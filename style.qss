@@ -1,0 +1,98 @@
+
+/* ===== COLORES BASE DE LA PALETA ===== */
+@color1: #E84A5F;  /* Coral intenso */
+@color2: #C04E8A;  /* Rosa oscuro */
+@color3: #6C4AB6;  /* Púrpura medio */
+@color4: #3B3CBB;  /* Azul profundo */
+@color5: #FFFFFF;  /* Blanco */
+
+/* ===== APLICACIÓN GLOBAL ===== */
+QWidget {
+    background-color: @color3;
+    color: @color5;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+}
+
+QMainWindow {
+    background-color: @color3;
+}
+
+/* ===== TITULOS ===== */
+QGroupBox, QLabel[title="true"] {
+    font-size: 16px;
+    font-weight: bold;
+    color: @color5;
+}
+
+/* ===== BOTONES ===== */
+QPushButton {
+    background-color: @color1;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    color: @color5;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: @color2;
+}
+
+QPushButton:pressed {
+    background-color: @color4;
+}
+
+QPushButton:disabled {
+    background-color: #A8A8A8;
+    color: #EEEEEE;
+}
+
+/* ===== CHECKBOX, RADIOBUTTON ===== */
+QCheckBox, QRadioButton {
+    font-weight: normal;
+    color: @color5;
+}
+
+QCheckBox:disabled, QRadioButton:disabled {
+    color: #BBBBBB;
+}
+
+/* ===== SPINBOX ===== */
+QSpinBox {
+    background-color: @color5;
+    color: @color4;
+    border: 1px solid @color4;
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+QSpinBox:disabled {
+    background-color: #DDDDDD;
+    color: #AAAAAA;
+}
+
+/* ===== QToolButton (por ejemplo, el botón de ayuda) ===== */
+QToolButton {
+    background-color: transparent;
+    color: @color5;
+    font-weight: bold;
+}
+
+/* ===== QToolBox y QStackedWidget ===== */
+QToolBox::tab, QStackedWidget {
+    background-color: @color4;
+    color: @color5;
+}
+
+/* ===== QFrame paso a paso ===== */
+QFrame {
+    background-color: @color4;
+    border-radius: 5px;
+}
+
+/* ===== QLabel ===== */
+QLabel {
+    font-size: 13px;
+    color: @color5;
+}
