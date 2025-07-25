@@ -1,5 +1,6 @@
 import numpy as np
 from medusa import components
+import medusa.bci.erp_spellers
 import medusa.ecg
 
 def find_valid_conditions(vector):
@@ -157,10 +158,12 @@ def recording_to_dict(rec):
     conditions_times = np.reshape(conditions_times, (-1, 2))
 
     # Get the intervals for the null condition
-    null_times = get_null_condition_times(conditions_times,[0, rec.eeg.times[-1] - rec.eeg.times[0]])
-    conditions_names.extend(['null']*len(null_times))
-    # Append and sort according to the initial point (both names and times)
-    conditions_times = np.concat((conditions_times, null_times))
+    null_times = get_null_condition_times(conditions_times, [0, rec.eeg.times[-1] - rec.eeg.times[0]])
+    if null_times.size > 0:
+        if null_times.ndim == 1:
+            null_times = null_times.reshape(1, -1)
+        conditions_names.extend(['null'] * len(null_times))
+        conditions_times = np.concatenate((conditions_times, null_times), axis=0)
     sort_idx = np.argsort(conditions_times[:, 0])
     conditions_times = conditions_times[sort_idx]
     conditions_names = np.array(conditions_names)[sort_idx]
@@ -169,15 +172,12 @@ def recording_to_dict(rec):
     conditions = {
         'conditions_names': conditions_names,
         'conditions_times': conditions_times,
-        'condtions_labels': rec.marks.conditions_labels[0::2],
+        'conditions_labels': rec.marks.conditions_labels[0::2],
         'names_to_labels': label_to_conditions
     }
 
-    # Vector to transform numeric labels to standard names, and array with the names
     label_to_event = {info['label']: name for name, info in rec.marks.app_settings['events'].items()}
     event_names = [label_to_event[label] for label in rec.marks.events_labels]
-
-    # Vector indicating the condition for each event
     events_times = rec.marks.events_times - rec.eeg.times[0]
     condition_event = np.logical_and(events_times >= conditions_times[:, 0][:, None],
                                      events_times <= conditions_times[:, 1][:, None])
@@ -203,19 +203,26 @@ def recording_to_dict(rec):
 
 
 def get_null_condition_times(conditions_times, whole_interval):
-
+    """
+    Get time intervals that are not covered by any condition.
+    If no conditions exist, the entire interval is considered 'null'.
+    """
     gaps = []
-    # For the first interval
+
+    if conditions_times.shape[0] == 0:
+        return np.array([whole_interval])
+
     if conditions_times[0][0] > whole_interval[0]:
         gaps.append([whole_interval[0], conditions_times[0][0]])
-    # Between conditions
+
     for i in range(1, len(conditions_times)):
         prev_end = conditions_times[i - 1][1]
         curr_start = conditions_times[i][0]
         if curr_start > prev_end:
-            gaps.append([prev_end, curr_start])  # Gap between conditions
-    # For the last interval
+            gaps.append([prev_end, curr_start])
+
     if conditions_times[-1][1] < whole_interval[1]:
         gaps.append([conditions_times[-1][1], whole_interval[1]])
 
     return np.array(gaps)
+
