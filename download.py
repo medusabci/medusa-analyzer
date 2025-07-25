@@ -1,6 +1,8 @@
 import os
 import json
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtGui import QTextCursor
+from PyQt5.QtWidgets import QApplication
 
 class DownloadWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
@@ -17,16 +19,32 @@ class DownloadWidget(QtWidgets.QWidget):
         self.runButton = self.findChild(QtWidgets.QPushButton, "runButton")
         self.progressLabel = self.findChild(QtWidgets.QLabel, "progressLabel")
         self.progressBar = self.findChild(QtWidgets.QProgressBar, "progressBar")
+        self.logtextBrowser = self.findChild(QtWidgets.QTextBrowser, "logtextBrowser")
         self.settings = {}
 
         # Estados
         self.progressLabel.hide()
         self.progressBar.hide()
         self.selected_folder = None
+        for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
+            w.setChecked(True)
 
         # Connect button
         self.selectfolderButton.clicked.connect(self.select_folder)
         self.runButton.clicked.connect(self.run_tasks)
+        self.runButton.setStyleSheet("background-color: #00CFC1; color: black; font-weight: bold;")
+
+    def handle_exception(func):
+        def wrapper(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except Exception as e:
+                if hasattr(self, 'log_message'):
+                    self.log_message(f"[ERROR] {func.__name__}: {str(e)}", style='error')
+                else:
+                    print(f"[ERROR] {func.__name__}: {str(e)}")
+
+        return wrapper
 
     def prepare_data(self, preprocessing, segmentation, parameters):
         self.settings_dic = {
@@ -38,29 +56,29 @@ class DownloadWidget(QtWidgets.QWidget):
         self.json_path = os.path.join(self.selected_folder, "settings.json")
 
         try:
-            print(f"Guardando JSON en: {self.json_path}")
+            self.log_message(f"Saving JSON in: {self.json_path}")
             with open(self.json_path, "w") as f:
                 json.dump(self.settings_dic, f, indent=4)
         except Exception as e:
-            print(f"ERROR SAVING JSON: {e}")
+            self.log_message(f"ERROR SAVING JSON: {e}")
             QtWidgets.QMessageBox.critical(self, "Error", f"Could not save the JSON file: {str(e)}")
 
-    def select_folder(self):
+    def select_folder(self, *args, **kwargs):
         while True:
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
             if not folder:
-                return  # Usuario canceló
+                return  # User cancelled
 
-            if os.listdir(folder):  # La carpeta NO está vacía
+            if os.listdir(folder):
                 QtWidgets.QMessageBox.warning(self, "Error",
                                               "The selected folder is not empty. Please select an empty folder.")
             else:
                 self.selected_folder = folder
-                QtWidgets.QMessageBox.information(self, "Selected folder", f"It has been selected: {folder}")
                 self.selectfolderLabel.setText(folder)
                 break
 
-    def run_tasks(self):
+    @handle_exception
+    def run_tasks(self, *args, **kwargs):
         if not self.selected_folder:
             QtWidgets.QMessageBox.warning(self, "Error", "Please, select one folder to save the data.")
             return
@@ -68,6 +86,7 @@ class DownloadWidget(QtWidgets.QWidget):
         self.progressLabel.show()
         self.progressBar.show()
         self.progressBar.setValue(0)
+        self.error_occurred = False
 
         total_tasks = sum([
             self.settingsCBox.isChecked(),
@@ -97,8 +116,33 @@ class DownloadWidget(QtWidgets.QWidget):
             "parameters": parameters
         }
 
-        self.run_pipeline(self.settings_dic, total_tasks)
-        QtWidgets.QMessageBox.information(self, "Download Complete", "Files downloaded successfully.")
+        success = self.run_pipeline(self.settings_dic, total_tasks)
+        self.main_window.validate_download_step(success)
+
+    def log_message(self, msg, style=None):
+        # Estilos adaptados para fondo blanco
+        theme_colors = {
+            'THEME_TEXT_LIGHT': '#333333',  # Texto oscuro para buena legibilidad
+            'THEME_RED': '#D32F2F',  # Rojo más profundo
+            'THEME_YELLOW': '#FBC02D'  # Amarillo más oscuro
+        }
+        if isinstance(style, str):
+            if style == 'error':
+                style = {'color': theme_colors['THEME_RED']}
+            elif style == 'warning':
+                style = {'color': theme_colors['THEME_YELLOW']}
+            else:
+                style = {'color': theme_colors['THEME_TEXT_LIGHT']}
+        elif style is None:
+            style = {'color': theme_colors['THEME_TEXT_LIGHT']}
+
+        style.setdefault('font-size', '9pt')
+        style_str = ';'.join(f'{k}: {v}' for k, v in style.items())
+
+        formatted = f'<p style="margin:0;margin-top:2;{style_str}"> >> {msg} </p>'
+        self.logtextBrowser.append(formatted)
+        self.logtextBrowser.moveCursor(QTextCursor.End)
+        QApplication.processEvents()
 
     def run_pipeline(self, settings_dic, total_tasks):
         import medusa
@@ -194,8 +238,8 @@ class DownloadWidget(QtWidgets.QWidget):
                     fxx, psd = medusa.transforms.power_spectral_density(epoched, fs, segment_pct, overlap_pct, window)
                 else:
                     fxx, psd = medusa.transforms.power_spectral_density(epoched, fs)
-            params['psd'] = np.nanmean(psd, axis=0) if avg else psd
-            params['psd_freq'] = fxx
+                params['psd'] = np.nanmean(psd, axis=0) if avg else psd
+                params['psd_freq'] = fxx
 
             # --- Relative Power ---
             if settings['parameters'].get('relative_power', False) and (band == 'broadband' or band is None):
@@ -385,27 +429,28 @@ class DownloadWidget(QtWidgets.QWidget):
                 makedirs(output_dir, exist_ok=True)
                 output_path = join(output_dir, f"{base_name}_preprocessing_{suffix}.mat")
                 data.save_to_mat(output_path)
-                print(f"Guardado preprocesado en: {output_path}")
+                self.log_message(f"Preprocessed saved in: {output_path}")
 
             if self.segsignalsCBox.isChecked() and key == 'seg':
                 output_dir = join(self.selected_folder, "Segmented_signals")
                 makedirs(output_dir, exist_ok=True)
                 output_path = join(output_dir, f"{base_name}_{suffix}.mat")
                 savemat(output_path, {'epochs': data})
-                print(f"Segmentación guardada en: {output_path}")
+                self.log_message(f"Segmentation saved in: {output_path}")
 
             if self.paramsignalsCBox.isChecked() and key == 'param':
                 output_dir = join(self.selected_folder, "Signal_parameters")
                 makedirs(output_dir, exist_ok=True)
-                print(f"Parámetros: carpeta preparada en {output_dir}")
+                self.log_message(f"Parameters: folder ready in {output_dir}")
                 output_path = join(output_dir, f"{base_name}_{suffix}.mat")
                 savemat(output_path, {'parameters': data})
-                print(f"Parámetros guardados en: {output_path}")
+                self.log_message(f"Parameters saved in: {output_path}")
 
+        error_found = False
         for i, file in enumerate(selected_files):
             try:
-                print(f"Procesando archivo: {file}")
-                self.progressLabel.setText(f"Procesando: {basename(file)}")
+                self.log_message(f"Processing file: {file}")
+                self.progressLabel.setText(f"Processing: {basename(file)}")
                 QtWidgets.QApplication.processEvents()
 
                 base_name = splitext(basename(file))[0]
@@ -456,4 +501,6 @@ class DownloadWidget(QtWidgets.QWidget):
                     self.progressBar.setValue(global_progress)
 
             except Exception as e:
-                print(f"Error preprocessing {file}: {e}")
+                error_found = True
+                self.log_message(f"Error preprocessing {file}: {e}", style='error')
+        return not error_found

@@ -30,8 +30,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>267</width>
-        <height>138</height>
+        <width>565</width>
+        <height>483</height>
        </rect>
       </property>
       <attribute name="label">
@@ -244,9 +244,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-57</y>
         <width>548</width>
-        <height>493</height>
+        <height>543</height>
        </rect>
       </property>
       <attribute name="label">
@@ -275,19 +275,6 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="medianCBox">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Median</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <spacer name="horizontalSpacer">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -299,6 +286,23 @@
                </size>
               </property>
              </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_19">
+            <item>
+             <widget class="QCheckBox" name="medianCBox">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Median</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -348,19 +352,6 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="skewnessCBox">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Skewness</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <spacer name="horizontalSpacer_3">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -372,6 +363,23 @@
                </size>
               </property>
              </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_20">
+            <item>
+             <widget class="QCheckBox" name="skewnessCBox">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Skewness</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -395,7 +403,7 @@
                </font>
               </property>
               <property name="text">
-               <string>PSD</string>
+               <string>Power Spectral Density</string>
               </property>
              </widget>
             </item>
@@ -468,17 +476,7 @@
              <widget class="QComboBox" name="psdcomboBox">
               <item>
                <property name="text">
-                <string>boxcar</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>triang</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>hamming</string>
+                <string>barthann</string>
                </property>
               </item>
               <item>
@@ -488,12 +486,7 @@
               </item>
               <item>
                <property name="text">
-                <string>flattop</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>parzen</string>
+                <string>blackmanharris</string>
                </property>
               </item>
               <item>
@@ -503,7 +496,17 @@
               </item>
               <item>
                <property name="text">
-                <string>blackmanharris</string>
+                <string>boxcar</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>flattop</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>hamming</string>
                </property>
               </item>
               <item>
@@ -513,23 +516,15 @@
               </item>
               <item>
                <property name="text">
-                <string>barthann</string>
+                <string>parzen</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>triang</string>
                </property>
               </item>
              </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_15">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </item>
@@ -547,7 +542,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Relative Power&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
-               <string>Relative power</string>
+               <string>Relative power to broadband</string>
               </property>
              </widget>
             </item>
@@ -779,7 +774,29 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Central Tendency Measure&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
-               <string>CTM</string>
+               <string>Central tendendy measure</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="ctmrLabel">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Radius used to compute the CTM. Should be a positive real number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Radius</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="ctmrBox">
+              <property name="styleSheet">
+               <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
+    width: 0;
+    height: 0;
+    border: none;
+}
+</string>
               </property>
              </widget>
             </item>
@@ -795,28 +812,6 @@
                </size>
               </property>
              </spacer>
-            </item>
-            <item>
-             <widget class="QLabel" name="ctmrLabel">
-              <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Radius used to compute the CTM. Should be a positive real number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-              </property>
-              <property name="text">
-               <string>r</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="ctmrBox">
-              <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
-              </property>
-             </widget>
             </item>
            </layout>
           </item>
@@ -839,22 +834,9 @@
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer_11">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
              <widget class="QLabel" name="sampenmLabel">
               <property name="toolTip">
-               <string>mbedding dimension (sequence length). Determines the length of subsequences compared in the signal.</string>
+               <string>Embedding dimension (sequence length). Determines the length of subsequences compared in the signal.</string>
               </property>
               <property name="text">
                <string>m</string>
@@ -895,6 +877,19 @@
               </property>
              </widget>
             </item>
+            <item>
+             <spacer name="horizontalSpacer_11">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
           <item>
@@ -914,19 +909,6 @@
                <string>Multiscale sample entropy</string>
               </property>
              </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_12">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
             </item>
             <item>
              <widget class="QLabel" name="maxscaleLabel">
@@ -994,6 +976,19 @@
               </property>
              </widget>
             </item>
+            <item>
+             <spacer name="horizontalSpacer_12">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
           </item>
           <item>
@@ -1048,19 +1043,6 @@
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer_10">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
              <widget class="QLabel" name="mlzcscalesLabel">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sequence of odd integers representing the window lengths for multiscale binarisation.&lt;/p&gt;&lt;p&gt;Each window defines a temporal scale for local median filtering.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1082,6 +1064,19 @@
                <string>[1, 3, 5]</string>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_10">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -1108,8 +1103,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>271</width>
-        <height>276</height>
+        <width>565</width>
+        <height>483</height>
        </rect>
       </property>
       <attribute name="label">
@@ -1377,8 +1372,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>98</width>
-        <height>28</height>
+        <width>565</width>
+        <height>483</height>
        </rect>
       </property>
       <attribute name="label">

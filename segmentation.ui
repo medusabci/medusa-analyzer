@@ -15,81 +15,6 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <widget class="QGroupBox" name="signal_markers">
-     <property name="title">
-      <string>Signal markers</string>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <layout class="QVBoxLayout" name="available_conditions">
-        <item>
-         <widget class="QWidget" name="conditionWidget" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QLabel" name="availableconditionsLabel">
-             <property name="text">
-              <string>Available conditions</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListView" name="conditionList"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="conditionLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>3</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Conditions found: </string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QVBoxLayout" name="available_events">
-        <item>
-         <widget class="QWidget" name="eventWidget" native="true">
-          <layout class="QVBoxLayout" name="verticalLayout_4">
-           <item>
-            <widget class="QLabel" name="availableeventsLabel">
-             <property name="text">
-              <string>Available events</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QListView" name="eventList"/>
-           </item>
-           <item>
-            <widget class="QLabel" name="eventLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>3</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Events found: </string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QGroupBox" name="segmentation_properties">
      <property name="title">
       <string>Segmentation properties</string>
@@ -265,6 +190,81 @@
            </size>
           </property>
          </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="signal_markers">
+     <property name="title">
+      <string>Signal markers</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <layout class="QVBoxLayout" name="available_conditions">
+        <item>
+         <widget class="QWidget" name="conditionWidget" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_3">
+           <item>
+            <widget class="QLabel" name="availableconditionsLabel">
+             <property name="text">
+              <string>Available conditions</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListView" name="conditionList"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="conditionLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>3</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Conditions found: </string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="available_events">
+        <item>
+         <widget class="QWidget" name="eventWidget" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QLabel" name="availableeventsLabel">
+             <property name="text">
+              <string>Available events</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListView" name="eventList"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="eventLabel">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>3</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Events found: </string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </item>
        </layout>
       </item>
@@ -531,7 +531,7 @@
       <item>
        <widget class="QLabel" name="newfsLabel">
         <property name="text">
-         <string>Target fs</string>
+         <string>Target sample frequency</string>
         </property>
        </widget>
       </item>

@@ -120,6 +120,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 idx = toolbox.indexOf(page)
                 if idx != -1:
                     toolbox.setCurrentIndex(idx)
+            self.nextButton.setEnabled(True)
+
+        elif index == 3:
+            self.nextButton.setEnabled(False)
+        else:
+            self.nextButton.setEnabled(True)
 
     def validate_preprocessing(self):
         """
@@ -290,6 +296,18 @@ class MainWindow(QtWidgets.QMainWindow):
                     return False
         print(config)
         return True
+
+    def validate_download_step(self, success: bool):
+        current_widget = self.stackedWidget.currentWidget()
+        if not isinstance(current_widget, DownloadWidget):
+            return
+
+        if success:
+            QtWidgets.QMessageBox.information(self, "Download Complete", "Files downloaded successfully.")
+            self.nextButton.setEnabled(True)
+        else:
+            print("Pipeline failed. nextButton will remain disabled.")
+            self.nextButton.setEnabled(False)
 
     def _warn(self, title, message):
         QtWidgets.QMessageBox.warning(self, title, message)

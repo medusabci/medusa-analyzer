@@ -89,18 +89,18 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="5,1">
-      <item>
-       <widget class="QPushButton" name="nextButton">
-        <property name="text">
-         <string>Next step</string>
-        </property>
-       </widget>
-      </item>
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0">
       <item>
        <widget class="QPushButton" name="backButton">
         <property name="text">
          <string>&lt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="nextButton">
+        <property name="text">
+         <string>Next step</string>
         </property>
        </widget>
       </item>

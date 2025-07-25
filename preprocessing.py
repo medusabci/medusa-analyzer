@@ -1,7 +1,6 @@
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from files_list_dialog import FilesListDialog
-from theme import PALETTE
 
 class PreprocessingWidget(QtWidgets.QWidget):
     def __init__(self, main_window):

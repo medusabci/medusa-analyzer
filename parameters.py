@@ -6,7 +6,6 @@ from rp_bands_table import RPBandTable
 from ap_bands_table import APBandTable
 from mf_bands_table import MFBandTable
 from se_bands_table import SEBandTable
-from theme import PALETTE
 import ast
 
 class ParametersWidget(QtWidgets.QWidget):
@@ -316,17 +315,17 @@ class ParametersWidget(QtWidgets.QWidget):
         for widget in [self.rpselectedbandsLabel, self.rpselectedbandsauxLabel, self.rpLabel, self.rpButton]:
             widget.setVisible(visible)
 
-        if visible:
-            msg_box = QtWidgets.QMessageBox(self)
-            msg_box.setIcon(QtWidgets.QMessageBox.Warning)
-            msg_box.setWindowTitle("Relative Power Warning")
-            msg_box.setTextFormat(Qt.RichText)
-            msg_box.setText(
-                "<b>Relative Power is normalized</b> using the selected broadband range.<br><br>"
-                "You can adjust this range in the <i><b>Band segmentation</b></i> section."
-            )
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg_box.exec_()
+        # if visible:
+        #     msg_box = QtWidgets.QMessageBox(self)
+        #     msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+        #     msg_box.setWindowTitle("Relative Power Warning")
+        #     msg_box.setTextFormat(Qt.RichText)
+        #     msg_box.setText(
+        #         "<b>Relative Power is normalized</b> using the selected broadband range.<br><br>"
+        #         "You can adjust this range in the <i><b>Band segmentation</b></i> section."
+        #     )
+        #     msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        #     msg_box.exec_()
 
     def toggle_absolute_power(self):
         '''
