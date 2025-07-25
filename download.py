@@ -32,7 +32,6 @@ class DownloadWidget(QtWidgets.QWidget):
         # Connect button
         self.selectfolderButton.clicked.connect(self.select_folder)
         self.runButton.clicked.connect(self.run_tasks)
-        self.runButton.setStyleSheet("background-color: #00CFC1; color: black; font-weight: bold;")
 
     def handle_exception(func):
         def wrapper(self, *args, **kwargs):
