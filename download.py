@@ -378,8 +378,12 @@ class DownloadWidget(QtWidgets.QWidget):
             for cond in selected_conditions:
                 for evt in selected_events:
                     if cond == 'null':
-                        epoched = medusa.get_epochs(current_signal, int(settings['segmentation']['trial_length']),
-                                                    baseline_window, norm=norm_type)
+                        evt_key = data.marks.app_settings['events'][evt]['label']
+                        onsets = np.array(data.marks.events_times)[np.array(data.marks.events_labels) == evt_key]
+                        onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
+                        epoched = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
+                                                             baseline_window, norm=norm_type)
+
                         save_and_compute(epoched, cond, evt)
                         continue
 
