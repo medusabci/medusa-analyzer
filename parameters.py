@@ -18,6 +18,29 @@ class ParametersWidget(QtWidgets.QWidget):
 
         uic.loadUi('parameters.ui', self)
 
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget.setLayout(layout)
+        self.logtextBrowser = QtWidgets.QLabel()
+        self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
+        self.logtextBrowser.setWordWrap(True)
+        self.logtextBrowser.setText("""
+            <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
+                <p>
+                    This is the <b>Signal Parameters Module</b> of <i>MEDUSA Analyzer</i>. In this section, you can 
+                    configure a wide range of <b>features and metrics</b> to extract from your EEG or biosignal 
+                    recordings, including band-based metrics. statistical descriptors, spectral features, 
+                    non-lineal parameters and connectivity metrics.
+                </p>
+                <p>
+                    Use the checkboxes to enable the metrics of interest. Some metrics require specific 
+                    band selections or additional parameters, which can be adjusted after activation.
+                </p>
+            </div>
+        """)
+        layout.addWidget(self.logtextBrowser)
         #%% ------------------------------------ BAND SEGMENTATION PAGE ----------------------------------------- #
 
         # Groupbox buttons and labels

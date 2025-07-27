@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtCore
 from utils import extract_condition_events
 from PyQt5.QtCore import QStringListModel
 from collections import Counter
@@ -18,7 +18,25 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.files = self.main_window.selected_files
         self.validating_window = False
 
+        layout = QtWidgets.QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget.setLayout(layout)
+        self.segmentation_label = QtWidgets.QLabel()
+        self.segmentation_label.setTextFormat(QtCore.Qt.RichText)
+        self.segmentation_label.setWordWrap(True)
+        self.segmentation_label.setText("""
+            <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
+                <p>
+                    Proceeding to the <b>Segmentation Module</b>, you can define how the signals should be split 
+                    into analyzable segments. Choose between the following segmentation strategies:
+            </div>
+        """)
+        layout.addWidget(self.segmentation_label)
+
         # -------------------- Signal Markers Section -------------------- #
+        self.trials = self.findChild(QtWidgets.QVBoxLayout, "trials")
         self.conditionWidget = self.findChild(QtWidgets.QWidget, "conditionsWidget")
         self.availableconditionsLabel = self.findChild(QtWidgets.QLabel, "availableconditionsLabel")
         self.conditionList = self.findChild(QtWidgets.QListView, "conditionList")

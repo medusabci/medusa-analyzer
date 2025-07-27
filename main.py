@@ -1,10 +1,35 @@
 import sys
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
 from preprocessing import PreprocessingWidget
 from segmentation import SegmentationWidget
 from parameters import ParametersWidget
 from download import DownloadWidget
+
+class GradientTitleWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumHeight(56)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        font = QtGui.QFont("Arial", 36, QtGui.QFont.Bold)
+        painter.setFont(font)
+
+        text = "MEDUSA©-Analyzer"
+        fm = QtGui.QFontMetrics(font)
+        text_width = fm.width(text)
+
+        x = (self.width() - text_width) // 2
+        y = (self.height()  + fm.ascent() - fm.descent()) // 2
+
+        gradient = QtGui.QLinearGradient(x, 0, x + text_width, 0)
+        gradient.setColorAt(0.0, QtGui.QColor("#6a0dad"))   # Morado
+        gradient.setColorAt(1.0, QtGui.QColor("#ec407a"))   # Rosa
+
+        brush = QtGui.QBrush(gradient)
+        painter.setPen(QtGui.QPen(brush, 0))
+        painter.drawText(x, y, text)
 
 class MainWindow(QtWidgets.QMainWindow):
     """
@@ -16,6 +41,14 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi("main_window.ui", self)
         self.selected_files = []
+
+        self.title_widget = GradientTitleWidget(self)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.title_widget)
+        layout.setContentsMargins(0, 20, 0, 0)
+        layout.setSpacing(0)
+        self.titleWidget = self.findChild(QtWidgets.QWidget, "titleWidget")
+        self.titleWidget.setLayout(layout)
 
         # --- UI Components ---
         self.stackedWidget = self.findChild(QtWidgets.QStackedWidget, "stackedWidget")
