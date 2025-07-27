@@ -107,8 +107,10 @@ class MainWindow(QtWidgets.QMainWindow):
         '''
         self.update_ui()
 
-        if index == 0 and (self.preproc_widget.yesRButton.isChecked() or self.preproc_widget.noRButton.isChecked()):
-            self.nextButton.setDisabled(False)
+        if index == 0:
+            print('Hola')
+        # if index == 0 and (self.preproc_widget.yesRButton.isChecked() or self.preproc_widget.noRButton.isChecked()):
+        #     self.nextButton.setDisabled(False)
 
         elif index == 1 and (not self.segmentation_widget.conditions or not self.segmentation_widget.events):
             if self.selected_files:
@@ -145,7 +147,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 bool: True if all validations pass, False otherwise.
             """
         pw = self.preproc_widget
-        if pw.yesRButton.isChecked() and not (
+        if pw.preprocessingButton.isChecked() and not (
                 pw.notchCBox.isChecked() or pw.bpCBox.isChecked() or pw.carCBox.isChecked()):
             self._warn("Processing Pipeline Required",
                        "Please select at least one preprocessing step before continuing.")
@@ -155,8 +157,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self._warn("Invalid Bandpass Filter Configuration",
                        f"The <b>maximum</b> frequency ({pw.maxfreqbpBox.value()}) must be greater than "
                        f"the <b>minimum</b> frequency ({pw.minfreqbpBox.value()}).")
-            pw.minfreqbpBox.setValue(pw.minfreqbpBox.minimum())
-            pw.maxfreqbpBox.setValue(pw.maxfreqbpBox.minimum())
+            pw.minfreqbpBox.setValue(pw.defaults["minfreqbp"])
+            pw.maxfreqbpBox.setValue(pw.defaults["maxfreqbp"])
+            return False
+
+        if pw.notchCBox.isChecked() and pw.minfreqnotchBox.value() >= pw.maxfreqnotchBox.value():
+            self._warn("Invalid Notch Filter Configuration",
+                       f"The <b>maximum</b> frequency ({pw.maxfreqnotchBox.value()}) must be greater than "
+                       f"the <b>minimum</b> frequency ({pw.minfreqnotchBox.value()}).")
+            pw.minfreqnotchBox.setValue(pw.defaults["minfreqnotch"])
+            pw.maxfreqnotchBox.setValue(pw.defaults["maxfreqnotch"])
             return False
 
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
@@ -185,6 +195,9 @@ class MainWindow(QtWidgets.QMainWindow):
             """
         sw = self.segmentation_widget
 
+        if not sw.conditionRButton.isChecked() and not sw.eventRButton.isChecked():
+            self._warn("Segmentation Selection Required", "Please select at least one segmentation type before proceeding.")
+            return False
         if sw.conditionRButton.isChecked() and not sw.conditionList.selectionModel().selectedIndexes():
             self._warn("Condition Selection Required", "Please select at least one condition before proceeding.")
             return False

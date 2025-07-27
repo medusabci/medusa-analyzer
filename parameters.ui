@@ -23,7 +23,7 @@
    <item>
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
-      <number>1</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="bandSegmentationPage">
       <property name="geometry">
@@ -244,7 +244,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-57</y>
+        <y>0</y>
         <width>548</width>
         <height>543</height>
        </rect>
@@ -1143,16 +1143,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="iacyesRButton">
+             <widget class="QCheckBox" name="iacortButton">
               <property name="text">
-               <string>Yes</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="iacnoRButton">
-              <property name="text">
-               <string>No</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -1197,16 +1190,9 @@
              </widget>
             </item>
             <item>
-             <widget class="QRadioButton" name="aecyesRButton">
+             <widget class="QCheckBox" name="aecortButton">
               <property name="text">
-               <string>Yes</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="aecnoRButton">
-              <property name="text">
-               <string>No</string>
+               <string/>
               </property>
              </widget>
             </item>
@@ -1367,7 +1353,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="graphMetricsPage">
+     <widget class="QWidget" name="widget">
       <property name="geometry">
        <rect>
         <x>0</x>
