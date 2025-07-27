@@ -26,6 +26,11 @@
    </item>
    <item>
     <widget class="QGroupBox" name="dataloading">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="title">
       <string>Data loading</string>
      </property>
@@ -95,6 +100,11 @@
    </item>
    <item>
     <widget class="QGroupBox" name="Datapreprocessing">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="title">
       <string>Preprocessing</string>
      </property>

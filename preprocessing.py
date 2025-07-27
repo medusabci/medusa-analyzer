@@ -6,31 +6,6 @@ from matplotlib.figure import Figure
 from scipy.signal import firwin, freqz
 import numpy as np
 
-class GradientTitleWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setMinimumHeight(50)
-
-    def paintEvent(self, event):
-        painter = QtGui.QPainter(self)
-        font = QtGui.QFont("Arial", 36, QtGui.QFont.Bold)
-        painter.setFont(font)
-
-        text = "MEDUSA©-Analyzer"
-        fm = QtGui.QFontMetrics(font)
-        text_width = fm.width(text)
-
-        x = (self.width() - text_width) // 2
-        y = (self.height() + fm.ascent() - fm.descent()) // 2
-
-        gradient = QtGui.QLinearGradient(x, 0, x + text_width, 0)
-        gradient.setColorAt(0.0, QtGui.QColor("#6a0dad"))   # Morado
-        gradient.setColorAt(1.0, QtGui.QColor("#ec407a"))   # Rosa
-
-        brush = QtGui.QBrush(gradient)
-        painter.setPen(QtGui.QPen(brush, 0))
-        painter.drawText(x, y, text)
-
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=4, height=3, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
@@ -48,16 +23,16 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         uic.loadUi("preprocessing_modificated.ui", self)
 
-        self.title_widget = GradientTitleWidget(self)
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.title_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
         self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.description_label = QtWidgets.QLabel()
         self.description_label.setTextFormat(QtCore.Qt.RichText)
         self.description_label.setWordWrap(True)
         self.description_label.setText("""
-                <p style="font-size: 12pt; font-family: Arial;">
+                <p style="font-size: 11pt; font-family: Arial;">
                 Welcome to the <b>Preprocessing Module</b> of <i>MEDUSA Analyzer</i>. 
                 Please select at least one <span style="color:#007acc; font-weight:bold;">.rec</span> file to begin.
                 </p>

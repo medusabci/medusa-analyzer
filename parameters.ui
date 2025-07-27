@@ -12,6 +12,7 @@
   </property>
   <property name="font">
    <font>
+    <pointsize>10</pointsize>
     <weight>50</weight>
     <bold>false</bold>
    </font>
@@ -20,6 +21,16 @@
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_6">
+   <item>
+    <widget class="QFrame" name="topContentWidget">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
@@ -31,7 +42,7 @@
         <x>0</x>
         <y>0</y>
         <width>565</width>
-        <height>483</height>
+        <height>455</height>
        </rect>
       </property>
       <attribute name="label">
@@ -245,8 +256,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>548</width>
-        <height>543</height>
+        <width>615</width>
+        <height>566</height>
        </rect>
       </property>
       <attribute name="label">
@@ -1104,7 +1115,7 @@
         <x>0</x>
         <y>0</y>
         <width>565</width>
-        <height>483</height>
+        <height>455</height>
        </rect>
       </property>
       <attribute name="label">
@@ -1359,7 +1370,7 @@
         <x>0</x>
         <y>0</y>
         <width>565</width>
-        <height>483</height>
+        <height>455</height>
        </rect>
       </property>
       <attribute name="label">
