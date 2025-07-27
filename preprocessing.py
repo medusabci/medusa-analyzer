@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets, uic, QtGui, QtCore
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from files_list_dialog import FilesListDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -6,12 +6,37 @@ from matplotlib.figure import Figure
 from scipy.signal import firwin, freqz
 import numpy as np
 
+class GradientTitleWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setMinimumHeight(50)
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        font = QtGui.QFont("Arial", 36, QtGui.QFont.Bold)
+        painter.setFont(font)
+
+        text = "MEDUSA©-Analyzer"
+        fm = QtGui.QFontMetrics(font)
+        text_width = fm.width(text)
+
+        x = (self.width() - text_width) // 2
+        y = (self.height() + fm.ascent() - fm.descent()) // 2
+
+        gradient = QtGui.QLinearGradient(x, 0, x + text_width, 0)
+        gradient.setColorAt(0.0, QtGui.QColor("#6a0dad"))   # Morado
+        gradient.setColorAt(1.0, QtGui.QColor("#ec407a"))   # Rosa
+
+        brush = QtGui.QBrush(gradient)
+        painter.setPen(QtGui.QPen(brush, 0))
+        painter.drawText(x, y, text)
 
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=4, height=3, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)
         super().__init__(self.fig)
+        self.setParent(parent)
 
 class PreprocessingWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
@@ -20,9 +45,24 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.main_window = main_window
         self.validating_bandpass = False
         self.validating_notch = False
-        # self.apply_custom_styles()
 
         uic.loadUi("preprocessing_modificated.ui", self)
+
+        self.title_widget = GradientTitleWidget(self)
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.title_widget)
+        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget.setLayout(layout)
+        self.description_label = QtWidgets.QLabel()
+        self.description_label.setTextFormat(QtCore.Qt.RichText)
+        self.description_label.setWordWrap(True)
+        self.description_label.setText("""
+                <p style="font-size: 12pt; font-family: Arial;">
+                Welcome to the <b>Preprocessing Module</b> of <i>MEDUSA Analyzer</i>. 
+                Please select at least one <span style="color:#007acc; font-weight:bold;">.rec</span> file to begin.
+                </p>
+                """)
+        layout.addWidget(self.description_label)
 
         # -----------------                   GROUPBOX: Data loading                                      ------------#
         self.browseButton = self.findChild(QtWidgets.QPushButton, "browseButton")
@@ -90,7 +130,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.notchCBox.toggled.connect(self.update_notch_plot)
         self.minfreqnotchBox.valueChanged.connect(self.update_notch_plot)
         self.maxfreqnotchBox.valueChanged.connect(self.update_notch_plot)
-        self.orderNotchBox.valueChanged.connect(self.update_notch_plot)
+        self.orderNotchBox.editingFinished.connect(self.update_notch_plot)
         self.bpCBox.toggled.connect(self.update_bandpass_plot)
         self.minfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
         self.maxfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
@@ -288,13 +328,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.notchCanvas.draw()
             return
 
-        fs = 256  # todo CARGAR LA FS DEL ARCHIVO SELECCIOANDO POR USUARIO
+        fs = 256  # CAMBIAR: Cargar la FS del archivo seleccionado
         low = self.minfreqnotchBox.value()
         high = self.maxfreqnotchBox.value()
 
         if high <= low or low <= 0 or high >= fs / 2:
             self.notchCanvas.ax.clear()
-            self.notchCanvas.ax.set_title("Invalid notch frequency range", fontsize=10)
+            self.notchCanvas.ax.set_title("Invalid notch frequency range", fontsize=10, color="#000000")
             self.notchCanvas.draw()
             return
 
@@ -303,13 +343,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
         w, h = freqz(b, worN=1024, fs=fs)
 
         self.notchCanvas.ax.clear()
-        self.notchCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)))
-        self.notchCanvas.ax.set_title("Notch Filter", fontsize=10)
-        self.notchCanvas.ax.set_ylabel("Gain (dB)", fontsize=9)
-        self.notchCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9)
-        self.notchCanvas.ax.set_xlim([0, fs])
-        self.notchCanvas.ax.grid(True)
-        self.notchCanvas.ax.tick_params(labelsize=8)
+        self.notchCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)), color="#ab47bc", linewidth=2.0)
+        self.notchCanvas.ax.set_title("Notch Filter", fontsize=10, color="#000000")
+        self.notchCanvas.ax.set_ylabel("Gain (dB)", fontsize=9, color="#000000")
+        self.notchCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9, color="#000000")
+        self.notchCanvas.ax.set_xlim([0, fs / 2])
+        self.notchCanvas.ax.grid(False)
+        self.notchCanvas.ax.tick_params(labelsize=8, colors="#000000")
         self.notchCanvas.draw()
 
     def update_bandpass_plot(self):
@@ -318,13 +358,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.bandpassCanvas.draw()
             return
 
-        fs = 256 # todo CARGAR LA FS DEL ARCHIVO SELECCIOANDO POR USUARIO
+        fs = 256  # CAMBIAR: Cargar la FS del archivo seleccionado
         low = self.minfreqbpBox.value()
         high = self.maxfreqbpBox.value()
 
         if high <= low or low <= 0 or high >= fs / 2:
             self.bandpassCanvas.ax.clear()
-            self.bandpassCanvas.ax.set_title("Invalid bandpass frequency range", fontsize=10)
+            self.bandpassCanvas.ax.set_title("Invalid bandpass frequency range", fontsize=10, color="#000000")
             self.bandpassCanvas.draw()
             return
 
@@ -333,13 +373,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
         w, h = freqz(b, worN=1024, fs=fs)
 
         self.bandpassCanvas.ax.clear()
-        self.bandpassCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)))
-        self.bandpassCanvas.ax.set_title("Bandpass Filter", fontsize=10)
-        self.bandpassCanvas.ax.set_ylabel("Gain (dB)", fontsize=9)
-        self.bandpassCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9)
-        self.bandpassCanvas.ax.set_xlim([0, fs])
-        self.bandpassCanvas.ax.grid(True)
-        self.bandpassCanvas.ax.tick_params(labelsize=8)
+        self.bandpassCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)), color="#ec407a", linewidth=2.0)
+        self.bandpassCanvas.ax.set_title("Bandpass Filter", fontsize=10, color="#000000")
+        self.bandpassCanvas.ax.set_ylabel("Gain (dB)", fontsize=9, color="#000000")
+        self.bandpassCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9, color="#000000")
+        self.bandpassCanvas.ax.set_xlim([0, fs / 2])
+        self.bandpassCanvas.ax.grid(False)
+        self.bandpassCanvas.ax.tick_params(labelsize=8, colors="#000000")
         self.bandpassCanvas.draw()
 
     def get_preprocessing_config(self):
