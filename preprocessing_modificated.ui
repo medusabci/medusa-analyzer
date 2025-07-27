@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>623</height>
+    <width>907</width>
+    <height>894</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,20 +15,12 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
-    <widget class="QLabel" name="label_2">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-       <weight>50</weight>
-       <italic>false</italic>
-       <bold>false</bold>
-       <underline>true</underline>
-       <strikeout>false</strikeout>
-       <kerning>false</kerning>
-      </font>
+    <widget class="QFrame" name="topContentWidget">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
      </property>
-     <property name="text">
-      <string>Please select at least one .rec file to proceed. Optional preprocessing steps can be configured below.</string>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
      </property>
     </widget>
    </item>
@@ -143,7 +135,7 @@
         <property name="title">
          <string>Common average reference (CAR)</string>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
+        <layout class="QHBoxLayout" name="horizontalLayout_7">
          <item>
           <layout class="QHBoxLayout" name="CAR_filtering">
            <item>
@@ -161,13 +153,6 @@
            </item>
            <item>
             <widget class="QCheckBox" name="carCBox">
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="carLabel">
              <property name="font">
               <font>
                <weight>75</weight>
@@ -180,7 +165,46 @@
             </widget>
            </item>
            <item>
+            <widget class="QLabel" name="carLabel">
+             <property name="font">
+              <font>
+               <weight>50</weight>
+               <bold>false</bold>
+              </font>
+             </property>
+             <property name="text">
+              <string>- Re-reference channels using Common Average</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_39">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
             <spacer name="horizontalSpacer_36">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_38">
              <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
@@ -610,18 +634,11 @@
              <property name="title">
               <string>Notch filtering</string>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_7">
+             <layout class="QVBoxLayout" name="verticalLayout_6">
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <item>
                  <widget class="QCheckBox" name="notchCBox">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="notchfilterLabel">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -630,6 +647,19 @@
                   </property>
                   <property name="text">
                    <string>Notch filter</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="notchfilterLabel">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>- Remove powerline or frequency interference.</string>
                   </property>
                  </widget>
                 </item>
@@ -732,6 +762,19 @@
                   </property>
                  </widget>
                 </item>
+                <item>
+                 <spacer name="horizontalSpacer_40">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
                </layout>
               </item>
               <item>
@@ -751,18 +794,11 @@
              <property name="title">
               <string>Bandpass filtering</string>
              </property>
-             <layout class="QVBoxLayout" name="verticalLayout_8">
+             <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_5">
                 <item>
                  <widget class="QCheckBox" name="bpCBox">
-                  <property name="text">
-                   <string/>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="bpLabel">
                   <property name="font">
                    <font>
                     <weight>75</weight>
@@ -771,6 +807,19 @@
                   </property>
                   <property name="text">
                    <string>Bandpass</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="bpLabel">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>– Focus on frequency ranges of interest</string>
                   </property>
                  </widget>
                 </item>
@@ -871,6 +920,19 @@
                    <number>1000</number>
                   </property>
                  </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_41">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
                 </item>
                </layout>
               </item>
