@@ -288,7 +288,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.notchCanvas.draw()
             return
 
-        fs = 256  # Nueva frecuencia de muestreo
+        fs = 256  # todo CARGAR LA FS DEL ARCHIVO SELECCIOANDO POR USUARIO
         low = self.minfreqnotchBox.value()
         high = self.maxfreqnotchBox.value()
 
@@ -300,16 +300,16 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         numtaps = self.orderNotchBox.value()
         b = firwin(numtaps, [low, high], pass_zero=True, fs=fs)
-        w, h = freqz(b, worN=1024, fs=fs)  # Menos puntos
+        w, h = freqz(b, worN=1024, fs=fs)
 
         self.notchCanvas.ax.clear()
         self.notchCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)))
         self.notchCanvas.ax.set_title("Notch Filter", fontsize=10)
         self.notchCanvas.ax.set_ylabel("Gain (dB)", fontsize=9)
         self.notchCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9)
-        self.notchCanvas.ax.set_xlim([0, fs])  # Límite en X
+        self.notchCanvas.ax.set_xlim([0, fs])
         self.notchCanvas.ax.grid(True)
-        self.notchCanvas.ax.tick_params(labelsize=8)  # Tamaño de los ticks
+        self.notchCanvas.ax.tick_params(labelsize=8)
         self.notchCanvas.draw()
 
     def update_bandpass_plot(self):
@@ -318,7 +318,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.bandpassCanvas.draw()
             return
 
-        fs = 256
+        fs = 256 # todo CARGAR LA FS DEL ARCHIVO SELECCIOANDO POR USUARIO
         low = self.minfreqbpBox.value()
         high = self.maxfreqbpBox.value()
 
