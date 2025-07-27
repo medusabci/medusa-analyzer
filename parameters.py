@@ -134,20 +134,17 @@ class ParametersWidget(QtWidgets.QWidget):
     # %% --------------------------------------------- CONNECTIVITY  ------------------------------------------- #
         self.iacCBox = self.findChild(QtWidgets.QCheckBox, "iacCBox")
         self.iacCBox.toggled.connect(self.toggle_iac)
-        self.iacyesRButton =self.findChild(QtWidgets.QRadioButton, "iacyesRButton")
-        self.iacnoRButton = self.findChild(QtWidgets.QRadioButton, "iacnoRButton")
+        self.iacortButton =self.findChild(QtWidgets.QCheckBox, "iacortButton")
         self.iacortLabel = self.findChild(QtWidgets.QLabel, "iacortLabel")
-        self.aecyesRButton = self.findChild(QtWidgets.QRadioButton, "aecyesRButton")
-        self.aecnoRButton = self.findChild(QtWidgets.QRadioButton, "aecnoRButton")
         self.aecCBox = self.findChild(QtWidgets.QCheckBox, "aecCBox")
         self.aecortLabel = self.findChild(QtWidgets.QLabel, "aecortLabel")
+        self.aecortButton = self.findChild(QtWidgets.QCheckBox, "aecortButton")
         self.aecCBox.toggled.connect(self.toggle_aec)
         self.pliCBox = self.findChild(QtWidgets.QCheckBox, "pliCBox")
         self.plvCBox = self.findChild(QtWidgets.QCheckBox, "plvCBox")
         self.wpliCBox = self.findChild(QtWidgets.QCheckBox, "wpliCBox")
 
-        for widget in [self.iacortLabel, self.iacyesRButton, self.iacnoRButton, self.aecortLabel,
-                       self.aecnoRButton, self.aecyesRButton]:
+        for widget in [self.iacortLabel, self.iacortButton, self.aecortLabel, self.aecortButton]:
             widget.setVisible(False)
 
 
@@ -191,9 +188,9 @@ class ParametersWidget(QtWidgets.QWidget):
             "multiscale_lzc_scales": ast.literal_eval(self.mlzcEdit.text()) if self.mlzcCBox.isChecked()
                                                                                and self.mlzcEdit.text().strip() else None,
             "iac": True if self.iacCBox.isChecked() else None,
-            "ort_iac": True if self.iacyesRButton.isChecked() and self.iacCBox.isChecked() else None,
+            "ort_iac": True if self.iacortButton.isChecked() and self.iacCBox.isChecked() else None,
             "aec": True if self.aecCBox.isChecked() else None,
-            "ort_aec": True if self.aecyesRButton.isChecked() and self.aecCBox.isChecked() else None,
+            "ort_aec": True if self.aecortButton.isChecked() and self.aecCBox.isChecked() else None,
             "pli": True if self.pliCBox.isChecked() else None,
             "plv": True if self.plvCBox.isChecked() else None,
             "wpli": True if self.wpliCBox.isChecked() else None,
@@ -471,28 +468,14 @@ class ParametersWidget(QtWidgets.QWidget):
 
     def toggle_iac(self):
         visible = self.iacCBox.isChecked()
-
-        if not visible:
-            # Resetear selección solo si se desactiva la casilla
-            self.iacyesRButton.setAutoExclusive(False)
-            self.iacnoRButton.setAutoExclusive(False)
-            self.iacyesRButton.setChecked(False)
-            self.iacnoRButton.setChecked(False)
-            self.iacyesRButton.setAutoExclusive(True)
-            self.iacnoRButton.setAutoExclusive(True)
-
-        for widget in [self.iacortLabel, self.iacyesRButton, self.iacnoRButton]:
+        if visible: self.iacortButton.setChecked(True)
+        else: self.iacyesButton.setChecked(False)
+        for widget in [self.iacortLabel, self.iacortButton]:
             widget.setVisible(visible)
 
     def toggle_aec(self):
         visible = self.aecCBox.isChecked()
-        if not visible:
-            # Resetear selección solo si se desactiva la casilla
-            self.aecyesRButton.setAutoExclusive(False)
-            self.aecnoRButton.setAutoExclusive(False)
-            self.aecyesRButton.setChecked(False)
-            self.aecnoRButton.setChecked(False)
-            self.aecyesRButton.setAutoExclusive(True)
-            self.aecnoRButton.setAutoExclusive(True)
-        for widget in [self.aecortLabel, self.aecyesRButton, self.aecnoRButton]:
+        if visible: self.aecortButton.setChecked(True)
+        else: self.aecortButton.setChecked(False)
+        for widget in [self.aecortLabel, self.aecortButton]:
             widget.setVisible(visible)

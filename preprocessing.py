@@ -1,6 +1,17 @@
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from files_list_dialog import FilesListDialog
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from scipy.signal import firwin, freqz
+import numpy as np
+
+
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=4, height=3, dpi=100):
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.ax = self.fig.add_subplot(111)
+        super().__init__(self.fig)
 
 class PreprocessingWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
@@ -11,7 +22,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.validating_notch = False
         # self.apply_custom_styles()
 
-        uic.loadUi("preprocessing.ui", self)
+        uic.loadUi("preprocessing_modificated.ui", self)
 
         # -----------------                   GROUPBOX: Data loading                                      ------------#
         self.browseButton = self.findChild(QtWidgets.QPushButton, "browseButton")
@@ -25,13 +36,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
 
         # -----------------                   GROUPBOX: Data preprocessing                                ------------#
-        self.yesRButton = self.findChild(QtWidgets.QRadioButton, "yesRButton")
-        self.noRButton = self.findChild(QtWidgets.QRadioButton, "noRButton")
-        # Hacemos que de primeras ambos botones aparezcan desactivados hasta que el usuario seleccione archivos.
-        self.yesRButton.setDisabled(True)
-        self.noRButton.setDisabled(True)
+        self.preprocessingButton = self.findChild(QtWidgets.QCheckBox, "preprocessingButton")
+        self.preprocessingButton.setChecked(True)
 
         # ======================================== Notch ========================================================= #
+        self.notchgroupBox = self.findChild(QtWidgets.QGroupBox, "notchgroupBox")
         self.notchLabel = self.findChild(QtWidgets.QLabel, "notchfilterLabel")
         self.notchCBox = self.findChild(QtWidgets.QCheckBox, "notchCBox")
         self.notchminLabel = self.findChild(QtWidgets.QLabel, "notchminLabel")
@@ -40,8 +49,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.maxfreqnotchBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqnotchBox")
         self.orderNotchLabel = self.findChild(QtWidgets.QLabel, "orderNotchLabel")
         self.orderNotchBox = self.findChild(QtWidgets.QSpinBox, "orderNotchBox")
+        self.notchPlotWidget = self.findChild(QtWidgets.QWidget, "notchPlotWidget")
+        self.notchCanvas = MplCanvas(self.notchPlotWidget)
+        notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
+        notchLayout.addWidget(self.notchCanvas)
 
         # ======================================== Bandpass ========================================================= #
+        self.bpgroupBox = self.findChild(QtWidgets.QGroupBox, "bpgroupBox")
         self.bpLabel = self.findChild(QtWidgets.QLabel, "bpLabel")
         self.bpCBox = self.findChild(QtWidgets.QCheckBox, "bpCBox")
         self.bpminLabel = self.findChild(QtWidgets.QLabel, "bpminfreqLabel")
@@ -50,16 +64,37 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.maxfreqbpBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqbpBox")
         self.orderbpLabel = self.findChild(QtWidgets.QLabel, "orderbpLabel")
         self.orderbpBox = self.findChild(QtWidgets.QSpinBox, "orderbpBox")
+        self.bandpassPlotWidget = self.findChild(QtWidgets.QWidget, "bandpassPlotWidget")
+        self.bandpassCanvas = MplCanvas(self.bandpassPlotWidget)
+        bpLayout = QtWidgets.QVBoxLayout(self.bandpassPlotWidget)
+        bpLayout.addWidget(self.bandpassCanvas)
+
+        self.defaults = {
+            "minfreqnotch": self.minfreqnotchBox.value(),
+            "maxfreqnotch": self.maxfreqnotchBox.value(),
+            "ordernotch": self.orderNotchBox.value(),
+            "minfreqbp": self.minfreqbpBox.value(),
+            "maxfreqbp": self.maxfreqbpBox.value(),
+            "orderbp": self.orderbpBox.value(),
+        }
 
         # ======================================== CAR ========================================================= #
+        self.cargroupBox = self.findChild(QtWidgets.QGroupBox, "cargroupBox")
         self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
         self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
 
         # Group buttons connection
-        self.yesRButton.toggled.connect(self.toggle_preprocessing_group)
-        self.noRButton.toggled.connect(self.toggle_preprocessing_group)
+        self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
         self.notchCBox.toggled.connect(self.toggle_notch_controls)
         self.bpCBox.toggled.connect(self.toggle_bandpass_controls)
+        self.notchCBox.toggled.connect(self.update_notch_plot)
+        self.minfreqnotchBox.valueChanged.connect(self.update_notch_plot)
+        self.maxfreqnotchBox.valueChanged.connect(self.update_notch_plot)
+        self.orderNotchBox.valueChanged.connect(self.update_notch_plot)
+        self.bpCBox.toggled.connect(self.update_bandpass_plot)
+        self.minfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
+        self.maxfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
+        self.orderbpBox.valueChanged.connect(self.update_bandpass_plot)
 
         # Inicializar estado
         self.reset_all_controls()
@@ -79,23 +114,21 @@ class PreprocessingWidget(QtWidgets.QWidget):
         for w in [
             self.notchLabel, self.notchCBox, self.notchminLabel, self.minfreqnotchBox, self.notchmaxLabel, self.maxfreqnotchBox, self.orderNotchLabel, self.orderNotchBox,
             self.bpLabel, self.bpCBox, self.bpminLabel, self.minfreqbpBox, self.bpmaxLabel, self.maxfreqbpBox, self.orderbpLabel, self.orderbpBox,
-            self.carLabel, self.carCBox,
+            self.carLabel, self.carCBox, self.notchPlotWidget, self.bandpassPlotWidget, self.bpgroupBox, self.cargroupBox,
+            self.notchgroupBox
         ]:
             w.setVisible(False)
 
         # Resetear los checkboxes para que no estén marcadas
-        for box in [self.notchCBox, self.bpCBox, self.carCBox, self.yesRButton,
-            self.noRButton,
-        ]:
-            box.setChecked(False)
+        for box in [self.notchCBox, self.bpCBox, self.carCBox, self.preprocessingButton]: box.setChecked(False)
 
         # Reseteamos todas las spinboxes para poner sus valores por defecto
-        self.minfreqnotchBox.setValue(self.minfreqnotchBox.minimum())
-        self.maxfreqnotchBox.setValue(self.maxfreqnotchBox.minimum())
-        self.orderNotchBox.setValue(self.orderNotchBox.minimum())
-        self.minfreqbpBox.setValue(self.minfreqbpBox.minimum())
-        self.maxfreqbpBox.setValue(self.maxfreqbpBox.minimum())
-        self.orderbpBox.setValue(self.orderbpBox.minimum())
+        self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
+        self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
+        self.orderNotchBox.setValue(self.defaults["ordernotch"])
+        self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
+        self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
+        self.orderbpBox.setValue(self.defaults["orderbp"])
 
     def select_files(self):
         """
@@ -115,7 +148,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         """
         if not self.selected_files:
             return
-        reply = QMessageBox.question(self, "Eliminar archivos", "¿Quieres eliminar todos los archivos seleccionados?",
+        reply = QMessageBox.question(self, "Delete files", "¿Do you want to delete all the selected files?",
                                      QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.selected_files = []
@@ -130,36 +163,14 @@ class PreprocessingWidget(QtWidgets.QWidget):
         '''
 
         count = len(self.selected_files)
-        self.selectLabel.setText(f"{count} archivos seleccionados")
+        self.selectLabel.setText(f"{count} selected files")
 
         # Sincronizar con main_window
         self.main_window.selected_files = self.selected_files.copy()
         self.main_window.segmentation_widget.reset_segmentation_state()
-        print(count)
-
-        if count > 0: # sí que hay archivos entonces habilitamos los radioButtons
-            self.yesRButton.setDisabled(False)
-            self.noRButton.setDisabled(False)
-
-            if self.yesRButton.isChecked() or self.noRButton.isChecked():
-                self.main_window.nextButton.setDisabled(False)
-            else:
-                self.main_window.nextButton.setDisabled(True)
-
-        else: # no hay archivos entonces deshabilitamos los botones y no dejamos pasar de página
-            self.yesRButton.setDisabled(True)
-            self.noRButton.setDisabled(True)
-
-            # NOTA: el problema aquí es que al ser auto-excluyentes y deshabilitarlos se ve como uno de ellos siempre
-            # va a quedar marcados. Por ello, hay que quitar un momento la auto-exclusividad, desmarcarlos, y volver
-            # a activar la auto-exclusividad.
-            self.yesRButton.setAutoExclusive(False)
-            self.noRButton.setAutoExclusive(False)
-            self.yesRButton.setChecked(False)
-            self.noRButton.setChecked(False)
-            self.yesRButton.setAutoExclusive(True)
-            self.noRButton.setAutoExclusive(True)
-
+        if count > 0:
+            self.main_window.nextButton.setDisabled(False)
+        else:
             self.main_window.nextButton.setDisabled(True)
 
     def open_file_list_dialog(self):
@@ -174,17 +185,20 @@ class PreprocessingWidget(QtWidgets.QWidget):
         aplicarlos o no. Además, ya activamos el botón de Next en la main_window.
         '''
 
-        self.main_window.nextButton.setDisabled(False)
-        if self.noRButton.isChecked():
+        # self.main_window.nextButton.setDisabled(False)
+        if not self.preprocessingButton.isChecked():
             self.reset_all_controls()
             return
 
-        if self.yesRButton.isChecked(): # mostramos los controles de preprocessing (pero siguen ocultos sus parámetros)
+        if self.preprocessingButton.isChecked(): # mostramos los controles de preprocessing (pero siguen ocultos sus parámetros)
             pairs = [
                 (self.notchLabel, self.notchCBox),
                 (self.bpLabel, self.bpCBox),
                 (self.carLabel, self.carCBox),
             ]
+            self.cargroupBox.setVisible(True)
+            self.bpgroupBox.setVisible(True)
+            self.notchgroupBox.setVisible(True)
 
             for label, checkbox in pairs:
                 label.setVisible(True)
@@ -195,6 +209,12 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 Muestra y oculta los parámetros asociados a 'notch_filyer' cuando se marca o se desmarca su checkbox principal.
                 :param checked:
                 '''
+        if not checked:
+            self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
+            self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
+            self.orderNotchBox.setValue(self.defaults["ordernotch"])
+        # self.notchgroupBox.setVisible(checked)
+        self.notchPlotWidget.setVisible(checked)
         self.notchminLabel.setVisible(checked)
         self.minfreqnotchBox.setVisible(checked)
         self.notchmaxLabel.setVisible(checked)
@@ -207,6 +227,12 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 Muestra y oculta los parámetros asociados a 'bandpass' cuando se marca o se desmarca su checkbox principal.
                 :param checked:
                 '''
+        if not checked:
+            self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
+            self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
+            self.orderbpBox.setValue(self.defaults["orderbp"])
+        # self.bpgroupBox.setVisible(checked)
+        self.bandpassPlotWidget.setVisible(checked)
         self.bpminLabel.setVisible(checked)
         self.minfreqbpBox.setVisible(checked)
         self.bpmaxLabel.setVisible(checked)
@@ -222,8 +248,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         min_val = self.minfreqbpBox.value()
         max_val = self.maxfreqbpBox.value()
-        min_limit = self.minfreqbpBox.minimum()
-        max_limit = self.maxfreqbpBox.minimum()
 
         if max_val <= min_val:
             QMessageBox.warning(
@@ -232,8 +256,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 f"For bandpass filtering, <b>max</b> frequency ({max_val}) must be greater than <b>min</b> ({min_val})."
             )
 
-            self.minfreqbpBox.setValue(min_limit)
-            self.maxfreqbpBox.setValue(max_limit)
+            self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
+            self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
 
         self.validating_bandpass = False
 
@@ -245,8 +269,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         min_val = self.minfreqnotchBox.value()
         max_val = self.maxfreqnotchBox.value()
-        min_limit = self.minfreqnotchBox.minimum()
-        max_limit = self.maxfreqnotchBox.minimum()
 
         if max_val <= min_val:
             QMessageBox.warning(
@@ -255,15 +277,75 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 f"For notch filtering, <b>max</b> frequency ({max_val}) must be greater than <b>min</b> ({min_val})."
             )
 
-            self.minfreqnotchBox.setValue(min_limit)
-            self.maxfreqnotchBox.setValue(max_limit)
+            self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
+            self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
 
         self.validating_notch = False
+
+    def update_notch_plot(self):
+        if not self.notchCBox.isChecked():
+            self.notchCanvas.ax.clear()
+            self.notchCanvas.draw()
+            return
+
+        fs = 256  # Nueva frecuencia de muestreo
+        low = self.minfreqnotchBox.value()
+        high = self.maxfreqnotchBox.value()
+
+        if high <= low or low <= 0 or high >= fs / 2:
+            self.notchCanvas.ax.clear()
+            self.notchCanvas.ax.set_title("Invalid notch frequency range", fontsize=10)
+            self.notchCanvas.draw()
+            return
+
+        numtaps = self.orderNotchBox.value()
+        b = firwin(numtaps, [low, high], pass_zero=True, fs=fs)
+        w, h = freqz(b, worN=1024, fs=fs)  # Menos puntos
+
+        self.notchCanvas.ax.clear()
+        self.notchCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)))
+        self.notchCanvas.ax.set_title("Notch Filter", fontsize=10)
+        self.notchCanvas.ax.set_ylabel("Gain (dB)", fontsize=9)
+        self.notchCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9)
+        self.notchCanvas.ax.set_xlim([0, fs])  # Límite en X
+        self.notchCanvas.ax.grid(True)
+        self.notchCanvas.ax.tick_params(labelsize=8)  # Tamaño de los ticks
+        self.notchCanvas.draw()
+
+    def update_bandpass_plot(self):
+        if not self.bpCBox.isChecked():
+            self.bandpassCanvas.ax.clear()
+            self.bandpassCanvas.draw()
+            return
+
+        fs = 256
+        low = self.minfreqbpBox.value()
+        high = self.maxfreqbpBox.value()
+
+        if high <= low or low <= 0 or high >= fs / 2:
+            self.bandpassCanvas.ax.clear()
+            self.bandpassCanvas.ax.set_title("Invalid bandpass frequency range", fontsize=10)
+            self.bandpassCanvas.draw()
+            return
+
+        numtaps = self.orderbpBox.value()
+        b = firwin(numtaps, [low, high], pass_zero=False, fs=fs)
+        w, h = freqz(b, worN=1024, fs=fs)
+
+        self.bandpassCanvas.ax.clear()
+        self.bandpassCanvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)))
+        self.bandpassCanvas.ax.set_title("Bandpass Filter", fontsize=10)
+        self.bandpassCanvas.ax.set_ylabel("Gain (dB)", fontsize=9)
+        self.bandpassCanvas.ax.set_xlabel("Frequency (Hz)", fontsize=9)
+        self.bandpassCanvas.ax.set_xlim([0, fs])
+        self.bandpassCanvas.ax.grid(True)
+        self.bandpassCanvas.ax.tick_params(labelsize=8)
+        self.bandpassCanvas.draw()
 
     def get_preprocessing_config(self):
         config = {
             "selected_files": self.selected_files if self.selected_files else None,
-            "apply_preprocessing": True if self.yesRButton.isChecked() else None,
+            "apply_preprocessing": True if self.preprocessingButton.isChecked() else None,
 
             "notch": self.notchCBox.isChecked() if self.notchCBox else None,
             "notch_min": self.minfreqnotchBox.value() if self.notchCBox.isChecked() else None,
