@@ -133,7 +133,7 @@ class DownloadWidget(QtWidgets.QWidget):
         }
 
         success = self.run_pipeline(self.settings_dic, total_tasks)
-        self.main_window.validate_download_step(success)
+        self.main_window.validate_save_step(success)
 
     def log_message(self, msg, style=None):
         # Estilos adaptados para fondo blanco

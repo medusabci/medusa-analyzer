@@ -14,15 +14,20 @@ class MplCanvas(FigureCanvas):
         self.setParent(parent)
 
 class PreprocessingWidget(QtWidgets.QWidget):
+    """
+        Main widget window. Contains all the widget elements and methods
+    """
+
     def __init__(self, main_window):
         super().__init__()
+        uic.loadUi("preprocessing_modificated.ui", self)
 
+        # Define variables
         self.main_window = main_window
         self.validating_bandpass = False
         self.validating_notch = False
 
-        uic.loadUi("preprocessing_modificated.ui", self)
-
+        # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -39,22 +44,17 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 """)
         layout.addWidget(self.description_label)
 
-        # -----------------                   GROUPBOX: Data loading                                      ------------#
+        # --- GET ELEMENTS FROM UI MODULE ---
+
+        # Data loading
         self.browseButton = self.findChild(QtWidgets.QPushButton, "browseButton")
         self.deletefilesButton = self.findChild(QtWidgets.QPushButton, "deletefilesButton")
         self.viewfilesButton = self.findChild(QtWidgets.QPushButton, "viewfilesButton")
         self.selectLabel = self.findChild(QtWidgets.QLabel, "selectLabel")
-        self.selected_files = []  # Almacena las rutas de los archivos seleccionados
-
-        self.browseButton.clicked.connect(self.select_files)
-        self.deletefilesButton.clicked.connect(self.delete_files)
-        self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
-
-        # -----------------                   GROUPBOX: Data preprocessing                                ------------#
+        self.selected_files = []  # Store the selected files
+        # Preprocessing
         self.preprocessingButton = self.findChild(QtWidgets.QCheckBox, "preprocessingButton")
-        self.preprocessingButton.setChecked(True)
-
-        # ======================================== Notch ========================================================= #
+        # Notch
         self.notchgroupBox = self.findChild(QtWidgets.QGroupBox, "notchgroupBox")
         self.notchLabel = self.findChild(QtWidgets.QLabel, "notchfilterLabel")
         self.notchCBox = self.findChild(QtWidgets.QCheckBox, "notchCBox")
@@ -68,8 +68,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
         notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
         notchLayout.addWidget(self.notchCanvas)
-
-        # ======================================== Bandpass ========================================================= #
+        # Bandpass
         self.bpgroupBox = self.findChild(QtWidgets.QGroupBox, "bpgroupBox")
         self.bpLabel = self.findChild(QtWidgets.QLabel, "bpLabel")
         self.bpCBox = self.findChild(QtWidgets.QCheckBox, "bpCBox")
@@ -83,7 +82,34 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.bandpassCanvas = MplCanvas(self.bandpassPlotWidget)
         bpLayout = QtWidgets.QVBoxLayout(self.bandpassPlotWidget)
         bpLayout.addWidget(self.bandpassCanvas)
+        # CAR
+        self.cargroupBox = self.findChild(QtWidgets.QGroupBox, "cargroupBox")
+        self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
+        self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
 
+        # --- ELEMENT SETUP ---
+
+        # Data loading
+        self.browseButton.clicked.connect(self.select_files)
+        self.deletefilesButton.clicked.connect(self.delete_files)
+        self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
+        # Data preprocessing
+        self.preprocessingButton.setChecked(True)
+        self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
+        # Notch
+        self.notchCBox.toggled.connect(self.toggle_notch_controls)
+        self.notchCBox.toggled.connect(self.update_notch_plot)
+        self.minfreqnotchBox.valueChanged.connect(self.update_notch_plot)
+        self.maxfreqnotchBox.valueChanged.connect(self.update_notch_plot)
+        self.orderNotchBox.editingFinished.connect(self.update_notch_plot)
+        # Bandpass
+        self.bpCBox.toggled.connect(self.toggle_bandpass_controls)
+        self.bpCBox.toggled.connect(self.update_bandpass_plot)
+        self.minfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
+        self.maxfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
+        self.orderbpBox.valueChanged.connect(self.update_bandpass_plot)
+
+        # Store the default values in a dict
         self.defaults = {
             "minfreqnotch": self.minfreqnotchBox.value(),
             "maxfreqnotch": self.maxfreqnotchBox.value(),
@@ -93,29 +119,12 @@ class PreprocessingWidget(QtWidgets.QWidget):
             "orderbp": self.orderbpBox.value(),
         }
 
-        # ======================================== CAR ========================================================= #
-        self.cargroupBox = self.findChild(QtWidgets.QGroupBox, "cargroupBox")
-        self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
-        self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
-
-        # Group buttons connection
-        self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
-        self.notchCBox.toggled.connect(self.toggle_notch_controls)
-        self.bpCBox.toggled.connect(self.toggle_bandpass_controls)
-        self.notchCBox.toggled.connect(self.update_notch_plot)
-        self.minfreqnotchBox.valueChanged.connect(self.update_notch_plot)
-        self.maxfreqnotchBox.valueChanged.connect(self.update_notch_plot)
-        self.orderNotchBox.editingFinished.connect(self.update_notch_plot)
-        self.bpCBox.toggled.connect(self.update_bandpass_plot)
-        self.minfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
-        self.maxfreqbpBox.valueChanged.connect(self.update_bandpass_plot)
-        self.orderbpBox.valueChanged.connect(self.update_bandpass_plot)
-
-        # Inicializar estado
+        # Set initial state
         self.reset_all_controls()
         self.maxfreqbpBox.editingFinished.connect(self.validate_bandpass_bounds)
         self.maxfreqnotchBox.editingFinished.connect(self.validate_notch_bounds)
         self.main_window.selected_files = self.selected_files
+
 
     def reset_all_controls(self):
         '''
