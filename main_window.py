@@ -1,8 +1,8 @@
 import sys
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
-from preprocessing import PreprocessingWidget
-from segmentation import SegmentationWidget
+from preprocessing_widget import PreprocessingWidget
+from segmentation_widget import SegmentationWidget
 from parameters import ParametersWidget
 from download import DownloadWidget
 
@@ -166,11 +166,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.update_ui()
 
-        if index == 0:
-            print('Hola')
-        # if index == 0 and (self.preproc_widget.yesRButton.isChecked() or self.preproc_widget.noRButton.isChecked()):
-        #     self.nextButton.setDisabled(False)
-        elif index == 1 and (not self.segmentation_widget.conditions or not self.segmentation_widget.events):
+        if index == 1 and (not self.segmentation_widget.conditions or not self.segmentation_widget.events):
             if self.selected_files:
                 self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         elif index == 2:

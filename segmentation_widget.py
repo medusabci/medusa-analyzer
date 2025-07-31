@@ -5,14 +5,13 @@ from collections import Counter
 
 class SegmentationWidget(QtWidgets.QWidget):
     """
-    Widget responsible for configuring segmentation parameters of the EEG data.
-    Includes selection of signal markers (conditions/events), segmentation window settings,
-    normalization, thresholding, and resampling options.
+        Main windget element. Manages the  segmentation configuration of the data. Includes selection of signal markers
+        (conditions/events), segmentation window settings, normalization, thresholding, and resampling options.
     """
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi("segmentation.ui", self)
+        uic.loadUi("segmentation_widget.ui", self)
 
         self.main_window = main_window
         self.files = self.main_window.selected_files
