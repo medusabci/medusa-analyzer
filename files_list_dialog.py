@@ -5,19 +5,25 @@ class FilesListDialog(QtWidgets.QDialog):
         super().__init__()
         uic.loadUi("files_list.ui", self)
 
+        # Define variables
         self.preprocessing_widget = preprocessing_widget
+
+
+        # --- GET ELEMENTS FROM UI MODULE ---
         self.filelistWidget = self.findChild(QtWidgets.QListWidget, "filelistWidget")
         self.deletefilesButton = self.findChild(QtWidgets.QPushButton, "deletefilesButton")
         self.acceptfilesButton = self.findChild(QtWidgets.QPushButton, "acceptfilesButton")
 
+        # --- ELEMENT SETUP ---
         self.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.filelistWidget.addItems(files)
-
         self.deletefilesButton.clicked.connect(self.delete_selected)
         self.acceptfilesButton.clicked.connect(self.accept)
 
     def delete_selected(self):
-        """Eliminar archivos seleccionados de la lista."""
+        """
+            Remove the selected files.
+        """
         for item in self.filelistWidget.selectedItems():
             self.filelistWidget.takeItem(self.filelistWidget.row(item))
 
@@ -29,5 +35,7 @@ class FilesListDialog(QtWidgets.QDialog):
             self.preprocessing_widget.update_select_label()
 
     def get_updated_files(self):
-        """Devolver la lista actual de archivos."""
+        """
+            Return the current file list.
+        """
         return [self.filelistWidget.item(i).text() for i in range(self.filelistWidget.count())]
