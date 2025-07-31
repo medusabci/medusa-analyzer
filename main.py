@@ -7,6 +7,10 @@ from parameters import ParametersWidget
 from download import DownloadWidget
 
 class GradientTitleWidget(QtWidgets.QWidget):
+    """
+        Creates the header of the MEDUSA Analyzer GUI
+    """
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setMinimumHeight(56)
@@ -16,7 +20,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
         font = QtGui.QFont("Arial", 36, QtGui.QFont.Bold)
         painter.setFont(font)
 
-        text = "MEDUSA©-Analyzer"
+        text = "MEDUSA© Analyzer"
         fm = QtGui.QFontMetrics(font)
         text_width = fm.width(text)
 
@@ -33,8 +37,8 @@ class GradientTitleWidget(QtWidgets.QWidget):
 
 class MainWindow(QtWidgets.QMainWindow):
     """
-    Main application window. Manages navigation through the main stages of the workflow:
-    Preprocessing, Segmentation, Signal Analysis, and Downloads.
+        Main application window. Manages navigation through the main stages of the workflow:
+        Preprocessing, Segmentation, Signal Analysis, and Downloads.
     """
 
     def __init__(self):
@@ -42,6 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi("main_window.ui", self)
         self.selected_files = []
 
+        # Define the header of the GUI
         self.title_widget = GradientTitleWidget(self)
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.title_widget)
@@ -50,8 +55,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.titleWidget = self.findChild(QtWidgets.QWidget, "titleWidget")
         self.titleWidget.setLayout(layout)
 
-        # --- UI Components ---
+
+        # --- GET ELEMENTS FROM UI MODULE ---
+
+        # Stacked widget (main section)
         self.stackedWidget = self.findChild(QtWidgets.QStackedWidget, "stackedWidget")
+        # Navigation buttons and progress bar
         self.nextButton = self.findChild(QtWidgets.QPushButton, "nextButton")
         self.backButton = self.findChild(QtWidgets.QPushButton, "backButton")
         self.progressLabel = self.findChild(QtWidgets.QLabel, "progressLabel")
@@ -62,36 +71,44 @@ class MainWindow(QtWidgets.QMainWindow):
         self.toolBox = self.findChild(QtWidgets.QToolBox, "toolBox")
         self.bandSegmentationPage = self.findChild(QtWidgets.QWidget, "bandSegmentationPage")
 
-        # --- Setup Navigation Buttons ---
+
+        # --- ELEMENT SETUP ---
+
+        # Navigation Buttons
         self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
         self.nextButton.clicked.connect(self.go_next)
         self.backButton.clicked.connect(self.go_back)
-
-        # --- Initialize Step Info ---
+        # Step Info
         self.total_steps = self.stackedWidget.count()
         self.step_names = ["Preprocessing", "Segmentation", "Signal Analysis", "Downloads"]
 
-        # --- Insert Workflow Widgets into StackedWidget ---
+
+        # --- INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ---
+
+        # Preprocesssing
         self.preproc_widget = PreprocessingWidget(self)
         self.stackedWidget.insertWidget(0, self.preproc_widget)
-
+        # Segmentation
         self.segmentation_widget = SegmentationWidget(self)
         self.segmentation_widget.hide_all_param_widgets()
         self.stackedWidget.insertWidget(1, self.segmentation_widget)
-
+        # Parameters
         self.parameters_widget = ParametersWidget(self)
         self.stackedWidget.insertWidget(2, self.parameters_widget)
+        # Saving
+        self.save_widget = DownloadWidget(self)
+        self.stackedWidget.insertWidget(3, self.save_widget)
 
-        self.download_widget = DownloadWidget(self)
-        self.stackedWidget.insertWidget(3, self.download_widget)
-
-        # --- Initial State ---
+        # Set initial state
         self.stackedWidget.setCurrentIndex(0)  # Start with the Preprocessing tab
         self.stackedWidget.currentChanged.connect(self.on_tab_changed)
         self.update_ui()
 
 
     def go_next(self):
+        """
+            Controls the next (and finish) button behaviour
+        """
         idx = self.stackedWidget.currentIndex()
 
         if idx == 0 and not self.validate_preprocessing(): return
@@ -104,21 +121,26 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.close()
 
+
     def go_back(self):
+        """
+            Controls the back button behaviour
+        """
         idx = self.stackedWidget.currentIndex()
         if idx > 0:
             self.stackedWidget.setCurrentIndex(idx - 1)
             self.update_ui()
 
+
     def update_ui(self):
         """
-        Updates the user interface based on the current step in the workflow.
+            Updates the user interface based on the current step in the workflow.
 
-        This includes:
-        - Setting the step label with the current step number and name.
-        - Updating the visual progress bar.
-        - Controlling visibility of the Back button (hidden on the first step).
-        - Updating the Next button text (changes to 'Finish' on the last step).
+            This includes:
+            - Setting the step label with the current step number and name.
+            - Updating the progress bar.
+            - Controlling visibility of the Back button (hidden on the first step).
+            - Updating the Next button text (changes to 'Finish' on the last step).
         """
         idx = self.stackedWidget.currentIndex()
         self.progressLabel.setText(f"Step {idx + 1} of {self.total_steps}: {self.step_names[idx]}")
@@ -126,29 +148,31 @@ class MainWindow(QtWidgets.QMainWindow):
         self.backButton.setVisible(idx > 0)
         self.nextButton.setText("Finish" if idx == self.total_steps - 1 else "Next")
 
+
     def update_progress_bar(self, idx):
+        """
+        Paints the progress bar
+        """
         bars = [self.stepBar0, self.stepBar1, self.stepBar2, self.stepBar3]
         colors = ["#FF8A5C", "#F63553", "#6234BD", "#3117A4"]
         for i, bar in enumerate(bars):
             bar.setStyleSheet(f"background-color: {colors[i] if i <= idx else 'lightgray'}")
 
+
     def on_tab_changed(self, index):
-        '''
-        This function ensures that when the user navigates backward through the tabs after interacting with them,
-        their previous selections and entered data are preserved. It maintains the consistency of the user interface
-        in accordance with the user's interactions.
-        '''
+        """
+            This function ensures that when the user navigates forward and backward through the tabs after interacting with
+            them, their previous interactions with the GUI are preserved.
+        """
         self.update_ui()
 
         if index == 0:
             print('Hola')
         # if index == 0 and (self.preproc_widget.yesRButton.isChecked() or self.preproc_widget.noRButton.isChecked()):
         #     self.nextButton.setDisabled(False)
-
         elif index == 1 and (not self.segmentation_widget.conditions or not self.segmentation_widget.events):
             if self.selected_files:
                 self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
-
         elif index == 2:
             toolbox, page = self.parameters_widget.toolBox, self.parameters_widget.bandSegmentationPage
             if toolbox and page:
@@ -156,11 +180,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 if idx != -1:
                     toolbox.setCurrentIndex(idx)
             self.nextButton.setEnabled(True)
-
         elif index == 3:
             self.nextButton.setEnabled(False)
         else:
             self.nextButton.setEnabled(True)
+
 
     def validate_preprocessing(self):
         """
@@ -168,7 +192,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             Checks:
             - If preprocessing is enabled, at least one step (Notch, BP, CAR) must be selected.
-            - Bandpass filter parameters must have valid min < max values.
+            - Bandpass and notch filters parameters must have valid min < max values.
 
             Side Effects:
             - Displays warning dialogs on validation failure.
@@ -180,6 +204,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 bool: True if all validations pass, False otherwise.
             """
         pw = self.preproc_widget
+
         if pw.preprocessingButton.isChecked() and not (
                 pw.notchCBox.isChecked() or pw.bpCBox.isChecked() or pw.carCBox.isChecked()):
             self._warn("Processing Pipeline Required",
@@ -207,6 +232,7 @@ class MainWindow(QtWidgets.QMainWindow):
         print(config)
         self.parameters_widget.set_defaults_from_preprocessing(config)
         return True
+
 
     def validate_segmentation(self):
         """
@@ -264,6 +290,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         print(sw.get_segmentation_config())
         return True
+
 
     def validate_parameters(self):
         """
@@ -343,7 +370,16 @@ class MainWindow(QtWidgets.QMainWindow):
         print(config)
         return True
 
-    def validate_download_step(self, success: bool):
+    def validate_save_step(self, success: bool):
+        """
+            Validates user selections in the Save step before finishing.
+
+            Checks:
+            - Based on success variable
+
+            Side Effects:
+            - Displays warning/success dialogs
+        """
         current_widget = self.stackedWidget.currentWidget()
         if not isinstance(current_widget, DownloadWidget):
             return
