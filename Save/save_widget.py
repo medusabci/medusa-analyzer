@@ -8,7 +8,7 @@ class DownloadWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
-        uic.loadUi("final_window.ui", self)
+        uic.loadUi("Save/save_widget.ui", self)
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

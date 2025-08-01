@@ -1,6 +1,6 @@
 from medusa import components
 from medusa import get_epochs, get_epochs_of_events
-from utils import recording_to_dict
+from Segmentation.utils import recording_to_dict
 import numpy as np
 import pickle as pkl
 

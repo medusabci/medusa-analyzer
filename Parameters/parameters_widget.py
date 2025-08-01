@@ -1,11 +1,8 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtCore import Qt
-from bands_table import BandTable
-from rp_bands_table import RPBandTable
-from ap_bands_table import APBandTable
-from mf_bands_table import MFBandTable
-from se_bands_table import SEBandTable
+from Parameters.rp_bands_table import RPBandTable
+from Parameters.ap_bands_table import APBandTable
+from Parameters.mf_bands_table import MFBandTable
+from Parameters.se_bands_table import SEBandTable
 import ast
 
 class ParametersWidget(QtWidgets.QWidget):
@@ -13,10 +10,9 @@ class ParametersWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.main_window = main_window
-        self.initialized = False  # Para que manejar los parámetros por defecto
         self.last_params = None
 
-        uic.loadUi('parameters.ui', self)
+        uic.loadUi('Parameters/parameters_widget.ui', self)
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -41,32 +37,7 @@ class ParametersWidget(QtWidgets.QWidget):
             </div>
         """)
         layout.addWidget(self.logtextBrowser)
-        #%% ------------------------------------ BAND SEGMENTATION PAGE ----------------------------------------- #
 
-        # Groupbox buttons and labels
-        self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
-        self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
-        self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
-        self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
-        self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
-        self.bandCBox = self.findChild(QtWidgets.QCheckBox, "bandCBox")
-        self.selectedbandsLabel = self.findChild(QtWidgets.QLabel, "selectedbandsLabel")
-        self.selectedbandsauxLabel = self.findChild(QtWidgets.QLabel, "selectedbandsauxLabel")
-        self.bandLabel = self.findChild(QtWidgets.QLabel, "bandLabel")
-        self.bandButton = self.findChild(QtWidgets.QPushButton, "bandButton")
-
-        # Group buttons connections
-        self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
-        for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
-            widget.setVisible(False)
-        self.bandButton.clicked.connect(self.open_band_editor)
-        self.selected_bands = []
-        self.band_editor = None  # se inicializa después
-
-        # Sincronizar cambios en spinboxes con tabla si se abre
-        self.minbroadBox.valueChanged.connect(self._sync_broadband_spinboxes)
-        self.maxbroadBox.valueChanged.connect(self._sync_broadband_spinboxes)
-        self.maxbroadBox.editingFinished.connect(self.validate_broadband_interval)
 
         #%% --------------------------------------------- SIGNAL METRICS  ------------------------------------------- #
         # RP and AP
@@ -171,15 +142,10 @@ class ParametersWidget(QtWidgets.QWidget):
             widget.setVisible(False)
 
 
-
     #%% Funciones comunes
     def get_parameters_config(self):
         # Configuración base
         config = {
-            "band_segmentation": True if self.bandCBox.isChecked() else None,
-            "broadband_min": self.minbroadBox.value(),
-            "broadband_max": self.maxbroadBox.value(),
-            "selected_bands": self.selected_bands if self.bandCBox.isChecked() else None,
             "mean": True if self.meanCBox.isChecked() else None,
             "median": True if self.medianCBox.isChecked() else None,
             "variance": True if self.varianceCBox.isChecked() else None,
@@ -221,103 +187,6 @@ class ParametersWidget(QtWidgets.QWidget):
         }
 
         return config
-    #%% Funciones de bands segmentation
-    def validate_broadband_interval(self):
-
-        start = self.minbroadBox.value()
-        end = self.maxbroadBox.value()
-
-        # Validación
-        if end <= start:
-            # Bloquear señales para prevenir loops
-            self.minbroadBox.blockSignals(True)
-            self.maxbroadBox.blockSignals(True)
-
-            QtWidgets.QMessageBox.warning(
-                self,
-                "Invalid Broadband range",
-                "Max. frequency must be greater than min. frequency."
-            )
-
-            self.minbroadBox.setValue(getattr(self, "default_min_broad", 0.5))
-            self.maxbroadBox.setValue(getattr(self, "default_max_broad", 70))
-
-            # Desbloquear señales
-            self.minbroadBox.blockSignals(False)
-            self.maxbroadBox.blockSignals(False)
-
-    def set_defaults_from_preprocessing(self, params):
-        if not self.initialized or self._params_changed(params):
-            if params.get("bandpass"):
-                self.default_min_broad = params.get("bp_min", 0)
-                self.default_max_broad = params.get("bp_max", 70)
-            elif params.get("resample"):
-                self.default_min_broad = 0.5
-                self.default_max_broad = params.get("resample_fs", 70)
-            else:
-                self.default_min_broad = 0.5
-                self.default_max_broad = 70  # TO DO: usar fs/2 si lo tienes
-
-            self.minbroadBox.setValue(self.default_min_broad)
-            self.maxbroadBox.setValue(self.default_max_broad)
-
-            self.last_params = dict(params)
-            self.initialized = True
-
-    def _params_changed(self, new_params):
-        # Si nunca se guardaron params, han cambiado
-        if self.last_params is None:
-            return True
-        # Comparamos claves relevantes
-        keys_to_check = ["bandpass", "bp_min", "bp_max"]
-        return any(self.last_params.get(k) != new_params.get(k) for k in keys_to_check)
-
-    def toggle_bands_segmentation(self):
-        '''
-        Función para mostrar los datos relacionados con las bandas en caso de marcar que si que se desea hacer
-        segmenatación por bandas. Si se desmarca el CheckBoxButton, se ocultan los datos.
-        '''
-        visible = self.bandCBox.isChecked()
-        for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
-            widget.setVisible(visible)
-    def open_band_editor(self):
-        if self.band_editor is None:
-            self.band_editor = BandTable(
-                parameters_widget=self,
-                min_broad=self.minbroadBox.value(),
-                max_broad=self.maxbroadBox.value()
-            )
-            self.band_editor.setModal(True)  # Hace que desactive MainWindow sin cerrar herencia
-            self.band_editor.show()
-        else:
-            self.band_editor.sync_broadband_range(
-                self.minbroadBox.value(),
-                self.maxbroadBox.value()
-            )
-        self.band_editor.show()
-
-    def update_band_label(self, bands):
-        self.selected_bands = bands
-        if bands:
-            names = [b["name"] for b in bands]
-            self.bandLabel.setText(", ".join(names))
-        else:
-            self.bandLabel.setText("None")
-
-    def _sync_broadband_spinboxes(self):
-        if self.band_editor:
-            self.band_editor.sync_broadband_range(
-                self.minbroadBox.value(),
-                self.maxbroadBox.value()
-            )
-
-    def update_broadband_spinboxes(self, min_val, max_val):
-        self.minbroadBox.blockSignals(True)
-        self.maxbroadBox.blockSignals(True)
-        self.minbroadBox.setValue(min_val)
-        self.maxbroadBox.setValue(max_val)
-        self.minbroadBox.blockSignals(False)
-        self.maxbroadBox.blockSignals(False)
 
     #%% Funciones de signal metrics
     def toggle_psd(self):

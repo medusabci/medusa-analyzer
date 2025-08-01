@@ -1,10 +1,10 @@
 import sys
 from PyQt5 import QtWidgets, uic, QtGui
 from PyQt5.QtWidgets import QApplication
-from preprocessing_widget import PreprocessingWidget
-from segmentation_widget import SegmentationWidget
-from parameters import ParametersWidget
-from download import DownloadWidget
+from Preprocessing.preprocessing_widget import PreprocessingWidget
+from Segmentation.segmentation_widget import SegmentationWidget
+from Parameters.parameters_widget import ParametersWidget
+from Save.save_widget import DownloadWidget
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -69,7 +69,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stepBar2 = self.findChild(QtWidgets.QWidget, "stepBar2")
         self.stepBar3 = self.findChild(QtWidgets.QWidget, "stepBar3")
         self.toolBox = self.findChild(QtWidgets.QToolBox, "toolBox")
-        self.bandSegmentationPage = self.findChild(QtWidgets.QWidget, "bandSegmentationPage")
 
 
         # --- ELEMENT SETUP ---
@@ -170,11 +169,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.selected_files:
                 self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         elif index == 2:
-            toolbox, page = self.parameters_widget.toolBox, self.parameters_widget.bandSegmentationPage
-            if toolbox and page:
-                idx = toolbox.indexOf(page)
-                if idx != -1:
-                    toolbox.setCurrentIndex(idx)
+            self.parameters_widget.toolBox.setCurrentIndex(0)
             self.nextButton.setEnabled(True)
         elif index == 3:
             self.nextButton.setEnabled(False)
@@ -223,10 +218,17 @@ class MainWindow(QtWidgets.QMainWindow):
             pw.maxfreqnotchBox.setValue(pw.defaults["maxfreqnotch"])
             return False
 
+        min_b, max_b = pw.minbroadBox.value(), pw.maxbroadBox.value()
+        if min_b >= max_b:
+            self._warn("Invalid Broadband Range", "The maximum frequency must be greater than the minimum frequency.")
+            pw.minbroadBox.setValue(getattr(pw, "default_min_broad", 0.5))
+            pw.maxbroadBox.setValue(getattr(pw, "default_max_broad", 70))
+            return False
+
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         config = pw.get_preprocessing_config()
         print(config)
-        self.parameters_widget.set_defaults_from_preprocessing(config)
+        # self.preproc_widget.set_defaults_from_preprocessing(config)
         return True
 
 
@@ -247,7 +249,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             Returns:
                 bool: True if all validations pass, False otherwise.
-            """
+        """
         sw = self.segmentation_widget
 
         if not sw.conditionRButton.isChecked() and not sw.eventRButton.isChecked():
@@ -310,13 +312,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 bool: True if all validations pass, False otherwise.
             """
         pw = self.parameters_widget
-        min_b, max_b = pw.minbroadBox.value(), pw.maxbroadBox.value()
 
-        if min_b >= max_b:
-            self._warn("Invalid Broadband Range", "The maximum frequency must be greater than the minimum frequency.")
-            pw.minbroadBox.setValue(getattr(pw, "default_min_broad", 0.5))
-            pw.maxbroadBox.setValue(getattr(pw, "default_max_broad", 70))
-            return False
+        # min_b, max_b = pw.minbroadBox.value(), pw.maxbroadBox.value()
+        # if min_b >= max_b:
+        #     self._warn("Invalid Broadband Range", "The maximum frequency must be greater than the minimum frequency.")
+        #     pw.minbroadBox.setValue(getattr(pw, "default_min_broad", 0.5))
+        #     pw.maxbroadBox.setValue(getattr(pw, "default_max_broad", 70))
+        #     return False
 
         checks = [
             (pw.bandCBox.isChecked() and pw.bandLabel.text() == "None", "Band Segmentation Required",
@@ -350,19 +352,16 @@ class MainWindow(QtWidgets.QMainWindow):
             )
 
         config = pw.get_parameters_config()
-        band_checks = [("selected_bands", pw.bandCBox.isChecked(), "Frequency Bands"),
-            ("selected_rp_bands", pw.rpCBox.isChecked(), "Relative Power"),]
-        for key, enabled, label in band_checks:
-            if not enabled:
-                continue
-            for band in config.get(key, []):
-                if band.get("name") == "Broadband":
-                    band["min"], band["max"] = min_b, max_b
+        min_b = self.preproc_widget.minbroadBox.getValue()
+        max_b = self.preproc_widget.maxbroadBox.getValue()
+        if pw.rpCBox.isChecked():
+            for band in config.get('selected_rp_bands', []):
                 if band.get("min", 0) < min_b or band.get("max", 0) > max_b:
                     self._warn("Frequency Band Out of Range",
-                               f"The band <b>{band.get('name', 'Unnamed')}</b> in the '{label} Table' "
+                               f"The band <b>{band.get('name', 'Unnamed')}</b> in the 'Relative Power Table' "
                                f"(range: {band.get('min', 0)}-{band.get('max', 0)} Hz) exceeds the allowed Broadband limits ({min_b}-{max_b} Hz).")
                     return False
+
         print(config)
         return True
 
