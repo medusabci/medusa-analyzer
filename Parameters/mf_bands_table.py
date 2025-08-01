@@ -192,7 +192,7 @@ class MFBandTable(QtWidgets.QDialog):
 
         # Remove
         remove_button = QtWidgets.QPushButton()
-        icon = QtGui.QIcon("media/delete_icon.png")  # o usa tu propia imagen
+        icon = QtGui.QIcon("../media/delete_icon.png")  # o usa tu propia imagen
         remove_button.setIcon(icon)
         remove_button.setFixedSize(20, 20)
         remove_button.clicked.connect(lambda _, r=row: self.mfbandsTable.removeRow(r))

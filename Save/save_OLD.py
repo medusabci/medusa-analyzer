@@ -7,7 +7,7 @@ class DownloadWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
-        uic.loadUi("final_window.ui", self)
+        uic.loadUi("save_widget.ui", self)
 
         self.selectfolderButton = self.findChild(QtWidgets.QPushButton, "selectfolderButton")
         self.selectfolderLabel = self.findChild(QtWidgets.QLabel, "selectfolderLabel")

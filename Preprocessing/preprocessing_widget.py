@@ -1,9 +1,10 @@
 from PyQt5 import QtWidgets, uic, QtGui, QtCore
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from files_list_dialog import FilesListDialog
+from Preprocessing.files_list_dialog import FilesListDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from scipy.signal import firwin, freqz
+from bands_table import BandTable
 import numpy as np
 
 class MplCanvas(FigureCanvas):
@@ -21,12 +22,15 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi("preprocessing_widget.ui", self)
+        uic.loadUi("Preprocessing/preprocessing_widget.ui", self)
 
         # Define variables
         self.main_window = main_window
         self.validated_bandpass = False
         self.validating_notch = False
+        self.selected_bands = []
+        self.band_editor = None  # It will be initialized later
+        self.initialized = False  # Para que manejar los parámetros por defecto
 
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
@@ -90,6 +94,21 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.cargroupBox = self.findChild(QtWidgets.QGroupBox, "cargroupBox")
         self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
         self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
+        # Band segmentation
+        self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
+        self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
+        self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
+        self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
+        self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
+        self.bandCBox = self.findChild(QtWidgets.QCheckBox, "bandCBox")
+        self.selectedbandsLabel = self.findChild(QtWidgets.QLabel, "selectedbandsLabel")
+        self.selectedbandsauxLabel = self.findChild(QtWidgets.QLabel, "selectedbandsauxLabel")
+        self.bandLabel = self.findChild(QtWidgets.QLabel, "bandLabel")
+        self.bandButton = self.findChild(QtWidgets.QPushButton, "bandButton")
+        self.bandsegmentationLabel = self.findChild(QtWidgets.QLabel, "bandsegmentationLabel")
+        self.element_group = [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
+                         self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
+                         self.maxbroadBox]
 
         # --- ELEMENT SETUP ---
 
@@ -113,6 +132,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.drawbpButton.clicked.connect(lambda: self.update_filter_plot('bandpass'))
         self.bandpassCanvas.fig.patch.set_facecolor(bg_color)
         self.bandpassCanvas.ax.set_facecolor(bg_color)
+        # Band segmentation
+        self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
+        self.bandButton.clicked.connect(self.open_band_editor)
+        # Sync changes in spinboxed with the band table content
+        # self.minbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
+        # self.maxbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
+        # self.maxbroadBox.editingFinished.connect(self.validate_broadband_interval)
 
         # Store the default values in a dict
         self.defaults = {
@@ -126,9 +152,10 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Set initial state
         self.reset_all_controls()
-        self.preprocessingButton.setDisabled(True)
-        self.preprocessingLabel.setDisabled(True)
+        [elm.setDisabled(True) for elm in self.element_group]
         self.main_window.selected_files = self.selected_files
+        for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
+            widget.setVisible(False)
 
 
     def reset_all_controls(self):
@@ -151,8 +178,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Reset checkboxes
         for box in [self.notchCBox, self.bpCBox, self.carCBox, self.preprocessingButton]: box.setChecked(False)
-        self.preprocessingButton.setDisabled(True)
-        self.preprocessingLabel.setDisabled(True)
+        [elm.setDisabled(True) for elm in self.element_group]
 
         # Reset spinboxes
         self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
@@ -203,13 +229,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.main_window.segmentation_widget.reset_segmentation_state()
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
-            self.preprocessingButton.setDisabled(False)
-            self.preprocessingLabel.setDisabled(False)
+            [elm.setDisabled(False) for elm in self.element_group]
+
         else:
             self.main_window.nextButton.setDisabled(True)
-            self.preprocessingButton.setDisabled(True)
-            self.preprocessingLabel.setDisabled(True)
-
+            [elm.setDisabled(True) for elm in self.element_group]
 
     def open_file_list_dialog(self):
         """
@@ -369,11 +393,136 @@ class PreprocessingWidget(QtWidgets.QWidget):
         canvas.fig.tight_layout()
         canvas.draw()
 
+
+    # def validate_broadband_interval(self):
+    #     """
+    #         Function that validates the broadband bounds (Low freq < high freq)
+    #     """
+    #
+    #     start = self.minbroadBox.value()
+    #     end = self.maxbroadBox.value()
+    #     if end <= start:
+    #         # Block the signals to avoid loops
+    #         self.minbroadBox.blockSignals(True)
+    #         self.maxbroadBox.blockSignals(True)
+    #
+    #         QtWidgets.QMessageBox.warning(
+    #             self,
+    #             "Invalid Broadband range",
+    #             "Max. frequency must be higher than min. frequency."
+    #         )
+    #
+    #         self.minbroadBox.setValue(getattr(self, "default_min_broad", 0.5))
+    #         self.maxbroadBox.setValue(getattr(self, "default_max_broad", 70))
+    #
+    #         # Unlock signals
+    #         self.minbroadBox.blockSignals(False)
+    #         self.maxbroadBox.blockSignals(False)
+
+
+    def set_defaults_broadband(self, params):
+        """
+            Set default values for the broadband interval.
+        """
+        if not self.initialized or self._params_changed(params):
+            if params.get("bandpass"):
+                self.default_min_broad = params.get("bp_min", 0)
+                self.default_max_broad = params.get("bp_max", 70)
+            elif params.get("resample"):
+                self.default_min_broad = 0.5
+                self.default_max_broad = params["resample_fs"] / 2 if "resample_fs" in params else 70
+            else:
+                self.default_min_broad = 0.5
+                self.default_max_broad = 70  # TO DO: use fs/2
+
+            self.minbroadBox.setValue(self.default_min_broad)
+            self.maxbroadBox.setValue(self.default_max_broad)
+
+            self.last_params = dict(params)
+            self.initialized = True
+
+    def _params_changed(self, new_params):
+        """
+            Checks if some relevant parameters have changed.
+        """
+        # If they have not been stored, they have changed
+        if self.last_params is None:
+            return True
+        # Check for changes only in relevant keys
+        keys_to_check = ["bandpass", "bp_min", "bp_max"]
+        return any(self.last_params.get(k) != new_params.get(k) for k in keys_to_check)
+
+
+    def toggle_bands_segmentation(self):
+        """
+            Function to display the data related to frequency bands when the corresponding checkbox is checked to
+            indicate that band segmentation should be performed. If the checkbox is unchecked, the data is hidden.
+        """
+        visible = self.bandCBox.isChecked()
+        for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
+            widget.setVisible(visible)
+
+
+    def open_band_editor(self):
+        """
+            Opens the band editor
+        """
+        # If it is not initialized, do it
+        if self.band_editor is None:
+            print(':)')
+            self.band_editor = BandTable(
+                parameters_widget=self,
+                min_broad=self.minbroadBox.value(),
+                max_broad=self.maxbroadBox.value()
+            )
+            self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
+            print(':)')
+            self.band_editor.show()
+        else:
+            # Before showing the band editor, update the broadband range
+            self.band_editor.sync_broadband_range(
+                self.minbroadBox.value(),
+                self.maxbroadBox.value()
+            )
+        self.band_editor.show()
+
+    def update_band_label(self, bands):
+        """
+            Updates the labels with the names of the selected bands
+        """
+        self.selected_bands = bands
+        if bands:
+            names = [b["name"] for b in bands]
+            self.bandLabel.setText(", ".join(names))
+        else:
+            self.bandLabel.setText("None")
+
+    # def _sync_broadband_spinboxes(self):
+    #     if self.band_editor:
+    #         self.band_editor.sync_broadband_range(
+    #             self.minbroadBox.value(),
+    #             self.maxbroadBox.value()
+    #         )
+
+    def update_broadband_spinboxes(self, min_val, max_val):
+        self.minbroadBox.blockSignals(True)
+        self.maxbroadBox.blockSignals(True)
+        self.minbroadBox.setValue(min_val)
+        self.maxbroadBox.setValue(max_val)
+        self.minbroadBox.blockSignals(False)
+        self.maxbroadBox.blockSignals(False)
+
+
     def get_preprocessing_config(self):
         """
             Function that creates a dictionary with preprocessing configurations.
         """
         config = {
+            "band_segmentation": True if self.bandCBox.isChecked() else None,
+            "broadband_min": self.minbroadBox.value(),
+            "broadband_max": self.maxbroadBox.value(),
+            "selected_bands": self.selected_bands if self.bandCBox.isChecked() else None,
+
             "selected_files": self.selected_files if self.selected_files else None,
             "apply_preprocessing": True if self.preprocessingButton.isChecked() else None,
 

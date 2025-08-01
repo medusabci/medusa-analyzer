@@ -7,8 +7,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFontMetrics
 from collections import Counter
-from utils import extract_condition_events
-import gui_utils as gu
+from Segmentation.utils import extract_condition_events
+
 
 class SegmentationWidget(QWidget):
     def __init__(self):
