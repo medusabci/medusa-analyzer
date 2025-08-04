@@ -11,6 +11,9 @@ from conversor_to_rec import conversor_to_rec
 from medusa import components
 
 class MplCanvas(FigureCanvas):
+    """
+        Canvas class for the filter canvas
+    """
     def __init__(self, parent=None, width=4, height=3, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.ax = self.fig.add_subplot(111)

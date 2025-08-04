@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, uic, QtGui, QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 
-# Código para poder arrastras filas
+# This code enable the drag and drop of bands in the table
 class BandTableWidget(QtWidgets.QTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -33,14 +33,14 @@ class BandTableWidget(QtWidgets.QTableWidget):
 
         row = self.rowAt(self._drag_start_pos.y())
         if row == 0:
-            return  # No permitir arrastrar broadband
+            return  # It is not possible to move the broadband
 
         drag = QtGui.QDrag(self)
         mime_data = QtCore.QMimeData()
         mime_data.setData("application/x-qabstractitemmodeldatalist", b"")
         drag.setMimeData(mime_data)
 
-        # Visual feedback opcional
+        # Optional visual feedback
         drag.exec_(Qt.MoveAction)
 
     def dropEvent(self, event):
@@ -67,7 +67,7 @@ class BandTableWidget(QtWidgets.QTableWidget):
         if dest_row > source_row:
             dest_row += 1
 
-        # Guardar datos de la fila origen
+        # Keep the data of the original row
         row_data = []
         for col in range(self.columnCount()):
             widget = self.cellWidget(source_row, col)
@@ -78,7 +78,7 @@ class BandTableWidget(QtWidgets.QTableWidget):
                 cloned_item = QtWidgets.QTableWidgetItem(item) if item else None
                 row_data.append(("item", cloned_item))
 
-        # Insertar una nueva fila en el destino
+        # Insert a new row in the destination
         self.insertRow(dest_row)
 
         for col, (kind, content) in enumerate(row_data):
@@ -98,12 +98,11 @@ class BandTableWidget(QtWidgets.QTableWidget):
             elif kind == "item":
                 self.setItem(dest_row, col, QtWidgets.QTableWidgetItem(content))
 
-        # Eliminar fila original (tener en cuenta que se desplazó si está antes)
+        # Delete original row (take into account that the index may have changed "+1")
         if dest_row < source_row:
             self.removeRow(source_row + 1)
         else:
             self.removeRow(source_row)
-#-------
 
 class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
     def __init__(self, parameters_widget=None, min_broad=0.5, max_broad=69.0):

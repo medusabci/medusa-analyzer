@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication
 from Preprocessing.preprocessing_widget import PreprocessingWidget
 from Segmentation.segmentation_widget import SegmentationWidget
 from Parameters.parameters_widget import ParametersWidget
-from Save.save_widget import DownloadWidget
+from Save.save_widget import SaveWidget
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -96,7 +96,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.parameters_widget = ParametersWidget(self)
         self.stackedWidget.insertWidget(2, self.parameters_widget)
         # Saving
-        self.save_widget = DownloadWidget(self)
+        self.save_widget = SaveWidget(self)
         self.stackedWidget.insertWidget(3, self.save_widget)
 
         # Set initial state
@@ -377,7 +377,7 @@ class MainWindow(QtWidgets.QMainWindow):
             - Displays warning/success dialogs
         """
         current_widget = self.stackedWidget.currentWidget()
-        if not isinstance(current_widget, DownloadWidget):
+        if not isinstance(current_widget, SaveWidget):
             return
 
         if success:
