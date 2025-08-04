@@ -1,9 +1,11 @@
 from PyQt5 import QtWidgets, uic
+import os
 
 class FilesListDialog(QtWidgets.QDialog):
     def __init__(self, files, preprocessing_widget):
         super().__init__()
-        uic.loadUi("files_list.ui", self)
+        ui_path = os.path.join(os.path.dirname(__file__), "files_list.ui")
+        uic.loadUi(ui_path, self)
 
         # Define variables
         self.preprocessing_widget = preprocessing_widget

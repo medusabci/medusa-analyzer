@@ -45,6 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi("main_window.ui", self)
         self.selected_files = []
+        self.sample_frequency = []
 
         # Define the header of the GUI
         self.title_widget = GradientTitleWidget(self)
