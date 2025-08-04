@@ -6,6 +6,9 @@ from matplotlib.figure import Figure
 from scipy.signal import firwin, freqz
 from bands_table import BandTable
 import numpy as np
+import os
+from conversor_to_rec import conversor_to_rec
+from medusa import components
 
 class MplCanvas(FigureCanvas):
     def __init__(self, parent=None, width=4, height=3, dpi=100):
@@ -53,10 +56,35 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Data loading
         self.browseButton = self.findChild(QtWidgets.QPushButton, "browseButton")
-        self.deletefilesButton = self.findChild(QtWidgets.QPushButton, "deletefilesButton")
         self.viewfilesButton = self.findChild(QtWidgets.QPushButton, "viewfilesButton")
         self.selectLabel = self.findChild(QtWidgets.QLabel, "selectLabel")
         self.selected_files = []  # Store the selected files
+        self.convertButton = self.findChild(QtWidgets.QPushButton, "convertButton")
+        self.convertButton.setStyleSheet("""
+            QPushButton {
+                color: white;
+                border: none;
+                font-size: 13pt;
+                font-weight: bold;
+                border-radius: 10px;
+                padding: 10px;
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 #6a0dad, stop: 1 #ec407a
+                );
+            }
+            QPushButton:hover {
+                background: qlineargradient(
+                    x1: 0, y1: 0, x2: 1, y2: 0,
+                    stop: 0 #7b1fa2, stop: 1 #f06292
+                );
+            }
+        """)
+        self.convertProgressBar = self.findChild(QtWidgets.QProgressBar, "convertProgressBar")
+        self.convertProgressBar.setValue(0)
+        self.convertProgressBar.setVisible(False)
+        self.convertLogTextBrowser = self.findChild(QtWidgets.QTextBrowser, "convertLogTextBrowser")
+        self.convertLogTextBrowser.setVisible(False)
         # Preprocessing
         self.preprocessingButton = self.findChild(QtWidgets.QCheckBox, "preprocessingButton")
         self.preprocessingLabel = self.findChild(QtWidgets.QLabel, "preprocessingLabel")
@@ -114,10 +142,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Data loading
         self.browseButton.clicked.connect(self.select_files)
-        self.deletefilesButton.clicked.connect(self.delete_files)
         self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
+        self.convertButton.clicked.connect(self.select_and_convert_files)
         # Data preprocessing
         self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
+        self.preprocessingButton.toggled.connect(self.update_select_label)
         # Notch
         self.notchCBox.toggled.connect(self.toggle_notch_controls)
         self.notchCBox.toggled.connect(lambda: self.update_filter_plot('notch'))
@@ -164,7 +193,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         It is called:
             - At Analyzer startup.
             - When Preprocess data is unchecked.
-            - When the files are deleted (by clicking 'delete files' or from the 'View list').
+            - When the files are deleted (by clicking 'delete' from the 'View list').
         """
 
         # Hide elements
@@ -191,28 +220,74 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
     def select_files(self):
         """
-            Function to select multiple files from various folders.
+            Function to select multiple .rec.bson files from various folders.
                 - It stores them in 'self.selected_files'.
                 - Updates the label with the number of files.
                 - Enables the checkbox for preprocessing.
+                - If invalid files are selected, prompts to open the converter.
         """
-        files, _ = QFileDialog.getOpenFileNames(self, "Select recordings", "", "Recording files (*.bson; *.json)")
-        if files:
-            self.selected_files.extend(files)
-            self.update_select_label()
+        files, _ = QFileDialog.getOpenFileNames(
+            self, "Select recordings", "", "Recording files (*.bson *.json)"
+        )
 
-    def delete_files(self):
-        """
-            Function to delete all selected files after confirming with the user.
-        """
-        if not self.selected_files:
+        if not files:
             return
-        reply = QMessageBox.question(self, "Delete files", "Do you want to delete all the selected files?",
-                                     QMessageBox.Yes | QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            self.selected_files = []
-            self.update_select_label()
-            self.reset_all_controls() # Set all the elements to default
+
+        # Separate .rec.bson and others
+        rec_files = [f for f in files if f.endswith(".rec.bson")]
+        to_convert = [f for f in files if not f.endswith(".rec.bson")]
+
+        converted_paths = []
+        if to_convert:
+            QtWidgets.QMessageBox.information(
+                self,
+                "Automatic Conversion",
+                f"{len(to_convert)} file(s) are not '.rec.bson' and will be automatically converted."
+            )
+
+            self.convertLogTextBrowser.clear()
+            self.convertLogTextBrowser.setVisible(True)
+            self.convertProgressBar.setValue(0)
+            self.convertProgressBar.setVisible(True)
+            QtWidgets.QApplication.processEvents()
+
+            try:
+                # Call converter and get paths of new .rec.bson files
+                converted_paths = conversor_to_rec(
+                    to_convert,
+                    self.convertProgressBar,
+                    self.convertLogTextBrowser,
+                    return_rec_paths=True
+                )
+
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "Conversion Complete",
+                    f"Successfully converted {len(to_convert)} file(s)."
+                )
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(
+                    self, "Conversion Error", f"An error occurred during conversion:\n{str(e)}"
+                )
+                return
+
+            finally:
+                self.convertProgressBar.setVisible(False)
+                self.convertLogTextBrowser.setVisible(False)
+
+        # Combine all valid .rec.bson files
+        all_rec_files = rec_files + converted_paths
+
+        # Avoid duplicates
+        new_files = [f for f in all_rec_files if f not in self.selected_files]
+        if not new_files:
+            QtWidgets.QMessageBox.information(
+                self, "No New Files", "All selected files are already loaded."
+            )
+            return
+
+        self.selected_files.extend(new_files)
+        self.update_select_label()
 
     def update_select_label(self):
         """
@@ -229,6 +304,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.main_window.segmentation_widget.reset_segmentation_state()
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
+            self.main_window.sample_frequency = components.Recording.load(self.selected_files[0]).eeg.fs
             [elm.setDisabled(False) for elm in self.element_group]
 
         else:
@@ -244,6 +320,66 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.selected_files = dialog.get_updated_files()
             self.update_select_label()
 
+    def select_and_convert_files(self):
+        files, _ = QtWidgets.QFileDialog.getOpenFileNames(
+            self,
+            "Select .rcp.bson files to convert",
+            "",
+            "BSON files (*.bson)"
+        )
+
+        if not files:
+            return
+
+        valid_files = []
+        for file in files:
+            if not file.endswith(".rcp.bson"):
+                continue
+            rec_path = file.replace(".rcp.bson", ".rec.bson")
+            if os.path.exists(rec_path):
+                result = QtWidgets.QMessageBox.question(
+                    self,
+                    "File already exists",
+                    f"The file '{os.path.basename(rec_path)}' already exists.\nDo you want to overwrite it?",
+                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+                )
+                if result == QtWidgets.QMessageBox.No:
+                    continue
+            valid_files.append(file)
+
+        if not valid_files:
+            QtWidgets.QMessageBox.information(self, "No Valid Files", "No valid files selected for conversion.")
+            return
+
+        self.convertLogTextBrowser.clear()
+        self.convertLogTextBrowser.setVisible(True)
+        self.convertProgressBar.setValue(0)
+        self.convertProgressBar.setVisible(True)
+        QtWidgets.QApplication.processEvents()
+
+        try:
+            conversor_to_rec(valid_files, self.convertProgressBar, self.convertLogTextBrowser)
+            QtWidgets.QMessageBox.information(
+                self,
+                "Conversion Complete",
+                f"Successfully converted {len(valid_files)} file(s)."
+            )
+
+            rec_files = [f.replace(".rcp.bson", ".rec.bson") for f in valid_files]
+            for f in rec_files:
+                if f not in self.selected_files:
+                    self.selected_files.append(f)
+            self.update_select_label()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Conversion Error",
+                f"An error occurred:\n{str(e)}"
+            )
+        finally:
+            self.convertProgressBar.setVisible(False)
+            self.convertLogTextBrowser.setVisible(False)
 
     def toggle_preprocessing_group(self):
         """
@@ -377,7 +513,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Define filter settings
         if numtaps % 2 == 0:
             numtaps += 1
-        fs = 256  # CAMBIAR: Cargar la FS del archivo seleccionado
+        fs = self.main_window.sample_frequency
         b = firwin(numtaps, [low, high], pass_zero=filter_type=='notch', fs=fs)
         w, h = freqz(b, worN=1024, fs=fs)
 

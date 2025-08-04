@@ -478,11 +478,11 @@ class DownloadWidget(QtWidgets.QWidget):
                 current_signal = data.eeg.signal
                 fs = data.eeg.fs
 
-                band_seg = settings_dic['parameters'].get('band_segmentation', False)
+                band_seg = settings_dic['preprocessing'].get('band_segmentation', False)
                 segmentation_type = settings_dic['segmentation']['segmentation_type']
                 norm = settings_dic['segmentation']['norm'] or None
-                bands = settings_dic['parameters'].get('selected_bands', []) if band_seg else [
-                    {'name': 'broadband', 'min': settings_dic['parameters']['broadband_min'], 'max': settings_dic['parameters']['broadband_max']}]
+                bands = settings_dic['preprocessing'].get('selected_bands', []) if band_seg else [
+                    {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'], 'max': settings_dic['preprocessing']['broadband_max']}]
                 total_steps = total_files * len(bands)
 
                 for j, band in enumerate(bands):
