@@ -4,12 +4,17 @@ from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtGui import QTextCursor
 from PyQt5.QtWidgets import QApplication
 
-class DownloadWidget(QtWidgets.QWidget):
+class SaveWidget(QtWidgets.QWidget):
+    """
+        Main windget element. Manages the saving options. It also manages the functions to preprocess, segment and
+        compute paramters with the previously selected options.
+    """
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
         uic.loadUi("Save/save_widget.ui", self)
 
+        # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
@@ -27,6 +32,7 @@ class DownloadWidget(QtWidgets.QWidget):
         """)
         layout.addWidget(self.logtextBrowser)
 
+        # --- GET ELEMENTS FROM UI MODULE ---
         self.selectfolderButton = self.findChild(QtWidgets.QPushButton, "selectfolderButton")
         self.selectfolderLabel = self.findChild(QtWidgets.QLabel, "selectfolderLabel")
         self.settingsCBox = self.findChild(QtWidgets.QCheckBox, "settingsCBox")
@@ -39,18 +45,20 @@ class DownloadWidget(QtWidgets.QWidget):
         self.logtextBrowser = self.findChild(QtWidgets.QTextBrowser, "logtextBrowser")
         self.settings = {}
 
-        # Estados
+        # --- ELEMENT SETUP ---
+        self.selectfolderButton.clicked.connect(self.select_folder)
+        self.runButton.clicked.connect(self.run_tasks)
+        # States
         self.progressLabel.hide()
         self.progressBar.hide()
         self.selected_folder = None
         for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
             w.setChecked(True)
 
-        # Connect button
-        self.selectfolderButton.clicked.connect(self.select_folder)
-        self.runButton.clicked.connect(self.run_tasks)
-
     def handle_exception(func):
+        """
+            Manages the exceptions
+        """
         def wrapper(self, *args, **kwargs):
             try:
                 return func(self, *args, **kwargs)
@@ -59,10 +67,12 @@ class DownloadWidget(QtWidgets.QWidget):
                     self.log_message(f"[ERROR] {func.__name__}: {str(e)}", style='error')
                 else:
                     print(f"[ERROR] {func.__name__}: {str(e)}")
-
         return wrapper
 
     def prepare_data(self, preprocessing, segmentation, parameters):
+        """
+            Prepares the configuration parameters for the data processing.
+        """
         self.settings_dic = {
             "preprocessing": preprocessing,
             "segmentation": segmentation,
@@ -80,6 +90,10 @@ class DownloadWidget(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(self, "Error", f"Could not save the JSON file: {str(e)}")
 
     def select_folder(self, *args, **kwargs):
+        """
+            Manages the selection of an empty folder to save the results. It includes all the associated error check
+        """
+
         while True:
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
             if not folder:
@@ -95,23 +109,29 @@ class DownloadWidget(QtWidgets.QWidget):
 
     @handle_exception
     def run_tasks(self, *args, **kwargs):
+        """
+            Main function that runs all the tasks: preprocessing, segmentation and paramters computation.
+        """
         if not self.selected_folder:
             QtWidgets.QMessageBox.warning(self, "Error", "Please, select one folder to save the data.")
             return
 
+        # Visibility of progress bars
         self.progressLabel.show()
         self.progressBar.show()
         self.progressBar.setValue(0)
         self.error_occurred = False
 
+        # Get the total number of tasks to perform
         total_tasks = sum([
             self.settingsCBox.isChecked(),
             self.prepsignalsCBox.isChecked(),
             self.segsignalsCBox.isChecked(),
             self.paramsignalsCBox.isChecked()
         ])
-        total_tasks = max(total_tasks, 1)  # Asegura que nunca sea cero para evitar división por cero
+        total_tasks = max(total_tasks, 1)  # To avoid division by 0
 
+        # Get configuration data
         try:
             preprocessing = self.main_window.preproc_widget.get_preprocessing_config()
             segmentation = self.main_window.segmentation_widget.get_segmentation_config()
@@ -120,27 +140,28 @@ class DownloadWidget(QtWidgets.QWidget):
             QtWidgets.QMessageBox.critical(self, "Error",
                                            f"Unable to obtain the data from the main window: {e}")
             return
-
-        # Guardar settings si está marcado
-        if self.settingsCBox.isChecked():
-            self.prepare_data(preprocessing, segmentation, parameters)
-
-        # Ejecutar pipeline SIEMPRE
         self.settings_dic = {
             "preprocessing": preprocessing,
             "segmentation": segmentation,
             "parameters": parameters
         }
+        # Save the settings
+        if self.settingsCBox.isChecked():
+            self.prepare_data(preprocessing, segmentation, parameters)
 
+        # Run the pipeline
         success = self.run_pipeline(self.settings_dic, total_tasks)
         self.main_window.validate_save_step(success)
 
     def log_message(self, msg, style=None):
-        # Estilos adaptados para fondo blanco
+        """
+            Manages the format of the error and warning messages
+        """
+        # Styles adapted to the white format
         theme_colors = {
-            'THEME_TEXT_LIGHT': '#333333',  # Texto oscuro para buena legibilidad
-            'THEME_RED': '#D32F2F',  # Rojo más profundo
-            'THEME_YELLOW': '#FBC02D'  # Amarillo más oscuro
+            'THEME_TEXT_LIGHT': '#333333',  # Dark text (good visibility)
+            'THEME_RED': '#D32F2F',  # Darker red
+            'THEME_YELLOW': '#FBC02D'  # Darker yellow
         }
         if isinstance(style, str):
             if style == 'error':
@@ -161,6 +182,9 @@ class DownloadWidget(QtWidgets.QWidget):
         QApplication.processEvents()
 
     def run_pipeline(self, settings_dic, total_tasks):
+        """
+            This function runs all the tasks after the data preparation in "run_tasks".
+        """
         import medusa
         import medusa.artifact_removal
         import medusa.transforms
@@ -174,10 +198,10 @@ class DownloadWidget(QtWidgets.QWidget):
         from scipy.stats import kurtosis, skew
         from scipy.io import savemat
 
-        selected_files = settings_dic['preprocessing'].get('selected_files', [])
-        total_files = len(selected_files)
-
         def apply_preprocessing(signal, fs, cfg):
+            """
+                Filtering and CAR
+            """
             if cfg.get('bandpass') and None not in (cfg.get('bp_min'), cfg.get('bp_max'), cfg.get('bp_order')):
                 signal = medusa.FIRFilter(cfg['bp_order'], [cfg['bp_min'], cfg['bp_max']], 'bandpass').fit_transform(
                     signal, fs)
@@ -187,16 +211,25 @@ class DownloadWidget(QtWidgets.QWidget):
             return medusa.car(signal) if cfg.get('car') else signal
 
         def band_segmentation (signal, bp_min, bp_max, fs):
+            """
+                Band segmentation
+            """
             bp_filter = medusa.FIRFilter(1000, [bp_min, bp_max], 'bandpass')
             signal = bp_filter.fit_transform(signal, fs)
             return signal
 
         def find_nearest_index(array, value):
+            """
+                For segmentation: find the nearest value to the given index
+            """
             array = np.array(array)
             idx = (np.abs(array - value)).argmin()
             return idx
 
         def find_nearest_index_array(reference_times, query_times):
+            """
+                For segmentation: find the nearest value to the given index in array format
+            """
             reference_times = np.asarray(reference_times)
             query_times = np.asarray(query_times)
 
@@ -211,9 +244,15 @@ class DownloadWidget(QtWidgets.QWidget):
             return closest
 
         def get_condition_indices(data, condition_key):
+            """
+                Get indices of conditions by name
+            """
             return np.where(np.array(data.marks.conditions_labels) == condition_key)[0]
 
         def get_event_indices_in_range(data, event_key, start_time, end_time):
+            """
+                Get indices of events by name whithin an interval
+            """
             events_labels = np.array(data.marks.events_labels)
             events_times = np.array(data.marks.events_times)
             return np.where(
@@ -222,10 +261,164 @@ class DownloadWidget(QtWidgets.QWidget):
                 (events_times <= end_time)
             )[0]
 
+        def segment_by_condition(data, current_signal, settings, base_name, norm, band):
+            """
+                Manages the segmentation by condition. It includes the signal thresholding, resampling and normalization
+            """
+            # Variable definition
+            fs_seg = fs / 1000
+            trial_len = int(settings['segmentation']['trial_length']) * fs_seg
+            norm_type = settings['segmentation']['norm_type'] if norm else None
+            t_window = [0, int(settings['segmentation']['trial_length'])]
+            selected_conditions = settings['segmentation']['selected_conditions']
+            thresholding = settings['segmentation']["thresholding"]
+            resample = settings['segmentation']['resample']
+            resample_fs = settings['segmentation']['resample_fs']
+            thres_k = settings['segmentation']['thres_k']
+            thres_samples = settings['segmentation']["thres_samples"]
+            thres_channels = settings['segmentation']["thres_channels"]
+
+            def save_and_compute(epoched, cond_name):
+                """
+                    Save the segmented signals, compute the parameters, and store them
+                """
+                if epoched is None:
+                    return
+                save_outputs(epoched, f"{base_name}_segmentation_{cond_name}", band or 'broadband', 'seg')
+                params = compute_parameters(epoched, settings, fs, band)
+                save_outputs(params, f"{base_name}_parameters_{cond_name}", band or 'broadband', 'param')
+
+            # For each condition...
+            for cond in selected_conditions:
+                if cond == 'null':
+                    epoched = medusa.get_epochs(current_signal, trial_len, norm=norm_type)
+                else:
+                    cond_key = data.marks.app_settings['conditions'][cond]['label']
+                    idx = get_condition_indices(data, cond_key)
+
+                    # If the condition do not have even indices (start and end in all cases) in all segments, continue
+                    if len(idx) % 2 != 0:
+                        continue
+
+                    # For each segment, make epochs
+                    segments = []
+                    for i in range(0, len(idx), 2):
+                        start = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
+                        end = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
+                        segment = current_signal[start:end]
+                        epochs = medusa.get_epochs(segment, trial_len, norm=norm_type)
+                        if epochs is not None:
+                            segments.append(epochs)
+                    epoched = np.concatenate(segments, axis=0) if segments else None
+
+                # Thresholding
+                if epoched is not None and thresholding:
+                    _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
+                        epoched,
+                        np.nanmean(current_signal, axis=0),
+                        np.std(current_signal, axis=0),
+                        k=thres_k,
+                        n_samp=thres_samples,
+                        n_cha=thres_channels
+                    )
+
+                # Resampling
+                if epoched is not None and resample:
+                    epoched = medusa.resample_epochs(epoched, t_window, resample_fs)
+
+                save_and_compute(epoched, cond)
+
+        def segment_by_event(data, current_signal, settings, base_name, norm, fs, band):
+            """
+                Manages the segmentation by event. It includes the signal thresholding, resampling and normalization
+            """
+            # Variable definition
+            w_start, w_end = settings['segmentation']['window_start'], settings['segmentation']['window_end']
+            window = [w_start, w_end]
+            norm_type = settings['segmentation']['norm_type'] if norm else None
+            baseline_window = [settings['segmentation']['baseline_start'],
+                               settings['segmentation']['baseline_end']] if norm else None
+            selected_conditions = settings['segmentation']['selected_conditions']
+            selected_events = settings['segmentation']['selected_events']
+            thresholding = settings['segmentation']["thresholding"]
+            resample = settings['segmentation']['resample']
+            resample_fs = settings['segmentation']['resample_fs']
+            thres_k = settings['segmentation']['thres_k']
+            thres_samples = settings['segmentation']["thres_samples"]
+            thres_channels = settings['segmentation']["thres_channels"]
+
+            def save_and_compute(epoched, cond, evt):
+                """
+                    Save the segmented signals, compute the parameters, and store them
+                """
+                if epoched is None:
+                    return
+                label = f"{base_name}_segmentation_{cond}_{evt}"
+                band_lbl = band or 'broadband'
+                save_outputs(epoched, label, band_lbl, 'seg')
+                params = compute_parameters(epoched, settings, fs, band)
+                save_outputs(params, label, band_lbl, 'param')
+
+            # For each condition and event
+            for cond in selected_conditions:
+                for evt in selected_events:
+                    if cond == 'null':
+                        evt_key = data.marks.app_settings['events'][evt]['label']
+                        onsets = np.array(data.marks.events_times)[np.array(data.marks.events_labels) == evt_key]
+                        onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
+                        epoched = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
+                                                             baseline_window, norm=norm_type)
+                    else:
+                        cond_key = data.marks.app_settings['conditions'][cond]['label']
+                        evt_key = data.marks.app_settings['events'][evt]['label']
+                        idx = get_condition_indices(data, cond_key)
+
+                        # If the condition do not have even indices (start and end in all cases) in all segments, continue
+                        if len(idx) % 2 != 0:
+                            continue
+
+                        segments = []
+                        for i in range(0, len(idx), 2):
+                            start_idx = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
+                            end_idx = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
+                            start_time, end_time = data.eeg.times[start_idx], data.eeg.times[end_idx]
+
+                            evt_idx = get_event_indices_in_range(data, evt_key, start_time, end_time)
+                            onsets = np.array(data.marks.events_times)[evt_idx]
+                            onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
+
+                            epochs = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
+                                                                 baseline_window, norm=norm_type)
+                            if epochs is not None:
+                                segments.append(epochs)
+
+                        epoched = np.concatenate(segments, axis=0) if segments else None
+
+                    # Thresholding
+                    if epoched is not None and thresholding:
+                        _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
+                            epoched,
+                            np.nanmean(current_signal, axis=0),
+                            np.std(current_signal, axis=0),
+                            k=thres_k,
+                            n_samp=thres_samples,
+                            n_cha=thres_channels
+                        )
+
+                    # Resample
+                    if epoched is not None and resample:
+                        epoched = medusa.resample_epochs(epoched, window, resample_fs)
+
+                    save_and_compute(epoched, cond, evt)
+
+
         def compute_parameters(epoched, settings, fs, band):
+            """
+                Manages the computation of all the parameters
+            """
             params = {}
 
-            # --- Estadísticos básicos ---
+            # Basic statistics
             stat_funcs = {
                 'mean': np.mean,
                 'variance': np.var,
@@ -240,7 +433,7 @@ class DownloadWidget(QtWidgets.QWidget):
                     val = func(epoched, axis=axis)
                     params[name] = np.mean(val, axis=0) if avg and epoched.ndim == 3 else val
 
-            # --- PSD si es necesario ---
+            # PSD
             psd_enabled = settings['parameters'].get('psd', False)
             needs_psd = any([
                 settings['parameters'].get(k, False)
@@ -257,7 +450,7 @@ class DownloadWidget(QtWidgets.QWidget):
                 params['psd'] = np.nanmean(psd, axis=0) if avg else psd
                 params['psd_freq'] = fxx
 
-            # --- Relative Power ---
+            # RP
             if settings['parameters'].get('relative_power', False) and (band == 'broadband' or band is None):
                 bb = [settings['parameters']['broadband_min'], settings['parameters']['broadband_max']]
                 norm_psd = medusa.transforms.normalize_psd(psd, bb, fxx, norm='rel')
@@ -266,25 +459,25 @@ class DownloadWidget(QtWidgets.QWidget):
                     val = medusa.signal_metrics.band_power.band_power(norm_psd, fs, [b['min'], b['max']])
                     params[f"relative_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
 
-            # --- Absolute Power ---
+            # AP
             if settings['parameters'].get('absolute_power', False) and (band == 'broadband' or band is None):
                 for b in settings['parameters']['selected_ap_bands']:
                     val = medusa.signal_metrics.band_power.band_power(psd, fs, [b['min'], b['max']])
                     params[f"absolute_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
 
-            # --- Median Frequency ---
+            # MF
             if settings['parameters'].get('median_frequency', False) and (band == 'broadband' or band is None):
                 for b in settings['parameters']['selected_mf_bands']:
                     val = medusa.signal_metrics.median_frequency.median_frequency(psd, fs, [b['min'], b['max']])
                     params[f"median_frequency_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
 
-            # --- Spectral Entropy ---
+            # SE
             if settings['parameters'].get('spectral_entropy', False) and (band == 'broadband' or band is None):
                 for b in settings['parameters']['selected_se_bands']:
                     val = medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd, fs,[b['min'], b['max']])
                     params[f"spectral_entropy_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
 
-            # --- Non linear and connectivity parameters ---
+            # Nonlinear and connectivity
             param_map = {
                 'ctm': lambda: medusa.signal_metrics.central_tendency.central_tendency_measure(epoched,
                                                                             settings['parameters']['ctm_r']),
@@ -313,137 +506,11 @@ class DownloadWidget(QtWidgets.QWidget):
 
             return params
 
-        def segment_by_condition(data, current_signal, settings, base_name, norm, band):
-            fs_seg = fs / 1000
-            trial_len = int(settings['segmentation']['trial_length']) * fs_seg
-            norm_type = settings['segmentation']['norm_type'] if norm else None
-            t_window = [0, int(settings['segmentation']['trial_length'])]
-            selected_conditions = settings['segmentation']['selected_conditions']
-            thresholding = settings['segmentation']["thresholding"]
-            resample = settings['segmentation']['resample']
-            resample_fs = settings['segmentation']['resample_fs']
-            thres_k = settings['segmentation']['thres_k']
-            thres_samples = settings['segmentation']["thres_samples"]
-            thres_channels = settings['segmentation']["thres_channels"]
-
-            def save_and_compute(epoched, cond_name):
-                if epoched is None:
-                    return
-                save_outputs(epoched, f"{base_name}_segmentation_{cond_name}", band or 'broadband', 'seg')
-                params = compute_parameters(epoched, settings, fs, band)
-                save_outputs(params, f"{base_name}_parameters_{cond_name}", band or 'broadband', 'param')
-
-            for cond in selected_conditions:
-                if cond == 'null':
-                    epoched = medusa.get_epochs(current_signal, trial_len, norm=norm_type)
-                else:
-                    cond_key = data.marks.app_settings['conditions'][cond]['label']
-                    idx = get_condition_indices(data, cond_key)
-                    if len(idx) % 2 != 0:
-                        continue
-
-                    segments = []
-                    for i in range(0, len(idx), 2):
-                        start = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
-                        end = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
-                        segment = current_signal[start:end]
-                        epochs = medusa.get_epochs(segment, trial_len, norm=norm_type)
-                        if epochs is not None:
-                            segments.append(epochs)
-
-                    epoched = np.concatenate(segments, axis=0) if segments else None
-
-                    if epoched is not None and thresholding:
-                        _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
-                            epoched,
-                            np.nanmean(current_signal, axis=0),
-                            np.std(current_signal, axis=0),
-                            k=thres_k,
-                            n_samp=thres_samples,
-                            n_cha=thres_channels
-                        )
-
-                    if epoched is not None and resample:
-                        epoched = medusa.resample_epochs(epoched, t_window, resample_fs)
-
-                save_and_compute(epoched, cond)
-
-        def segment_by_event(data, current_signal, settings, base_name, norm, fs, band):
-            w_start, w_end = settings['segmentation']['window_start'], settings['segmentation']['window_end']
-            window = [w_start, w_end]
-            norm_type = settings['segmentation']['norm_type'] if norm else None
-            baseline_window = [settings['segmentation']['baseline_start'],
-                               settings['segmentation']['baseline_end']] if norm else None
-            selected_conditions = settings['segmentation']['selected_conditions']
-            selected_events = settings['segmentation']['selected_events']
-            thresholding = settings['segmentation']["thresholding"]
-            resample = settings['segmentation']['resample']
-            resample_fs = settings['segmentation']['resample_fs']
-            thres_k = settings['segmentation']['thres_k']
-            thres_samples = settings['segmentation']["thres_samples"]
-            thres_channels = settings['segmentation']["thres_channels"]
-
-            def save_and_compute(epoched, cond, evt):
-                if epoched is None:
-                    return
-                label = f"{base_name}_segmentation_{cond}_{evt}"
-                band_lbl = band or 'broadband'
-                save_outputs(epoched, label, band_lbl, 'seg')
-                params = compute_parameters(epoched, settings, fs, band)
-                save_outputs(params, label, band_lbl, 'param')
-
-            for cond in selected_conditions:
-                for evt in selected_events:
-                    if cond == 'null':
-                        evt_key = data.marks.app_settings['events'][evt]['label']
-                        onsets = np.array(data.marks.events_times)[np.array(data.marks.events_labels) == evt_key]
-                        onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
-                        epoched = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
-                                                             baseline_window, norm=norm_type)
-
-                        save_and_compute(epoched, cond, evt)
-                        continue
-
-                    cond_key = data.marks.app_settings['conditions'][cond]['label']
-                    evt_key = data.marks.app_settings['events'][evt]['label']
-                    idx = get_condition_indices(data, cond_key)
-                    if len(idx) % 2 != 0:
-                        continue
-
-                    segments = []
-                    for i in range(0, len(idx), 2):
-                        start_idx = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
-                        end_idx = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
-                        start_time, end_time = data.eeg.times[start_idx], data.eeg.times[end_idx]
-
-                        evt_idx = get_event_indices_in_range(data, evt_key, start_time, end_time)
-                        onsets = np.array(data.marks.events_times)[evt_idx]
-                        onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
-
-                        epochs = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
-                                                             baseline_window, norm=norm_type)
-                        if epochs is not None:
-                            segments.append(epochs)
-
-                    epoched = np.concatenate(segments, axis=0) if segments else None
-
-                    if epoched is not None and thresholding:
-                        _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
-                            epoched,
-                            np.nanmean(current_signal, axis=0),
-                            np.std(current_signal, axis=0),
-                            k=thres_k,
-                            n_samp=thres_samples,
-                            n_cha=thres_channels
-                        )
-
-                    if epoched is not None and resample:
-                        epoched = medusa.resample_epochs(epoched, window, resample_fs)
-
-                    save_and_compute(epoched, cond, evt)
-
         def save_outputs(data, base_name, suffix, key):
-            """Guarda los archivos según lo seleccionado por el usuario"""
+            """
+                Stores the files according to the user selections
+            """
+            # Stores the preprocessed signals
             if self.prepsignalsCBox.isChecked() and settings_dic['preprocessing'].get('apply_preprocessing') and key == 'prep':
                 output_dir = join(self.selected_folder, "Preprocessed_signals")
                 makedirs(output_dir, exist_ok=True)
@@ -451,6 +518,7 @@ class DownloadWidget(QtWidgets.QWidget):
                 data.save_to_mat(output_path)
                 self.log_message(f"Preprocessed saved in: {output_path}")
 
+            # Stores the segmented signals
             if self.segsignalsCBox.isChecked() and key == 'seg':
                 output_dir = join(self.selected_folder, "Segmented_signals")
                 makedirs(output_dir, exist_ok=True)
@@ -458,6 +526,7 @@ class DownloadWidget(QtWidgets.QWidget):
                 savemat(output_path, {'epochs': data})
                 self.log_message(f"Segmentation saved in: {output_path}")
 
+            # Stores the parameters
             if self.paramsignalsCBox.isChecked() and key == 'param':
                 output_dir = join(self.selected_folder, "Signal_parameters")
                 makedirs(output_dir, exist_ok=True)
@@ -466,18 +535,24 @@ class DownloadWidget(QtWidgets.QWidget):
                 savemat(output_path, {'parameters': data})
                 self.log_message(f"Parameters saved in: {output_path}")
 
+        # Here is where run_pipeline begins
+
+        selected_files = settings_dic['preprocessing'].get('selected_files', [])
+        total_files = len(selected_files)
+
         error_found = False
+        # For each file...
         for i, file in enumerate(selected_files):
             try:
+                # Logging: Preprocessing
                 self.log_message(f"Processing file: {file}")
                 self.progressLabel.setText(f"Processing: {basename(file)}")
                 QtWidgets.QApplication.processEvents()
-
+                # Variable definition
                 base_name = splitext(basename(file))[0]
                 data = medusa.components.Recording.load(file)
                 current_signal = data.eeg.signal
                 fs = data.eeg.fs
-
                 band_seg = settings_dic['preprocessing'].get('band_segmentation', False) #
                 segmentation_type = settings_dic['segmentation']['segmentation_type']
                 norm = settings_dic['segmentation']['norm'] or None
@@ -485,11 +560,12 @@ class DownloadWidget(QtWidgets.QWidget):
                     {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'], 'max': settings_dic['preprocessing']['broadband_max']}]
                 total_steps = total_files * len(bands)
 
+                # For each band....
                 for j, band in enumerate(bands):
                     band_name = band.get('name', 'unknown')
                     bp_min, bp_max = band.get('min'), band.get('max')
 
-                    # --------  Preprocessing -------
+                    # Preprocessing
                     if settings_dic['preprocessing'].get('apply_preprocessing'):
                         cfg = {**settings_dic['preprocessing']}
                         if band_seg:
@@ -501,14 +577,14 @@ class DownloadWidget(QtWidgets.QWidget):
                         processed_signal = apply_preprocessing(signal_to_process, fs, cfg)
                         data.eeg.signal = processed_signal
                         save_outputs(deepcopy(data), base_name, band_name, 'prep')
-                    else:
+                    else: # If no preprocessing, apply only the band segmentation (if apply)
                         if band_seg:
                             processed_signal = band_segmentation(current_signal.copy(), bp_min, bp_max, fs)
                             data.eeg.signal = processed_signal
                         else:
                             processed_signal = current_signal
 
-                    # --------  Segmentation and parameter's extraction -------
+                    # Segmentation and parameter's computation
                     if segmentation_type == 'condition':
                         segment_by_condition(data, processed_signal, settings_dic, base_name, norm,
                                              band=band_name if band_seg else None)
@@ -516,10 +592,11 @@ class DownloadWidget(QtWidgets.QWidget):
                         segment_by_event(data, processed_signal, settings_dic, base_name, norm, fs,
                                          band=band_name if band_seg else None)
 
-                    # Actualizar progreso
+                    # Update the progress bar and labels
                     global_progress = int(((i * len(bands) + j + 1) / total_steps) * 100)
                     self.progressBar.setValue(global_progress)
 
+            # Exception handling
             except Exception as e:
                 error_found = True
                 self.log_message(f"Error preprocessing {file}: {e}", style='error')
