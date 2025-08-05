@@ -363,7 +363,7 @@ class ParametersWidget(QtWidgets.QWidget):
             self.seLabel.setText("None")
 
     def get_parameters_config(self):
-        # Configuración base
+        # Configuration dict
         config = {
             "mean": True if self.meanCBox.isChecked() else None,
             "median": True if self.medianCBox.isChecked() else None,
@@ -403,5 +403,4 @@ class ParametersWidget(QtWidgets.QWidget):
             "plv": True if self.plvCBox.isChecked() else None,
             "wpli": True if self.wpliCBox.isChecked() else None
         }
-
         return config

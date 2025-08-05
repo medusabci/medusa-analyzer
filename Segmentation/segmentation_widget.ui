@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>988</width>
+    <width>996</width>
     <height>872</height>
    </rect>
   </property>
@@ -595,7 +595,7 @@
       <item>
        <widget class="QLabel" name="newfsLabel">
         <property name="text">
-         <string>Target sample frequency</string>
+         <string>Target sampling frequency</string>
         </property>
        </widget>
       </item>
