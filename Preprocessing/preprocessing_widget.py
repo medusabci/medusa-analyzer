@@ -128,8 +128,10 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Band segmentation
         self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
         self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
+        self.minbroadBox.setValue(0.5)
         self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
         self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
+        self.maxbroadBox.setValue(70)
         self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
         self.bandCBox = self.findChild(QtWidgets.QCheckBox, "bandCBox")
         self.selectedbandsLabel = self.findChild(QtWidgets.QLabel, "selectedbandsLabel")
@@ -166,7 +168,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.bandpassCanvas.ax.set_facecolor(bg_color)
         # Band segmentation
         self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
-        self.bandButton.clicked.connect(self.open_band_editor)
+        self.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
         # Sync changes in spinboxed with the band table content
         # self.minbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
         # self.maxbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
@@ -600,9 +602,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
         visible = self.bandCBox.isChecked()
         for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
             widget.setVisible(visible)
+        self.bandLabel.setText("None")
+        self.band_editor = None
 
 
-    def open_band_editor(self):
+    def open_band_editor(self, band_type):
         """
             Opens the band editor
         """
@@ -610,7 +614,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
         if self.band_editor is None:
             print(':)')
             self.band_editor = BandTable(
-                parameters_widget=self,
+                preprocessing_widget=self,
+                band_type=band_type,
                 min_broad=self.minbroadBox.value(),
                 max_broad=self.maxbroadBox.value()
             )
@@ -625,16 +630,20 @@ class PreprocessingWidget(QtWidgets.QWidget):
             )
         self.band_editor.show()
 
-    def update_band_label(self, bands):
+    def update_band_label(self, band_type, bands):
         """
             Updates the labels with the names of the selected bands
         """
-        self.selected_bands = bands
-        if bands:
-            names = [b["name"] for b in bands]
-            self.bandLabel.setText(", ".join(names))
-        else:
-            self.bandLabel.setText("None")
+        self.selected_bands_by_type = getattr(self, "selected_bands_by_type", {})
+        self.selected_bands_by_type[band_type] = bands
+
+        label = self.findChild(QtWidgets.QLabel, f"bandLabel")
+        if label:
+            if bands:
+                names = [b["name"] for b in bands]
+                label.setText(", ".join(names))
+            else:
+                label.setText("None")
 
     # def _sync_broadband_spinboxes(self):
     #     if self.band_editor:
@@ -660,7 +669,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             "band_segmentation": True if self.bandCBox.isChecked() else None,
             "broadband_min": self.minbroadBox.value(),
             "broadband_max": self.maxbroadBox.value(),
-            "selected_bands": self.selected_bands if self.bandCBox.isChecked() else None,
+            "selected_bands": self.selected_bands_by_type["segmentation"] if self.bandCBox.isChecked() else None,
 
             "selected_files": self.selected_files if self.selected_files else None,
             "apply_preprocessing": True if self.preprocessingButton.isChecked() else None,

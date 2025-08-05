@@ -1,8 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from Parameters.rp_bands_table import RPBandTable
-from Parameters.ap_bands_table import APBandTable
-from Parameters.mf_bands_table import MFBandTable
-from Parameters.se_bands_table import SEBandTable
+from bands_table import BandTable
 import ast
 
 class ParametersWidget(QtWidgets.QWidget):
@@ -18,10 +15,12 @@ class ParametersWidget(QtWidgets.QWidget):
         # Define variables
         self.main_window = main_window
         self.last_params = None
-        self.selected_rp_bands = []
-        self.selected_ap_bands = []
-        self.selected_mf_bands = []
-        self.selected_se_bands = []
+        self.selected_bands_by_type = {
+            "rp": [],
+            "ap": [],
+            "mf": [],
+            "se": []
+        }
         self.rp_band_editor = None
         self.ap_band_editor = None
         self.mf_band_editor = None
@@ -41,8 +40,8 @@ class ParametersWidget(QtWidgets.QWidget):
                 <p>
                     This is the <b>Signal Parameters Module</b> of <i>MEDUSA Analyzer</i>. In this section, you can 
                     configure a wide range of <b>features and metrics</b> to extract from your EEG or biosignal 
-                    recordings, including band-based metrics. statistical descriptors, spectral features, 
-                    non-lineal parameters and connectivity metrics.
+                    recordings, including statistical descriptors, spectral features, non-lineal parameters and 
+                    connectivity metrics.
                 </p>
                 <p>
                     Use the checkboxes to enable the metrics of interest. Some metrics require specific 
@@ -81,10 +80,10 @@ class ParametersWidget(QtWidgets.QWidget):
         self.apCBox.toggled.connect(self.toggle_absolute_power)
         self.mfCBox.toggled.connect(self.toggle_median_frequency)
         self.seCBox.toggled.connect(self.toggle_spectral_entropy)
-        self.rpButton.clicked.connect(self.open_rp_band_table)
-        self.apButton.clicked.connect(self.open_ap_band_table)
-        self.mfButton.clicked.connect(self.open_mf_band_table)
-        self.seButton.clicked.connect(self.open_se_band_table)
+        self.rpButton.clicked.connect(lambda: self.open_band_table("rp"))
+        self.apButton.clicked.connect(lambda: self.open_band_table("ap"))
+        self.mfButton.clicked.connect(lambda: self.open_band_table("mf"))
+        self.seButton.clicked.connect(lambda: self.open_band_table("se"))
 
         # STATISTICS AND NONLINEAR
         self.meanCBox = self.findChild(QtWidgets.QCheckBox, "meanCBox")
@@ -165,6 +164,8 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.rpCBox.isChecked()
         for widget in [self.rpselectedbandsLabel, self.rpselectedbandsauxLabel, self.rpLabel, self.rpButton]:
             widget.setVisible(visible)
+        self.rpLabel.setText("None")
+        self.rp_band_editor = None
 
         # if visible:
         #     msg_box = QtWidgets.QMessageBox(self)
@@ -185,6 +186,8 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.apCBox.isChecked()
         for widget in [self.apselectedbandsLabel, self.apLabel, self.apButton]:
             widget.setVisible(visible)
+        self.apLabel.setText("None")
+        self.ap_band_editor = None
 
     def toggle_median_frequency(self):
         """
@@ -193,6 +196,8 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.mfCBox.isChecked()
         for widget in [self.mfselectedbandsLabel, self.mfLabel, self.mfButton]:
             widget.setVisible(visible)
+        self.mfLabel.setText("None")
+        self.mf_band_editor = None
 
     def toggle_spectral_entropy(self):
         """
@@ -201,6 +206,8 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.seCBox.isChecked()
         for widget in [self.seselectedbandsLabel, self.seLabel, self.seButton]:
             widget.setVisible(visible)
+        self.seLabel.setText("None")
+        self.se_band_editor = None
 
     def toggle_ctm(self):
         """
@@ -255,112 +262,38 @@ class ParametersWidget(QtWidgets.QWidget):
         for widget in [self.aecortLabel, self.aecortButton]:
             widget.setVisible(visible)
 
-    def open_rp_band_table(self):
+    def open_band_table(self, band_type):
         """
-            Manages the creation of the RP bands table
+        Opens the band table dialog for a specific band type (e.g., 'rp', 'ap', etc.)
         """
-        if self.rp_band_editor is None:
-            self.rp_band_editor = RPBandTable(
-                parameters_widget=self
-            )
-            self.rp_band_editor.setModal(True)
-            self.rp_band_editor.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.rp_band_editor.destroyed.connect(lambda: self._on_rp_band_editor_closed())
-            self.rp_band_editor.show()
+        if not hasattr(self, "band_table_editors"):
+            self.band_table_editors = {}
 
-    def open_ap_band_table(self):
-        """
-            Manages the creation of the RP bands table
-        """
-        if self.ap_band_editor is None:
-            self.ap_band_editor = APBandTable(
-                parameters_widget=self
+        if band_type not in self.band_table_editors or self.band_table_editors[band_type] is None:
+            previous_bands = self.selected_bands_by_type.get(band_type, [])
+            editor = BandTable(
+                parameters_widget=self,
+                band_type=band_type,
+                previous_bands=previous_bands,
+                min_broad=self.main_window.min_b,
+                max_broad=self.main_window.max_b
             )
-            self.ap_band_editor.setModal(True)
-            self.ap_band_editor.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.ap_band_editor.destroyed.connect(lambda: self._on_ap_band_editor_closed())
-            self.ap_band_editor.show()
-
-    def open_mf_band_table(self):
-        """
-            Manages the creation of the RP bands table
-        """
-        if self.mf_band_editor is None:
-            self.mf_band_editor = MFBandTable(
-                parameters_widget=self
-            )
-            self.mf_band_editor.setModal(True)
-            self.mf_band_editor.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.mf_band_editor.destroyed.connect(lambda: self._on_mf_band_editor_closed())
-            self.mf_band_editor.show()
-
-    def open_se_band_table(self):
-        """
-            Manages the creation of the RP bands table
-        """
-        if self.se_band_editor is None:
-            self.se_band_editor = SEBandTable(
-                parameters_widget=self
-            )
-            self.se_band_editor.setModal(True)
-            self.se_band_editor.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            self.se_band_editor.destroyed.connect(lambda: self._on_se_band_editor_closed())
-            self.se_band_editor.show()
+            editor.setModal(True)
+            editor.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+            editor.destroyed.connect(lambda: self._on_band_table_closed(band_type))
+            self.band_table_editors[band_type] = editor
+            editor.show()
 
     # Additional functions for band table management
-    def _on_rp_band_editor_closed(self):
-        self.rp_band_editor = None
-    def _on_ap_band_editor_closed(self):
-        self.ap_band_editor = None
-    def _on_mf_band_editor_closed(self):
-        self.mf_band_editor = None
-    def _on_se_band_editor_closed(self):
-        self.se_band_editor = None
+    def _on_band_table_closed(self, band_type):
+        if band_type in self.band_table_editors:
+            self.band_table_editors[band_type] = None
 
-
-    def update_band_rp_label(self, rp_bands):
-        """
-            Manages the labels of the "Selected bands" of the RP bands table
-        """
-        self.selected_rp_bands = rp_bands
-        if rp_bands:
-            names = [b["name"] for b in rp_bands]
-            self.rpLabel.setText(", ".join(names))
-        else:
-            self.rpLabel.setText("None")
-
-    def update_band_ap_label(self, ap_bands):
-        """
-            Manages the labels of the "Selected bands" of the AP bands table
-        """
-        self.selected_ap_bands = ap_bands
-        if ap_bands:
-            names = [b["name"] for b in ap_bands]
-            self.apLabel.setText(", ".join(names))
-        else:
-            self.apLabel.setText("None")
-
-    def update_band_mf_label(self, mf_bands):
-        """
-            Manages the labels of the "Selected bands" of the MF bands table
-        """
-        self.selected_mf_bands = mf_bands
-        if mf_bands:
-            names = [b["name"] for b in mf_bands]
-            self.mfLabel.setText(", ".join(names))
-        else:
-            self.mfLabel.setText("None")
-
-    def update_band_se_label(self, se_bands):
-        """
-            Manages the labels of the "Selected bands" of the SE bands table
-        """
-        self.selected_se_bands = se_bands
-        if se_bands:
-            names = [b["name"] for b in se_bands]
-            self.seLabel.setText(", ".join(names))
-        else:
-            self.seLabel.setText("None")
+    def update_band_label(self, band_type, bands):
+        self.selected_bands_by_type[band_type] = bands
+        label = getattr(self, f"{band_type}Label", None)
+        if label:
+            label.setText(", ".join(b["name"] for b in bands) if bands else "None")
 
     def get_parameters_config(self):
         # Configuration dict
@@ -375,13 +308,13 @@ class ParametersWidget(QtWidgets.QWidget):
             "psd_overlap_pct": self.overlappsdBox.value() if self.psdCBox.isChecked() else None,
             'psd_window': self.psdcomboBox.currentText() if self.psdCBox.isChecked() else None,
             "relative_power": True if self.rpCBox.isChecked() else None,
-            "selected_rp_bands": self.selected_rp_bands if self.rpCBox.isChecked() else None,
+            "selected_rp_bands": self.selected_bands_by_type["rp"] if self.rpCBox.isChecked() else None,
             "absolute_power": True if self.apCBox.isChecked() else None,
-            "selected_ap_bands": self.selected_ap_bands if self.apCBox.isChecked() else None,
+            "selected_ap_bands": self.selected_bands_by_type["ap"] if self.apCBox.isChecked() else None,
             "median_frequency": True if self.mfCBox.isChecked() else None,
-            "selected_mf_bands": self.selected_mf_bands if self.mfCBox.isChecked() else None,
+            "selected_mf_bands": self.selected_bands_by_type["mf"] if self.mfCBox.isChecked() else None,
             "spectral_entropy": True if self.seCBox.isChecked() else None,
-            "selected_se_bands": self.selected_se_bands if self.seCBox.isChecked() else None,
+            "selected_se_bands": self.selected_bands_by_type["se"] if self.seCBox.isChecked() else None,
             "ctm": True if self.ctmCBox.isChecked() else None,
             "ctm_r": self.ctmrBox.value() if self.ctmCBox.isChecked() else None,
             "sample_entropy": True if self.sampenCBox.isChecked() else None,

@@ -104,20 +104,22 @@ class BandTableWidget(QtWidgets.QTableWidget):
         else:
             self.removeRow(source_row)
 
-class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
-    def __init__(self, parameters_widget=None, min_broad=0.5, max_broad=69.0):
-        super().__init__(parameters_widget)  # NO usar main_window como parent directo
+class BandTable(QtWidgets.QDialog):
+    def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None,
+                 min_broad=0.5, max_broad=69.0):
+        super().__init__(parameters_widget or preprocessing_widget)
         self.parameters_widget = parameters_widget
+        self.preprocessing_widget = preprocessing_widget
+        self.band_type = band_type
+        self.previous_bands = previous_bands or []
         self.default_min = min_broad
         self.default_max = max_broad
         uic.loadUi("bands_table.ui", self)
 
-        # Reemplazamos el QTableWidget original con el customizado
         original_table = self.findChild(QtWidgets.QTableWidget, "bandsTable")
         self.bandsTable = BandTableWidget(self)
         self.bandsTable.setObjectName("bandsTable")
 
-        # Reemplazar en el layout
         layout = original_table.parent().layout()
         if layout:
             index = layout.indexOf(original_table)
@@ -155,25 +157,23 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
         self.bandsTable.setColumnCount(5)
         self.bandsTable.setHorizontalHeaderLabels(["Enabled", "Name", "Min. Freq.", "Max. Freq.", "Remove"])
 
-        # Cabecera en negrita
+        # Header
         font = QFont()
         font.setBold(True)
         for i in range(5):
             item = self.bandsTable.horizontalHeaderItem(i)
             item.setFont(font)
 
-        # Configuración tabla
+        # Table configuration
         self.bandsTable.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.bandsTable.setDragDropOverwriteMode(False)
         self.bandsTable.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
         self.bandsTable.setDefaultDropAction(Qt.MoveAction)
 
         if preserve_broadband:
-            # Solo elimina las filas a partir de la segunda
             while self.bandsTable.rowCount() > 1:
                 self.bandsTable.removeRow(1)
         else:
-            # Borra todo
             for row in range(self.bandsTable.rowCount()):
                 for col in range(self.bandsTable.columnCount()):
                     widget = self.bandsTable.cellWidget(row, col)
@@ -181,13 +181,37 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
                         widget.deleteLater()
             self.bandsTable.clearContents()
             self.bandsTable.setRowCount(0)
-
-            # Y agrega Broadband
             self._add_broadband_row()
 
-        # Agrega bandas predefinidas
+        previous_dict = {band["name"]: band for band in self.previous_bands} if self.previous_bands else {}
+
+        # Default bands
         for band in self.default_bands:
-            self._add_band_row(band["name"], band["min"], band["max"])
+            name = band["name"]
+            if name in previous_dict:
+                prev_band = previous_dict[name]
+                self._add_band_row(name, prev_band["min"], prev_band["max"])
+                checkbox = self._get_checkbox_at_row(self.bandsTable.rowCount() - 1)
+                if checkbox:
+                    checkbox.setChecked(True)
+                del previous_dict[name]
+            else:
+                self._add_band_row(name, band["min"], band["max"])
+
+        # Personalized bands (different from default)
+        for name, band in previous_dict.items():
+            if name == 'broadband':
+                continue
+            self._add_band_row(name, band["min"], band["max"])
+            checkbox = self._get_checkbox_at_row(self.bandsTable.rowCount() - 1)
+            if checkbox:
+                checkbox.setChecked(True)
+
+    def _get_checkbox_at_row(self, row):
+        container = self.bandsTable.cellWidget(row, 0)
+        if container:
+            return container.findChild(QtWidgets.QCheckBox)
+        return None
 
     def _add_broadband_row(self):
         row = self.bandsTable.rowCount()
@@ -255,7 +279,7 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
 
         # Remove
         remove_button = QtWidgets.QPushButton()
-        icon = QtGui.QIcon("media/delete_icon.png")  # o usa tu propia imagen
+        icon = QtGui.QIcon("media/delete_icon.png")
         remove_button.setIcon(icon)
         remove_button.setFixedSize(20, 20)
         remove_button.setStyleSheet("margin-left:auto; margin-right:auto;")
@@ -267,10 +291,7 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
             self.bandsTable.cellChanged.disconnect(self._handle_cell_change)
         except TypeError:
             pass
-
-        current_min_broad = self._get_broadband_value(col=2)
-        current_max_broad = self._get_broadband_value(col=3)
-        self._setup_table(min_broad=current_min_broad, max_broad=current_max_broad, preserve_broadband=True)
+        self._setup_table(min_broad=self.default_min, max_broad=self.default_max, preserve_broadband=False)
         self.bandsTable.cellChanged.connect(self._handle_cell_change)
 
     def _accept_and_close(self):
@@ -322,9 +343,7 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
             if min_val >= max_val: # max_value is lower than min_value
                 invalid_interval_rows.append(row + 1)
 
-            current_min = self.parameters_widget.minbroadBox.value()
-            current_max = self.parameters_widget.maxbroadBox.value()
-            if min_val < current_min or max_val > current_max: #exceeding broadband range
+            if min_val < self.min_broad or max_val > self.max_broad:
                 out_of_range_rows.append(row + 1)
 
             if (row + 1 not in empty_name_rows and
@@ -359,14 +378,17 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
             if invalid_interval_rows:
                 message += f"• Row(s) {', '.join(map(str, invalid_interval_rows))}: minimum frequency must be less than the maximum frequency.\n"
             if out_of_range_rows:
-                message += f"• Row(s) {', '.join(map(str, out_of_range_rows))}: frequency range must be within the broadband range ({current_min:.1f}–{current_max:.1f} Hz).\n"
+                message += f"• Row(s) {', '.join(map(str, out_of_range_rows))}: frequency range must be within the broadband range ({self.min_broad:.1f}–{self.max_broad:.1f} Hz).\n"
 
             message += "\nCorrect the above issues and try again."
             QtWidgets.QMessageBox.warning(self, "Invalid Table Entries", message)
             return
 
-        if self.parameters_widget:
-            self.parameters_widget.update_band_label(self.accepted_bands)
+        if self.band_type:
+            if self.parameters_widget:
+                self.parameters_widget.update_band_label(self.band_type, self.accepted_bands)
+            elif self.preprocessing_widget:
+                self.preprocessing_widget.update_band_label(self.band_type, self.accepted_bands)
         self.close()
 
     def sync_broadband_range(self, min_val, max_val):
@@ -383,9 +405,6 @@ class BandTable(QtWidgets.QDialog):  # <-- cambia QWidget por QDialog
                 max_val = float(self.bandsTable.item(0, 3).text())
             except ValueError:
                 return  # texto inválido
-            # Actualizar en el parent (ParametersWidget)
-            if self.parameters_widget:
-                self.parameters_widget.update_broadband_spinboxes(min_val, max_val)
 
     def _center_widget(self, widget):
         container = QtWidgets.QWidget()
