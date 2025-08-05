@@ -312,6 +312,7 @@ class MainWindow(QtWidgets.QMainWindow):
             Returns:
                 bool: True if all validations pass, False otherwise.
             """
+
         pw = self.parameters_widget
 
         # min_b, max_b = pw.minbroadBox.value(), pw.maxbroadBox.value()
@@ -322,8 +323,6 @@ class MainWindow(QtWidgets.QMainWindow):
         #     return False
 
         checks = [
-            (pw.bandCBox.isChecked() and pw.bandLabel.text() == "None", "Band Segmentation Required",
-             "Please define at least one frequency band to enable band-based segmentation."),
             (pw.rpCBox.isChecked() and pw.rpLabel.text() == "None", "Relative Power Configuration Missing",
              "Please define at least one frequency band to enable relative power analysis."),
             (pw.apCBox.isChecked() and pw.apLabel.text() == "None", "Absolute Power Configuration Missing",
@@ -353,8 +352,8 @@ class MainWindow(QtWidgets.QMainWindow):
             )
 
         config = pw.get_parameters_config()
-        min_b = self.preproc_widget.minbroadBox.getValue()
-        max_b = self.preproc_widget.maxbroadBox.getValue()
+        min_b = self.preproc_widget.minbroadBox.value()
+        max_b = self.preproc_widget.maxbroadBox.value()
         if pw.rpCBox.isChecked():
             for band in config.get('selected_rp_bands', []):
                 if band.get("min", 0) < min_b or band.get("max", 0) > max_b:
