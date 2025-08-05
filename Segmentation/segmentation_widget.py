@@ -59,6 +59,8 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.conditionRButton = self.findChild(QtWidgets.QRadioButton, "conditionRButton")
         self.trialLabel = self.findChild(QtWidgets.QLabel, "trialLabel")
         self.trialBox = self.findChild(QtWidgets.QSpinBox, "trialBox")
+        self.trialstrideLabel = self.findChild(QtWidgets.QLabel, "trialstrideLabel")
+        self.trialstrideBox = self.findChild(QtWidgets.QSpinBox, "trialstrideBox")
         # Events
         self.eventRButton = self.findChild(QtWidgets.QRadioButton, "eventRButton")
         self.winLabel_1 = self.findChild(QtWidgets.QLabel, "winLabel_1")
@@ -314,12 +316,12 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.availableconditionsLabel.setEnabled(enabled)
         self.conditionLabel.setEnabled(enabled)
     def hide_all_param_widgets(self):
-        for w in [self.trialLabel, self.trialBox, self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.hide()
+        for w in [self.trialLabel, self.trialBox, self.trialstrideLabel, self.trialstrideBox, self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.hide()
     def show_event_widgets(self):
         for w in [self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.show()
-        for w in [self.trialLabel, self.trialBox]: w.hide()
+        for w in [self.trialLabel, self.trialBox, self.trialstrideLabel, self.trialstrideBox]: w.hide()
     def show_condition_widgets(self):
-        for w in [self.trialLabel, self.trialBox]: w.show()
+        for w in [self.trialLabel, self.trialBox, self.trialstrideLabel, self.trialstrideBox]: w.show()
         for w in [self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.hide()
     # def show_all_widgets(self):
     #     for w in [self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2, self.trialLabel, self.trialBox]: w.show()
@@ -536,6 +538,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             "selected_events": selected_events if self.eventRButton.isChecked() else None,
 
             "trial_length": self.trialBox.value() if self.conditionRButton.isChecked() else None,
+            "trial_stride": self.trialstrideBox.value() if self.conditionRButton.isChecked() else None,
             "window_start": self.winBox_1.value() if self.eventRButton.isChecked() else None,
             "window_end": self.winBox_2.value() if self.eventRButton.isChecked() else None,
             'norm': self.normCBox.isChecked() if self.normCBox else None,
