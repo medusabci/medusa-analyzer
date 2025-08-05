@@ -88,6 +88,12 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.convertProgressBar.setVisible(False)
         self.convertLogTextBrowser = self.findChild(QtWidgets.QTextBrowser, "convertLogTextBrowser")
         self.convertLogTextBrowser.setVisible(False)
+        self.broadbandButton = self.findChild(QtWidgets.QToolButton, "broadbandButton")
+        self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
+        self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
+        self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
+        self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
+        self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
         # Preprocessing
         self.preprocessingButton = self.findChild(QtWidgets.QCheckBox, "preprocessingButton")
         self.preprocessingLabel = self.findChild(QtWidgets.QLabel, "preprocessingLabel")
@@ -126,13 +132,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
         self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
         # Band segmentation
-        self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
-        self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
-        self.minbroadBox.setValue(0.5)
-        self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
-        self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
-        self.maxbroadBox.setValue(70)
-        self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
         self.bandCBox = self.findChild(QtWidgets.QCheckBox, "bandCBox")
         self.selectedbandsLabel = self.findChild(QtWidgets.QLabel, "selectedbandsLabel")
         self.selectedbandsauxLabel = self.findChild(QtWidgets.QLabel, "selectedbandsauxLabel")
@@ -141,7 +140,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.bandsegmentationLabel = self.findChild(QtWidgets.QLabel, "bandsegmentationLabel")
         self.element_group = [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
                          self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
-                         self.maxbroadBox]
+                         self.maxbroadBox, self.broadbandButton]
 
         # --- ELEMENT SETUP ---
 
@@ -149,6 +148,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.browseButton.clicked.connect(self.select_files)
         self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
         self.convertButton.clicked.connect(self.select_and_convert_files)
+        self.broadbandButton.clicked.connect(self.show_freq_content_dialog)
         # Data preprocessing
         self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
         self.preprocessingButton.toggled.connect(self.update_select_label)
@@ -166,6 +166,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.drawbpButton.clicked.connect(lambda: self.update_filter_plot('bandpass'))
         self.bandpassCanvas.fig.patch.set_facecolor(bg_color)
         self.bandpassCanvas.ax.set_facecolor(bg_color)
+        self.minfreqbpBox.editingFinished.connect(lambda: self.minbroadBox.setValue(self.minfreqbpBox.value()))
+        self.maxfreqbpBox.editingFinished.connect(lambda: self.maxbroadBox.setValue(self.maxfreqbpBox.value()))
         # Band segmentation
         self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
         self.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
@@ -309,8 +311,12 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.main_window.segmentation_widget.reset_segmentation_state()
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
-            self.main_window.sample_frequency = components.Recording.load(self.selected_files[0]).eeg.fs
+            self.main_window.sampling_frequency = components.Recording.load(self.selected_files[0]).eeg.fs
             [elm.setDisabled(False) for elm in self.element_group]
+            self.minbroadBox.setValue(0.5)
+            self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
+            self.minfreqbpBox.setValue(0.5)
+            self.maxfreqbpBox.setValue(self.main_window.sampling_frequency/2)
 
         else:
             self.main_window.nextButton.setDisabled(True)
@@ -518,7 +524,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Define filter settings
         if numtaps % 2 == 0:
             numtaps += 1
-        fs = self.main_window.sample_frequency
+        fs = self.main_window.sampling_frequency
         b = firwin(numtaps, [low, high], pass_zero=filter_type=='notch', fs=fs)
         w, h = freqz(b, worN=1024, fs=fs)
 
@@ -561,26 +567,23 @@ class PreprocessingWidget(QtWidgets.QWidget):
     #         self.maxbroadBox.blockSignals(False)
 
 
-    def set_defaults_broadband(self, params):
-        """
-            Set default values for the broadband interval.
-        """
-        if not self.initialized or self._params_changed(params):
-            if params.get("bandpass"):
-                self.default_min_broad = params.get("bp_min", 0)
-                self.default_max_broad = params.get("bp_max", 70)
-            elif params.get("resample"):
-                self.default_min_broad = 0.5
-                self.default_max_broad = params["resample_fs"] / 2 if "resample_fs" in params else 70
-            else:
-                self.default_min_broad = 0.5
-                self.default_max_broad = 70  # TO DO: use fs/2
-
-            self.minbroadBox.setValue(self.default_min_broad)
-            self.maxbroadBox.setValue(self.default_max_broad)
-
-            self.last_params = dict(params)
-            self.initialized = True
+    # def set_defaults_broadband(self, params):
+    #     """
+    #         Set default values for the broadband interval.
+    #     """
+    #     if not self.initialized or self._params_changed(params):
+    #         if params.get("bandpass"):
+    #             self.default_min_broad = params.get("bp_min", 0)
+    #             self.default_max_broad = params.get("bp_max", 70)
+    #         else:
+    #             self.default_min_broad = 0.5
+    #             self.default_max_broad = self.main_window.sampling_frequency/2  # TO DO: use fs/2
+    #
+    #         self.minbroadBox.setValue(self.default_min_broad)
+    #         self.maxbroadBox.setValue(self.default_max_broad)
+    #
+    #         self.last_params = dict(params)
+    #         self.initialized = True
 
     def _params_changed(self, new_params):
         """
@@ -612,7 +615,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         """
         # If it is not initialized, do it
         if self.band_editor is None:
-            print(':)')
             self.band_editor = BandTable(
                 preprocessing_widget=self,
                 band_type=band_type,
@@ -620,7 +622,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 max_broad=self.maxbroadBox.value()
             )
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
-            print(':)')
             self.band_editor.show()
         else:
             # Before showing the band editor, update the broadband range
@@ -660,6 +661,12 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.minbroadBox.blockSignals(False)
         self.maxbroadBox.blockSignals(False)
 
+    def show_freq_content_dialog(self):
+        QtWidgets.QMessageBox.information(self, "Data frequency content",
+                                          "To calculate many parameters in your data, it is necessary to know the "
+                                          "frequency limits. By default, this range is set between 0.5 and half the "
+                                          "sampling frequency, but it will be updated if you bandpass filter the "
+                                          "signal.")
 
     def get_preprocessing_config(self):
         """
