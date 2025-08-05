@@ -86,6 +86,8 @@ def run_pipeline(self, settings_dic, total_tasks):
         # Variable definition
         fs_seg = fs / 1000
         trial_len = int(settings['segmentation']['trial_length']) * fs_seg
+        trial_stride = settings['segmentation']['trial_stride']/100
+        trial_stride = trial_stride * trial_len
         norm_type = settings['segmentation']['norm_type'] if norm else None
         t_window = [0, int(settings['segmentation']['trial_length'])]
         selected_conditions = settings['segmentation']['selected_conditions']
@@ -109,7 +111,7 @@ def run_pipeline(self, settings_dic, total_tasks):
         # For each condition...
         for cond in selected_conditions:
             if cond == 'null':
-                epoched = medusa.get_epochs(current_signal, trial_len, norm=norm_type)
+                epoched = medusa.get_epochs(current_signal, trial_len, stride=trial_stride, norm=norm_type)
             else:
                 cond_key = data.marks.app_settings['conditions'][cond]['label']
                 idx = get_condition_indices(data, cond_key)
@@ -124,7 +126,7 @@ def run_pipeline(self, settings_dic, total_tasks):
                     start = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
                     end = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
                     segment = current_signal[start:end]
-                    epochs = medusa.get_epochs(segment, trial_len, norm=norm_type)
+                    epochs = medusa.get_epochs(segment, trial_len, stride=trial_stride, norm=norm_type)
                     if epochs is not None:
                         segments.append(epochs)
                 epoched = np.concatenate(segments, axis=0) if segments else None

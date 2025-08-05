@@ -161,6 +161,25 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="trialstrideLabel">
+          <property name="text">
+           <string>Stride (%):</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="trialstrideBox">
+          <property name="styleSheet">
+           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
+    width: 0;
+    height: 0;
+    border: none;
+}
+</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="winLabel_1">
           <property name="toolTip">
            <string>Temporal window in ms of the epoch. For example, w_epoch_t = [0, 1000] takes the epoch form 0 ms to 1000 ms after each onset (0 ms represents the onset).</string>
