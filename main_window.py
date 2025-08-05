@@ -25,7 +25,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
         text_width = fm.width(text)
 
         x = (self.width() - text_width) // 2
-        y = (self.height()  + fm.ascent() - fm.descent()) // 2
+        y = (self.height() + fm.ascent() - fm.descent()) // 2
 
         gradient = QtGui.QLinearGradient(x, 0, x + text_width, 0)
         gradient.setColorAt(0.0, QtGui.QColor("#6a0dad"))   # Morado
@@ -46,6 +46,8 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi("main_window.ui", self)
         self.selected_files = []
         self.sample_frequency = []
+        self.min_b = 0.5
+        self.max_b = 70
 
         # Define the header of the GUI
         self.title_widget = GradientTitleWidget(self)
@@ -226,8 +228,18 @@ class MainWindow(QtWidgets.QMainWindow):
             pw.maxbroadBox.setValue(getattr(pw, "default_max_broad", 70))
             return False
 
+        checks = [
+            (pw.bandCBox.isChecked() and pw.bandLabel.text() == "None", "Band Segmentation Configuration Missing",
+             "Please define at least one frequency band to enable band segmentation."),
+        ]
+        for cond, title, msg in checks:
+            if cond:
+                self._warn(title, msg)
+                return False
+
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         config = pw.get_preprocessing_config()
+        self.min_b, self.max_b = config["broadband_min"], config["broadband_max"]
         print(config)
         # self.preproc_widget.set_defaults_from_preprocessing(config)
         return True
