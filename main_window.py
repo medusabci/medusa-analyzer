@@ -45,7 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         uic.loadUi("main_window.ui", self)
         self.selected_files = []
-        self.sample_frequency = []
+        self.sampling_frequency = 0
         self.min_b = 0.5
         self.max_b = 70
 
@@ -236,6 +236,16 @@ class MainWindow(QtWidgets.QMainWindow):
             if cond:
                 self._warn(title, msg)
                 return False
+
+        if self.preproc_widget.maxbroadBox.value() > self.sampling_frequency/2:
+            self._warn("Invalid Broadband Range", "The maximum frequency of the broadband must be lower "
+                                                  "than the fs/2.")
+            return False
+
+        if self.preproc_widget.maxfreqbpBox and self.preproc_widget.maxfreqbpBox.value() > self.sampling_frequency/2:
+            self._warn("Invalid Bandpass Filter Range", "The maximum frequency of the bandpass filter must "
+                                                        "be lower than the fs/2.")
+            return False
 
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         config = pw.get_preprocessing_config()
