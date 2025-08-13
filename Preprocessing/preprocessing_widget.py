@@ -505,7 +505,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 return
             # Define filter settings
             low = self.minfreqbpBox.value()
-            high = self.maxfreqbpBox.value()
+            high = self.maxfreqbpBox.value() - 1e-6
             numtaps = self.orderbpBox.value()
         else:
             # If the checkbox is not selected, redraws the Figure with an empty plot
@@ -524,6 +524,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Define filter settings
         if numtaps % 2 == 0:
             numtaps += 1
+            self.orderNotchBox.setValue(self.orderNotchBox.value() + 1)
         fs = self.main_window.sampling_frequency
         b = firwin(numtaps, [low, high], pass_zero=filter_type=='notch', fs=fs)
         w, h = freqz(b, worN=1024, fs=fs)
@@ -676,8 +677,14 @@ class PreprocessingWidget(QtWidgets.QWidget):
             "band_segmentation": True if self.bandCBox.isChecked() else None,
             "broadband_min": self.minbroadBox.value(),
             "broadband_max": self.maxbroadBox.value(),
-            "selected_bands": self.selected_bands_by_type["segmentation"] if self.bandCBox.isChecked() else None,
-
+            "selected_bands": (
+                None
+                if (not self.bandCBox.isChecked() or (
+                    len(self.selected_bands_by_type.get("segmentation", [])) == 1 and
+                    str(self.selected_bands_by_type.get("segmentation", [])[0].get("name","")).lower() == "broadband"
+                ))
+                else self.selected_bands_by_type.get("segmentation", [])
+            ),
             "selected_files": self.selected_files if self.selected_files else None,
             "apply_preprocessing": True if self.preprocessingButton.isChecked() else None,
 

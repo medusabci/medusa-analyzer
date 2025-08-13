@@ -164,8 +164,11 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.rpCBox.isChecked()
         for widget in [self.rpselectedbandsLabel, self.rpselectedbandsauxLabel, self.rpLabel, self.rpButton]:
             widget.setVisible(visible)
-        self.rpLabel.setText("None")
-        self.rp_band_editor = None
+
+        if not visible:
+            self.rpLabel.setText("None")
+            self.rp_band_editor = None
+            self.selected_bands_by_type["rp"] = []
 
         # if visible:
         #     msg_box = QtWidgets.QMessageBox(self)
@@ -186,8 +189,10 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.apCBox.isChecked()
         for widget in [self.apselectedbandsLabel, self.apLabel, self.apButton]:
             widget.setVisible(visible)
-        self.apLabel.setText("None")
-        self.ap_band_editor = None
+        if not visible:
+            self.apLabel.setText("None")
+            self.ap_band_editor = None
+            self.selected_bands_by_type["ap"] = []
 
     def toggle_median_frequency(self):
         """
@@ -196,8 +201,10 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.mfCBox.isChecked()
         for widget in [self.mfselectedbandsLabel, self.mfLabel, self.mfButton]:
             widget.setVisible(visible)
-        self.mfLabel.setText("None")
-        self.mf_band_editor = None
+        if not visible:
+            self.mfLabel.setText("None")
+            self.mf_band_editor = None
+            self.selected_bands_by_type["mf"] = []
 
     def toggle_spectral_entropy(self):
         """
@@ -206,8 +213,10 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.seCBox.isChecked()
         for widget in [self.seselectedbandsLabel, self.seLabel, self.seButton]:
             widget.setVisible(visible)
-        self.seLabel.setText("None")
-        self.se_band_editor = None
+        if not visible:
+            self.seLabel.setText("None")
+            self.se_band_editor = None
+            self.selected_bands_by_type["se"] = []
 
     def toggle_ctm(self):
         """
@@ -248,7 +257,7 @@ class ParametersWidget(QtWidgets.QWidget):
         """
         visible = self.iacCBox.isChecked()
         if visible: self.iacortButton.setChecked(True)
-        else: self.iacyesButton.setChecked(False)
+        else: self.iacortButton.setChecked(False)
         for widget in [self.iacortLabel, self.iacortButton]:
             widget.setVisible(visible)
 
