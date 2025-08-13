@@ -130,6 +130,7 @@ class BandTable(QtWidgets.QDialog):
         self.addButton = self.findChild(QtWidgets.QPushButton, "addButton")
         self.resetButton = self.findChild(QtWidgets.QPushButton, "resetButton")
         self.acceptButton = self.findChild(QtWidgets.QPushButton, "acceptButton")
+        self.selectallButton = self.findChild(QtWidgets.QPushButton, "selectallButton")
 
         self.min_broad = min_broad
         self.max_broad = max_broad
@@ -147,6 +148,7 @@ class BandTable(QtWidgets.QDialog):
         self.resetButton.clicked.connect(self._reset_table)
         self.acceptButton.clicked.connect(self._accept_and_close)
         self.bandsTable.cellChanged.connect(self._handle_cell_change)
+        self.selectallButton.clicked.connect(self._select_all_bands)
 
     def _setup_table(self, min_broad=None, max_broad=None, preserve_broadband=False):
         if min_broad is not None:
@@ -253,7 +255,7 @@ class BandTable(QtWidgets.QDialog):
         item.setTextAlignment(Qt.AlignCenter)
         self.bandsTable.setItem(row, 4, item)
 
-    def _add_band_row(self, name="custom", min_freq=0.5, max_freq=0.0):
+    def _add_band_row(self, name="custom", min_freq=None, max_freq=None):
         row = self.bandsTable.rowCount()
         self.bandsTable.insertRow(row)
 
@@ -268,12 +270,12 @@ class BandTable(QtWidgets.QDialog):
         self.bandsTable.setItem(row, 1, name_item)
 
         # Min freq
-        min_item = QtWidgets.QTableWidgetItem(f"{float(min_freq):.1f}")
+        min_item = QtWidgets.QTableWidgetItem(f"{float(min_freq):.1f}" if min_freq is not None else "")
         min_item.setTextAlignment(Qt.AlignCenter)
         self.bandsTable.setItem(row, 2, min_item)
 
         # Max freq
-        max_item = QtWidgets.QTableWidgetItem(f"{float(max_freq):.1f}")
+        max_item = QtWidgets.QTableWidgetItem(f"{float(max_freq):.1f}" if max_freq is not None else "")
         max_item.setTextAlignment(Qt.AlignCenter)
         self.bandsTable.setItem(row, 3, max_item)
 
@@ -285,6 +287,13 @@ class BandTable(QtWidgets.QDialog):
         remove_button.setStyleSheet("margin-left:auto; margin-right:auto;")
         remove_button.clicked.connect(lambda _, r=row: self.bandsTable.removeRow(r))
         self.bandsTable.setCellWidget(row, 4, self._center_widget(remove_button))
+
+    def _select_all_bands(self):
+        row_count = self.bandsTable.rowCount()
+        for row in range(row_count):
+            checkbox = self._get_checkbox_at_row(row)
+            if checkbox:
+                checkbox.setChecked(True)
 
     def _reset_table(self):
         try:

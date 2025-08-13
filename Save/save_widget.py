@@ -151,7 +151,7 @@ class SaveWidget(QtWidgets.QWidget):
             self.prepare_data(preprocessing, segmentation, parameters)
 
         # Run the pipeline
-        success = run_pipeline(self.settings_dic, total_tasks)
+        success = run_pipeline(self, self.settings_dic, total_tasks)
         self.main_window.validate_save_step(success)
 
     def log_message(self, msg, style=None):
