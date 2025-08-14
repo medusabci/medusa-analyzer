@@ -538,8 +538,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             "selected_events": selected_events if self.eventRButton.isChecked() else None,
 
             "trial_length": self.trialBox.value() if self.conditionRButton.isChecked() else None,
-            "trial_stride": self.trialstrideBox.value() if self.conditionRButton.isChecked()
-                and self.trialstrideBox.value() > 0 else None,
+            "trial_stride": self.trialstrideBox.value() if self.conditionRButton.isChecked() else None,
             "window_start": self.winBox_1.value() if self.eventRButton.isChecked() else None,
             "window_end": self.winBox_2.value() if self.eventRButton.isChecked() else None,
             'norm': self.normCBox.isChecked() if self.normCBox else None,
