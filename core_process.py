@@ -87,8 +87,8 @@ def run_pipeline(self, settings_dic, total_tasks):
         # Variable definition
         fs_seg = fs / 1000
         trial_len = int(settings['segmentation']['trial_length']) * fs_seg
-        trial_stride = settings['segmentation']['trial_stride']/100
-        trial_stride = trial_stride * trial_len
+        trial_stride_val = settings['segmentation']['trial_stride']
+        trial_stride = (trial_stride_val / 100 * trial_len) if trial_stride_val else None
         norm_type = settings['segmentation']['norm_type'] if norm else None
         t_window = [0, int(settings['segmentation']['trial_length'])]
         selected_conditions = settings['segmentation']['selected_conditions']
