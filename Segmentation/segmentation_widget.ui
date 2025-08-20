@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>996</width>
+    <width>995</width>
     <height>935</height>
    </rect>
   </property>
@@ -133,12 +133,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhDigitsOnly</set>
@@ -170,12 +165,7 @@
         <item>
          <widget class="QSpinBox" name="trialstrideBox">
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
          </widget>
         </item>
@@ -197,12 +187,7 @@
            </font>
           </property>
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="frame">
            <bool>true</bool>
@@ -228,12 +213,7 @@
         <item>
          <widget class="QSpinBox" name="winBox_2">
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="minimum">
            <number>-100000</number>
@@ -377,6 +357,24 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="normLabel">
+          <property name="font">
+           <font>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="margin">
+           <number>0</number>
+          </property>
+          <property name="indent">
+           <number>-8</number>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="zscoreRButton">
           <property name="text">
            <string>Z-score</string>
@@ -416,12 +414,7 @@
         <item>
          <widget class="QSpinBox" name="baselineCBox_1">
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="minimum">
            <number>-100000</number>
@@ -441,12 +434,7 @@
         <item>
          <widget class="QSpinBox" name="baselineCBox_2">
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="minimum">
            <number>-100000</number>
@@ -478,6 +466,12 @@
         </item>
         <item>
          <widget class="QLabel" name="threskLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="font">
            <font>
             <pointsize>11</pointsize>
@@ -494,12 +488,10 @@
         <item>
          <widget class="QDoubleSpinBox" name="threskBox">
           <property name="styleSheet">
-           <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
           </property>
          </widget>
         </item>
@@ -528,12 +520,7 @@
         <item>
          <widget class="QSpinBox" name="thressampBox">
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="minimum">
            <number>1</number>
@@ -556,12 +543,7 @@
            <string>Minimum number of channels that have to have n_samples over the threshold in each epoch to be discarded</string>
           </property>
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="minimum">
            <number>1</number>
@@ -650,12 +632,7 @@
       <item>
        <widget class="QSpinBox" name="resamplefsBox">
         <property name="styleSheet">
-         <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+         <string notr="true"/>
         </property>
         <property name="minimum">
          <number>1</number>

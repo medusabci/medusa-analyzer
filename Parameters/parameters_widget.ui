@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>583</width>
-    <height>609</height>
+    <width>633</width>
+    <height>839</height>
    </rect>
   </property>
   <property name="font">
@@ -34,15 +34,15 @@
    <item>
     <widget class="QToolBox" name="toolBox">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="signalMetricsPage">
       <property name="geometry">
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>783</width>
-        <height>691</height>
+        <width>643</width>
+        <height>698</height>
        </rect>
       </property>
       <attribute name="label">
@@ -217,12 +217,7 @@
             <item>
              <widget class="QSpinBox" name="segmentpsdBox">
               <property name="styleSheet">
-               <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
               <property name="maximum">
                <number>100</number>
@@ -246,12 +241,7 @@
             <item>
              <widget class="QSpinBox" name="overlappsdBox">
               <property name="styleSheet">
-               <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
               <property name="maximum">
                <number>100</number>
@@ -587,12 +577,7 @@
             <item>
              <widget class="QDoubleSpinBox" name="ctmrBox">
               <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -642,12 +627,7 @@
             <item>
              <widget class="QSpinBox" name="sampenmBox">
               <property name="styleSheet">
-               <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -664,12 +644,7 @@
             <item>
              <widget class="QDoubleSpinBox" name="sampenrBox">
               <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -719,12 +694,7 @@
             <item>
              <widget class="QSpinBox" name="msampenscaleBox">
               <property name="styleSheet">
-               <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -741,12 +711,7 @@
             <item>
              <widget class="QSpinBox" name="msampenmBox">
               <property name="styleSheet">
-               <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -763,12 +728,7 @@
             <item>
              <widget class="QDoubleSpinBox" name="msampenrBox">
               <property name="styleSheet">
-               <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+               <string notr="true"/>
               </property>
              </widget>
             </item>
@@ -899,8 +859,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>561</width>
-        <height>426</height>
+        <width>615</width>
+        <height>715</height>
        </rect>
       </property>
       <attribute name="label">
@@ -1154,8 +1114,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>98</width>
-        <height>28</height>
+        <width>615</width>
+        <height>715</height>
        </rect>
       </property>
       <attribute name="label">
