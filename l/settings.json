@@ -1,0 +1,161 @@
+{
+    "preprocessing": {
+        "band_segmentation": null,
+        "broadband_min": 0.5,
+        "broadband_max": 128.0,
+        "selected_bands": null,
+        "selected_files": [
+            "D:/Proyectos/medusa-analyzer/Example signals for converter/U01-control-r1.rec.bson",
+            "D:/Proyectos/medusa-analyzer/Example signals for converter/U01-control-r2.rec.bson",
+            "D:/Proyectos/medusa-analyzer/Example signals for converter/U01-control-r3.rec.bson"
+        ],
+        "apply_preprocessing": null,
+        "notch": false,
+        "notch_min": null,
+        "notch_max": null,
+        "notch_order": null,
+        "bandpass": false,
+        "bp_min": null,
+        "bp_max": null,
+        "bp_order": null,
+        "car": false
+    },
+    "segmentation": {
+        "segmentation_type": "condition",
+        "selected_conditions": [
+            "null"
+        ],
+        "selected_events": null,
+        "trial_length": 100,
+        "trial_stride": 0,
+        "window_start": null,
+        "window_end": null,
+        "norm": true,
+        "norm_type": "z",
+        "baseline_start": null,
+        "baseline_end": null,
+        "average": false,
+        "thresholding": true,
+        "thres_k": 1,
+        "thres_samples": 10,
+        "thres_channels": 1,
+        "resample": false,
+        "resample_fs": null
+    },
+    "parameters": {
+        "mean": true,
+        "median": true,
+        "variance": true,
+        "kurtosis": true,
+        "skewness": true,
+        "psd": true,
+        "psd_segment_pct": 80,
+        "psd_overlap_pct": 50,
+        "psd_window": "barthann",
+        "relative_power": true,
+        "selected_rp_bands": [
+            {
+                "name": "broadband",
+                "min": 0.5,
+                "max": 128.0
+            },
+            {
+                "name": "delta",
+                "min": 1.0,
+                "max": 4.0
+            },
+            {
+                "name": "theta",
+                "min": 4.0,
+                "max": 8.0
+            },
+            {
+                "name": "alpha",
+                "min": 8.0,
+                "max": 13.0
+            },
+            {
+                "name": "beta",
+                "min": 13.0,
+                "max": 30.0
+            },
+            {
+                "name": "gamma",
+                "min": 30.0,
+                "max": 70.0
+            }
+        ],
+        "absolute_power": true,
+        "selected_ap_bands": [
+            {
+                "name": "broadband",
+                "min": 0.5,
+                "max": 128.0
+            },
+            {
+                "name": "delta",
+                "min": 1.0,
+                "max": 4.0
+            },
+            {
+                "name": "theta",
+                "min": 4.0,
+                "max": 8.0
+            },
+            {
+                "name": "alpha",
+                "min": 8.0,
+                "max": 13.0
+            },
+            {
+                "name": "beta",
+                "min": 13.0,
+                "max": 30.0
+            },
+            {
+                "name": "gamma",
+                "min": 30.0,
+                "max": 70.0
+            }
+        ],
+        "median_frequency": true,
+        "selected_mf_bands": [
+            {
+                "name": "broadband",
+                "min": 0.5,
+                "max": 128.0
+            },
+            {
+                "name": "alpha",
+                "min": 8.0,
+                "max": 13.0
+            },
+            {
+                "name": "beta",
+                "min": 13.0,
+                "max": 30.0
+            }
+        ],
+        "spectral_entropy": null,
+        "selected_se_bands": null,
+        "ctm": null,
+        "ctm_r": null,
+        "sample_entropy": null,
+        "sample_entropy_r": null,
+        "sample_entropy_m": null,
+        "multiscale_sample_entropy": null,
+        "multiscale_sample_entropy_r": null,
+        "multiscale_sample_entropy_m": null,
+        "multiscale_sample_entropy_scale": null,
+        "lzc": null,
+        "multiscale_lzc": null,
+        "multiscale_lzc_scales": null,
+        "iac": null,
+        "ort_iac": null,
+        "aec": null,
+        "ort_aec": null,
+        "pli": null,
+        "plv": null,
+        "wpli": null
+    }
+}

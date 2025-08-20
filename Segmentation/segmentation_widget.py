@@ -68,6 +68,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.winBox_2 = self.findChild(QtWidgets.QSpinBox, "winBox_2")
 
         # Normalization
+        self.normLabel = self.findChild(QtWidgets.QLabel, "normLabel")
         self.normCBox = self.findChild(QtWidgets.QCheckBox, "normCBox")
         self.zscoreRButton = self.findChild(QtWidgets.QRadioButton, "zscoreRButton")
         self.dcRButton = self.findChild(QtWidgets.QRadioButton, "dcRButton")
@@ -227,6 +228,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             self.show_condition_widgets()
             self.reset_trial_params()
             self._post_toggle_updates()
+            self.normLabel.setText('- Over condition segment')
         # Event
         if self.eventRButton.isChecked():
             self.conditionRButton.setChecked(False)
@@ -234,6 +236,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             self.show_event_widgets()
             self.reset_win_params()
             self._post_toggle_updates()
+            self.normLabel.setText('- Over event window')
         self.toggle_normalization_events_controls(self.normCBox.isChecked())
 
     # def handle_condition_toggle(self):

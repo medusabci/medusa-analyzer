@@ -152,12 +152,7 @@
         <item>
          <widget class="QDoubleSpinBox" name="minbroadBox">
           <property name="styleSheet">
-           <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
          </widget>
         </item>
@@ -171,12 +166,7 @@
         <item>
          <widget class="QDoubleSpinBox" name="maxbroadBox">
           <property name="styleSheet">
-           <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+           <string notr="true"/>
           </property>
           <property name="maximum">
            <double>9999.989999999999782</double>
@@ -406,11 +396,7 @@
                 <item>
                  <widget class="QDoubleSpinBox" name="minfreqnotchBox">
                   <property name="styleSheet">
-                   <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
+                   <string notr="true">
 
 </string>
                   </property>
@@ -435,12 +421,7 @@
                 <item>
                  <widget class="QDoubleSpinBox" name="maxfreqnotchBox">
                   <property name="styleSheet">
-                   <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+                   <string notr="true"/>
                   </property>
                   <property name="minimum">
                    <double>0.200000000000000</double>
@@ -463,12 +444,7 @@
                 <item>
                  <widget class="QSpinBox" name="orderNotchBox">
                   <property name="styleSheet">
-                   <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+                   <string notr="true"/>
                   </property>
                   <property name="minimum">
                    <number>1</number>
@@ -592,12 +568,7 @@
                 <item>
                  <widget class="QDoubleSpinBox" name="minfreqbpBox">
                   <property name="styleSheet">
-                   <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+                   <string notr="true"/>
                   </property>
                   <property name="minimum">
                    <double>0.100000000000000</double>
@@ -620,12 +591,7 @@
                 <item>
                  <widget class="QDoubleSpinBox" name="maxfreqbpBox">
                   <property name="styleSheet">
-                   <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+                   <string notr="true"/>
                   </property>
                   <property name="minimum">
                    <double>0.200000000000000</double>
@@ -648,12 +614,7 @@
                 <item>
                  <widget class="QSpinBox" name="orderbpBox">
                   <property name="styleSheet">
-                   <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
-    width: 0;
-    height: 0;
-    border: none;
-}
-</string>
+                   <string notr="true"/>
                   </property>
                   <property name="minimum">
                    <number>1</number>
