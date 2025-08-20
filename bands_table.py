@@ -149,6 +149,7 @@ class BandTable(QtWidgets.QDialog):
         self.acceptButton.clicked.connect(self._accept_and_close)
         self.bandsTable.cellChanged.connect(self._handle_cell_change)
         self.selectallButton.clicked.connect(self._select_all_bands)
+        self.bandsTable.cellDoubleClicked.connect(self.warn_deactivate_broadband)
 
     def _setup_table(self, min_broad=None, max_broad=None, preserve_broadband=False):
         if min_broad is not None:
@@ -222,13 +223,7 @@ class BandTable(QtWidgets.QDialog):
         # Enabled
         checkbox = QtWidgets.QCheckBox()
         checkbox.setChecked(True)
-        checkbox.setEnabled(True)
-        def block_uncheck(state):
-            if state == Qt.Unchecked:
-                QtWidgets.QMessageBox.warning(self, "Not allowed", "Broadband cannot be disabled.")
-                checkbox.setChecked(True)
-        checkbox.stateChanged.connect(block_uncheck)
-
+        checkbox.setVisible(False)
         self.bandsTable.setCellWidget(row, 0, self._center_widget(checkbox))
 
         # Name - not editable
@@ -431,3 +426,11 @@ class BandTable(QtWidgets.QDialog):
             except ValueError:
                 return self.min_broad if col == 2 else self.max_broad
         return self.min_broad if col == 2 else self.max_broad
+
+    def warn_deactivate_broadband(self, row, column):
+        if row == 0 and column == 0:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Warning",
+                f"Broadband cannot be deactivated"
+            )

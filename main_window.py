@@ -46,6 +46,7 @@ class MainWindow(QtWidgets.QMainWindow):
         uic.loadUi("main_window.ui", self)
         self.selected_files = []
         self.sampling_frequency = 0
+        self.num_chann = 0
         self.min_b = 0.5
         self.max_b = 70
 
@@ -263,6 +264,7 @@ class MainWindow(QtWidgets.QMainWindow):
             - At least one condition must be selected when condition-based segmentation is active.
             - If normalization is enabled, at least one type (z-score or DC) must be selected.
             - Event-related windows (analysis and baseline) must have valid min < max values.
+            - At least one condition and one event must be selected if event-based segmentation is active.
             - At least one condition and one event must be selected if event-based segmentation is active.
 
             Side Effects:

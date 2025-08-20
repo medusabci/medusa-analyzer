@@ -1,8 +1,7 @@
 from PyQt5 import QtWidgets, uic, QtCore
 from Segmentation.utils import extract_condition_events
 from PyQt5.QtCore import QStringListModel
-# from collections import Counter
-
+from scipy.stats import norm
 class SegmentationWidget(QtWidgets.QWidget):
     """
         Main windget element. Manages the  segmentation configuration of the data. Includes selection of signal markers
@@ -84,7 +83,8 @@ class SegmentationWidget(QtWidgets.QWidget):
         # Thresholding
         self.thresCBox = self.findChild(QtWidgets.QCheckBox, "thresCBox")
         self.threskLabel = self.findChild(QtWidgets.QLabel, "threskLabel")
-        self.threskBox = self.findChild(QtWidgets.QSpinBox, "threskBox")
+        self.threskBox = self.findChild(QtWidgets.QDoubleSpinBox, "threskBox")
+        self.threskLabelaux = self.findChild(QtWidgets.QLabel, "threskLabelaux")
         self.thressampLabel = self.findChild(QtWidgets.QLabel, "thressampLabel")
         self.thressampBox = self.findChild(QtWidgets.QSpinBox, "thressampBox")
         self.threschanLabel = self.findChild(QtWidgets.QLabel, "threschanLabel")
@@ -114,6 +114,10 @@ class SegmentationWidget(QtWidgets.QWidget):
         # self.winBox_2.editingFinished.connect(self.validate_window_interval)
         self.eventList.setEnabled(False)
         self.conditionList.setEnabled(False)
+        self.trialBox.editingFinished.connect(self.update_max_samples)
+        self.winBox_1.editingFinished.connect(self.update_max_samples)
+        self.winBox_2.editingFinished.connect(self.update_max_samples)
+
 
         # Normalization
         self.normCBox.toggled.connect(self.toggle_normalization_events_controls)
@@ -122,6 +126,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         # Thresholding
         self.thresCBox.toggled.connect(self.toggle_threshold_controls)
         self.threshelButton.clicked.connect(self.show_threshold_help)
+        self.threskBox.editingFinished.connect(self.set_sigma_percent)
         # Set initial values for threshold spin boxes
         self.threskBox.setValue(self.threskBox.minimum())
         self.thressampBox.setValue(self.thressampBox.minimum())
@@ -135,7 +140,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             self.zscoreRButton, self.dcRButton,
             self.baselineLabel_1, self.baselineCBox_1,
             self.baselineLabel_2, self.baselineCBox_2,
-            self.threskLabel, self.threskBox,
+            self.threskLabel, self.threskBox, self.threskLabelaux,
             self.thressampLabel, self.thressampBox,
             self.threschanLabel, self.threschanBox,
             self.threshelButton, self.newfsLabel, self.resamplefsBox,
@@ -311,6 +316,8 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.eventList.setEnabled(enabled)
         self.availableeventsLabel.setEnabled(enabled)
         self.eventLabel.setEnabled(enabled)
+        self.conditionList.setEnabled(enabled)
+        self.conditionLabel.setEnabled(enabled)
     def _set_condition_widgets_enabled(self, enabled: bool):
         self.conditionList.setEnabled(enabled)
         self.availableconditionsLabel.setEnabled(enabled)
@@ -359,7 +366,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         widgets_to_hide = [
             self.resamplefsBox, self.newfsLabel,
             self.threskBox, self.threschanBox, self.thressampBox,
-            self.threskLabel, self.threschanLabel, self.thressampLabel,
+            self.threskLabel, self.threskLabelaux, self.threschanLabel, self.thressampLabel,
             self.threshelButton
         ]
         for w in widgets_to_hide:
@@ -388,7 +395,8 @@ class SegmentationWidget(QtWidgets.QWidget):
             Show or hide threshold-related controls based on the checkbox state.
             Resets spinboxes to minimum values when disabled.
         """
-        for w in [self.threskLabel, self.threskBox, self.thressampLabel, self.thressampBox, self.threschanLabel,
+
+        for w in [self.threskLabel, self.threskBox, self.threskLabelaux, self.thressampLabel, self.thressampBox, self.threschanLabel,
                    self.threschanBox, self.threshelButton]:
             w.setVisible(checked)
 
@@ -516,6 +524,18 @@ class SegmentationWidget(QtWidgets.QWidget):
     #         for box in (self.baselineCBox_1, self.baselineCBox_2):
     #             box.blockSignals(False)
 
+    def update_max_samples(self):
+        if self.conditionRButton.isChecked():
+            max_samples = (self.trialBox.value()/1000) * self.main_window.sampling_frequency
+        else:
+            max_samples = -self.winBox_1.value() + self.winBox_2.value()
+            max_samples = (max_samples/1000) * self.main_window.sampling_frequency
+        self.thressampBox.setMaximum(int(max_samples))
+
+    def set_sigma_percent(self):
+        percent = norm.cdf(self.threskBox.value()) - norm.cdf(-self.threskBox.value())
+        percent *= 100
+        self.threskLabelaux.setText(f"{percent:.2f}%")
 
     def get_segmentation_config(self):
         """

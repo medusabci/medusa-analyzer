@@ -417,6 +417,9 @@
                   <property name="minimum">
                    <double>0.100000000000000</double>
                   </property>
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
+                  </property>
                   <property name="value">
                    <double>49.000000000000000</double>
                   </property>
@@ -441,6 +444,9 @@
                   </property>
                   <property name="minimum">
                    <double>0.200000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
                   </property>
                   <property name="value">
                    <double>51.000000000000000</double>
@@ -596,6 +602,9 @@
                   <property name="minimum">
                    <double>0.100000000000000</double>
                   </property>
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
+                  </property>
                   <property name="value">
                    <double>1.000000000000000</double>
                   </property>
@@ -622,7 +631,7 @@
                    <double>0.200000000000000</double>
                   </property>
                   <property name="maximum">
-                   <double>999.990000000000009</double>
+                   <double>9999.989999999999782</double>
                   </property>
                   <property name="value">
                    <double>70.000000000000000</double>
