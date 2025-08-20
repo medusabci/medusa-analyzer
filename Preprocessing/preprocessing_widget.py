@@ -301,17 +301,22 @@ class PreprocessingWidget(QtWidgets.QWidget):
             Function to update the text with the number of selected files.
             IMPORTANT: Enables or disables the checkbox and the "Next" button depending on whether files are selected or not.
         """
-
         count = len(self.selected_files)
 
         # Update text
         self.selectLabel.setText(f"{count} selected files")
+
         # Sync with main_window
         self.main_window.selected_files = self.selected_files.copy()
         self.main_window.segmentation_widget.reset_segmentation_state()
+
+
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
-            self.main_window.sampling_frequency = components.Recording.load(self.selected_files[0]).eeg.fs
+            eeg = components.Recording.load(self.selected_files[0])
+            self.main_window.sampling_frequency = eeg.eeg.fs
+            self.main_window.num_chann = len(eeg.eeg.channel_set.l_cha)
+            self.main_window.segmentation_widget.threschanBox.setMaximum(self.main_window.num_chann)
             [elm.setDisabled(False) for elm in self.element_group]
             self.minbroadBox.setValue(0.5)
             self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
@@ -475,6 +480,20 @@ class PreprocessingWidget(QtWidgets.QWidget):
             min_val = self.minfreqnotchBox.value()
             max_val = self.maxfreqnotchBox.value()
 
+        if max_val > (self.main_window.sampling_frequency/2):
+            QMessageBox.warning(
+                self,
+                f"Invalid values for {filter_type} filter.",
+                f"For {filter_type} filtering, <b>max</b> frequency {max_val} must be lower than <b>fs</b> {self.main_window.sampling_frequency}.",
+            )
+            if filter_type == 'bandpass':
+                self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
+                self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
+            else:
+                self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
+                self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
+            return False
+
         if max_val <= min_val:
             QMessageBox.warning(
                 self,
@@ -507,6 +526,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             low = self.minfreqbpBox.value()
             high = self.maxfreqbpBox.value() - 1e-6
             numtaps = self.orderbpBox.value()
+
         else:
             # If the checkbox is not selected, redraws the Figure with an empty plot
             if not self.notchCBox.isChecked():

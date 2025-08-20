@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>996</width>
-    <height>872</height>
+    <height>935</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -266,6 +266,12 @@
    </item>
    <item>
     <widget class="QGroupBox" name="signal_markers">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="font">
       <font>
        <pointsize>10</pointsize>
@@ -472,23 +478,40 @@
         </item>
         <item>
          <widget class="QLabel" name="threskLabel">
+          <property name="font">
+           <font>
+            <pointsize>11</pointsize>
+           </font>
+          </property>
           <property name="toolTip">
            <string>Standard deviation multiplier to calculate threshold</string>
           </property>
           <property name="text">
-           <string>k</string>
+           <string>σ</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="threskBox">
+         <widget class="QDoubleSpinBox" name="threskBox">
           <property name="styleSheet">
-           <string notr="true">QSpinBox::up-button, QSpinBox::down-button {
+           <string notr="true">QDoubleSpinBox::up-button, QDoubleSpinBox::down-button {
     width: 0;
     height: 0;
     border: none;
 }
 </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="threskLabelaux">
+          <property name="font">
+           <font>
+            <italic>true</italic>
+           </font>
+          </property>
+          <property name="text">
+           <string>0%</string>
           </property>
          </widget>
         </item>
@@ -543,6 +566,9 @@
           <property name="minimum">
            <number>1</number>
           </property>
+          <property name="maximum">
+           <number>999</number>
+          </property>
          </widget>
         </item>
         <item>
@@ -550,9 +576,12 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>40</width>
+            <width>450</width>
             <height>20</height>
            </size>
           </property>
