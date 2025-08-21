@@ -109,6 +109,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.zscoreRButton.setAutoExclusive(True)
         self.dcRButton.setAutoExclusive(True)
 
+
         # Conditions/Events
         self.conditionRButton.clicked.connect(self.handle_segmentation_toggle)
         self.eventRButton.clicked.connect(self.handle_segmentation_toggle)
