@@ -114,6 +114,13 @@
        </layout>
       </item>
       <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Please, </string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="trials">
         <item>
          <widget class="QLabel" name="trialLabel">
@@ -145,7 +152,7 @@
            <bool>true</bool>
           </property>
           <property name="minimum">
-           <number>1</number>
+           <number>1000</number>
           </property>
           <property name="maximum">
            <number>100000</number>
@@ -201,6 +208,9 @@
           <property name="singleStep">
            <number>100</number>
           </property>
+          <property name="value">
+           <number>-100</number>
+          </property>
          </widget>
         </item>
         <item>
@@ -223,6 +233,9 @@
           </property>
           <property name="singleStep">
            <number>100</number>
+          </property>
+          <property name="value">
+           <number>400</number>
           </property>
          </widget>
         </item>
@@ -338,7 +351,7 @@
       </font>
      </property>
      <property name="title">
-      <string>Epoch's parameters</string>
+      <string>Epoch parameters</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_8">
       <item>
@@ -360,11 +373,11 @@
          <widget class="QLabel" name="normLabel">
           <property name="font">
            <font>
-            <italic>true</italic>
+            <italic>false</italic>
            </font>
           </property>
           <property name="text">
-           <string/>
+           <string>- Over condition segment</string>
           </property>
           <property name="margin">
            <number>0</number>
@@ -389,13 +402,16 @@
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer_5">
+         <spacer name="horizontalSpacer_7">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>40</width>
+            <width>20</width>
             <height>20</height>
            </size>
           </property>
@@ -422,6 +438,9 @@
           <property name="maximum">
            <number>10000</number>
           </property>
+          <property name="value">
+           <number>-100</number>
+          </property>
          </widget>
         </item>
         <item>
@@ -447,6 +466,19 @@
           </property>
          </widget>
         </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
        </layout>
       </item>
       <item>
@@ -461,6 +493,13 @@
           </property>
           <property name="text">
            <string>Thresholding</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="thresLabel">
+          <property name="text">
+           <string>- Automatic rejection of noisy epochs</string>
           </property>
          </widget>
         </item>
@@ -492,6 +531,9 @@
           </property>
           <property name="singleStep">
            <double>0.100000000000000</double>
+          </property>
+          <property name="value">
+           <double>2.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -528,6 +570,9 @@
           <property name="maximum">
            <number>9999</number>
           </property>
+          <property name="value">
+           <number>2</number>
+          </property>
          </widget>
         </item>
         <item>
@@ -558,12 +603,9 @@
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeType">
-           <enum>QSizePolicy::Fixed</enum>
-          </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>450</width>
+            <width>40</width>
             <height>20</height>
            </size>
           </property>
@@ -592,6 +634,26 @@
            <string>Average epochs</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="averageLabel">
+          <property name="text">
+           <string>- Average all the epochs of each condition </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -623,6 +685,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="resmapleLabel">
+        <property name="text">
+         <string>- Adjust epochs sampling rate </string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="newfsLabel">
         <property name="text">
          <string>Target sampling frequency</string>
@@ -639,6 +708,9 @@
         </property>
         <property name="maximum">
          <number>9999</number>
+        </property>
+        <property name="value">
+         <number>150</number>
         </property>
        </widget>
       </item>

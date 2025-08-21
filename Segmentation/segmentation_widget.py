@@ -79,9 +79,11 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.baselineCBox_2 = self.findChild(QtWidgets.QSpinBox, "baselineCBox_2")
 
         # Average epochs
+        self.averageLabel = self.findChild(QtWidgets.QLabel, "averageLabel")
         self.averageCBox = self.findChild(QtWidgets.QCheckBox, "averageCBox")
 
         # Thresholding
+        self.thresLabel = self.findChild(QtWidgets.QLabel, "thresLabel")
         self.thresCBox = self.findChild(QtWidgets.QCheckBox, "thresCBox")
         self.threskLabel = self.findChild(QtWidgets.QLabel, "threskLabel")
         self.threskBox = self.findChild(QtWidgets.QDoubleSpinBox, "threskBox")
@@ -93,6 +95,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.threshelButton = self.findChild(QtWidgets.QToolButton, "threshelButton")
 
         # Resampling
+        self.resampleLabel = self.findChild(QtWidgets.QLabel, "resampleLabel")
         self.resampleCBox = self.findChild(QtWidgets.QCheckBox, "resampleCBox")
         self.newfsLabel = self.findChild(QtWidgets.QLabel, "newfsLabel")
         self.resamplefsBox = self.findChild(QtWidgets.QSpinBox, "resamplefsBox")
@@ -109,13 +112,12 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.zscoreRButton.setAutoExclusive(True)
         self.dcRButton.setAutoExclusive(True)
 
-
         # Conditions/Events
         self.conditionRButton.clicked.connect(self.handle_segmentation_toggle)
         self.eventRButton.clicked.connect(self.handle_segmentation_toggle)
         # self.winBox_2.editingFinished.connect(self.validate_window_interval)
         self.eventList.setEnabled(False)
-        self.conditionList.setEnabled(False)
+        # self.conditionList.setEnabled(False)
         self.trialBox.editingFinished.connect(self.update_max_samples)
         self.winBox_1.editingFinished.connect(self.update_max_samples)
         self.winBox_2.editingFinished.connect(self.update_max_samples)
@@ -128,7 +130,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         # Thresholding
         self.thresCBox.toggled.connect(self.toggle_threshold_controls)
         self.threshelButton.clicked.connect(self.show_threshold_help)
-        self.threskBox.editingFinished.connect(self.set_sigma_percent)
+        self.threskBox.valueChanged.connect(self.set_sigma_percent)
         # Set initial values for threshold spin boxes
         self.threskBox.setValue(self.threskBox.minimum())
         self.thressampBox.setValue(self.thressampBox.minimum())
@@ -150,7 +152,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             widget.setVisible(False)
 
         self.update_checkboxes_state()
-
+        self.update_max_samples()
 
     def load_and_display_events_from_file(self, file):
         """
@@ -230,6 +232,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             self.reset_trial_params()
             self._post_toggle_updates()
             self.normLabel.setText('- Over condition segment')
+            self.averageLabel.setText('- Average all the epochs of each condition')
         # Event
         if self.eventRButton.isChecked():
             self.conditionRButton.setChecked(False)
@@ -238,6 +241,7 @@ class SegmentationWidget(QtWidgets.QWidget):
             self.reset_win_params()
             self._post_toggle_updates()
             self.normLabel.setText('- Over event window')
+            self.averageLabel.setText('- Average all the epochs of each event')
         self.toggle_normalization_events_controls(self.normCBox.isChecked())
 
     # def handle_condition_toggle(self):
@@ -326,8 +330,8 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.conditionList.setEnabled(enabled)
         self.availableconditionsLabel.setEnabled(enabled)
         self.conditionLabel.setEnabled(enabled)
-    def hide_all_param_widgets(self):
-        for w in [self.trialLabel, self.trialBox, self.trialstrideLabel, self.trialstrideBox, self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.hide()
+    def hide_event_widgets(self):
+        for w in [self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.hide()
     def show_event_widgets(self):
         for w in [self.winLabel_1, self.winBox_1, self.winLabel_2, self.winBox_2]: w.show()
         for w in [self.trialLabel, self.trialBox, self.trialstrideLabel, self.trialstrideBox]: w.hide()
@@ -348,11 +352,12 @@ class SegmentationWidget(QtWidgets.QWidget):
         - Reset thresholding and resampling controls.
         - Disable 'Next' button.
         """
-        # Disable both RadButtons. To this ende, temporarily disable AutoExclusive is necessary
-        for btn in (self.conditionRButton, self.eventRButton):
-            btn.setAutoExclusive(False)
-            btn.setChecked(False)
-            btn.setAutoExclusive(True)
+        # Disable both RadButtons. To this end, temporarily disable AutoExclusive is necessary
+        # for btn in (self.conditionRButton, self.eventRButton):
+        #     btn.setAutoExclusive(False)
+        #     btn.setChecked(False)
+        #     btn.setAutoExclusive(True)
+        self.conditionRButton.setChecked(True)
 
         # Clear condition and event models
         empty_model = QStringListModel()
@@ -362,7 +367,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         # Reset labels and UI elements
         self.conditionLabel.setText("Conditions: None")
         self.eventLabel.setText("Events: None")
-        self.hide_all_param_widgets()
+        self.hide_event_widgets()
         self.reset_trial_params()
         self.reset_win_params()
 
@@ -403,7 +408,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         for w in [self.threskLabel, self.threskBox, self.threskLabelaux, self.thressampLabel, self.thressampBox, self.threschanLabel,
                    self.threschanBox, self.threshelButton]:
             w.setVisible(checked)
-
+        self.thresLabel.setVisible(not checked)
         if not checked:
             for box in (self.threskBox, self.thressampBox, self.threschanBox):
                 box.setValue(box.minimum())
@@ -422,7 +427,7 @@ class SegmentationWidget(QtWidgets.QWidget):
 
         for w in (self.zscoreRButton, self.dcRButton):
             w.setVisible(checked)
-
+        self.normLabel.setVisible(not checked)
         if checked:
             if self.eventRButton.isChecked():
                 for w in (
@@ -445,6 +450,8 @@ class SegmentationWidget(QtWidgets.QWidget):
         """
         for w in [self.newfsLabel, self.resamplefsBox]:
             w.setVisible(checked)
+        self.resampleLabel.setVisible(not checked)
+
         if not checked:
             self.resamplefsBox.setValue(self.resamplefsBox.minimum())
 

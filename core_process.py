@@ -22,18 +22,20 @@ def run_pipeline(self, settings_dic, total_tasks):
             Filtering and CAR
         """
         if cfg.get('bandpass') and None not in (cfg.get('bp_min'), cfg.get('bp_max'), cfg.get('bp_order')):
-            signal = medusa.FIRFilter(cfg['bp_order'], [cfg['bp_min'], cfg['bp_max']], 'bandpass').fit_transform(
+            signal = medusa.FIRFilter(cfg['bp_order'], [cfg['bp_min'], cfg['bp_max']], 'bandpass', cfg['bp_win']).fit_transform(
                 signal, fs)
         if cfg.get('notch') and None not in (cfg.get('notch_min'), cfg.get('notch_max'), cfg.get('notch_order')):
             signal = medusa.FIRFilter(cfg['notch_order'], [cfg['notch_min'], cfg['notch_max']],
-                                      'bandstop').fit_transform(signal, fs)
+                                      'bandstop', cfg['notch_win']).fit_transform(signal, fs)
         return medusa.car(signal) if cfg.get('car') else signal
 
-    def band_segmentation(signal, bp_min, bp_max, fs):
+    def band_segmentation(signal, bp_min, bp_max, fs, cfg):
         """
             Band segmentation
         """
-        bp_filter = medusa.FIRFilter(1000, [bp_min, bp_max], 'bandpass')
+        order = 1000 if cfg.get('bandpass') is None else cfg.get('bp_order')
+        win = 'hamming' if cfg.get('bandpass') is None else cfg.get('bp_win')
+        bp_filter = medusa.FIRFilter(order, [bp_min, bp_max], 'bandpass', window=win)
         signal = bp_filter.fit_transform(signal, fs)
         return signal
 
@@ -391,12 +393,12 @@ def run_pipeline(self, settings_dic, total_tasks):
             for j, band in enumerate(bands):
                 band_name = band.get('name', 'unknown')
                 bp_min, bp_max = band.get('min'), band.get('max')
+                cfg = {**settings_dic['preprocessing']}
 
                 # Preprocessing
                 if settings_dic['preprocessing'].get('apply_preprocessing'):
-                    cfg = {**settings_dic['preprocessing']}
                     if band_seg:
-                        cfg.update({'bp_min': bp_min, 'bp_max': bp_max, 'bp_order': 1000})
+                        cfg.update({'bp_min': bp_min, 'bp_max': bp_max})
                         signal_to_process = current_signal.copy()
                     else:
                         signal_to_process = current_signal
@@ -406,7 +408,7 @@ def run_pipeline(self, settings_dic, total_tasks):
                     save_outputs(deepcopy(data), base_name, band_name, 'prep')
                 else:  # If no preprocessing, apply only the band segmentation (if apply)
                     if band_seg:
-                        processed_signal = band_segmentation(current_signal.copy(), bp_min, bp_max, fs)
+                        processed_signal = band_segmentation(current_signal.copy(), bp_min, bp_max, fs, cfg)
                         data.eeg.signal = processed_signal
                     else:
                         processed_signal = current_signal

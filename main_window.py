@@ -93,7 +93,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stackedWidget.insertWidget(0, self.preproc_widget)
         # Segmentation
         self.segmentation_widget = SegmentationWidget(self)
-        self.segmentation_widget.hide_all_param_widgets()
+        self.segmentation_widget.hide_event_widgets()
         self.stackedWidget.insertWidget(1, self.segmentation_widget)
         # Parameters
         self.parameters_widget = ParametersWidget(self)
