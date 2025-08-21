@@ -107,6 +107,10 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.maxfreqnotchBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqnotchBox")
         self.orderNotchLabel = self.findChild(QtWidgets.QLabel, "orderNotchLabel")
         self.orderNotchBox = self.findChild(QtWidgets.QSpinBox, "orderNotchBox")
+        self.winnotchLabel = self.findChild(QtWidgets.QLabel, "winnotchLabel")
+        self.winnotchBox = self.findChild(QtWidgets.QComboBox, "winnotchBox")
+        self.winbpLabel = self.findChild(QtWidgets.QLabel, "winbpLabel")
+        self.winbpBox = self.findChild(QtWidgets.QComboBox, "winbpBox")
         self.notchPlotWidget = self.findChild(QtWidgets.QWidget, "notchPlotWidget")
         self.drawnotchButton = self.findChild(QtWidgets.QPushButton, "drawnotchButton")
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
@@ -205,10 +209,10 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Hide elements
         for w in [
-            self.notchLabel, self.notchCBox, self.notchminLabel, self.minfreqnotchBox, self.notchmaxLabel, self.maxfreqnotchBox, self.orderNotchLabel, self.orderNotchBox,
-            self.bpLabel, self.bpCBox, self.bpminLabel, self.minfreqbpBox, self.bpmaxLabel, self.maxfreqbpBox, self.orderbpLabel, self.orderbpBox,
+            self.notchLabel, self.notchCBox, self.notchminLabel, self.minfreqnotchBox, self.notchmaxLabel, self.maxfreqnotchBox, self.winnotchLabel, self.winnotchBox, self.orderNotchLabel, self.orderNotchBox,
+            self.bpLabel, self.bpCBox, self.bpminLabel, self.minfreqbpBox, self.bpmaxLabel, self.maxfreqbpBox, self.orderbpLabel, self.orderbpBox, self.winbpLabel, self.winbpBox,
             self.carLabel, self.carCBox, self.notchPlotWidget, self.bandpassPlotWidget, self.bpgroupBox, self.cargroupBox,
-            self.notchgroupBox, self.drawnotchButton, self.drawbpButton
+            self.notchgroupBox, self.drawnotchButton, self.drawbpButton,
         ]:
             w.setVisible(False)
 
@@ -437,12 +441,15 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.orderNotchLabel.setVisible(checked)
         self.orderNotchBox.setVisible(checked)
         self.drawnotchButton.setVisible(checked)
+        self.winnotchBox.setVisible(checked)
+        self.winnotchLabel.setVisible(checked)
 
         # Reset default values
         if not checked:
             self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
             self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
             self.orderNotchBox.setValue(self.defaults["ordernotch"])
+            self.winnotchBox.setCurrentIndex(9)
 
 
     def toggle_bandpass_controls(self, checked):
@@ -526,6 +533,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             low = self.minfreqbpBox.value()
             high = self.maxfreqbpBox.value() - 1e-6
             numtaps = self.orderbpBox.value()
+            win = self.winbpBox.currentText()
 
         else:
             # If the checkbox is not selected, redraws the Figure with an empty plot
@@ -537,6 +545,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
             low = self.minfreqnotchBox.value()
             high = self.maxfreqnotchBox.value()
             numtaps = self.orderNotchBox.value()
+            win = self.winnotchBox.currentText()
+
 
         if not self.validate_filter_bounds(filter_type):
             return
@@ -546,7 +556,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             numtaps += 1
             self.orderNotchBox.setValue(self.orderNotchBox.value() + 1)
         fs = self.main_window.sampling_frequency
-        b = firwin(numtaps, [low, high], pass_zero=filter_type=='notch', fs=fs)
+        b = firwin(numtaps, [low, high], pass_zero=filter_type=='notch', fs=fs, window=win)
         w, h = freqz(b, worN=1024, fs=fs)
 
         # Create the plot
@@ -712,11 +722,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
             "notch_min": self.minfreqnotchBox.value() if self.notchCBox.isChecked() else None,
             "notch_max": self.maxfreqnotchBox.value() if self.notchCBox.isChecked() else None,
             "notch_order": self.orderNotchBox.value() if self.notchCBox.isChecked() else None,
+            "notch_win": self.winnotchBox.currentText() if self.notchCBox.isChecked() else None,
 
             "bandpass": self.bpCBox.isChecked() if self.bpCBox else None,
             "bp_min": self.minfreqbpBox.value() if self.bpCBox.isChecked() else None,
             "bp_max": self.maxfreqbpBox.value() if self.bpCBox.isChecked() else None,
             "bp_order": self.orderbpBox.value() if self.bpCBox.isChecked() else None,
+            "bp_win": self.winbpBox.currentText() if self.bpCBox.isChecked() else None,
 
             "car": self.carCBox.isChecked() if self.carCBox else None,
         }
