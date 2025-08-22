@@ -314,7 +314,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.main_window.selected_files = self.selected_files.copy()
         self.main_window.segmentation_widget.reset_segmentation_state()
 
-
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
             eeg = components.Recording.load(self.selected_files[0])
@@ -326,6 +325,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
             self.minfreqbpBox.setValue(0.5)
             self.maxfreqbpBox.setValue(self.main_window.sampling_frequency/2)
+            self.main_window.segmentation_widget.update_max_samples()
 
         else:
             self.main_window.nextButton.setDisabled(True)
