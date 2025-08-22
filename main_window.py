@@ -249,9 +249,10 @@ class MainWindow(QtWidgets.QMainWindow):
             return False
 
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
-        config = pw.get_preprocessing_config()
-        self.min_b, self.max_b = config["broadband_min"], config["broadband_max"]
-        print(config)
+        self.preproc_config = pw.get_preprocessing_config()
+        self.min_b, self.max_b = self.preproc_config["broadband_min"], self.preproc_config["broadband_max"]
+        print(self.preproc_config)
+        self.parameters_widget._init_default_bands()
         # self.preproc_widget.set_defaults_from_preprocessing(config)
         return True
 

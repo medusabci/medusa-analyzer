@@ -672,7 +672,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         label = self.findChild(QtWidgets.QLabel, f"bandLabel")
         if label:
             if bands:
-                names = [b["name"] for b in bands]
+                names = [f"{b['name']} ({b['min']}–{b['max']} Hz)" for b in bands]
                 label.setText(", ".join(names))
             else:
                 label.setText("None")

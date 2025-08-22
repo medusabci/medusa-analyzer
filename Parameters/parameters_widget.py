@@ -147,6 +147,17 @@ class ParametersWidget(QtWidgets.QWidget):
             widget.setVisible(False)
         self.aecCBox.toggled.connect(self.toggle_aec)
         self.iacCBox.toggled.connect(self.toggle_iac)
+    #%% DEFAULT VALUES
+        self.defaults = {
+            "psdsegment": self.segmentpsdBox.value(),
+            "psdoverlap": self.overlappsdBox.value(),
+            "ctmradius": self.ctmrBox.value(),
+            "sampm": self.sampenmBox.value(),
+            "sampradius": self.sampenrBox.value(),
+            "multisampmaxscale": self.msampenscaleBox.value(),
+            "multisampm": self.msampenmBox.value(),
+            "multisampradius": self.msampenrBox.value(),
+        }
 
     def toggle_psd(self):
         """
@@ -156,6 +167,9 @@ class ParametersWidget(QtWidgets.QWidget):
         for widget in [self.segmentpsdLabel, self.segmentpsdBox, self.overlappsdLabel, self.overlappsdBox,
                        self.psdcomboBox, self.windowpsdLabel]:
             widget.setVisible(visible)
+        self.segmentpsdBox.setValue(self.defaults["psdsegment"])
+        self.overlappsdBox.setValue(self.defaults["psdoverlap"])
+        self.psdcomboBox.setCurrentIndex(6)
 
     def toggle_relative_power(self):
         """
@@ -169,18 +183,14 @@ class ParametersWidget(QtWidgets.QWidget):
             self.rpLabel.setText("None")
             self.rp_band_editor = None
             self.selected_bands_by_type["rp"] = []
-
-        # if visible:
-        #     msg_box = QtWidgets.QMessageBox(self)
-        #     msg_box.setIcon(QtWidgets.QMessageBox.Warning)
-        #     msg_box.setWindowTitle("Relative Power Warning")
-        #     msg_box.setTextFormat(Qt.RichText)
-        #     msg_box.setText(
-        #         "<b>Relative Power is normalized</b> using the selected broadband range.<br><br>"
-        #         "You can adjust this range in the <i><b>Band segmentation</b></i> section."
-        #     )
-        #     msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        #     msg_box.exec_()
+        else:
+            broadband = {
+                "name": "broadband",
+                "min": self.main_window.preproc_config["broadband_min"],
+                "max": self.main_window.preproc_config["broadband_max"],
+            }
+            self.selected_bands_by_type["rp"] = [broadband]
+            self.rpLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
     def toggle_absolute_power(self):
         """
@@ -193,6 +203,14 @@ class ParametersWidget(QtWidgets.QWidget):
             self.apLabel.setText("None")
             self.ap_band_editor = None
             self.selected_bands_by_type["ap"] = []
+        else:
+            broadband = {
+                "name": "broadband",
+                "min": self.main_window.preproc_config["broadband_min"],
+                "max": self.main_window.preproc_config["broadband_max"],
+            }
+            self.selected_bands_by_type["ap"] = [broadband]
+            self.apLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
     def toggle_median_frequency(self):
         """
@@ -205,6 +223,14 @@ class ParametersWidget(QtWidgets.QWidget):
             self.mfLabel.setText("None")
             self.mf_band_editor = None
             self.selected_bands_by_type["mf"] = []
+        else:
+            broadband = {
+                "name": "broadband",
+                "min": self.main_window.preproc_config["broadband_min"],
+                "max": self.main_window.preproc_config["broadband_max"],
+            }
+            self.selected_bands_by_type["mf"] = [broadband]
+            self.mfLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
     def toggle_spectral_entropy(self):
         """
@@ -217,6 +243,14 @@ class ParametersWidget(QtWidgets.QWidget):
             self.seLabel.setText("None")
             self.se_band_editor = None
             self.selected_bands_by_type["se"] = []
+        else:
+            broadband = {
+                "name": "broadband",
+                "min": self.main_window.preproc_config["broadband_min"],
+                "max": self.main_window.preproc_config["broadband_max"],
+            }
+            self.selected_bands_by_type["se"] = [broadband]
+            self.seLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
     def toggle_ctm(self):
         """
@@ -225,6 +259,7 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.ctmCBox.isChecked()
         for widget in [self.ctmrLabel, self.ctmrBox]:
             widget.setVisible(visible)
+        self.ctmrBox.setValue(self.defaults["ctmradius"])
 
     def toggle_sampen(self):
         """
@@ -233,6 +268,8 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.sampenCBox.isChecked()
         for widget in [self.sampenmLabel, self.sampenmBox, self.sampenrLabel, self.sampenrBox]:
             widget.setVisible(visible)
+        self.sampenmBox.setValue(self.defaults["sampm"])
+        self.sampenrBox.setValue(self.defaults["sampradius"])
 
     def toggle_msampen(self):
         """
@@ -242,6 +279,9 @@ class ParametersWidget(QtWidgets.QWidget):
         for widget in [self.maxscaleLabel, self.msampenscaleBox, self.msampenmLabel, self.msampenmBox,
                        self.msampenrLabel, self.msampenrBox]:
             widget.setVisible(visible)
+        self.msampenscaleBox.setValue(self.defaults["multisampmaxscale"])
+        self.msampenmBox.setValue(self.defaults["multisampm"])
+        self.msampenrBox.setValue(self.defaults["multisampradius"])
 
     def toggle_mlzc(self):
         """
@@ -250,6 +290,7 @@ class ParametersWidget(QtWidgets.QWidget):
         visible = self.mlzcCBox.isChecked()
         for widget in [self.mlzcscalesLabel, self.mlzcEdit]:
             widget.setVisible(visible)
+        self.mlzcEdit.setText('[1, 3, 5]')
 
     def toggle_iac(self):
         """
@@ -293,16 +334,44 @@ class ParametersWidget(QtWidgets.QWidget):
             self.band_table_editors[band_type] = editor
             editor.show()
 
+    def _init_default_bands(self):
+        """
+        Initialize broadband (min_broad–max_broad).
+        """
+        default_band = {
+            "name": "broadband",
+            "min": self.main_window.preproc_config["broadband_min"],
+            "max": self.main_window.preproc_config["broadband_max"],
+        }
+        for band_type in self.selected_bands_by_type.keys():
+            self.selected_bands_by_type[band_type] = [default_band.copy()]
+            label = getattr(self, f"{band_type}Label", None)
+            if label:
+                label.setText(f"broadband ({default_band['min']}–{default_band['max']} Hz)")
+
     # Additional functions for band table management
     def _on_band_table_closed(self, band_type):
         if band_type in self.band_table_editors:
             self.band_table_editors[band_type] = None
 
     def update_band_label(self, band_type, bands):
-        self.selected_bands_by_type[band_type] = bands
+        broadband = {
+            "name": "broadband",
+            "min": self.main_window.preproc_config["broadband_min"],
+            "max": self.main_window.preproc_config["broadband_max"],
+        }
+        print(self.main_window.preproc_config["broadband_max"])
+
+        filtered_bands = [b for b in bands if b["name"] != "broadband"]
+        self.selected_bands_by_type[band_type] = [broadband] + filtered_bands
+
         label = getattr(self, f"{band_type}Label", None)
         if label:
-            label.setText(", ".join(b["name"] for b in bands) if bands else "None")
+            txt = ", ".join(
+                [f"{b['name']} ({b['min']}–{b['max']} Hz)" if b['name'] != "broadband" else f"broadband ({b['min']}–{b['max']} Hz)"
+                 for b in self.selected_bands_by_type[band_type]]
+            )
+            label.setText(txt)
 
     def get_parameters_config(self):
         # Configuration dict
