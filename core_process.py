@@ -21,12 +21,15 @@ def run_pipeline(self, settings_dic, total_tasks):
         """
             Filtering and CAR
         """
+        print('Creo que esto no es un texto: ' +  cfg['bp_win'])
+
+
         if cfg.get('bandpass') and None not in (cfg.get('bp_min'), cfg.get('bp_max'), cfg.get('bp_order')):
-            signal = medusa.FIRFilter(cfg['bp_order'], [cfg['bp_min'], cfg['bp_max']], 'bandpass', cfg['bp_win']).fit_transform(
+            signal = medusa.FIRFilter(cfg['bp_order'], [cfg['bp_min'], cfg['bp_max']], 'bandpass', window=cfg['bp_win']).fit_transform(
                 signal, fs)
         if cfg.get('notch') and None not in (cfg.get('notch_min'), cfg.get('notch_max'), cfg.get('notch_order')):
             signal = medusa.FIRFilter(cfg['notch_order'], [cfg['notch_min'], cfg['notch_max']],
-                                      'bandstop', cfg['notch_win']).fit_transform(signal, fs)
+                                      'bandstop', window=cfg['notch_win']).fit_transform(signal, fs)
         return medusa.car(signal) if cfg.get('car') else signal
 
     def band_segmentation(signal, bp_min, bp_max, fs, cfg):
@@ -274,32 +277,57 @@ def run_pipeline(self, settings_dic, total_tasks):
             params['psd_freq'] = fxx
 
         # RP
-        if settings['parameters'].get('relative_power', False) and (band == 'broadband' or band is None):
+        if settings['parameters'].get('relative_power', False):
             bb = [settings['parameters']['broadband_min'], settings['parameters']['broadband_max']]
             norm_psd = medusa.transforms.normalize_psd(psd, bb, fxx, norm='rel')
             params['norm_psd'] = norm_psd
-            for b in settings['parameters']['selected_rp_bands']:
-                val = medusa.signal_metrics.band_power.band_power(norm_psd, fs, [b['min'], b['max']])
-                params[f"relative_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+            if settings['preprocessing'].get('band_segmentation', False) and (band == 'broadband'): # Band segmentation
+                for b in settings['preprocessing'].get('selected_bands'):
+                    val = medusa.signal_metrics.band_power.band_power(norm_psd, fs, [b.get('min'), b.get('max')])
+                    params[f"relative_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+            else:
+                for b in settings['parameters']['selected_rp_bands']:
+                    val = medusa.signal_metrics.band_power.band_power(norm_psd, fs, [b['min'], b['max']])
+                    params[f"relative_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+
+        # if settings['parameters'].get('relative_power', False) and (band == 'broadband' or band is None):
+        #     bb = [settings['parameters']['broadband_min'], settings['parameters']['broadband_max']]
+        #     norm_psd = medusa.transforms.normalize_psd(psd, bb, fxx, norm='rel')
+        #     params['norm_psd'] = norm_psd
+        #     for b in settings['parameters']['selected_rp_bands']:
+        #         val = medusa.signal_metrics.band_power.band_power(norm_psd, fs, [b['min'], b['max']])
+        #         params[f"relative_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+
+        # # AP, MF, SE
+        # if settings['parameters'].get('absolute_power', False) and (band == 'broadband' or band is None):
+        #     for b in settings['parameters']['selected_ap_bands']:
+        #         val = medusa.signal_metrics.band_power.band_power(psd, fs, [b['min'], b['max']])
+        #         params[f"absolute_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+        #
+        # # MF
+        # if settings['parameters'].get('median_frequency', False) and (band == 'broadband' or band is None):
+        #     for b in settings['parameters']['selected_mf_bands']:
+        #         val = medusa.signal_metrics.median_frequency.median_frequency(psd, fs, [b['min'], b['max']])
+        #         params[f"median_frequency_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+        #
+        # # SE
+        # if settings['parameters'].get('spectral_entropy', False) and (band == 'broadband' or band is None):
+        #     for b in settings['parameters']['selected_se_bands']:
+        #         val = medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd, fs,
+        #                                                                                       [b['min'], b['max']])
+        #         params[f"spectral_entropy_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
 
         # AP
-        if settings['parameters'].get('absolute_power', False) and (band == 'broadband' or band is None):
-            for b in settings['parameters']['selected_ap_bands']:
-                val = medusa.signal_metrics.band_power.band_power(psd, fs, [b['min'], b['max']])
-                params[f"absolute_power_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
-
+        print(band)
+        val = medusa.signal_metrics.band_power.band_power(psd, fs, [band.get('min'), band.get('max')])
+        params[f"absolute_power_{band.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
         # MF
-        if settings['parameters'].get('median_frequency', False) and (band == 'broadband' or band is None):
-            for b in settings['parameters']['selected_mf_bands']:
-                val = medusa.signal_metrics.median_frequency.median_frequency(psd, fs, [b['min'], b['max']])
-                params[f"median_frequency_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
-
+        val = medusa.signal_metrics.median_frequency.median_frequency(psd, fs, [band.get('min'), band.get('max')])
+        params[f"median_frequency_{band.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
         # SE
-        if settings['parameters'].get('spectral_entropy', False) and (band == 'broadband' or band is None):
-            for b in settings['parameters']['selected_se_bands']:
-                val = medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd, fs,
-                                                                                              [b['min'], b['max']])
-                params[f"spectral_entropy_{b.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
+        val = medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd, fs,
+                                                                                      [band.get('min'), band.get('max')])
+        params[f"spectral_entropy_{band.get('name', 'unknown')}"] = np.nanmean(val, axis=0) if avg else val
 
         # Nonlinear and connectivity
         param_map = {

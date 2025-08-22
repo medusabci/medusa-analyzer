@@ -84,7 +84,7 @@ class SaveWidget(QtWidgets.QWidget):
 
         try:
             self.log_message(f"Saving JSON in: {self.json_path}")
-            os.makedirs(self.json_path, exist_ok=True)  # Create the folder if it do not exist
+            os.makedirs(self.selected_folder, exist_ok=True)  # Create the folder if it do not exist
             with open(self.json_path, "w") as f:
                 json.dump(self.settings_dic, f, indent=4)
         except Exception as e:

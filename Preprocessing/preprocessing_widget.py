@@ -467,6 +467,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.orderbpLabel.setVisible(checked)
         self.orderbpBox.setVisible(checked)
         self.drawbpButton.setVisible(checked)
+        self.winbpLabel.setVisible(checked)
+        self.winbpBox.setVisible(checked)
 
         # Reset default values
         if not checked:

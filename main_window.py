@@ -351,12 +351,6 @@ class MainWindow(QtWidgets.QMainWindow):
         checks = [
             (pw.rpCBox.isChecked() and pw.rpLabel.text() == "None", "Relative Power Configuration Missing",
              "Please define at least one frequency band to enable relative power analysis."),
-            (pw.apCBox.isChecked() and pw.apLabel.text() == "None", "Absolute Power Configuration Missing",
-             "Please define at least one frequency band to enable absolute power analysis."),
-            (pw.mfCBox.isChecked() and pw.mfLabel.text() == "None", "Median Frequency Configuration Missing",
-             "Please define at least one target band to enable median frequency analysis."),
-            (pw.seCBox.isChecked() and pw.seLabel.text() == "None", "Spectral Entropy Configuration Missing",
-             "Please define at least one target band to enable spectral entropy analysis."),
         ]
         for cond, title, msg in checks:
             if cond:
