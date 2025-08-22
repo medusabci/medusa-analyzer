@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1115</width>
+    <width>1143</width>
     <height>982</height>
    </rect>
   </property>
@@ -870,7 +870,7 @@
       </size>
      </property>
      <property name="title">
-      <string>Band Segmentation</string>
+      <string>Band Filtering</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,1">
       <property name="sizeConstraint">
@@ -894,7 +894,14 @@
            </font>
           </property>
           <property name="text">
-           <string>Band Segmentation</string>
+           <string>Band Filtering</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>- Filter signal into frequency bands to compute band-specific parameter</string>
           </property>
          </widget>
         </item>
@@ -939,19 +946,6 @@
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer_48">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
          <widget class="QLabel" name="selectedbandsLabel">
           <property name="text">
            <string>Selected bands</string>
@@ -971,6 +965,19 @@
            <string>None</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_48">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>

@@ -113,7 +113,7 @@ def run_pipeline(self, settings_dic, total_tasks):
 
         # For each condition...
         for cond in selected_conditions:
-            if cond == 'null':
+            if cond == 'no-condition':
                 epoched = medusa.get_epochs(current_signal, trial_len, stride=trial_stride, norm=norm_type)
             else:
                 cond_key = data.marks.app_settings['conditions'][cond]['label']
@@ -185,7 +185,7 @@ def run_pipeline(self, settings_dic, total_tasks):
         # For each condition and event
         for cond in selected_conditions:
             for evt in selected_events:
-                if cond == 'null':
+                if cond == 'no-condition':
                     evt_key = data.marks.app_settings['events'][evt]['label']
                     onsets = np.array(data.marks.events_times)[np.array(data.marks.events_labels) == evt_key]
                     onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
@@ -381,6 +381,8 @@ def run_pipeline(self, settings_dic, total_tasks):
             data = medusa.components.Recording.load(file)
             current_signal = data.eeg.signal
             fs = data.eeg.fs
+            if fs != settings_dic['preprocessing']['fs']:
+                raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
             band_seg = settings_dic['preprocessing'].get('band_segmentation', False)  #
             segmentation_type = settings_dic['segmentation']['segmentation_type']
             norm = settings_dic['segmentation']['norm'] or None

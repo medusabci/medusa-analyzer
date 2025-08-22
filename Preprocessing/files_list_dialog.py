@@ -1,4 +1,5 @@
 from PyQt5 import QtWidgets, uic
+from PyQt5.QtCore import Qt
 import os
 
 class FilesListDialog(QtWidgets.QDialog):
@@ -7,9 +8,14 @@ class FilesListDialog(QtWidgets.QDialog):
         ui_path = os.path.join(os.path.dirname(__file__), "files_list.ui")
         uic.loadUi(ui_path, self)
 
+        # Remove the "?" button
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+
+        # Change the title
+        self.setWindowTitle("List of Files")
+
         # Define variables
         self.preprocessing_widget = preprocessing_widget
-
 
         # --- GET ELEMENTS FROM UI MODULE ---
         self.filelistWidget = self.findChild(QtWidgets.QListWidget, "filelistWidget")
