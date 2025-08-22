@@ -114,13 +114,6 @@
        </layout>
       </item>
       <item>
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Please, </string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <layout class="QHBoxLayout" name="trials">
         <item>
          <widget class="QLabel" name="trialLabel">
@@ -388,16 +381,16 @@
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="zscoreRButton">
+         <widget class="QRadioButton" name="dcRButton">
           <property name="text">
-           <string>Z-score</string>
+           <string>Mean</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QRadioButton" name="dcRButton">
+         <widget class="QRadioButton" name="zscoreRButton">
           <property name="text">
-           <string>DC</string>
+           <string>Mean + STD</string>
           </property>
          </widget>
         </item>

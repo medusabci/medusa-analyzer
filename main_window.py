@@ -44,6 +44,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("main_window.ui", self)
+        self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
         self.selected_files = []
         self.sampling_frequency = 0
         self.num_chann = 0
@@ -409,6 +410,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.nextButton.setEnabled(True)
         else:
             print("Pipeline failed. nextButton will remain disabled.")
+            self.save_widget.progressBar.setValue(0)
             self.nextButton.setEnabled(False)
 
     def _warn(self, title, message):

@@ -162,7 +162,7 @@ def recording_to_dict(rec):
     if null_times.size > 0:
         if null_times.ndim == 1:
             null_times = null_times.reshape(1, -1)
-        conditions_names.extend(['null'] * len(null_times))
+        conditions_names.extend(['no-condition'] * len(null_times))
         conditions_times = np.concatenate((conditions_times, null_times), axis=0)
     sort_idx = np.argsort(conditions_times[:, 0])
     conditions_times = conditions_times[sort_idx]
@@ -184,7 +184,7 @@ def recording_to_dict(rec):
     condition_event_str = []
     for event in condition_event.T:
         if not np.any(event):
-            condition_event_str.append('null')
+            condition_event_str.append('no-condition')
         else:
             condition_event_str.append(np.array(conditions['conditions_names'])[event].item())
     condition_event = condition_event_str
@@ -205,7 +205,7 @@ def recording_to_dict(rec):
 def get_null_condition_times(conditions_times, whole_interval):
     """
     Get time intervals that are not covered by any condition.
-    If no conditions exist, the entire interval is considered 'null'.
+    If no conditions exist, the entire interval is considered 'no-condition'.
     """
     gaps = []
 

@@ -84,6 +84,7 @@ class SaveWidget(QtWidgets.QWidget):
 
         try:
             self.log_message(f"Saving JSON in: {self.json_path}")
+            os.makedirs(self.json_path, exist_ok=True)  # Create the folder if it do not exist
             with open(self.json_path, "w") as f:
                 json.dump(self.settings_dic, f, indent=4)
         except Exception as e:
@@ -99,10 +100,8 @@ class SaveWidget(QtWidgets.QWidget):
             folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
             if not folder:
                 return  # User cancelled
-
             if os.listdir(folder):
-                QtWidgets.QMessageBox.warning(self, "Error",
-                                              "The selected folder is not empty. Please select an empty folder.")
+                QtWidgets.QMessageBox.warning(self, "Error", "The selected folder is not empty. Please select an empty folder.")
             else:
                 self.selected_folder = folder
                 self.selectfolderLabel.setText(folder)

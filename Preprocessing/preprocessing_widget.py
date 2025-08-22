@@ -704,6 +704,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             Function that creates a dictionary with preprocessing configurations.
         """
         config = {
+            "fs": self.main_window.sampling_frequency,
             "band_segmentation": True if self.bandCBox.isChecked() else None,
             "broadband_min": self.minbroadBox.value(),
             "broadband_max": self.maxbroadBox.value(),
