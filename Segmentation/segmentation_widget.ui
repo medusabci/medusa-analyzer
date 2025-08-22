@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>995</width>
+    <width>1023</width>
     <height>935</height>
    </rect>
   </property>
@@ -685,7 +685,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="resmapleLabel">
+       <widget class="QLabel" name="resampleLabel">
         <property name="text">
          <string>- Adjust epochs sampling rate </string>
         </property>

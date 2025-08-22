@@ -131,13 +131,24 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.thresCBox.toggled.connect(self.toggle_threshold_controls)
         self.threshelButton.clicked.connect(self.show_threshold_help)
         self.threskBox.valueChanged.connect(self.set_sigma_percent)
-        # Set initial values for threshold spin boxes
-        self.threskBox.setValue(self.threskBox.minimum())
-        self.thressampBox.setValue(self.thressampBox.minimum())
-        self.threschanBox.setValue(self.threschanBox.minimum())
 
         # Resample
         self.resampleCBox.toggled.connect(self.toggle_resample_controls)
+
+        self.defaults = {
+            "triallength": self.trialBox.value(),
+            "trialstride": self.trialstrideBox.value(),
+            "windowbox1": self.winBox_1.value(),
+            "windowbox2": self.winBox_2.value(),
+            "baselinewin1": self.baselineCBox_1.value(),
+            "baselinewin2": self.baselineCBox_2.value(),
+            "threshold": self.threskBox.value(),
+            "thressamples": self.thressampBox.value(),
+            "threschannels": self.threschanBox.value(),
+            "resamplefs": self.resamplefsBox.value(),
+        }
+
+        print(self.defaults)
 
         # Hide advanced options by default
         for widget in [
@@ -352,11 +363,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         - Reset thresholding and resampling controls.
         - Disable 'Next' button.
         """
-        # Disable both RadButtons. To this end, temporarily disable AutoExclusive is necessary
-        # for btn in (self.conditionRButton, self.eventRButton):
-        #     btn.setAutoExclusive(False)
-        #     btn.setChecked(False)
-        #     btn.setAutoExclusive(True)
+
         self.conditionRButton.setChecked(True)
 
         # Clear condition and event models
@@ -384,19 +391,23 @@ class SegmentationWidget(QtWidgets.QWidget):
         for checkbox in [self.thresCBox, self.resampleCBox, self.normCBox, self.averageCBox]:
             checkbox.setChecked(False)
 
-        # Reset spinbox values to minimum
-        for spinbox in [self.resamplefsBox, self.threskBox, self.threschanBox, self.thressampBox]:
-            spinbox.setValue(spinbox.minimum())
+        # Reset spinbox values to default
+        self.threskBox.setValue(self.defaults["threshold"])
+        self.threschanBox.setValue(self.defaults["threschannels"])
+        self.thressampBox.setValue(self.defaults["thressamples"])
+        self.resamplefsBox.setValue(self.defaults["resamplefs"])
 
         # Disable the Next button and update checkboxes states accordingly
         self.update_next_button_state()
         self.update_checkboxes_state()
+
     # Helpers to reset SpinBoxes values
     def reset_trial_params(self):
-        self.trialBox.setValue(self.trialBox.minimum())
+        self.trialBox.setValue(self.defaults["triallength"])
+        self.trialstrideBox.setValue(self.defaults["trialstride"])
     def reset_win_params(self):
-        self.winBox_1.setValue(0)
-        self.winBox_2.setValue(0)
+        self.winBox_1.setValue(self.defaults["windowbox1"])
+        self.winBox_2.setValue(self.defaults["windowbox2"])
 
 
     def toggle_threshold_controls(self, checked):
@@ -410,8 +421,9 @@ class SegmentationWidget(QtWidgets.QWidget):
             w.setVisible(checked)
         self.thresLabel.setVisible(not checked)
         if not checked:
-            for box in (self.threskBox, self.thressampBox, self.threschanBox):
-                box.setValue(box.minimum())
+            self.threskBox.setValue(self.defaults["threshold"])
+            self.thressampBox.setValue(self.defaults["thressamples"])
+            self.threschanBox.setValue(self.defaults["threschannels"])
 
 
     def toggle_normalization_events_controls(self, checked):
@@ -422,8 +434,8 @@ class SegmentationWidget(QtWidgets.QWidget):
         def reset_baseline():
             for w in (self.baselineLabel_1, self.baselineLabel_2, self.baselineCBox_1, self.baselineCBox_2):
                 w.setVisible(False)
-            self.baselineCBox_1.setValue(0)
-            self.baselineCBox_2.setValue(0)
+            self.baselineCBox_1.setValue(self.defaults["baselinewin1"])
+            self.baselineCBox_2.setValue(self.defaults["baselinewin2"])
 
         for w in (self.zscoreRButton, self.dcRButton):
             w.setVisible(checked)
@@ -453,7 +465,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         self.resampleLabel.setVisible(not checked)
 
         if not checked:
-            self.resamplefsBox.setValue(self.resamplefsBox.minimum())
+            self.resamplefsBox.setValue(self.defaults["resamplefs"])
 
 
     def show_threshold_help(self):
@@ -546,7 +558,7 @@ class SegmentationWidget(QtWidgets.QWidget):
     def set_sigma_percent(self):
         percent = norm.cdf(self.threskBox.value()) - norm.cdf(-self.threskBox.value())
         percent *= 100
-        self.threskLabelaux.setText(f"{percent:.2f}%")
+        self.threskLabelaux.setText(f"Percentile:{percent:.2f}%")
 
     def get_segmentation_config(self):
         """
