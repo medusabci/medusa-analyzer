@@ -15,16 +15,8 @@ class ParametersWidget(QtWidgets.QWidget):
         # Define variables
         self.main_window = main_window
         self.last_params = None
-        self.selected_bands_by_type = {
-            "rp": [],
-            "ap": [],
-            "mf": [],
-            "se": []
-        }
+        self.selected_bands_by_type = {"rp": []}
         self.rp_band_editor = None
-        self.ap_band_editor = None
-        self.mf_band_editor = None
-        self.se_band_editor = None
 
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
@@ -68,22 +60,14 @@ class ParametersWidget(QtWidgets.QWidget):
         self.mfLabel = self.findChild(QtWidgets.QLabel, "mfLabel")
         self.seLabel = self.findChild(QtWidgets.QLabel, "seLabel")
         self.rpButton = self.findChild(QtWidgets.QPushButton, "rpButton")
-        self.apButton = self.findChild(QtWidgets.QPushButton, "apButton")
-        self.mfButton = self.findChild(QtWidgets.QPushButton, "mfButton")
-        self.seButton = self.findChild(QtWidgets.QPushButton, "seButton")
+
         # Element setup
         for widget in [self.rpselectedbandsLabel, self.apselectedbandsLabel, self.mfselectedbandsLabel,
                        self.seselectedbandsLabel, self.rpselectedbandsauxLabel, self.mfLabel, self.seLabel,
-                       self.rpLabel, self.apLabel, self.rpButton, self.apButton, self.mfButton, self.seButton]:
+                       self.rpLabel, self.apLabel, self.rpButton]:
             widget.setVisible(False)
         self.rpCBox.toggled.connect(self.toggle_relative_power)
-        self.apCBox.toggled.connect(self.toggle_absolute_power)
-        self.mfCBox.toggled.connect(self.toggle_median_frequency)
-        self.seCBox.toggled.connect(self.toggle_spectral_entropy)
         self.rpButton.clicked.connect(lambda: self.open_band_table("rp"))
-        self.apButton.clicked.connect(lambda: self.open_band_table("ap"))
-        self.mfButton.clicked.connect(lambda: self.open_band_table("mf"))
-        self.seButton.clicked.connect(lambda: self.open_band_table("se"))
 
         # STATISTICS AND NONLINEAR
         self.meanCBox = self.findChild(QtWidgets.QCheckBox, "meanCBox")
@@ -176,8 +160,11 @@ class ParametersWidget(QtWidgets.QWidget):
             Manages the visibility of the RP config parameters
         """
         visible = self.rpCBox.isChecked()
-        for widget in [self.rpselectedbandsLabel, self.rpselectedbandsauxLabel, self.rpLabel, self.rpButton]:
+        for widget in [self.rpselectedbandsLabel, self.rpselectedbandsauxLabel, self.rpLabel]:
             widget.setVisible(visible)
+
+        if not self.main_window.preproc_config['band_segmentation']:
+            self.rpButton.setVisible(visible)
 
         if not visible:
             self.rpLabel.setText("None")
@@ -191,66 +178,6 @@ class ParametersWidget(QtWidgets.QWidget):
             }
             self.selected_bands_by_type["rp"] = [broadband]
             self.rpLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
-
-    def toggle_absolute_power(self):
-        """
-            Manages the visibility of the AP config parameters
-        """
-        visible = self.apCBox.isChecked()
-        for widget in [self.apselectedbandsLabel, self.apLabel, self.apButton]:
-            widget.setVisible(visible)
-        if not visible:
-            self.apLabel.setText("None")
-            self.ap_band_editor = None
-            self.selected_bands_by_type["ap"] = []
-        else:
-            broadband = {
-                "name": "broadband",
-                "min": self.main_window.preproc_config["broadband_min"],
-                "max": self.main_window.preproc_config["broadband_max"],
-            }
-            self.selected_bands_by_type["ap"] = [broadband]
-            self.apLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
-
-    def toggle_median_frequency(self):
-        """
-            Manages the visibility of the MF config parameters
-        """
-        visible = self.mfCBox.isChecked()
-        for widget in [self.mfselectedbandsLabel, self.mfLabel, self.mfButton]:
-            widget.setVisible(visible)
-        if not visible:
-            self.mfLabel.setText("None")
-            self.mf_band_editor = None
-            self.selected_bands_by_type["mf"] = []
-        else:
-            broadband = {
-                "name": "broadband",
-                "min": self.main_window.preproc_config["broadband_min"],
-                "max": self.main_window.preproc_config["broadband_max"],
-            }
-            self.selected_bands_by_type["mf"] = [broadband]
-            self.mfLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
-
-    def toggle_spectral_entropy(self):
-        """
-            Manages the visibility of the SE config parameters
-        """
-        visible = self.seCBox.isChecked()
-        for widget in [self.seselectedbandsLabel, self.seLabel, self.seButton]:
-            widget.setVisible(visible)
-        if not visible:
-            self.seLabel.setText("None")
-            self.se_band_editor = None
-            self.selected_bands_by_type["se"] = []
-        else:
-            broadband = {
-                "name": "broadband",
-                "min": self.main_window.preproc_config["broadband_min"],
-                "max": self.main_window.preproc_config["broadband_max"],
-            }
-            self.selected_bands_by_type["se"] = [broadband]
-            self.seLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
     def toggle_ctm(self):
         """
@@ -360,7 +287,6 @@ class ParametersWidget(QtWidgets.QWidget):
             "min": self.main_window.preproc_config["broadband_min"],
             "max": self.main_window.preproc_config["broadband_max"],
         }
-        print(self.main_window.preproc_config["broadband_max"])
 
         filtered_bands = [b for b in bands if b["name"] != "broadband"]
         self.selected_bands_by_type[band_type] = [broadband] + filtered_bands
@@ -388,11 +314,8 @@ class ParametersWidget(QtWidgets.QWidget):
             "relative_power": True if self.rpCBox.isChecked() else None,
             "selected_rp_bands": self.selected_bands_by_type["rp"] if self.rpCBox.isChecked() else None,
             "absolute_power": True if self.apCBox.isChecked() else None,
-            "selected_ap_bands": self.selected_bands_by_type["ap"] if self.apCBox.isChecked() else None,
             "median_frequency": True if self.mfCBox.isChecked() else None,
-            "selected_mf_bands": self.selected_bands_by_type["mf"] if self.mfCBox.isChecked() else None,
             "spectral_entropy": True if self.seCBox.isChecked() else None,
-            "selected_se_bands": self.selected_bands_by_type["se"] if self.seCBox.isChecked() else None,
             "ctm": True if self.ctmCBox.isChecked() else None,
             "ctm_r": self.ctmrBox.value() if self.ctmCBox.isChecked() else None,
             "sample_entropy": True if self.sampenCBox.isChecked() else None,
