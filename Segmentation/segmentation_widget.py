@@ -553,6 +553,7 @@ class SegmentationWidget(QtWidgets.QWidget):
         else:
             max_samples = -self.winBox_1.value() + self.winBox_2.value()
             max_samples = (max_samples/1000) * self.main_window.sampling_frequency
+
         self.thressampBox.setMaximum(int(max_samples))
 
     def set_sigma_percent(self):

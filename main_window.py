@@ -157,7 +157,7 @@ class MainWindow(QtWidgets.QMainWindow):
         Paints the progress bar
         """
         bars = [self.stepBar0, self.stepBar1, self.stepBar2, self.stepBar3]
-        colors = ["#FF8A5C", "#F63553", "#6234BD", "#3117A4"]
+        colors = ["#6a0dad", "#931d9d", "#c4308a", "#eb407a"]
         for i, bar in enumerate(bars):
             bar.setStyleSheet(f"background-color: {colors[i] if i <= idx else 'lightgray'}")
 

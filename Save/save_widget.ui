@@ -102,7 +102,7 @@
          <string>.mat files with the extracted parameters.</string>
         </property>
         <property name="text">
-         <string>Signal's parameters</string>
+         <string>Signal parameters</string>
         </property>
        </widget>
       </item>
