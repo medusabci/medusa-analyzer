@@ -148,8 +148,6 @@ class SegmentationWidget(QtWidgets.QWidget):
             "resamplefs": self.resamplefsBox.value(),
         }
 
-        print(self.defaults)
-
         # Hide advanced options by default
         for widget in [
             self.zscoreRButton, self.dcRButton,

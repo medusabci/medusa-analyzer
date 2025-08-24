@@ -160,11 +160,21 @@ class ParametersWidget(QtWidgets.QWidget):
             Manages the visibility of the RP config parameters
         """
         visible = self.rpCBox.isChecked()
-        for widget in [self.rpselectedbandsLabel, self.rpselectedbandsauxLabel, self.rpLabel]:
-            widget.setVisible(visible)
 
         if not self.main_window.preproc_config['band_segmentation']:
             self.rpButton.setVisible(visible)
+            self.rpselectedbandsLabel.setVisible(visible)
+            self.rpselectedbandsauxLabel.setVisible(visible)
+            self.rpLabel.setVisible(visible)
+            if visible:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Relative Power",
+                    "We are currently working only with the broadband signal, since no band filtering "
+                    "has been applied during preprocessing.\n\n"
+                    "Please use the 'Edit bands' button to define at least one additional frequency band "
+                    "in order to enable the calculation of relative power for that band."
+                )
 
         if not visible:
             self.rpLabel.setText("None")
@@ -178,6 +188,10 @@ class ParametersWidget(QtWidgets.QWidget):
             }
             self.selected_bands_by_type["rp"] = [broadband]
             self.rpLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
+
+    def reset_relative_power(self):
+        self.rpCBox.setChecked(False)
+
 
     def toggle_ctm(self):
         """
