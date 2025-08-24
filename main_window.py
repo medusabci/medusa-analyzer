@@ -108,6 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stackedWidget.currentChanged.connect(self.on_tab_changed)
         self.update_ui()
 
+        self.preproc_widget.band_config_changed.connect(self.parameters_widget.reset_relative_power)
 
     def go_next(self):
         """

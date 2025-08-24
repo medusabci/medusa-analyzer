@@ -26,6 +26,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
         bandpass filtering.
     """
 
+    band_config_changed = QtCore.pyqtSignal()
+
     def __init__(self, main_window):
         super().__init__()
         uic.loadUi("Preprocessing/preprocessing_widget.ui", self)
@@ -189,6 +191,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             "maxfreqbp": self.maxfreqbpBox.value(),
             "orderbp": self.orderbpBox.value(),
         }
+        print(self.defaults)
 
         # Set initial state
         self.reset_all_controls()
@@ -469,12 +472,14 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.drawbpButton.setVisible(checked)
         self.winbpLabel.setVisible(checked)
         self.winbpBox.setVisible(checked)
+        # self.maxbroadBox.setValue(self.maxfreqbpBox.value())
 
         # Reset default values
         if not checked:
             self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
             self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
             self.orderbpBox.setValue(self.defaults["orderbp"])
+            self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
 
 
     def validate_filter_bounds(self, filter_type):
@@ -640,7 +645,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             widget.setVisible(visible)
         self.bandLabel.setText("None")
         self.band_editor = None
-
+        self.band_config_changed.emit()
 
     def open_band_editor(self, band_type):
         """
@@ -678,6 +683,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 label.setText(", ".join(names))
             else:
                 label.setText("None")
+
+        self.band_config_changed.emit()
 
     # def _sync_broadband_spinboxes(self):
     #     if self.band_editor:
