@@ -26,6 +26,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
         bandpass filtering.
     """
 
+    band_config_changed = QtCore.pyqtSignal()
+
     def __init__(self, main_window):
         super().__init__()
         uic.loadUi("Preprocessing/preprocessing_widget.ui", self)
@@ -156,6 +158,9 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Data preprocessing
         self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
         self.preprocessingButton.toggled.connect(self.update_select_label)
+        # Broadband
+        self.minbroadBox.valueChanged.connect(self.disable_bandsegmentation_on_bp_change)
+        self.maxbroadBox.valueChanged.connect(self.disable_bandsegmentation_on_bp_change)
         # Notch
         self.notchCBox.toggled.connect(self.toggle_notch_controls)
         self.notchCBox.toggled.connect(lambda: self.update_filter_plot('notch'))
@@ -170,8 +175,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.drawbpButton.clicked.connect(lambda: self.update_filter_plot('bandpass'))
         self.bandpassCanvas.fig.patch.set_facecolor(bg_color)
         self.bandpassCanvas.ax.set_facecolor(bg_color)
-        self.minfreqbpBox.editingFinished.connect(lambda: self.minbroadBox.setValue(self.minfreqbpBox.value()))
-        self.maxfreqbpBox.editingFinished.connect(lambda: self.maxbroadBox.setValue(self.maxfreqbpBox.value()))
+        self.minfreqbpBox.valueChanged.connect(lambda: self.minbroadBox.setValue(self.minfreqbpBox.value()))
+        self.maxfreqbpBox.valueChanged.connect(lambda: self.maxbroadBox.setValue(self.maxfreqbpBox.value()))
+        self.minfreqbpBox.valueChanged.connect(self.disable_bandsegmentation_on_bp_change)
+        self.maxfreqbpBox.valueChanged.connect(self.disable_bandsegmentation_on_bp_change)
+
         # Band segmentation
         self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
         self.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
@@ -189,6 +197,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             "maxfreqbp": self.maxfreqbpBox.value(),
             "orderbp": self.orderbpBox.value(),
         }
+        print(self.defaults)
 
         # Set initial state
         self.reset_all_controls()
@@ -469,13 +478,20 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.drawbpButton.setVisible(checked)
         self.winbpLabel.setVisible(checked)
         self.winbpBox.setVisible(checked)
+        # self.maxbroadBox.setValue(self.maxfreqbpBox.value())
+
+        if checked:
+            self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
+            self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
+            self.orderbpBox.setValue(self.defaults["orderbp"])
+            self.maxbroadBox.setValue(self.maxfreqbpBox.value())
 
         # Reset default values
         if not checked:
             self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
             self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
             self.orderbpBox.setValue(self.defaults["orderbp"])
-
+            self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
 
     def validate_filter_bounds(self, filter_type):
         """
@@ -526,39 +542,40 @@ class PreprocessingWidget(QtWidgets.QWidget):
             Function that plots the filter
         """
         if filter_type == 'bandpass':
-            # If the checkbox is not selected, redraws the Figure with an empty plot
             if not self.bpCBox.isChecked():
                 self.bandpassCanvas.ax.clear()
                 self.bandpassCanvas.draw()
                 return
-            # Define filter settings
             low = self.minfreqbpBox.value()
             high = self.maxfreqbpBox.value() - 1e-6
             numtaps = self.orderbpBox.value()
             win = self.winbpBox.currentText()
 
-        else:
-            # If the checkbox is not selected, redraws the Figure with an empty plot
+        else:  # notch
             if not self.notchCBox.isChecked():
                 self.notchCanvas.ax.clear()
                 self.notchCanvas.draw()
                 return
-            # Define filter settings
             low = self.minfreqnotchBox.value()
             high = self.maxfreqnotchBox.value()
             numtaps = self.orderNotchBox.value()
             win = self.winnotchBox.currentText()
 
+            if numtaps % 2 == 0:
+                numtaps += 1
+                self.orderNotchBox.setValue(numtaps)
 
         if not self.validate_filter_bounds(filter_type):
             return
 
-        # Define filter settings
-        if numtaps % 2 == 0:
-            numtaps += 1
-            self.orderNotchBox.setValue(self.orderNotchBox.value() + 1)
         fs = self.main_window.sampling_frequency
-        b = firwin(numtaps, [low, high], pass_zero=filter_type=='notch', fs=fs, window=win)
+        b = firwin(
+            numtaps,
+            [low, high],
+            pass_zero=(filter_type == 'notch'),
+            fs=fs,
+            window=win
+        )
         w, h = freqz(b, worN=1024, fs=fs)
 
         # Create the plot
@@ -567,12 +584,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
         canvas.ax.plot(w, 20 * np.log10(np.maximum(abs(h), 1e-6)), color="#ab47bc", linewidth=2.0)
         canvas.ax.set_title(f"{filter_type} Filter", fontsize=10, color="#000000")
         canvas.ax.set_ylabel("Gain (dB)", fontsize=9, color="#000000")
-        canvas.ax.set_xlim([0, fs/2])
+        canvas.ax.set_xlim([0, fs / 2])
         canvas.ax.grid(False)
         canvas.ax.tick_params(labelsize=8, colors="#000000")
         canvas.fig.tight_layout()
         canvas.draw()
-
 
     # def validate_broadband_interval(self):
     #     """
@@ -640,7 +656,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
             widget.setVisible(visible)
         self.bandLabel.setText("None")
         self.band_editor = None
+        self.band_config_changed.emit()
 
+    def disable_bandsegmentation_on_bp_change(self):
+        if self.bandCBox.isChecked():
+            self.bandCBox.setChecked(False)
 
     def open_band_editor(self, band_type):
         """
@@ -678,6 +698,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 label.setText(", ".join(names))
             else:
                 label.setText("None")
+
+        self.band_config_changed.emit()
 
     # def _sync_broadband_spinboxes(self):
     #     if self.band_editor:
