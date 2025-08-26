@@ -1,12 +1,18 @@
-from PyQt5 import QtWidgets, uic
-from PyQt5.QtCore import Qt
+from PySide6 import QtWidgets
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import Qt
 import os
 
 class FilesListDialog(QtWidgets.QDialog):
     def __init__(self, files, preprocessing_widget):
         super().__init__()
         ui_path = os.path.join(os.path.dirname(__file__), "files_list.ui")
-        uic.loadUi(ui_path, self)
+        loader = QUiLoader()
+        self.ui = loader.load(ui_path, self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.ui)
+        self.setLayout(layout)
 
         # Remove the "?" button
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -18,9 +24,9 @@ class FilesListDialog(QtWidgets.QDialog):
         self.preprocessing_widget = preprocessing_widget
 
         # --- GET ELEMENTS FROM UI MODULE ---
-        self.filelistWidget = self.findChild(QtWidgets.QListWidget, "filelistWidget")
-        self.deletefilesButton = self.findChild(QtWidgets.QPushButton, "deletefilesButton")
-        self.acceptfilesButton = self.findChild(QtWidgets.QPushButton, "acceptfilesButton")
+        self.filelistWidget = self.ui.findChild(QtWidgets.QListWidget, "filelistWidget")
+        self.deletefilesButton = self.ui.findChild(QtWidgets.QPushButton, "deletefilesButton")
+        self.acceptfilesButton = self.ui.findChild(QtWidgets.QPushButton, "acceptfilesButton")
 
         # --- ELEMENT SETUP ---
         self.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)

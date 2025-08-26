@@ -1,6 +1,7 @@
-from PyQt5 import QtWidgets, uic, QtGui, QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 
 # This code enable the drag and drop of bands in the table
 class BandTableWidget(QtWidgets.QTableWidget):
@@ -114,9 +115,15 @@ class BandTable(QtWidgets.QDialog):
         self.previous_bands = previous_bands or []
         self.default_min = min_broad
         self.default_max = max_broad
-        uic.loadUi("bands_table.ui", self)
 
-        original_table = self.findChild(QtWidgets.QTableWidget, "bandsTable")
+        loader = QUiLoader()
+        self.ui = loader.load("bands_table.ui", self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.ui)
+        self.setLayout(layout)
+
+        original_table = self.ui.findChild(QtWidgets.QTableWidget, "bandsTable")
         self.bandsTable = BandTableWidget(self)
         self.bandsTable.setObjectName("bandsTable")
 
@@ -127,10 +134,10 @@ class BandTable(QtWidgets.QDialog):
             original_table.deleteLater()
             layout.insertWidget(index, self.bandsTable)
 
-        self.addButton = self.findChild(QtWidgets.QPushButton, "addButton")
-        self.resetButton = self.findChild(QtWidgets.QPushButton, "resetButton")
-        self.acceptButton = self.findChild(QtWidgets.QPushButton, "acceptButton")
-        self.selectallButton = self.findChild(QtWidgets.QPushButton, "selectallButton")
+        self.addButton = self.ui.findChild(QtWidgets.QPushButton, "addButton")
+        self.resetButton = self.ui.findChild(QtWidgets.QPushButton, "resetButton")
+        self.acceptButton = self.ui.findChild(QtWidgets.QPushButton, "acceptButton")
+        self.selectallButton = self.ui.findChild(QtWidgets.QPushButton, "selectallButton")
 
         self.min_broad = min_broad
         self.max_broad = max_broad

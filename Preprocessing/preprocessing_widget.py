@@ -1,5 +1,6 @@
-from PyQt5 import QtWidgets, uic, QtGui, QtCore
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 from Preprocessing.files_list_dialog import FilesListDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -26,11 +27,16 @@ class PreprocessingWidget(QtWidgets.QWidget):
         bandpass filtering.
     """
 
-    band_config_changed = QtCore.pyqtSignal()
+    band_config_changed = QtCore.Signal()
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi("Preprocessing/preprocessing_widget.ui", self)
+        loader = QUiLoader()
+        self.ui = loader.load("Preprocessing/preprocessing_widget.ui", self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.ui)
+        self.setLayout(layout)
 
         # Define variables
         self.main_window = main_window
@@ -44,7 +50,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.description_label = QtWidgets.QLabel()
         self.description_label.setTextFormat(QtCore.Qt.RichText)
@@ -60,11 +66,11 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # --- GET ELEMENTS FROM UI MODULE ---
 
         # Data loading
-        self.browseButton = self.findChild(QtWidgets.QPushButton, "browseButton")
-        self.viewfilesButton = self.findChild(QtWidgets.QPushButton, "viewfilesButton")
-        self.selectLabel = self.findChild(QtWidgets.QLabel, "selectLabel")
+        self.browseButton = self.ui.findChild(QtWidgets.QPushButton, "browseButton")
+        self.viewfilesButton = self.ui.findChild(QtWidgets.QPushButton, "viewfilesButton")
+        self.selectLabel = self.ui.findChild(QtWidgets.QLabel, "selectLabel")
         self.selected_files = []  # Store the selected files
-        self.convertButton = self.findChild(QtWidgets.QPushButton, "convertButton")
+        self.convertButton = self.ui.findChild(QtWidgets.QPushButton, "convertButton")
         self.convertButton.setStyleSheet("""
             QPushButton {
                 color: white;
@@ -85,65 +91,65 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 );
             }
         """)
-        self.convertProgressBar = self.findChild(QtWidgets.QProgressBar, "convertProgressBar")
+        self.convertProgressBar = self.ui.findChild(QtWidgets.QProgressBar, "convertProgressBar")
         self.convertProgressBar.setValue(0)
         self.convertProgressBar.setVisible(False)
-        self.convertLogTextBrowser = self.findChild(QtWidgets.QTextBrowser, "convertLogTextBrowser")
+        self.convertLogTextBrowser = self.ui.findChild(QtWidgets.QTextBrowser, "convertLogTextBrowser")
         self.convertLogTextBrowser.setVisible(False)
-        self.broadbandButton = self.findChild(QtWidgets.QToolButton, "broadbandButton")
-        self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
-        self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
-        self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
-        self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
-        self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
+        self.broadbandButton = self.ui.findChild(QtWidgets.QToolButton, "broadbandButton")
+        self.broadbandLabel = self.ui.findChild(QtWidgets.QLabel, "broadbandLabel")
+        self.minbroadBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
+        self.broadbandauxLabel = self.ui.findChild(QtWidgets.QLabel, "broadbandauxLabel")
+        self.maxbroadBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
+        self.hzbroadbandLabel = self.ui.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
         # Preprocessing
-        self.preprocessingButton = self.findChild(QtWidgets.QCheckBox, "preprocessingButton")
-        self.preprocessingLabel = self.findChild(QtWidgets.QLabel, "preprocessingLabel")
+        self.preprocessingButton = self.ui.findChild(QtWidgets.QCheckBox, "preprocessingButton")
+        self.preprocessingLabel = self.ui.findChild(QtWidgets.QLabel, "preprocessingLabel")
         # Notch
-        self.notchgroupBox = self.findChild(QtWidgets.QGroupBox, "notchgroupBox")
-        self.notchLabel = self.findChild(QtWidgets.QLabel, "notchfilterLabel")
-        self.notchCBox = self.findChild(QtWidgets.QCheckBox, "notchCBox")
-        self.notchminLabel = self.findChild(QtWidgets.QLabel, "notchminLabel")
-        self.minfreqnotchBox = self.findChild(QtWidgets.QDoubleSpinBox, "minfreqnotchBox")
-        self.notchmaxLabel = self.findChild(QtWidgets.QLabel, "notchmaxLabel")
-        self.maxfreqnotchBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqnotchBox")
-        self.orderNotchLabel = self.findChild(QtWidgets.QLabel, "orderNotchLabel")
-        self.orderNotchBox = self.findChild(QtWidgets.QSpinBox, "orderNotchBox")
-        self.winnotchLabel = self.findChild(QtWidgets.QLabel, "winnotchLabel")
-        self.winnotchBox = self.findChild(QtWidgets.QComboBox, "winnotchBox")
-        self.winbpLabel = self.findChild(QtWidgets.QLabel, "winbpLabel")
-        self.winbpBox = self.findChild(QtWidgets.QComboBox, "winbpBox")
-        self.notchPlotWidget = self.findChild(QtWidgets.QWidget, "notchPlotWidget")
-        self.drawnotchButton = self.findChild(QtWidgets.QPushButton, "drawnotchButton")
+        self.notchgroupBox = self.ui.findChild(QtWidgets.QGroupBox, "notchgroupBox")
+        self.notchLabel = self.ui.findChild(QtWidgets.QLabel, "notchfilterLabel")
+        self.notchCBox = self.ui.findChild(QtWidgets.QCheckBox, "notchCBox")
+        self.notchminLabel = self.ui.findChild(QtWidgets.QLabel, "notchminLabel")
+        self.minfreqnotchBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "minfreqnotchBox")
+        self.notchmaxLabel = self.ui.findChild(QtWidgets.QLabel, "notchmaxLabel")
+        self.maxfreqnotchBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "maxfreqnotchBox")
+        self.orderNotchLabel = self.ui.findChild(QtWidgets.QLabel, "orderNotchLabel")
+        self.orderNotchBox = self.ui.findChild(QtWidgets.QSpinBox, "orderNotchBox")
+        self.winnotchLabel = self.ui.findChild(QtWidgets.QLabel, "winnotchLabel")
+        self.winnotchBox = self.ui.findChild(QtWidgets.QComboBox, "winnotchBox")
+        self.winbpLabel = self.ui.findChild(QtWidgets.QLabel, "winbpLabel")
+        self.winbpBox = self.ui.findChild(QtWidgets.QComboBox, "winbpBox")
+        self.notchPlotWidget = self.ui.findChild(QtWidgets.QWidget, "notchPlotWidget")
+        self.drawnotchButton = self.ui.findChild(QtWidgets.QPushButton, "drawnotchButton")
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
         notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
         notchLayout.addWidget(self.notchCanvas)
         # Bandpass
-        self.bpgroupBox = self.findChild(QtWidgets.QGroupBox, "bpgroupBox")
-        self.bpLabel = self.findChild(QtWidgets.QLabel, "bpLabel")
-        self.bpCBox = self.findChild(QtWidgets.QCheckBox, "bpCBox")
-        self.bpminLabel = self.findChild(QtWidgets.QLabel, "bpminfreqLabel")
-        self.minfreqbpBox = self.findChild(QtWidgets.QDoubleSpinBox, "minfreqbpBox")
-        self.bpmaxLabel = self.findChild(QtWidgets.QLabel, "bpmaxfreqLabel")
-        self.maxfreqbpBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqbpBox")
-        self.orderbpLabel = self.findChild(QtWidgets.QLabel, "orderbpLabel")
-        self.orderbpBox = self.findChild(QtWidgets.QSpinBox, "orderbpBox")
-        self.bandpassPlotWidget = self.findChild(QtWidgets.QWidget, "bandpassPlotWidget")
-        self.drawbpButton = self.findChild(QtWidgets.QPushButton, "drawbpButton")
+        self.bpgroupBox = self.ui.findChild(QtWidgets.QGroupBox, "bpgroupBox")
+        self.bpLabel = self.ui.findChild(QtWidgets.QLabel, "bpLabel")
+        self.bpCBox = self.ui.findChild(QtWidgets.QCheckBox, "bpCBox")
+        self.bpminLabel = self.ui.findChild(QtWidgets.QLabel, "bpminfreqLabel")
+        self.minfreqbpBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "minfreqbpBox")
+        self.bpmaxLabel = self.ui.findChild(QtWidgets.QLabel, "bpmaxfreqLabel")
+        self.maxfreqbpBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "maxfreqbpBox")
+        self.orderbpLabel = self.ui.findChild(QtWidgets.QLabel, "orderbpLabel")
+        self.orderbpBox = self.ui.findChild(QtWidgets.QSpinBox, "orderbpBox")
+        self.bandpassPlotWidget = self.ui.findChild(QtWidgets.QWidget, "bandpassPlotWidget")
+        self.drawbpButton = self.ui.findChild(QtWidgets.QPushButton, "drawbpButton")
         self.bandpassCanvas = MplCanvas(self.bandpassPlotWidget)
         bpLayout = QtWidgets.QVBoxLayout(self.bandpassPlotWidget)
         bpLayout.addWidget(self.bandpassCanvas)
         # CAR
-        self.cargroupBox = self.findChild(QtWidgets.QGroupBox, "cargroupBox")
-        self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
-        self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
+        self.cargroupBox = self.ui.findChild(QtWidgets.QGroupBox, "cargroupBox")
+        self.carLabel = self.ui.findChild(QtWidgets.QLabel, "carLabel")
+        self.carCBox = self.ui.findChild(QtWidgets.QCheckBox, "carCBox")
         # Band segmentation
-        self.bandCBox = self.findChild(QtWidgets.QCheckBox, "bandCBox")
-        self.selectedbandsLabel = self.findChild(QtWidgets.QLabel, "selectedbandsLabel")
-        self.selectedbandsauxLabel = self.findChild(QtWidgets.QLabel, "selectedbandsauxLabel")
-        self.bandLabel = self.findChild(QtWidgets.QLabel, "bandLabel")
-        self.bandButton = self.findChild(QtWidgets.QPushButton, "bandButton")
-        self.bandsegmentationLabel = self.findChild(QtWidgets.QLabel, "bandsegmentationLabel")
+        self.bandCBox = self.ui.findChild(QtWidgets.QCheckBox, "bandCBox")
+        self.selectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "selectedbandsLabel")
+        self.selectedbandsauxLabel = self.ui.findChild(QtWidgets.QLabel, "selectedbandsauxLabel")
+        self.bandLabel = self.ui.findChild(QtWidgets.QLabel, "bandLabel")
+        self.bandButton = self.ui.findChild(QtWidgets.QPushButton, "bandButton")
+        self.bandsegmentationLabel = self.ui.findChild(QtWidgets.QLabel, "bandsegmentationLabel")
         self.element_group = [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
                          self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
                          self.maxbroadBox, self.broadbandButton]
@@ -345,7 +351,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             Function that opens the file list dialog, and stores the updated file list
         """
         dialog = FilesListDialog(self.selected_files, self)
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
             self.selected_files = dialog.get_updated_files()
             self.update_select_label()
 
@@ -614,8 +620,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
     #         # Unlock signals
     #         self.minbroadBox.blockSignals(False)
     #         self.maxbroadBox.blockSignals(False)
-
-
+    #
     # def set_defaults_broadband(self, params):
     #     """
     #         Set default values for the broadband interval.

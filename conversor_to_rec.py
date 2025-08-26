@@ -2,7 +2,7 @@ import os
 import numpy as np
 import medusa.bci.erp_spellers
 from medusa.components import Recording, CustomExperimentData
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 
 
 def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_paths=True):
