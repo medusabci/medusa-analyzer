@@ -1,6 +1,8 @@
 import sys
-from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtWidgets import QApplication
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QFile
 from Preprocessing.preprocessing_widget import PreprocessingWidget
 from Segmentation.segmentation_widget import SegmentationWidget
 from Parameters.parameters_widget import ParametersWidget
@@ -17,12 +19,12 @@ class GradientTitleWidget(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        font = QtGui.QFont("Arial", 36, QtGui.QFont.Bold)
+        font = QtGui.QFont("Arial", 36, QtGui.QFont.Weight.Bold)
         painter.setFont(font)
 
         text = "MEDUSA© Analyzer"
         fm = QtGui.QFontMetrics(font)
-        text_width = fm.width(text)
+        text_width = fm.horizontalAdvance(text)
 
         x = (self.width() - text_width) // 2
         y = (self.height() + fm.ascent() - fm.descent()) // 2
@@ -43,7 +45,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi("main_window.ui", self)
+
+        # Load UI file using QUiLoader
+        loader = QUiLoader()
+        ui_file = QFile("main_window.ui")
+        ui_file.open(QFile.OpenModeFlag.ReadOnly)
+        self.ui = loader.load(ui_file, None)
+        ui_file.close()
+
+        # Set the loaded UI as the central widget
+        self.setCentralWidget(self.ui)
+
         self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
         self.selected_files = []
         self.sampling_frequency = 0
@@ -57,24 +69,21 @@ class MainWindow(QtWidgets.QMainWindow):
         layout.addWidget(self.title_widget)
         layout.setContentsMargins(0, 20, 0, 0)
         layout.setSpacing(0)
-        self.titleWidget = self.findChild(QtWidgets.QWidget, "titleWidget")
-        self.titleWidget.setLayout(layout)
-
+        self.ui.titleWidget.setLayout(layout)
 
         # --- GET ELEMENTS FROM UI MODULE ---
 
         # Stacked widget (main section)
-        self.stackedWidget = self.findChild(QtWidgets.QStackedWidget, "stackedWidget")
+        self.stackedWidget = self.ui.stackedWidget
         # Navigation buttons and progress bar
-        self.nextButton = self.findChild(QtWidgets.QPushButton, "nextButton")
-        self.backButton = self.findChild(QtWidgets.QPushButton, "backButton")
-        self.progressLabel = self.findChild(QtWidgets.QLabel, "progressLabel")
-        self.stepBar0 = self.findChild(QtWidgets.QWidget, "stepBar0")
-        self.stepBar1 = self.findChild(QtWidgets.QWidget, "stepBar1")
-        self.stepBar2 = self.findChild(QtWidgets.QWidget, "stepBar2")
-        self.stepBar3 = self.findChild(QtWidgets.QWidget, "stepBar3")
-        self.toolBox = self.findChild(QtWidgets.QToolBox, "toolBox")
-
+        self.nextButton = self.ui.nextButton
+        self.backButton = self.ui.backButton
+        self.progressLabel = self.ui.progressLabel
+        self.stepBar0 = self.ui.stepBar0
+        self.stepBar1 = self.ui.stepBar1
+        self.stepBar2 = self.ui.stepBar2
+        self.stepBar3 = self.ui.stepBar3
+        # self.toolBox = self.ui.toolBox
 
         # --- ELEMENT SETUP ---
 
@@ -371,7 +380,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if ((pw.rpCBox.isChecked() or pw.apCBox.isChecked() or pw.mfCBox.isChecked() or pw.seCBox.isChecked())
                 and not pw.psdCBox.isChecked()):
-            from PyQt5.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self,
                 "PSD Configuration Notice",
@@ -427,4 +435,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

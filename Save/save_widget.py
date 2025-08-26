@@ -1,8 +1,9 @@
 import os
 import json
-from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtGui import QTextCursor
-from PyQt5.QtWidgets import QApplication
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QApplication
 from core_process import run_pipeline
 
 class SaveWidget(QtWidgets.QWidget):
@@ -13,17 +14,29 @@ class SaveWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
-        uic.loadUi("Save/save_widget.ui", self)
+        loader = QUiLoader()
+        self.ui = loader.load("Save/save_widget.ui", self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.ui)
+        self.setLayout(layout)
 
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.logtextBrowser = QtWidgets.QLabel()
         self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
         self.logtextBrowser.setWordWrap(True)
+        self.logtextBrowser.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                background: transparent;
+                border: none;
+            }
+        """)
         self.logtextBrowser.setText("""
             <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
                 <p>
@@ -34,16 +47,16 @@ class SaveWidget(QtWidgets.QWidget):
         layout.addWidget(self.logtextBrowser)
 
         # --- GET ELEMENTS FROM UI MODULE ---
-        self.selectfolderButton = self.findChild(QtWidgets.QPushButton, "selectfolderButton")
-        self.selectfolderLabel = self.findChild(QtWidgets.QLabel, "selectfolderLabel")
-        self.settingsCBox = self.findChild(QtWidgets.QCheckBox, "settingsCBox")
-        self.prepsignalsCBox = self.findChild(QtWidgets.QCheckBox, "prepsignalsCBox")
-        self.segsignalsCBox = self.findChild(QtWidgets.QCheckBox, "segsignalsCBox")
-        self.paramsignalsCBox = self.findChild(QtWidgets.QCheckBox, "paramsignalsCBox")
-        self.runButton = self.findChild(QtWidgets.QPushButton, "runButton")
-        self.progressLabel = self.findChild(QtWidgets.QLabel, "progressLabel")
-        self.progressBar = self.findChild(QtWidgets.QProgressBar, "progressBar")
-        self.logtextBrowser = self.findChild(QtWidgets.QTextBrowser, "logtextBrowser")
+        self.selectfolderButton = self.ui.findChild(QtWidgets.QPushButton, "selectfolderButton")
+        self.selectfolderLabel = self.ui.findChild(QtWidgets.QLabel, "selectfolderLabel")
+        self.settingsCBox = self.ui.findChild(QtWidgets.QCheckBox, "settingsCBox")
+        self.prepsignalsCBox = self.ui.findChild(QtWidgets.QCheckBox, "prepsignalsCBox")
+        self.segsignalsCBox = self.ui.findChild(QtWidgets.QCheckBox, "segsignalsCBox")
+        self.paramsignalsCBox = self.ui.findChild(QtWidgets.QCheckBox, "paramsignalsCBox")
+        self.runButton = self.ui.findChild(QtWidgets.QPushButton, "runButton")
+        self.progressLabel = self.ui.findChild(QtWidgets.QLabel, "progressLabel")
+        self.progressBar = self.ui.findChild(QtWidgets.QProgressBar, "progressBar")
+        self.logtextBrowser = self.ui.findChild(QtWidgets.QTextBrowser, "logtextBrowser")
         self.settings = {}
 
         # --- ELEMENT SETUP ---
@@ -180,4 +193,3 @@ class SaveWidget(QtWidgets.QWidget):
         self.logtextBrowser.append(formatted)
         self.logtextBrowser.moveCursor(QTextCursor.End)
         QApplication.processEvents()
-

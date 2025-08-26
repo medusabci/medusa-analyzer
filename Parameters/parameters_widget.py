@@ -1,4 +1,5 @@
-from PyQt5 import QtWidgets, uic, QtCore
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtUiTools import QUiLoader
 from bands_table import BandTable
 import ast
 
@@ -10,7 +11,12 @@ class ParametersWidget(QtWidgets.QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi('Parameters/parameters_widget.ui', self)
+        loader = QUiLoader()
+        self.ui = loader.load('Parameters/parameters_widget.ui', self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.ui)
+        self.setLayout(layout)
 
         # Define variables
         self.main_window = main_window
@@ -22,11 +28,18 @@ class ParametersWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.logtextBrowser = QtWidgets.QLabel()
         self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
         self.logtextBrowser.setWordWrap(True)
+        self.logtextBrowser.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                background: transparent;
+                border: none;
+            }
+        """)
         self.logtextBrowser.setText("""
             <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
                 <p>
@@ -43,23 +56,22 @@ class ParametersWidget(QtWidgets.QWidget):
         """)
         layout.addWidget(self.logtextBrowser)
 
-
         #%% --------------------------------------------- SIGNAL METRICS  ------------------------------------------- #
         # RP AP MF SE
-        self.rpCBox = self.findChild(QtWidgets.QCheckBox, "rpCBox")
-        self.apCBox = self.findChild(QtWidgets.QCheckBox, "apCBox")
-        self.mfCBox = self.findChild(QtWidgets.QCheckBox, "mfCBox")
-        self.seCBox = self.findChild(QtWidgets.QCheckBox, "seCBox")
-        self.rpselectedbandsLabel = self.findChild(QtWidgets.QLabel, "rpselectedbandsLabel")
-        self.apselectedbandsLabel = self.findChild(QtWidgets.QLabel, "apselectedbandsLabel")
-        self.mfselectedbandsLabel = self.findChild(QtWidgets.QLabel, "mfselectedbandsLabel")
-        self.seselectedbandsLabel = self.findChild(QtWidgets.QLabel, "seselectedbandsLabel")
-        self.rpselectedbandsauxLabel = self.findChild(QtWidgets.QLabel, "rpselectedbandsauxLabel")
-        self.rpLabel = self.findChild(QtWidgets.QLabel, "rpLabel")
-        self.apLabel = self.findChild(QtWidgets.QLabel, "apLabel")
-        self.mfLabel = self.findChild(QtWidgets.QLabel, "mfLabel")
-        self.seLabel = self.findChild(QtWidgets.QLabel, "seLabel")
-        self.rpButton = self.findChild(QtWidgets.QPushButton, "rpButton")
+        self.rpCBox = self.ui.findChild(QtWidgets.QCheckBox, "rpCBox")
+        self.apCBox = self.ui.findChild(QtWidgets.QCheckBox, "apCBox")
+        self.mfCBox = self.ui.findChild(QtWidgets.QCheckBox, "mfCBox")
+        self.seCBox = self.ui.findChild(QtWidgets.QCheckBox, "seCBox")
+        self.rpselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "rpselectedbandsLabel")
+        self.apselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "apselectedbandsLabel")
+        self.mfselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "mfselectedbandsLabel")
+        self.seselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "seselectedbandsLabel")
+        self.rpselectedbandsauxLabel = self.ui.findChild(QtWidgets.QLabel, "rpselectedbandsauxLabel")
+        self.rpLabel = self.ui.findChild(QtWidgets.QLabel, "rpLabel")
+        self.apLabel = self.ui.findChild(QtWidgets.QLabel, "apLabel")
+        self.mfLabel = self.ui.findChild(QtWidgets.QLabel, "mfLabel")
+        self.seLabel = self.ui.findChild(QtWidgets.QLabel, "seLabel")
+        self.rpButton = self.ui.findChild(QtWidgets.QPushButton, "rpButton")
 
         # Element setup
         for widget in [self.rpselectedbandsLabel, self.apselectedbandsLabel, self.mfselectedbandsLabel,
@@ -70,39 +82,37 @@ class ParametersWidget(QtWidgets.QWidget):
         self.rpButton.clicked.connect(lambda: self.open_band_table("rp"))
 
         # STATISTICS AND NONLINEAR
-        self.meanCBox = self.findChild(QtWidgets.QCheckBox, "meanCBox")
-        self.medianCBox = self.findChild(QtWidgets.QCheckBox, "medianCBox")
-        self.varianceCBox = self.findChild(QtWidgets.QCheckBox, "varianceCBox")
-        self.kurtosisCBox = self.findChild(QtWidgets.QCheckBox, "kurtosisCBox")
-        self.skewnessCBox = self.findChild(QtWidgets.QCheckBox, "skewnessCBox")
-        self.psdCBox = self.findChild(QtWidgets.QCheckBox, "psdCBox")
-        self.segmentpsdLabel = self.findChild(QtWidgets.QLabel, "segmentpsdLabel")
-        self.segmentpsdBox = self.findChild(QtWidgets.QSpinBox, "segmentpsdBox")
-        self.overlappsdLabel = self.findChild(QtWidgets.QLabel, "overlappsdLabel")
-        self.overlappsdBox = self.findChild(QtWidgets.QSpinBox, "overlappsdBox")
-        self.windowpsdLabel = self.findChild(QtWidgets.QLabel, "windowpsdLabel")
-        self.psdcomboBox = self.findChild(QtWidgets.QComboBox, "psdcomboBox")
-        self.mfCBox = self.findChild(QtWidgets.QCheckBox, "mfCBox")
-        self.seCBox = self.findChild(QtWidgets.QCheckBox, "seCBox")
-        self.ctmCBox = self.findChild(QtWidgets.QCheckBox, "ctmCBox")
-        self.ctmrLabel = self.findChild(QtWidgets.QLabel, "ctmrLabel")
-        self.ctmrBox = self.findChild(QtWidgets.QDoubleSpinBox, "ctmrBox")
-        self.sampenCBox = self.findChild(QtWidgets.QCheckBox, "sampenCBox")
-        self.sampenmLabel = self.findChild(QtWidgets.QLabel, "sampenmLabel")
-        self.sampenmBox = self.findChild(QtWidgets.QSpinBox, "sampenmBox")
-        self.sampenrLabel = self.findChild(QtWidgets.QLabel, "sampenrLabel")
-        self.sampenrBox = self.findChild(QtWidgets.QDoubleSpinBox, "sampenrBox")
-        self.msampenCBox = self.findChild(QtWidgets.QCheckBox, "msampenCBox")
-        self.maxscaleLabel = self.findChild(QtWidgets.QLabel, "maxscaleLabel")
-        self.msampenscaleBox = self.findChild(QtWidgets.QSpinBox, "msampenscaleBox")
-        self.msampenmLabel = self.findChild(QtWidgets.QLabel, "msampenmLabel")
-        self.msampenmBox = self.findChild(QtWidgets.QSpinBox, "msampenmBox")
-        self.msampenrLabel = self.findChild(QtWidgets.QLabel, "msampenrLabel")
-        self.msampenrBox = self.findChild(QtWidgets.QDoubleSpinBox, "msampenrBox")
-        self.lzcCBox = self.findChild(QtWidgets.QCheckBox, "lzcCBox")
-        self.mlzcCBox = self.findChild(QtWidgets.QCheckBox, "mlzcCBox")
-        self.mlzcscalesLabel = self.findChild(QtWidgets.QLabel, "mlzcscalesLabel")
-        self.mlzcEdit = self.findChild(QtWidgets.QLineEdit, "mlzcEdit")
+        self.meanCBox = self.ui.findChild(QtWidgets.QCheckBox, "meanCBox")
+        self.medianCBox = self.ui.findChild(QtWidgets.QCheckBox, "medianCBox")
+        self.varianceCBox = self.ui.findChild(QtWidgets.QCheckBox, "varianceCBox")
+        self.kurtosisCBox = self.ui.findChild(QtWidgets.QCheckBox, "kurtosisCBox")
+        self.skewnessCBox = self.ui.findChild(QtWidgets.QCheckBox, "skewnessCBox")
+        self.psdCBox = self.ui.findChild(QtWidgets.QCheckBox, "psdCBox")
+        self.segmentpsdLabel = self.ui.findChild(QtWidgets.QLabel, "segmentpsdLabel")
+        self.segmentpsdBox = self.ui.findChild(QtWidgets.QSpinBox, "segmentpsdBox")
+        self.overlappsdLabel = self.ui.findChild(QtWidgets.QLabel, "overlappsdLabel")
+        self.overlappsdBox = self.ui.findChild(QtWidgets.QSpinBox, "overlappsdBox")
+        self.windowpsdLabel = self.ui.findChild(QtWidgets.QLabel, "windowpsdLabel")
+        self.psdcomboBox = self.ui.findChild(QtWidgets.QComboBox, "psdcomboBox")
+        self.ctmCBox = self.ui.findChild(QtWidgets.QCheckBox, "ctmCBox")
+        self.ctmrLabel = self.ui.findChild(QtWidgets.QLabel, "ctmrLabel")
+        self.ctmrBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "ctmrBox")
+        self.sampenCBox = self.ui.findChild(QtWidgets.QCheckBox, "sampenCBox")
+        self.sampenmLabel = self.ui.findChild(QtWidgets.QLabel, "sampenmLabel")
+        self.sampenmBox = self.ui.findChild(QtWidgets.QSpinBox, "sampenmBox")
+        self.sampenrLabel = self.ui.findChild(QtWidgets.QLabel, "sampenrLabel")
+        self.sampenrBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "sampenrBox")
+        self.msampenCBox = self.ui.findChild(QtWidgets.QCheckBox, "msampenCBox")
+        self.maxscaleLabel = self.ui.findChild(QtWidgets.QLabel, "maxscaleLabel")
+        self.msampenscaleBox = self.ui.findChild(QtWidgets.QSpinBox, "msampenscaleBox")
+        self.msampenmLabel = self.ui.findChild(QtWidgets.QLabel, "msampenmLabel")
+        self.msampenmBox = self.ui.findChild(QtWidgets.QSpinBox, "msampenmBox")
+        self.msampenrLabel = self.ui.findChild(QtWidgets.QLabel, "msampenrLabel")
+        self.msampenrBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "msampenrBox")
+        self.lzcCBox = self.ui.findChild(QtWidgets.QCheckBox, "lzcCBox")
+        self.mlzcCBox = self.ui.findChild(QtWidgets.QCheckBox, "mlzcCBox")
+        self.mlzcscalesLabel = self.ui.findChild(QtWidgets.QLabel, "mlzcscalesLabel")
+        self.mlzcEdit = self.ui.findChild(QtWidgets.QLineEdit, "mlzcEdit")
         # Element setup
         for widget in [self.ctmrLabel, self.ctmrBox, self.sampenmLabel, self.sampenmBox, self.sampenrLabel, self.sampenrBox,
                        self.maxscaleLabel, self.msampenscaleBox, self.msampenmLabel, self.msampenmBox, self.msampenrLabel,
@@ -117,15 +127,15 @@ class ParametersWidget(QtWidgets.QWidget):
 
 
     # %% --------------------------------------------- CONNECTIVITY  ------------------------------------------- #
-        self.iacCBox = self.findChild(QtWidgets.QCheckBox, "iacCBox")
-        self.iacortButton =self.findChild(QtWidgets.QCheckBox, "iacortButton")
-        self.iacortLabel = self.findChild(QtWidgets.QLabel, "iacortLabel")
-        self.aecCBox = self.findChild(QtWidgets.QCheckBox, "aecCBox")
-        self.aecortLabel = self.findChild(QtWidgets.QLabel, "aecortLabel")
-        self.aecortButton = self.findChild(QtWidgets.QCheckBox, "aecortButton")
-        self.pliCBox = self.findChild(QtWidgets.QCheckBox, "pliCBox")
-        self.plvCBox = self.findChild(QtWidgets.QCheckBox, "plvCBox")
-        self.wpliCBox = self.findChild(QtWidgets.QCheckBox, "wpliCBox")
+        self.iacCBox = self.ui.findChild(QtWidgets.QCheckBox, "iacCBox")
+        self.iacortButton = self.ui.findChild(QtWidgets.QCheckBox, "iacortButton")
+        self.iacortLabel = self.ui.findChild(QtWidgets.QLabel, "iacortLabel")
+        self.aecCBox = self.ui.findChild(QtWidgets.QCheckBox, "aecCBox")
+        self.aecortLabel = self.ui.findChild(QtWidgets.QLabel, "aecortLabel")
+        self.aecortButton = self.ui.findChild(QtWidgets.QCheckBox, "aecortButton")
+        self.pliCBox = self.ui.findChild(QtWidgets.QCheckBox, "pliCBox")
+        self.plvCBox = self.ui.findChild(QtWidgets.QCheckBox, "plvCBox")
+        self.wpliCBox = self.ui.findChild(QtWidgets.QCheckBox, "wpliCBox")
         # Element setup
         for widget in [self.iacortLabel, self.iacortButton, self.aecortLabel, self.aecortButton]:
             widget.setVisible(False)
@@ -274,26 +284,6 @@ class ParametersWidget(QtWidgets.QWidget):
             editor.destroyed.connect(lambda: self._on_band_table_closed(band_type))
             self.band_table_editors[band_type] = editor
             editor.show()
-
-    def _init_default_bands(self):
-        """
-        Initialize broadband (min_broad–max_broad).
-        """
-        default_band = {
-            "name": "broadband",
-            "min": self.main_window.preproc_config["broadband_min"],
-            "max": self.main_window.preproc_config["broadband_max"],
-        }
-        for band_type in self.selected_bands_by_type.keys():
-            self.selected_bands_by_type[band_type] = [default_band.copy()]
-            label = getattr(self, f"{band_type}Label", None)
-            if label:
-                label.setText(f"broadband ({default_band['min']}–{default_band['max']} Hz)")
-
-    # Additional functions for band table management
-    def _on_band_table_closed(self, band_type):
-        if band_type in self.band_table_editors:
-            self.band_table_editors[band_type] = None
 
     def update_band_label(self, band_type, bands):
         broadband = {

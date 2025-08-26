@@ -1,7 +1,9 @@
-from PyQt5 import QtWidgets, uic, QtCore
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtUiTools import QUiLoader
 from Segmentation.utils import extract_condition_events
-from PyQt5.QtCore import QStringListModel
+from PySide6.QtCore import QStringListModel
 from scipy.stats import norm
+
 class SegmentationWidget(QtWidgets.QWidget):
     """
         Main windget element. Manages the  segmentation configuration of the data. Includes selection of signal markers
@@ -10,7 +12,12 @@ class SegmentationWidget(QtWidgets.QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi("Segmentation/segmentation_widget.ui", self)
+        loader = QUiLoader()
+        self.ui = loader.load("Segmentation/segmentation_widget.ui", self)
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(self.ui)
+        self.setLayout(layout)
 
         # Define variables
         self.main_window = main_window
@@ -24,11 +31,18 @@ class SegmentationWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
+        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.segmentation_label = QtWidgets.QLabel()
         self.segmentation_label.setTextFormat(QtCore.Qt.RichText)
         self.segmentation_label.setWordWrap(True)
+        self.segmentation_label.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                background: transparent;
+                border: none;
+            }
+        """)
         self.segmentation_label.setText("""
             <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
                 <p>
@@ -41,64 +55,64 @@ class SegmentationWidget(QtWidgets.QWidget):
         # --- GET ELEMENTS FROM UI MODULE ---
 
         # Conditions box
-        self.conditionWidget = self.findChild(QtWidgets.QWidget, "conditionsWidget")
-        self.availableconditionsLabel = self.findChild(QtWidgets.QLabel, "availableconditionsLabel")
-        self.conditionList = self.findChild(QtWidgets.QListView, "conditionList")
-        self.conditionLabel = self.findChild(QtWidgets.QLabel, "conditionLabel")
+        self.conditionWidget = self.ui.findChild(QtWidgets.QWidget, "conditionsWidget")
+        self.availableconditionsLabel = self.ui.findChild(QtWidgets.QLabel, "availableconditionsLabel")
+        self.conditionList = self.ui.findChild(QtWidgets.QListView, "conditionList")
+        self.conditionLabel = self.ui.findChild(QtWidgets.QLabel, "conditionLabel")
         # Events box
-        self.eventWidget = self.findChild(QtWidgets.QWidget, "eventWidget")
-        self.availableeventsLabel = self.findChild(QtWidgets.QLabel, "availableeventsLabel")
-        self.eventList = self.findChild(QtWidgets.QListView, "eventList")
-        self.eventLabel = self.findChild(QtWidgets.QLabel, "eventLabel")
+        self.eventWidget = self.ui.findChild(QtWidgets.QWidget, "eventWidget")
+        self.availableeventsLabel = self.ui.findChild(QtWidgets.QLabel, "availableeventsLabel")
+        self.eventList = self.ui.findChild(QtWidgets.QListView, "eventList")
+        self.eventLabel = self.ui.findChild(QtWidgets.QLabel, "eventLabel")
 
         # Segmentation properties
-        self.trials = self.findChild(QtWidgets.QVBoxLayout, "trials")
-        self.segmentationtypeLabel = self.findChild(QtWidgets.QLabel, "segmentationtypeLabel")
+        self.trials = self.ui.findChild(QtWidgets.QVBoxLayout, "trials")
+        self.segmentationtypeLabel = self.ui.findChild(QtWidgets.QLabel, "segmentationtypeLabel")
         # Conditions
-        self.conditionRButton = self.findChild(QtWidgets.QRadioButton, "conditionRButton")
-        self.trialLabel = self.findChild(QtWidgets.QLabel, "trialLabel")
-        self.trialBox = self.findChild(QtWidgets.QSpinBox, "trialBox")
-        self.trialstrideLabel = self.findChild(QtWidgets.QLabel, "trialstrideLabel")
-        self.trialstrideBox = self.findChild(QtWidgets.QSpinBox, "trialstrideBox")
+        self.conditionRButton = self.ui.findChild(QtWidgets.QRadioButton, "conditionRButton")
+        self.trialLabel = self.ui.findChild(QtWidgets.QLabel, "trialLabel")
+        self.trialBox = self.ui.findChild(QtWidgets.QSpinBox, "trialBox")
+        self.trialstrideLabel = self.ui.findChild(QtWidgets.QLabel, "trialstrideLabel")
+        self.trialstrideBox = self.ui.findChild(QtWidgets.QSpinBox, "trialstrideBox")
         # Events
-        self.eventRButton = self.findChild(QtWidgets.QRadioButton, "eventRButton")
-        self.winLabel_1 = self.findChild(QtWidgets.QLabel, "winLabel_1")
-        self.winBox_1 = self.findChild(QtWidgets.QSpinBox, "winBox_1")
-        self.winLabel_2 = self.findChild(QtWidgets.QLabel, "winLabel_2")
-        self.winBox_2 = self.findChild(QtWidgets.QSpinBox, "winBox_2")
+        self.eventRButton = self.ui.findChild(QtWidgets.QRadioButton, "eventRButton")
+        self.winLabel_1 = self.ui.findChild(QtWidgets.QLabel, "winLabel_1")
+        self.winBox_1 = self.ui.findChild(QtWidgets.QSpinBox, "winBox_1")
+        self.winLabel_2 = self.ui.findChild(QtWidgets.QLabel, "winLabel_2")
+        self.winBox_2 = self.ui.findChild(QtWidgets.QSpinBox, "winBox_2")
 
         # Normalization
-        self.normLabel = self.findChild(QtWidgets.QLabel, "normLabel")
-        self.normCBox = self.findChild(QtWidgets.QCheckBox, "normCBox")
-        self.zscoreRButton = self.findChild(QtWidgets.QRadioButton, "zscoreRButton")
-        self.dcRButton = self.findChild(QtWidgets.QRadioButton, "dcRButton")
+        self.normLabel = self.ui.findChild(QtWidgets.QLabel, "normLabel")
+        self.normCBox = self.ui.findChild(QtWidgets.QCheckBox, "normCBox")
+        self.zscoreRButton = self.ui.findChild(QtWidgets.QRadioButton, "zscoreRButton")
+        self.dcRButton = self.ui.findChild(QtWidgets.QRadioButton, "dcRButton")
         # Baseline information
-        self.baselineLabel_1 = self.findChild(QtWidgets.QLabel, "baselineLabel_1")
-        self.baselineCBox_1 = self.findChild(QtWidgets.QSpinBox, "baselineCBox_1")
-        self.baselineLabel_2 = self.findChild(QtWidgets.QLabel, "baselineLabel_2")
-        self.baselineCBox_2 = self.findChild(QtWidgets.QSpinBox, "baselineCBox_2")
+        self.baselineLabel_1 = self.ui.findChild(QtWidgets.QLabel, "baselineLabel_1")
+        self.baselineCBox_1 = self.ui.findChild(QtWidgets.QSpinBox, "baselineCBox_1")
+        self.baselineLabel_2 = self.ui.findChild(QtWidgets.QLabel, "baselineLabel_2")
+        self.baselineCBox_2 = self.ui.findChild(QtWidgets.QSpinBox, "baselineCBox_2")
 
         # Average epochs
-        self.averageLabel = self.findChild(QtWidgets.QLabel, "averageLabel")
-        self.averageCBox = self.findChild(QtWidgets.QCheckBox, "averageCBox")
+        self.averageLabel = self.ui.findChild(QtWidgets.QLabel, "averageLabel")
+        self.averageCBox = self.ui.findChild(QtWidgets.QCheckBox, "averageCBox")
 
         # Thresholding
-        self.thresLabel = self.findChild(QtWidgets.QLabel, "thresLabel")
-        self.thresCBox = self.findChild(QtWidgets.QCheckBox, "thresCBox")
-        self.threskLabel = self.findChild(QtWidgets.QLabel, "threskLabel")
-        self.threskBox = self.findChild(QtWidgets.QDoubleSpinBox, "threskBox")
-        self.threskLabelaux = self.findChild(QtWidgets.QLabel, "threskLabelaux")
-        self.thressampLabel = self.findChild(QtWidgets.QLabel, "thressampLabel")
-        self.thressampBox = self.findChild(QtWidgets.QSpinBox, "thressampBox")
-        self.threschanLabel = self.findChild(QtWidgets.QLabel, "threschanLabel")
-        self.threschanBox = self.findChild(QtWidgets.QSpinBox, "threschanBox")
-        self.threshelButton = self.findChild(QtWidgets.QToolButton, "threshelButton")
+        self.thresLabel = self.ui.findChild(QtWidgets.QLabel, "thresLabel")
+        self.thresCBox = self.ui.findChild(QtWidgets.QCheckBox, "thresCBox")
+        self.threskLabel = self.ui.findChild(QtWidgets.QLabel, "threskLabel")
+        self.threskBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "threskBox")
+        self.threskLabelaux = self.ui.findChild(QtWidgets.QLabel, "threskLabelaux")
+        self.thressampLabel = self.ui.findChild(QtWidgets.QLabel, "thressampLabel")
+        self.thressampBox = self.ui.findChild(QtWidgets.QSpinBox, "thressampBox")
+        self.threschanLabel = self.ui.findChild(QtWidgets.QLabel, "threschanLabel")
+        self.threschanBox = self.ui.findChild(QtWidgets.QSpinBox, "threschanBox")
+        self.threshelButton = self.ui.findChild(QtWidgets.QToolButton, "threshelButton")
 
         # Resampling
-        self.resampleLabel = self.findChild(QtWidgets.QLabel, "resampleLabel")
-        self.resampleCBox = self.findChild(QtWidgets.QCheckBox, "resampleCBox")
-        self.newfsLabel = self.findChild(QtWidgets.QLabel, "newfsLabel")
-        self.resamplefsBox = self.findChild(QtWidgets.QSpinBox, "resamplefsBox")
+        self.resampleLabel = self.ui.findChild(QtWidgets.QLabel, "resampleLabel")
+        self.resampleCBox = self.ui.findChild(QtWidgets.QCheckBox, "resampleCBox")
+        self.newfsLabel = self.ui.findChild(QtWidgets.QLabel, "newfsLabel")
+        self.resamplefsBox = self.ui.findChild(QtWidgets.QSpinBox, "resamplefsBox")
 
         # --- ELEMENT SETUP ---
 
@@ -600,10 +614,3 @@ class SegmentationWidget(QtWidgets.QWidget):
         }
 
         return config
-
-
-
-
-
-
-
