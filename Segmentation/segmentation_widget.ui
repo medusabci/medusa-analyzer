@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1023</width>
+    <width>1054</width>
     <height>935</height>
    </rect>
   </property>
@@ -16,6 +16,11 @@
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QFrame" name="topContentWidget">
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+	border: none;
+}</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>

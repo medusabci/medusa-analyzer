@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import QUiLoader
 from bands_table import BandTable
 import ast
@@ -54,6 +54,10 @@ class ParametersWidget(QtWidgets.QWidget):
                 </p>
             </div>
         """)
+        # Remove background
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.topContentWidget.setPalette(palette)
         layout.addWidget(self.logtextBrowser)
 
         #%% --------------------------------------------- SIGNAL METRICS  ------------------------------------------- #

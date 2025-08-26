@@ -23,6 +23,11 @@
   <layout class="QVBoxLayout" name="verticalLayout_6">
    <item>
     <widget class="QFrame" name="topContentWidget">
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+	border: none;
+}</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -41,8 +46,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>694</width>
-        <height>745</height>
+        <width>826</width>
+        <height>707</height>
        </rect>
       </property>
       <attribute name="label">
@@ -901,8 +906,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>694</width>
-        <height>745</height>
+        <width>690</width>
+        <height>728</height>
        </rect>
       </property>
       <attribute name="label">

@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import QUiLoader
 from Segmentation.utils import extract_condition_events
 from PySide6.QtCore import QStringListModel
@@ -50,6 +50,10 @@ class SegmentationWidget(QtWidgets.QWidget):
                     into analyzable segments. Choose between the following segmentation strategies:
             </div>
         """)
+        # Remove background
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.topContentWidget.setPalette(palette)
         layout.addWidget(self.segmentation_label)
 
         # --- GET ELEMENTS FROM UI MODULE ---

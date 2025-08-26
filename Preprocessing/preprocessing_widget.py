@@ -10,7 +10,6 @@ import numpy as np
 import os
 from conversor_to_rec import conversor_to_rec
 from medusa import components
-from PySide6.QtGui import QPalette, QColor
 
 class MplCanvas(FigureCanvas):
     """
@@ -63,8 +62,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 </p>
                 """)
         # Remove background
-        palette = QPalette()
-        palette.setColor(QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
         self.topContentWidget.setPalette(palette)
         layout.addWidget(self.description_label)
 
