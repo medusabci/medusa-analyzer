@@ -7,6 +7,8 @@ from Preprocessing.preprocessing_widget import PreprocessingWidget
 from Segmentation.segmentation_widget import SegmentationWidget
 from Parameters.parameters_widget import ParametersWidget
 from Save.save_widget import SaveWidget
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import QFrame
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -65,6 +67,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Define the header of the GUI
         self.title_widget = GradientTitleWidget(self)
+        # Remove background
+        palette = QPalette()
+        palette.setColor(QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.ui.titleWidget.setPalette(palette)
+
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.title_widget)
         layout.setContentsMargins(0, 20, 0, 0)
@@ -83,7 +90,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.stepBar1 = self.ui.stepBar1
         self.stepBar2 = self.ui.stepBar2
         self.stepBar3 = self.ui.stepBar3
-        # self.toolBox = self.ui.toolBox
 
         # --- ELEMENT SETUP ---
 

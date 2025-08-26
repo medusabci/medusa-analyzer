@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>981</width>
+    <width>1003</width>
     <height>1057</height>
    </rect>
   </property>
@@ -45,6 +45,11 @@
         <width>16777215</width>
         <height>150</height>
        </size>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QFrame {
+	border: none;
+}</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
