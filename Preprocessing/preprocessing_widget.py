@@ -104,7 +104,7 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
 
         self.element_group = [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
                          self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
-                         self.maxbroadBox, self.broadbandButton]
+                         self.maxbroadBox, self.broadbandButton, self.biosignalLabel, self.biosignalBox]
 
         # --- ELEMENT SETUP ---
 
@@ -113,6 +113,8 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
         self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
         self.convertButton.clicked.connect(self.select_and_convert_files)
         self.broadbandButton.clicked.connect(self.show_freq_content_dialog)
+        # Biosignals
+        self.biosignalBox.currentIndexChanged.connect(self.on_combobox_changed)
         # Data preprocessing
         self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
         self.preprocessingButton.toggled.connect(self.update_select_label)
@@ -182,6 +184,7 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
         # Reset checkboxes
         for box in [self.notchCBox, self.bpCBox, self.carCBox, self.preprocessingButton]: box.setChecked(False)
         [elm.setDisabled(True) for elm in self.element_group]
+        self.biosignalBox.clear()
 
         # Reset spinboxes
         self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
@@ -279,9 +282,16 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
 
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
-            eeg = components.Recording.load(self.selected_files[0])
-            self.main_window.sampling_frequency = eeg.eeg.fs
-            self.main_window.num_chann = len(eeg.eeg.channel_set.l_cha)
+            recording = components.Recording.load(self.selected_files[0])
+            self.biosignals = recording.biosignals
+            for key, value in recording.biosignals.items():
+                self.biosignals[key]['fs'] = getattr(recording, key).fs
+                self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
+                self.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
+            self.biosignalBox.setCurrentIndex(0)
+            # default_biosignal = next(iter(recording.biosignals))
+            # self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
+            # self.main_window.num_chann = len(getattr(recording, default_biosignal).channel_set.l_cha)
             self.main_window.segmentation_widget.threschanBox.setMaximum(self.main_window.num_chann)
             self.maxbroadBox.setMaximum(self.main_window.sampling_frequency / 2)
             self.maxfreqbpBox.setMaximum(self.main_window.sampling_frequency / 2)
@@ -294,9 +304,12 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
             self.maxfreqbpBox.setValue(self.main_window.sampling_frequency/2)
             self.main_window.segmentation_widget.update_max_samples()
 
+            # Add elements to biosignalBox
+
         else:
             self.main_window.nextButton.setDisabled(True)
             [elm.setDisabled(True) for elm in self.element_group]
+            self.biosignalBox.clear()
 
     def open_file_list_dialog(self):
         """
@@ -367,6 +380,15 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
         finally:
             self.convertProgressBar.setVisible(False)
             self.convertLogTextBrowser.setVisible(False)
+
+    def on_combobox_changed(self):
+        """
+            Function that updates the sampling frequency and number of channels when the biosignal type is changed.
+        """
+        selected_biosignal = self.biosignalBox.currentText()
+        selected_biosignal = selected_biosignal.split(" ")[1]
+        self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
+        self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
 
     def toggle_preprocessing_group(self):
         """
