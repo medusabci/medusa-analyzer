@@ -286,7 +286,10 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
             self.biosignals = recording.biosignals
             for key, value in recording.biosignals.items():
                 self.biosignals[key]['fs'] = getattr(recording, key).fs
-                self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
+                try:
+                    self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
+                except:
+                    self.biosignals[key]['num_chann'] = getattr(recording, key).channel_set['n_cha']
                 self.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
             self.biosignalBox.setCurrentIndex(0)
             # default_biosignal = next(iter(recording.biosignals))
