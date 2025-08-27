@@ -1,12 +1,15 @@
 import os
 import json
 from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtUiTools import QUiLoader
+from PySide6.QtUiTools import loadUiType
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication
 from core_process import run_pipeline
 
-class SaveWidget(QtWidgets.QWidget):
+# Load UI class
+ui_save_widget = loadUiType("Save/save_widget.ui")[0]
+
+class SaveWidget(QtWidgets.QWidget, ui_save_widget):
     """
         Main windget element. Manages the saving options. It also manages the functions to preprocess, segment and
         compute paramters with the previously selected options.
@@ -14,18 +17,14 @@ class SaveWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
-        loader = QUiLoader()
-        self.ui = loader.load("Save/save_widget.ui", self)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.ui)
-        self.setLayout(layout)
+        # Setup UI
+        self.setupUi(self)
 
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.logtextBrowser = QtWidgets.QLabel()
         self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
@@ -50,17 +49,6 @@ class SaveWidget(QtWidgets.QWidget):
         self.topContentWidget.setPalette(palette)
         layout.addWidget(self.logtextBrowser)
 
-        # --- GET ELEMENTS FROM UI MODULE ---
-        self.selectfolderButton = self.ui.findChild(QtWidgets.QPushButton, "selectfolderButton")
-        self.selectfolderLabel = self.ui.findChild(QtWidgets.QLabel, "selectfolderLabel")
-        self.settingsCBox = self.ui.findChild(QtWidgets.QCheckBox, "settingsCBox")
-        self.prepsignalsCBox = self.ui.findChild(QtWidgets.QCheckBox, "prepsignalsCBox")
-        self.segsignalsCBox = self.ui.findChild(QtWidgets.QCheckBox, "segsignalsCBox")
-        self.paramsignalsCBox = self.ui.findChild(QtWidgets.QCheckBox, "paramsignalsCBox")
-        self.runButton = self.ui.findChild(QtWidgets.QPushButton, "runButton")
-        self.progressLabel = self.ui.findChild(QtWidgets.QLabel, "progressLabel")
-        self.progressBar = self.ui.findChild(QtWidgets.QProgressBar, "progressBar")
-        self.logtextBrowser = self.ui.findChild(QtWidgets.QTextBrowser, "logtextBrowser")
         self.settings = {}
 
         # --- ELEMENT SETUP ---

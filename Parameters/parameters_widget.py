@@ -1,9 +1,12 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtUiTools import QUiLoader
+from PySide6.QtUiTools import loadUiType
 from bands_table import BandTable
 import ast
 
-class ParametersWidget(QtWidgets.QWidget):
+# Load UI class
+ui_parameters_widget = loadUiType('Parameters/parameters_widget.ui')[0]
+
+class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
     """
         Main windget element. Manages all the metrics to compute and their parameters. Includes signal metrics,
         connectivity and graph
@@ -11,12 +14,9 @@ class ParametersWidget(QtWidgets.QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        loader = QUiLoader()
-        self.ui = loader.load('Parameters/parameters_widget.ui', self)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.ui)
-        self.setLayout(layout)
+        # Setup UI
+        self.setupUi(self)
 
         # Define variables
         self.main_window = main_window
@@ -28,7 +28,6 @@ class ParametersWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.logtextBrowser = QtWidgets.QLabel()
         self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
@@ -60,24 +59,9 @@ class ParametersWidget(QtWidgets.QWidget):
         self.topContentWidget.setPalette(palette)
         layout.addWidget(self.logtextBrowser)
 
-        #%% --------------------------------------------- SIGNAL METRICS  ------------------------------------------- #
-        # RP AP MF SE
-        self.rpCBox = self.ui.findChild(QtWidgets.QCheckBox, "rpCBox")
-        self.apCBox = self.ui.findChild(QtWidgets.QCheckBox, "apCBox")
-        self.mfCBox = self.ui.findChild(QtWidgets.QCheckBox, "mfCBox")
-        self.seCBox = self.ui.findChild(QtWidgets.QCheckBox, "seCBox")
-        self.rpselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "rpselectedbandsLabel")
-        self.apselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "apselectedbandsLabel")
-        self.mfselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "mfselectedbandsLabel")
-        self.seselectedbandsLabel = self.ui.findChild(QtWidgets.QLabel, "seselectedbandsLabel")
-        self.rpselectedbandsauxLabel = self.ui.findChild(QtWidgets.QLabel, "rpselectedbandsauxLabel")
-        self.rpLabel = self.ui.findChild(QtWidgets.QLabel, "rpLabel")
-        self.apLabel = self.ui.findChild(QtWidgets.QLabel, "apLabel")
-        self.mfLabel = self.ui.findChild(QtWidgets.QLabel, "mfLabel")
-        self.seLabel = self.ui.findChild(QtWidgets.QLabel, "seLabel")
-        self.rpButton = self.ui.findChild(QtWidgets.QPushButton, "rpButton")
+        # --- ELEMENT SETUP ---
 
-        # Element setup
+        # RP AP MF SE - Element setup
         for widget in [self.rpselectedbandsLabel, self.apselectedbandsLabel, self.mfselectedbandsLabel,
                        self.seselectedbandsLabel, self.rpselectedbandsauxLabel, self.mfLabel, self.seLabel,
                        self.rpLabel, self.apLabel, self.rpButton]:
@@ -85,39 +69,7 @@ class ParametersWidget(QtWidgets.QWidget):
         self.rpCBox.toggled.connect(self.toggle_relative_power)
         self.rpButton.clicked.connect(lambda: self.open_band_table("rp"))
 
-        # STATISTICS AND NONLINEAR
-        self.meanCBox = self.ui.findChild(QtWidgets.QCheckBox, "meanCBox")
-        self.medianCBox = self.ui.findChild(QtWidgets.QCheckBox, "medianCBox")
-        self.varianceCBox = self.ui.findChild(QtWidgets.QCheckBox, "varianceCBox")
-        self.kurtosisCBox = self.ui.findChild(QtWidgets.QCheckBox, "kurtosisCBox")
-        self.skewnessCBox = self.ui.findChild(QtWidgets.QCheckBox, "skewnessCBox")
-        self.psdCBox = self.ui.findChild(QtWidgets.QCheckBox, "psdCBox")
-        self.segmentpsdLabel = self.ui.findChild(QtWidgets.QLabel, "segmentpsdLabel")
-        self.segmentpsdBox = self.ui.findChild(QtWidgets.QSpinBox, "segmentpsdBox")
-        self.overlappsdLabel = self.ui.findChild(QtWidgets.QLabel, "overlappsdLabel")
-        self.overlappsdBox = self.ui.findChild(QtWidgets.QSpinBox, "overlappsdBox")
-        self.windowpsdLabel = self.ui.findChild(QtWidgets.QLabel, "windowpsdLabel")
-        self.psdcomboBox = self.ui.findChild(QtWidgets.QComboBox, "psdcomboBox")
-        self.ctmCBox = self.ui.findChild(QtWidgets.QCheckBox, "ctmCBox")
-        self.ctmrLabel = self.ui.findChild(QtWidgets.QLabel, "ctmrLabel")
-        self.ctmrBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "ctmrBox")
-        self.sampenCBox = self.ui.findChild(QtWidgets.QCheckBox, "sampenCBox")
-        self.sampenmLabel = self.ui.findChild(QtWidgets.QLabel, "sampenmLabel")
-        self.sampenmBox = self.ui.findChild(QtWidgets.QSpinBox, "sampenmBox")
-        self.sampenrLabel = self.ui.findChild(QtWidgets.QLabel, "sampenrLabel")
-        self.sampenrBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "sampenrBox")
-        self.msampenCBox = self.ui.findChild(QtWidgets.QCheckBox, "msampenCBox")
-        self.maxscaleLabel = self.ui.findChild(QtWidgets.QLabel, "maxscaleLabel")
-        self.msampenscaleBox = self.ui.findChild(QtWidgets.QSpinBox, "msampenscaleBox")
-        self.msampenmLabel = self.ui.findChild(QtWidgets.QLabel, "msampenmLabel")
-        self.msampenmBox = self.ui.findChild(QtWidgets.QSpinBox, "msampenmBox")
-        self.msampenrLabel = self.ui.findChild(QtWidgets.QLabel, "msampenrLabel")
-        self.msampenrBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "msampenrBox")
-        self.lzcCBox = self.ui.findChild(QtWidgets.QCheckBox, "lzcCBox")
-        self.mlzcCBox = self.ui.findChild(QtWidgets.QCheckBox, "mlzcCBox")
-        self.mlzcscalesLabel = self.ui.findChild(QtWidgets.QLabel, "mlzcscalesLabel")
-        self.mlzcEdit = self.ui.findChild(QtWidgets.QLineEdit, "mlzcEdit")
-        # Element setup
+        # STATISTICS AND NONLINEAR - Element setup
         for widget in [self.ctmrLabel, self.ctmrBox, self.sampenmLabel, self.sampenmBox, self.sampenrLabel, self.sampenrBox,
                        self.maxscaleLabel, self.msampenscaleBox, self.msampenmLabel, self.msampenmBox, self.msampenrLabel,
                        self.msampenrBox, self.mlzcscalesLabel, self.mlzcEdit, self.windowpsdLabel,
@@ -129,23 +81,13 @@ class ParametersWidget(QtWidgets.QWidget):
         self.psdCBox.toggled.connect(self.toggle_psd)
         self.mlzcCBox.toggled.connect(self.toggle_mlzc)
 
-
-    # %% --------------------------------------------- CONNECTIVITY  ------------------------------------------- #
-        self.iacCBox = self.ui.findChild(QtWidgets.QCheckBox, "iacCBox")
-        self.iacortButton = self.ui.findChild(QtWidgets.QCheckBox, "iacortButton")
-        self.iacortLabel = self.ui.findChild(QtWidgets.QLabel, "iacortLabel")
-        self.aecCBox = self.ui.findChild(QtWidgets.QCheckBox, "aecCBox")
-        self.aecortLabel = self.ui.findChild(QtWidgets.QLabel, "aecortLabel")
-        self.aecortButton = self.ui.findChild(QtWidgets.QCheckBox, "aecortButton")
-        self.pliCBox = self.ui.findChild(QtWidgets.QCheckBox, "pliCBox")
-        self.plvCBox = self.ui.findChild(QtWidgets.QCheckBox, "plvCBox")
-        self.wpliCBox = self.ui.findChild(QtWidgets.QCheckBox, "wpliCBox")
-        # Element setup
+        # CONNECTIVITY - Element setup
         for widget in [self.iacortLabel, self.iacortButton, self.aecortLabel, self.aecortButton]:
             widget.setVisible(False)
         self.aecCBox.toggled.connect(self.toggle_aec)
         self.iacCBox.toggled.connect(self.toggle_iac)
-    #%% DEFAULT VALUES
+
+        # DEFAULT VALUES
         self.defaults = {
             "psdsegment": self.segmentpsdBox.value(),
             "psdoverlap": self.overlappsdBox.value(),
@@ -157,6 +99,8 @@ class ParametersWidget(QtWidgets.QWidget):
             "multisampradius": self.msampenrBox.value(),
         }
 
+    # %% --------------------------------------------- SIGNAL METRICS  ------------------------------------------- #
+    # RP AP MF SE
     def toggle_psd(self):
         """
             Manages the visibility of the PSD config parameters
