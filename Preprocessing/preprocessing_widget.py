@@ -193,10 +193,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Band segmentation
         self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
         self.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
-        # Sync changes in spinboxed with the band table content
-        # self.minbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
-        # self.maxbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
-        # self.maxbroadBox.editingFinished.connect(self.validate_broadband_interval)
 
         # Store the default values in a dict
         self.defaults = {
@@ -339,6 +335,10 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.main_window.sampling_frequency = eeg.eeg.fs
             self.main_window.num_chann = len(eeg.eeg.channel_set.l_cha)
             self.main_window.segmentation_widget.threschanBox.setMaximum(self.main_window.num_chann)
+            self.maxbroadBox.setMaximum(self.main_window.sampling_frequency / 2)
+            self.maxfreqbpBox.setMaximum(self.main_window.sampling_frequency / 2)
+            self.minfreqnotchBox.setMaximum(self.main_window.sampling_frequency / 2)
+            self.maxfreqnotchBox.setMaximum(self.main_window.sampling_frequency / 2)
             [elm.setDisabled(False) for elm in self.element_group]
             self.minbroadBox.setValue(0.5)
             self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
@@ -444,7 +444,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 label.setVisible(True)
                 checkbox.setVisible(True)
 
-
     def toggle_notch_controls(self, checked):
         """
             Shows (or hides) the parameters associated with 'notch_filter' when its main checkbox is checked (or
@@ -514,20 +513,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         else:
             min_val = self.minfreqnotchBox.value()
             max_val = self.maxfreqnotchBox.value()
-
-        if max_val > (self.main_window.sampling_frequency/2):
-            QMessageBox.warning(
-                self,
-                f"Invalid values for {filter_type} filter.",
-                f"For {filter_type} filtering, <b>max</b> frequency {max_val} must be lower than <b>fs</b> {self.main_window.sampling_frequency}.",
-            )
-            if filter_type == 'bandpass':
-                self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
-                self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
-            else:
-                self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
-                self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
-            return False
 
         if max_val <= min_val:
             QMessageBox.warning(
@@ -600,49 +585,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         canvas.fig.tight_layout()
         canvas.draw()
 
-    # def validate_broadband_interval(self):
-    #     """
-    #         Function that validates the broadband bounds (Low freq < high freq)
-    #     """
-    #
-    #     start = self.minbroadBox.value()
-    #     end = self.maxbroadBox.value()
-    #     if end <= start:
-    #         # Block the signals to avoid loops
-    #         self.minbroadBox.blockSignals(True)
-    #         self.maxbroadBox.blockSignals(True)
-    #
-    #         QtWidgets.QMessageBox.warning(
-    #             self,
-    #             "Invalid Broadband range",
-    #             "Max. frequency must be higher than min. frequency."
-    #         )
-    #
-    #         self.minbroadBox.setValue(getattr(self, "default_min_broad", 0.5))
-    #         self.maxbroadBox.setValue(getattr(self, "default_max_broad", 70))
-    #
-    #         # Unlock signals
-    #         self.minbroadBox.blockSignals(False)
-    #         self.maxbroadBox.blockSignals(False)
-    #
-    # def set_defaults_broadband(self, params):
-    #     """
-    #         Set default values for the broadband interval.
-    #     """
-    #     if not self.initialized or self._params_changed(params):
-    #         if params.get("bandpass"):
-    #             self.default_min_broad = params.get("bp_min", 0)
-    #             self.default_max_broad = params.get("bp_max", 70)
-    #         else:
-    #             self.default_min_broad = 0.5
-    #             self.default_max_broad = self.main_window.sampling_frequency/2  # TO DO: use fs/2
-    #
-    #         self.minbroadBox.setValue(self.default_min_broad)
-    #         self.maxbroadBox.setValue(self.default_max_broad)
-    #
-    #         self.last_params = dict(params)
-    #         self.initialized = True
-
     def _params_changed(self, new_params):
         """
             Checks if some relevant parameters have changed.
@@ -685,12 +627,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
             )
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.band_editor.show()
-        else:
-            # Before showing the band editor, update the broadband range
-            self.band_editor.sync_broadband_range(
-                self.minbroadBox.value(),
-                self.maxbroadBox.value()
-            )
         self.band_editor.show()
 
     def update_band_label(self, band_type, bands):
@@ -709,13 +645,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 label.setText("None")
 
         self.band_config_changed.emit()
-
-    # def _sync_broadband_spinboxes(self):
-    #     if self.band_editor:
-    #         self.band_editor.sync_broadband_range(
-    #             self.minbroadBox.value(),
-    #             self.maxbroadBox.value()
-    #         )
 
     def update_broadband_spinboxes(self, min_val, max_val):
         self.minbroadBox.blockSignals(True)
