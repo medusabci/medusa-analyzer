@@ -78,27 +78,14 @@ class MainWindow(QtWidgets.QMainWindow):
         layout.setSpacing(0)
         self.ui.titleWidget.setLayout(layout)
 
-        # --- GET ELEMENTS FROM UI MODULE ---
-
-        # Stacked widget (main section)
-        self.stackedWidget = self.ui.stackedWidget
-        # Navigation buttons and progress bar
-        self.nextButton = self.ui.nextButton
-        self.backButton = self.ui.backButton
-        self.progressLabel = self.ui.progressLabel
-        self.stepBar0 = self.ui.stepBar0
-        self.stepBar1 = self.ui.stepBar1
-        self.stepBar2 = self.ui.stepBar2
-        self.stepBar3 = self.ui.stepBar3
-
         # --- ELEMENT SETUP ---
 
         # Navigation Buttons
-        self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
-        self.nextButton.clicked.connect(self.go_next)
-        self.backButton.clicked.connect(self.go_back)
+        self.ui.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
+        self.ui.nextButton.clicked.connect(self.go_next)
+        self.ui.backButton.clicked.connect(self.go_back)
         # Step Info
-        self.total_steps = self.stackedWidget.count()
+        self.total_steps = self.ui.stackedWidget.count()
         self.step_names = ["Preprocessing", "Segmentation", "Signal Analysis", "Downloads"]
 
 
@@ -106,21 +93,21 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Preprocesssing
         self.preproc_widget = PreprocessingWidget(self)
-        self.stackedWidget.insertWidget(0, self.preproc_widget)
+        self.ui.stackedWidget.insertWidget(0, self.preproc_widget)
         # Segmentation
         self.segmentation_widget = SegmentationWidget(self)
         self.segmentation_widget.hide_event_widgets()
-        self.stackedWidget.insertWidget(1, self.segmentation_widget)
+        self.ui.stackedWidget.insertWidget(1, self.segmentation_widget)
         # Parameters
         self.parameters_widget = ParametersWidget(self)
-        self.stackedWidget.insertWidget(2, self.parameters_widget)
+        self.ui.stackedWidget.insertWidget(2, self.parameters_widget)
         # Saving
         self.save_widget = SaveWidget(self)
-        self.stackedWidget.insertWidget(3, self.save_widget)
+        self.ui.stackedWidget.insertWidget(3, self.save_widget)
 
         # Set initial state
-        self.stackedWidget.setCurrentIndex(0)  # Start with the Preprocessing tab
-        self.stackedWidget.currentChanged.connect(self.on_tab_changed)
+        self.ui.stackedWidget.setCurrentIndex(0)  # Start with the Preprocessing tab
+        self.ui.stackedWidget.currentChanged.connect(self.on_tab_changed)
         self.update_ui()
 
         self.preproc_widget.band_config_changed.connect(self.parameters_widget.reset_relative_power)
@@ -129,14 +116,14 @@ class MainWindow(QtWidgets.QMainWindow):
         """
             Controls the next (and finish) button behaviour
         """
-        idx = self.stackedWidget.currentIndex()
+        idx = self.ui.stackedWidget.currentIndex()
 
         if idx == 0 and not self.validate_preprocessing(): return
         if idx == 1 and not self.validate_segmentation(): return
         if idx == 2 and not self.validate_parameters(): return
 
         if idx < self.total_steps - 1:
-            self.stackedWidget.setCurrentIndex(idx + 1)
+            self.ui.stackedWidget.setCurrentIndex(idx + 1)
             self.update_ui()
         else:
             self.close()
@@ -146,9 +133,9 @@ class MainWindow(QtWidgets.QMainWindow):
         """
             Controls the back button behaviour
         """
-        idx = self.stackedWidget.currentIndex()
+        idx = self.ui.stackedWidget.currentIndex()
         if idx > 0:
-            self.stackedWidget.setCurrentIndex(idx - 1)
+            self.ui.stackedWidget.setCurrentIndex(idx - 1)
             self.update_ui()
 
 
@@ -162,18 +149,18 @@ class MainWindow(QtWidgets.QMainWindow):
             - Controlling visibility of the Back button (hidden on the first step).
             - Updating the Next button text (changes to 'Finish' on the last step).
         """
-        idx = self.stackedWidget.currentIndex()
-        self.progressLabel.setText(f"Step {idx + 1} of {self.total_steps}: {self.step_names[idx]}")
+        idx = self.ui.stackedWidget.currentIndex()
+        self.ui.progressLabel.setText(f"Step {idx + 1} of {self.total_steps}: {self.step_names[idx]}")
         self.update_progress_bar(idx)
-        self.backButton.setVisible(idx > 0)
-        self.nextButton.setText("Finish" if idx == self.total_steps - 1 else "Next")
+        self.ui.backButton.setVisible(idx > 0)
+        self.ui.nextButton.setText("Finish" if idx == self.total_steps - 1 else "Next")
 
 
     def update_progress_bar(self, idx):
         """
         Paints the progress bar
         """
-        bars = [self.stepBar0, self.stepBar1, self.stepBar2, self.stepBar3]
+        bars = [self.ui.stepBar0, self.ui.stepBar1, self.ui.stepBar2, self.ui.stepBar3]
         colors = ["#6a0dad", "#931d9d", "#c4308a", "#eb407a"]
         for i, bar in enumerate(bars):
             bar.setStyleSheet(f"background-color: {colors[i] if i <= idx else 'lightgray'}")
@@ -191,11 +178,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         elif index == 2:
             self.parameters_widget.toolBox.setCurrentIndex(0)
-            self.nextButton.setEnabled(True)
+            self.ui.nextButton.setEnabled(True)
         elif index == 3:
-            self.nextButton.setEnabled(False)
+            self.ui.nextButton.setEnabled(False)
         else:
-            self.nextButton.setEnabled(True)
+            self.ui.nextButton.setEnabled(True)
 
 
     def validate_preprocessing(self):
@@ -416,17 +403,17 @@ class MainWindow(QtWidgets.QMainWindow):
             Side Effects:
             - Displays warning/success dialogs
         """
-        current_widget = self.stackedWidget.currentWidget()
+        current_widget = self.ui.stackedWidget.currentWidget()
         if not isinstance(current_widget, SaveWidget):
             return
 
         if success:
             QtWidgets.QMessageBox.information(self, "Download Complete", "Files downloaded successfully.")
-            self.nextButton.setEnabled(True)
+            self.ui.nextButton.setEnabled(True)
         else:
             print("Pipeline failed. nextButton will remain disabled.")
             self.save_widget.progressBar.setValue(0)
-            self.nextButton.setEnabled(False)
+            self.ui.nextButton.setEnabled(False)
 
     def _warn(self, title, message):
         QtWidgets.QMessageBox.warning(self, title, message)
