@@ -1,7 +1,10 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtUiTools import QUiLoader
+from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+
+# Load UI class
+ui_bands_table = loadUiType("bands_table.ui")[0]
 
 # This code enable the drag and drop of bands in the table
 class BandTableWidget(QtWidgets.QTableWidget):
@@ -105,10 +108,14 @@ class BandTableWidget(QtWidgets.QTableWidget):
         else:
             self.removeRow(source_row)
 
-class BandTable(QtWidgets.QDialog):
+class BandTable(QtWidgets.QDialog, ui_bands_table):
     def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None,
                  min_broad=0.5, max_broad=69.0):
         super().__init__(parameters_widget or preprocessing_widget)
+
+        # Setup UI
+        self.setupUi(self)
+
         self.parameters_widget = parameters_widget
         self.preprocessing_widget = preprocessing_widget
         self.band_type = band_type
@@ -116,28 +123,19 @@ class BandTable(QtWidgets.QDialog):
         self.default_min = min_broad
         self.default_max = max_broad
 
-        loader = QUiLoader()
-        self.ui = loader.load("bands_table.ui", self)
-
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.ui)
-        self.setLayout(layout)
-
-        original_table = self.ui.findChild(QtWidgets.QTableWidget, "bandsTable")
+        original_table = self.bandsTable
         self.bandsTable = BandTableWidget(self)
         self.bandsTable.setObjectName("bandsTable")
 
-        layout = original_table.parent().layout()
+        # Replace the original table with our custom one
+        parent_widget = original_table.parent()
+        layout = parent_widget.layout()
         if layout:
             index = layout.indexOf(original_table)
             layout.removeWidget(original_table)
             original_table.deleteLater()
             layout.insertWidget(index, self.bandsTable)
 
-        self.addButton = self.ui.findChild(QtWidgets.QPushButton, "addButton")
-        self.resetButton = self.ui.findChild(QtWidgets.QPushButton, "resetButton")
-        self.acceptButton = self.ui.findChild(QtWidgets.QPushButton, "acceptButton")
-        self.selectallButton = self.ui.findChild(QtWidgets.QPushButton, "selectallButton")
 
         self.min_broad = min_broad
         self.max_broad = max_broad

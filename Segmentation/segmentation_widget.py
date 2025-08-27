@@ -1,10 +1,13 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtUiTools import QUiLoader
+from PySide6.QtUiTools import loadUiType
 from Segmentation.utils import extract_condition_events
 from PySide6.QtCore import QStringListModel
 from scipy.stats import norm
 
-class SegmentationWidget(QtWidgets.QWidget):
+# Load UI class
+ui_segmentation_widget = loadUiType('Segmentation/segmentation_widget.ui')[0]
+
+class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
     """
         Main windget element. Manages the  segmentation configuration of the data. Includes selection of signal markers
         (conditions/events), segmentation window settings, normalization, thresholding, and resampling options.
@@ -12,12 +15,9 @@ class SegmentationWidget(QtWidgets.QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        loader = QUiLoader()
-        self.ui = loader.load("Segmentation/segmentation_widget.ui", self)
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.ui)
-        self.setLayout(layout)
+        # Setup UI
+        self.setupUi(self)
 
         # Define variables
         self.main_window = main_window
@@ -31,7 +31,6 @@ class SegmentationWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.ui.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.segmentation_label = QtWidgets.QLabel()
         self.segmentation_label.setTextFormat(QtCore.Qt.RichText)
@@ -55,68 +54,6 @@ class SegmentationWidget(QtWidgets.QWidget):
         palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
         self.topContentWidget.setPalette(palette)
         layout.addWidget(self.segmentation_label)
-
-        # --- GET ELEMENTS FROM UI MODULE ---
-
-        # Conditions box
-        self.conditionWidget = self.ui.findChild(QtWidgets.QWidget, "conditionsWidget")
-        self.availableconditionsLabel = self.ui.findChild(QtWidgets.QLabel, "availableconditionsLabel")
-        self.conditionList = self.ui.findChild(QtWidgets.QListView, "conditionList")
-        self.conditionLabel = self.ui.findChild(QtWidgets.QLabel, "conditionLabel")
-        # Events box
-        self.eventWidget = self.ui.findChild(QtWidgets.QWidget, "eventWidget")
-        self.availableeventsLabel = self.ui.findChild(QtWidgets.QLabel, "availableeventsLabel")
-        self.eventList = self.ui.findChild(QtWidgets.QListView, "eventList")
-        self.eventLabel = self.ui.findChild(QtWidgets.QLabel, "eventLabel")
-
-        # Segmentation properties
-        self.trials = self.ui.findChild(QtWidgets.QVBoxLayout, "trials")
-        self.segmentationtypeLabel = self.ui.findChild(QtWidgets.QLabel, "segmentationtypeLabel")
-        # Conditions
-        self.conditionRButton = self.ui.findChild(QtWidgets.QRadioButton, "conditionRButton")
-        self.trialLabel = self.ui.findChild(QtWidgets.QLabel, "trialLabel")
-        self.trialBox = self.ui.findChild(QtWidgets.QSpinBox, "trialBox")
-        self.trialstrideLabel = self.ui.findChild(QtWidgets.QLabel, "trialstrideLabel")
-        self.trialstrideBox = self.ui.findChild(QtWidgets.QSpinBox, "trialstrideBox")
-        # Events
-        self.eventRButton = self.ui.findChild(QtWidgets.QRadioButton, "eventRButton")
-        self.winLabel_1 = self.ui.findChild(QtWidgets.QLabel, "winLabel_1")
-        self.winBox_1 = self.ui.findChild(QtWidgets.QSpinBox, "winBox_1")
-        self.winLabel_2 = self.ui.findChild(QtWidgets.QLabel, "winLabel_2")
-        self.winBox_2 = self.ui.findChild(QtWidgets.QSpinBox, "winBox_2")
-
-        # Normalization
-        self.normLabel = self.ui.findChild(QtWidgets.QLabel, "normLabel")
-        self.normCBox = self.ui.findChild(QtWidgets.QCheckBox, "normCBox")
-        self.zscoreRButton = self.ui.findChild(QtWidgets.QRadioButton, "zscoreRButton")
-        self.dcRButton = self.ui.findChild(QtWidgets.QRadioButton, "dcRButton")
-        # Baseline information
-        self.baselineLabel_1 = self.ui.findChild(QtWidgets.QLabel, "baselineLabel_1")
-        self.baselineCBox_1 = self.ui.findChild(QtWidgets.QSpinBox, "baselineCBox_1")
-        self.baselineLabel_2 = self.ui.findChild(QtWidgets.QLabel, "baselineLabel_2")
-        self.baselineCBox_2 = self.ui.findChild(QtWidgets.QSpinBox, "baselineCBox_2")
-
-        # Average epochs
-        self.averageLabel = self.ui.findChild(QtWidgets.QLabel, "averageLabel")
-        self.averageCBox = self.ui.findChild(QtWidgets.QCheckBox, "averageCBox")
-
-        # Thresholding
-        self.thresLabel = self.ui.findChild(QtWidgets.QLabel, "thresLabel")
-        self.thresCBox = self.ui.findChild(QtWidgets.QCheckBox, "thresCBox")
-        self.threskLabel = self.ui.findChild(QtWidgets.QLabel, "threskLabel")
-        self.threskBox = self.ui.findChild(QtWidgets.QDoubleSpinBox, "threskBox")
-        self.threskLabelaux = self.ui.findChild(QtWidgets.QLabel, "threskLabelaux")
-        self.thressampLabel = self.ui.findChild(QtWidgets.QLabel, "thressampLabel")
-        self.thressampBox = self.ui.findChild(QtWidgets.QSpinBox, "thressampBox")
-        self.threschanLabel = self.ui.findChild(QtWidgets.QLabel, "threschanLabel")
-        self.threschanBox = self.ui.findChild(QtWidgets.QSpinBox, "threschanBox")
-        self.threshelButton = self.ui.findChild(QtWidgets.QToolButton, "threshelButton")
-
-        # Resampling
-        self.resampleLabel = self.ui.findChild(QtWidgets.QLabel, "resampleLabel")
-        self.resampleCBox = self.ui.findChild(QtWidgets.QCheckBox, "resampleCBox")
-        self.newfsLabel = self.ui.findChild(QtWidgets.QLabel, "newfsLabel")
-        self.resamplefsBox = self.ui.findChild(QtWidgets.QSpinBox, "resamplefsBox")
 
         # --- ELEMENT SETUP ---
 
@@ -219,25 +156,6 @@ class SegmentationWidget(QtWidgets.QWidget):
 
         selected_conditions = {index.data() for index in self.conditionList.selectionModel().selectedIndexes()}
         selected_events = {index.data() for index in self.eventList.selectionModel().selectedIndexes()}
-
-        # # Count conditions globally
-        # condition_counter = Counter(self.conditions)
-        # counted_conditions = ([(cnd, condition_counter[cnd]) for cnd in selected_conditions] if selected_conditions else list(
-        #         condition_counter.items()))
-        #
-        # # Filter events by selected conditions if any, then count
-        # if selected_conditions:
-        #     filtered_events = (self.events[i] for i, cond in enumerate(self.events_condition) if cond in selected_conditions)
-        #     event_counter = Counter(filtered_events)
-        # else:
-        #     event_counter = Counter(self.events)
-        #
-        # counted_events = ([(evt, event_counter[evt]) for evt in selected_events if evt in event_counter] if selected_events else list(
-        #         event_counter.items()))
-        #
-        # # Format and update labels
-        # cond_text = ", ".join(f"{cnd} ({cnt})" for cnd, cnt in counted_conditions) or "None"
-        # evt_text = ", ".join(f"{evt} ({cnt})" for evt, cnt in counted_events) or "None"
 
         # Format and update labels
         cond_text = ", ".join(f"{cnd}" for cnd in selected_conditions) or "None"
