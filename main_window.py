@@ -255,32 +255,27 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._warn(title, msg)
                 return False
 
-        if self.preproc_widget.maxbroadBox.value() > self.sampling_frequency/2:
-            self._warn("Invalid Broadband Range", "The maximum frequency of the broadband must be lower "
-                                                  "than the fs/2.")
-            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency / 2)
-            self.preproc_widget.maxfreqbpBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
-            return False
-
-        if self.preproc_widget.maxfreqbpBox and self.preproc_widget.maxfreqbpBox.value() > self.sampling_frequency/2:
-            self._warn("Invalid Bandpass Filter Range", "The maximum frequency of the bandpass filter must "
-                                                        "be lower than the fs/2.")
-            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency / 2)
-            self.preproc_widget.maxfreqbpBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
-            return False
-
         if self.preproc_widget.maxfreqbpBox and self.preproc_widget.maxfreqbpBox.value() > self.preproc_widget.maxbroadBox.value():
             self._warn("Invalid Bandpass Filter Range", "The maximum frequency of the bandpass filter must "
                                                         "be lower than the maximum broadband frequency.")
-            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency/2)
+            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency/2) if not self.preproc_widget.bpCBox.isChecked() \
+                else self.preproc_widget.maxbroadBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
             self.preproc_widget.maxfreqbpBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
+            return False
+
+        if self.preproc_widget.minfreqbpBox and self.preproc_widget.minfreqbpBox.value() < self.preproc_widget.minbroadBox.value():
+            self._warn("Invalid Bandpass Filter Range", "The minimum frequency of the bandpass filter must "
+                                                        "be higher than the minimum broadband frequency.")
+            self.preproc_widget.minbroadBox.setValue(0.5) if not self.preproc_widget.bpCBox.isChecked() \
+                else self.preproc_widget.minbroadBox.setValue(self.preproc_widget.defaults["minfreqbp"])
+            self.preproc_widget.minfreqbpBox.setValue(self.preproc_widget.defaults["minfreqbp"])
             return False
 
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         self.preproc_config = pw.get_preprocessing_config()
         self.min_b, self.max_b = self.preproc_config["broadband_min"], self.preproc_config["broadband_max"]
         print(self.preproc_config)
-        self.parameters_widget._init_default_bands()
+        # self.parameters_widget._init_default_bands()
         # self.preproc_widget.set_defaults_from_preprocessing(config)
         return True
 
