@@ -35,7 +35,7 @@ Create a virtual environment. To do so:
 
 - **4.3** In the command window, type: ```python -m venv venv```.
 This will create a new folder called venv inside your project folder containing the virtual environment
-- **4.3**  Activate the environment: ```source venv/Scripts/activate```.
+- **4.3**  Activate the environment: ```venv/Scripts/activate```.
 
 ## 5. Install the Medusa Kernel dependencies
 Install the Medusa Kernel into your virtual environment. In the CMD window type:
