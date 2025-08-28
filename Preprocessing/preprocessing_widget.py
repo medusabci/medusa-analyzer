@@ -285,6 +285,8 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
             recording = components.Recording.load(self.selected_files[0])
             self.biosignals = recording.biosignals
             for key, value in recording.biosignals.items():
+                if value['class_name'] not in ['EEG', 'EMG', 'ECG']:
+                    continue
                 self.biosignals[key]['fs'] = getattr(recording, key).fs
                 try:
                     self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
@@ -328,7 +330,7 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
             self,
             "Select .rcp.bson files to convert",
             "",
-            "BSON files (*.bson)"
+            "BSON files (*.*)"
         )
 
         if not files:
@@ -336,9 +338,10 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
 
         valid_files = []
         for file in files:
-            if not file.endswith(".rcp.bson"):
+            if not file.endswith(".rcp.bson") and not file.endswith(".mat"):
                 continue
-            rec_path = file.replace(".rcp.bson", ".rec.bson")
+            extension = file.split(".")[-1]
+            rec_path = file.replace("." + extension, ".rec.bson")
             if os.path.exists(rec_path):
                 result = QtWidgets.QMessageBox.question(
                     self,
@@ -368,7 +371,8 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
                 f"Successfully converted {len(valid_files)} file(s)."
             )
 
-            rec_files = [f.replace(".rcp.bson", ".rec.bson") for f in valid_files]
+            extension = file.split(".")[-1]
+            rec_files = [f.replace("." + extension, ".rec.bson") for f in valid_files]
             for f in rec_files:
                 if f not in self.selected_files:
                     self.selected_files.append(f)
@@ -389,6 +393,8 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
             Function that updates the sampling frequency and number of channels when the biosignal type is changed.
         """
         selected_biosignal = self.biosignalBox.currentText()
+        if not selected_biosignal:
+            return
         selected_biosignal = selected_biosignal.split(" ")[1]
         self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
         self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
