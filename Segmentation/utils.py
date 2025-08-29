@@ -138,6 +138,19 @@ def extract_condition_events(files):
     events_condition = []
     for file in files:
         rec = components.Recording.load(file)
+
+        if not hasattr(rec, "marks"):
+            # Empty marks
+            marks = components.CustomExperimentData()
+            marks.events_labels = []
+            marks.events_times = []
+            marks.conditions_labels = []
+            marks.conditions_times = np.empty((0, 2))
+            rec.add_experiment_data(marks, key='marks')
+            rec.marks.app_settings = {}
+            rec.marks.app_settings['conditions'] = {}
+            rec.marks.app_settings['events'] = {}
+
         # Standard dict
         _, conditions_tmp, events_tmp = recording_to_dict(rec)
         conditions.extend(conditions_tmp['conditions_names'])
@@ -149,11 +162,16 @@ def extract_condition_events(files):
 
 def recording_to_dict(rec):
     times = rec.eeg.times - rec.eeg.times[0]
+
     # Vector to transform numeric labels to standard names, and array with the names
     label_to_conditions = {info['label']: name for name, info in rec.marks.app_settings['conditions'].items()}
     conditions_names = [label_to_conditions[label] for label in rec.marks.conditions_labels[0::2]]
 
     # Numeric matrix with the conditions
+    # Detect if the last condition is not finished
+    if len(rec.marks.conditions_labels) % 2 != 0 and (rec.marks.conditions_labels[-1] != rec.marks.conditions_labels[-2]):
+        rec.marks.conditions_labels.append(rec.marks.conditions_labels[-1])
+        rec.marks.conditions_times.append(rec.eeg.times[-1])
     conditions_times = rec.marks.conditions_times - rec.eeg.times[0]
     conditions_times = np.reshape(conditions_times, (-1, 2))
 

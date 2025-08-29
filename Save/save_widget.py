@@ -26,17 +26,17 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
         self.topContentWidget.setLayout(layout)
-        self.logtextBrowser = QtWidgets.QLabel()
-        self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
-        self.logtextBrowser.setWordWrap(True)
-        self.logtextBrowser.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-                background: transparent;
-                border: none;
-            }
-        """)
-        self.logtextBrowser.setText("""
+        self.save_label = QtWidgets.QLabel()
+        self.save_label.setTextFormat(QtCore.Qt.RichText)
+        self.save_label.setWordWrap(True)
+        # self.save_label.setStyleSheet("""
+        #     QLabel {
+        #         background-color: transparent;
+        #         background: transparent;
+        #         border: none;
+        #     }
+        # """)
+        self.save_label.setText("""
             <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
                 <p>
                     Please select an <b>empty folder</b> where processed data will be saved. This step allows you to export 
@@ -47,7 +47,7 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         palette = QtGui.QPalette()
         palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
         self.topContentWidget.setPalette(palette)
-        layout.addWidget(self.logtextBrowser)
+        layout.addWidget(self.save_label)
 
         self.settings = {}
 
@@ -164,7 +164,6 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         """
         # Styles adapted to the white format
         theme_colors = {
-            'THEME_TEXT_LIGHT': '#333333',  # Dark text (good visibility)
             'THEME_RED': '#D32F2F',  # Darker red
             'THEME_YELLOW': '#FBC02D'  # Darker yellow
         }
@@ -174,9 +173,9 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
             elif style == 'warning':
                 style = {'color': theme_colors['THEME_YELLOW']}
             else:
-                style = {'color': theme_colors['THEME_TEXT_LIGHT']}
+                style = dict()
         elif style is None:
-            style = {'color': theme_colors['THEME_TEXT_LIGHT']}
+            style = dict()
 
         style.setdefault('font-size', '9pt')
         style_str = ';'.join(f'{k}: {v}' for k, v in style.items())
