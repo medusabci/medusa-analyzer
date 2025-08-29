@@ -403,7 +403,7 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
             return
 
         if success:
-            QtWidgets.QMessageBox.information(self, "Download Complete", "Files downloaded successfully.")
+            QtWidgets.QMessageBox.information(self, "Computation Complete", "Files saved successfully.")
             self.nextButton.setEnabled(True)
         else:
             print("Pipeline failed. nextButton will remain disabled.")

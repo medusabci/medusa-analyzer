@@ -97,6 +97,9 @@ def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_path
                 marks.events_times = []
                 marks.conditions_labels = []
                 marks.conditions_times = np.empty((0, 2))
+                marks.app_settings = {}
+                marks.app_settings['conditions'] = {}
+                marks.app_settings['events'] = {}
 
                 # Channel set
                 channels = data.cfg.channels
