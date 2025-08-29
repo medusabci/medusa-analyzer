@@ -1,11 +1,15 @@
 import os
 import json
-from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtGui import QTextCursor
-from PyQt5.QtWidgets import QApplication
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QApplication
 from core_process import run_pipeline
 
-class SaveWidget(QtWidgets.QWidget):
+# Load UI class
+ui_save_widget = loadUiType("Save/save_widget.ui")[0]
+
+class SaveWidget(QtWidgets.QWidget, ui_save_widget):
     """
         Main windget element. Manages the saving options. It also manages the functions to preprocess, segment and
         compute paramters with the previously selected options.
@@ -13,37 +17,38 @@ class SaveWidget(QtWidgets.QWidget):
     def __init__(self, main_window):
         super().__init__()
         self.main_window = main_window
-        uic.loadUi("Save/save_widget.ui", self)
+
+        # Setup UI
+        self.setupUi(self)
 
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
-        self.logtextBrowser = QtWidgets.QLabel()
-        self.logtextBrowser.setTextFormat(QtCore.Qt.RichText)
-        self.logtextBrowser.setWordWrap(True)
-        self.logtextBrowser.setText("""
+        self.save_label = QtWidgets.QLabel()
+        self.save_label.setTextFormat(QtCore.Qt.RichText)
+        self.save_label.setWordWrap(True)
+        # self.save_label.setStyleSheet("""
+        #     QLabel {
+        #         background-color: transparent;
+        #         background: transparent;
+        #         border: none;
+        #     }
+        # """)
+        self.save_label.setText("""
             <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
                 <p>
                     Please select an <b>empty folder</b> where processed data will be saved. This step allows you to export 
                     results from each stage of the workflow.
             </div>
         """)
-        layout.addWidget(self.logtextBrowser)
+        # Remove background
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.topContentWidget.setPalette(palette)
+        layout.addWidget(self.save_label)
 
-        # --- GET ELEMENTS FROM UI MODULE ---
-        self.selectfolderButton = self.findChild(QtWidgets.QPushButton, "selectfolderButton")
-        self.selectfolderLabel = self.findChild(QtWidgets.QLabel, "selectfolderLabel")
-        self.settingsCBox = self.findChild(QtWidgets.QCheckBox, "settingsCBox")
-        self.prepsignalsCBox = self.findChild(QtWidgets.QCheckBox, "prepsignalsCBox")
-        self.segsignalsCBox = self.findChild(QtWidgets.QCheckBox, "segsignalsCBox")
-        self.paramsignalsCBox = self.findChild(QtWidgets.QCheckBox, "paramsignalsCBox")
-        self.runButton = self.findChild(QtWidgets.QPushButton, "runButton")
-        self.progressLabel = self.findChild(QtWidgets.QLabel, "progressLabel")
-        self.progressBar = self.findChild(QtWidgets.QProgressBar, "progressBar")
-        self.logtextBrowser = self.findChild(QtWidgets.QTextBrowser, "logtextBrowser")
         self.settings = {}
 
         # --- ELEMENT SETUP ---
@@ -159,7 +164,6 @@ class SaveWidget(QtWidgets.QWidget):
         """
         # Styles adapted to the white format
         theme_colors = {
-            'THEME_TEXT_LIGHT': '#333333',  # Dark text (good visibility)
             'THEME_RED': '#D32F2F',  # Darker red
             'THEME_YELLOW': '#FBC02D'  # Darker yellow
         }
@@ -169,9 +173,9 @@ class SaveWidget(QtWidgets.QWidget):
             elif style == 'warning':
                 style = {'color': theme_colors['THEME_YELLOW']}
             else:
-                style = {'color': theme_colors['THEME_TEXT_LIGHT']}
+                style = dict()
         elif style is None:
-            style = {'color': theme_colors['THEME_TEXT_LIGHT']}
+            style = dict()
 
         style.setdefault('font-size', '9pt')
         style_str = ';'.join(f'{k}: {v}' for k, v in style.items())
@@ -180,4 +184,3 @@ class SaveWidget(QtWidgets.QWidget):
         self.logtextBrowser.append(formatted)
         self.logtextBrowser.moveCursor(QTextCursor.End)
         QApplication.processEvents()
-

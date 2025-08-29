@@ -1,10 +1,16 @@
 import sys
-from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtWidgets import QApplication
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtUiTools import loadUiType
 from Preprocessing.preprocessing_widget import PreprocessingWidget
 from Segmentation.segmentation_widget import SegmentationWidget
 from Parameters.parameters_widget import ParametersWidget
 from Save.save_widget import SaveWidget
+from PySide6.QtGui import QPalette
+from PySide6.QtWidgets import QFrame
+
+# Load UI class
+ui_main_window = loadUiType('main_window.ui')[0]
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -17,12 +23,12 @@ class GradientTitleWidget(QtWidgets.QWidget):
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
-        font = QtGui.QFont("Arial", 36, QtGui.QFont.Bold)
+        font = QtGui.QFont("Arial", 36, QtGui.QFont.Weight.Bold)
         painter.setFont(font)
 
         text = "MEDUSA© Analyzer"
         fm = QtGui.QFontMetrics(font)
-        text_width = fm.width(text)
+        text_width = fm.horizontalAdvance(text)
 
         x = (self.width() - text_width) // 2
         y = (self.height() + fm.ascent() - fm.descent()) // 2
@@ -35,7 +41,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
         painter.setPen(QtGui.QPen(brush, 0))
         painter.drawText(x, y, text)
 
-class MainWindow(QtWidgets.QMainWindow):
+class MainWindow(QtWidgets.QMainWindow, ui_main_window):
     """
         Main application window. Manages navigation through the main stages of the workflow:
         Preprocessing, Segmentation, Signal Analysis, and Downloads.
@@ -43,7 +49,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi("main_window.ui", self)
+
+        # Setup UI
+        self.setupUi(self)
+
         self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
         self.selected_files = []
         self.sampling_frequency = 0
@@ -53,28 +62,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Define the header of the GUI
         self.title_widget = GradientTitleWidget(self)
+        # Remove background
+        palette = QPalette()
+        palette.setColor(QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.titleWidget.setPalette(palette)
+
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.title_widget)
         layout.setContentsMargins(0, 20, 0, 0)
         layout.setSpacing(0)
-        self.titleWidget = self.findChild(QtWidgets.QWidget, "titleWidget")
         self.titleWidget.setLayout(layout)
-
-
-        # --- GET ELEMENTS FROM UI MODULE ---
-
-        # Stacked widget (main section)
-        self.stackedWidget = self.findChild(QtWidgets.QStackedWidget, "stackedWidget")
-        # Navigation buttons and progress bar
-        self.nextButton = self.findChild(QtWidgets.QPushButton, "nextButton")
-        self.backButton = self.findChild(QtWidgets.QPushButton, "backButton")
-        self.progressLabel = self.findChild(QtWidgets.QLabel, "progressLabel")
-        self.stepBar0 = self.findChild(QtWidgets.QWidget, "stepBar0")
-        self.stepBar1 = self.findChild(QtWidgets.QWidget, "stepBar1")
-        self.stepBar2 = self.findChild(QtWidgets.QWidget, "stepBar2")
-        self.stepBar3 = self.findChild(QtWidgets.QWidget, "stepBar3")
-        self.toolBox = self.findChild(QtWidgets.QToolBox, "toolBox")
-
 
         # --- ELEMENT SETUP ---
 
@@ -240,32 +237,27 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._warn(title, msg)
                 return False
 
-        if self.preproc_widget.maxbroadBox.value() > self.sampling_frequency/2:
-            self._warn("Invalid Broadband Range", "The maximum frequency of the broadband must be lower "
-                                                  "than the fs/2.")
-            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency / 2)
-            self.preproc_widget.maxfreqbpBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
-            return False
-
-        if self.preproc_widget.maxfreqbpBox and self.preproc_widget.maxfreqbpBox.value() > self.sampling_frequency/2:
-            self._warn("Invalid Bandpass Filter Range", "The maximum frequency of the bandpass filter must "
-                                                        "be lower than the fs/2.")
-            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency / 2)
-            self.preproc_widget.maxfreqbpBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
-            return False
-
         if self.preproc_widget.maxfreqbpBox and self.preproc_widget.maxfreqbpBox.value() > self.preproc_widget.maxbroadBox.value():
             self._warn("Invalid Bandpass Filter Range", "The maximum frequency of the bandpass filter must "
                                                         "be lower than the maximum broadband frequency.")
-            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency/2)
+            self.preproc_widget.maxbroadBox.setValue(self.sampling_frequency/2) if not self.preproc_widget.bpCBox.isChecked() \
+                else self.preproc_widget.maxbroadBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
             self.preproc_widget.maxfreqbpBox.setValue(self.preproc_widget.defaults["maxfreqbp"])
+            return False
+
+        if self.preproc_widget.minfreqbpBox and self.preproc_widget.minfreqbpBox.value() < self.preproc_widget.minbroadBox.value():
+            self._warn("Invalid Bandpass Filter Range", "The minimum frequency of the bandpass filter must "
+                                                        "be higher than the minimum broadband frequency.")
+            self.preproc_widget.minbroadBox.setValue(0.5) if not self.preproc_widget.bpCBox.isChecked() \
+                else self.preproc_widget.minbroadBox.setValue(self.preproc_widget.defaults["minfreqbp"])
+            self.preproc_widget.minfreqbpBox.setValue(self.preproc_widget.defaults["minfreqbp"])
             return False
 
         self.segmentation_widget.load_and_display_events_from_file(self.selected_files[0])
         self.preproc_config = pw.get_preprocessing_config()
         self.min_b, self.max_b = self.preproc_config["broadband_min"], self.preproc_config["broadband_max"]
         print(self.preproc_config)
-        self.parameters_widget._init_default_bands()
+        # self.parameters_widget._init_default_bands()
         # self.preproc_widget.set_defaults_from_preprocessing(config)
         return True
 
@@ -371,7 +363,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if ((pw.rpCBox.isChecked() or pw.apCBox.isChecked() or pw.mfCBox.isChecked() or pw.seCBox.isChecked())
                 and not pw.psdCBox.isChecked()):
-            from PyQt5.QtWidgets import QMessageBox
             QMessageBox.warning(
                 self,
                 "PSD Configuration Notice",
@@ -412,7 +403,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         if success:
-            QtWidgets.QMessageBox.information(self, "Download Complete", "Files downloaded successfully.")
+            QtWidgets.QMessageBox.information(self, "Computation Complete", "Files saved successfully.")
             self.nextButton.setEnabled(True)
         else:
             print("Pipeline failed. nextButton will remain disabled.")
@@ -427,4 +418,4 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

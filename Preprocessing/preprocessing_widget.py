@@ -1,5 +1,6 @@
-from PyQt5 import QtWidgets, uic, QtGui, QtCore
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtUiTools import loadUiType
+from PySide6.QtWidgets import QFileDialog, QMessageBox
 from Preprocessing.files_list_dialog import FilesListDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -9,6 +10,9 @@ import numpy as np
 import os
 from conversor_to_rec import conversor_to_rec
 from medusa import components
+
+# Load UI class
+ui_preprocessing_widget = loadUiType('Preprocessing/preprocessing_widget.ui')[0]
 
 class MplCanvas(FigureCanvas):
     """
@@ -20,17 +24,19 @@ class MplCanvas(FigureCanvas):
         super().__init__(self.fig)
         self.setParent(parent)
 
-class PreprocessingWidget(QtWidgets.QWidget):
+class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
     """
         Main windget element. Manages all the preprocessing options for the data. Includes CAR, notch filtering and
         bandpass filtering.
     """
 
-    band_config_changed = QtCore.pyqtSignal()
+    band_config_changed = QtCore.Signal()
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi("Preprocessing/preprocessing_widget.ui", self)
+
+        # Setup UI
+        self.setupUi(self)
 
         # Define variables
         self.main_window = main_window
@@ -44,7 +50,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.description_label = QtWidgets.QLabel()
         self.description_label.setTextFormat(QtCore.Qt.RichText)
@@ -55,16 +60,16 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 Please select at least one <span style="color:#007acc; font-weight:bold;">rec</span> file to begin.
                 </p>
                 """)
+        # Remove background
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.topContentWidget.setPalette(palette)
         layout.addWidget(self.description_label)
 
         # --- GET ELEMENTS FROM UI MODULE ---
 
         # Data loading
-        self.browseButton = self.findChild(QtWidgets.QPushButton, "browseButton")
-        self.viewfilesButton = self.findChild(QtWidgets.QPushButton, "viewfilesButton")
-        self.selectLabel = self.findChild(QtWidgets.QLabel, "selectLabel")
         self.selected_files = []  # Store the selected files
-        self.convertButton = self.findChild(QtWidgets.QPushButton, "convertButton")
         self.convertButton.setStyleSheet("""
             QPushButton {
                 color: white;
@@ -85,68 +90,21 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 );
             }
         """)
-        self.convertProgressBar = self.findChild(QtWidgets.QProgressBar, "convertProgressBar")
         self.convertProgressBar.setValue(0)
         self.convertProgressBar.setVisible(False)
-        self.convertLogTextBrowser = self.findChild(QtWidgets.QTextBrowser, "convertLogTextBrowser")
         self.convertLogTextBrowser.setVisible(False)
-        self.broadbandButton = self.findChild(QtWidgets.QToolButton, "broadbandButton")
-        self.broadbandLabel = self.findChild(QtWidgets.QLabel, "broadbandLabel")
-        self.minbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "minbroadBox")
-        self.broadbandauxLabel = self.findChild(QtWidgets.QLabel, "broadbandauxLabel")
-        self.maxbroadBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxbroadBox")
-        self.hzbroadbandLabel = self.findChild(QtWidgets.QLabel, "hzbroadbandLabel")
-        # Preprocessing
-        self.preprocessingButton = self.findChild(QtWidgets.QCheckBox, "preprocessingButton")
-        self.preprocessingLabel = self.findChild(QtWidgets.QLabel, "preprocessingLabel")
-        # Notch
-        self.notchgroupBox = self.findChild(QtWidgets.QGroupBox, "notchgroupBox")
-        self.notchLabel = self.findChild(QtWidgets.QLabel, "notchfilterLabel")
-        self.notchCBox = self.findChild(QtWidgets.QCheckBox, "notchCBox")
-        self.notchminLabel = self.findChild(QtWidgets.QLabel, "notchminLabel")
-        self.minfreqnotchBox = self.findChild(QtWidgets.QDoubleSpinBox, "minfreqnotchBox")
-        self.notchmaxLabel = self.findChild(QtWidgets.QLabel, "notchmaxLabel")
-        self.maxfreqnotchBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqnotchBox")
-        self.orderNotchLabel = self.findChild(QtWidgets.QLabel, "orderNotchLabel")
-        self.orderNotchBox = self.findChild(QtWidgets.QSpinBox, "orderNotchBox")
-        self.winnotchLabel = self.findChild(QtWidgets.QLabel, "winnotchLabel")
-        self.winnotchBox = self.findChild(QtWidgets.QComboBox, "winnotchBox")
-        self.winbpLabel = self.findChild(QtWidgets.QLabel, "winbpLabel")
-        self.winbpBox = self.findChild(QtWidgets.QComboBox, "winbpBox")
-        self.notchPlotWidget = self.findChild(QtWidgets.QWidget, "notchPlotWidget")
-        self.drawnotchButton = self.findChild(QtWidgets.QPushButton, "drawnotchButton")
+
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
         notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
         notchLayout.addWidget(self.notchCanvas)
-        # Bandpass
-        self.bpgroupBox = self.findChild(QtWidgets.QGroupBox, "bpgroupBox")
-        self.bpLabel = self.findChild(QtWidgets.QLabel, "bpLabel")
-        self.bpCBox = self.findChild(QtWidgets.QCheckBox, "bpCBox")
-        self.bpminLabel = self.findChild(QtWidgets.QLabel, "bpminfreqLabel")
-        self.minfreqbpBox = self.findChild(QtWidgets.QDoubleSpinBox, "minfreqbpBox")
-        self.bpmaxLabel = self.findChild(QtWidgets.QLabel, "bpmaxfreqLabel")
-        self.maxfreqbpBox = self.findChild(QtWidgets.QDoubleSpinBox, "maxfreqbpBox")
-        self.orderbpLabel = self.findChild(QtWidgets.QLabel, "orderbpLabel")
-        self.orderbpBox = self.findChild(QtWidgets.QSpinBox, "orderbpBox")
-        self.bandpassPlotWidget = self.findChild(QtWidgets.QWidget, "bandpassPlotWidget")
-        self.drawbpButton = self.findChild(QtWidgets.QPushButton, "drawbpButton")
+
         self.bandpassCanvas = MplCanvas(self.bandpassPlotWidget)
         bpLayout = QtWidgets.QVBoxLayout(self.bandpassPlotWidget)
         bpLayout.addWidget(self.bandpassCanvas)
-        # CAR
-        self.cargroupBox = self.findChild(QtWidgets.QGroupBox, "cargroupBox")
-        self.carLabel = self.findChild(QtWidgets.QLabel, "carLabel")
-        self.carCBox = self.findChild(QtWidgets.QCheckBox, "carCBox")
-        # Band segmentation
-        self.bandCBox = self.findChild(QtWidgets.QCheckBox, "bandCBox")
-        self.selectedbandsLabel = self.findChild(QtWidgets.QLabel, "selectedbandsLabel")
-        self.selectedbandsauxLabel = self.findChild(QtWidgets.QLabel, "selectedbandsauxLabel")
-        self.bandLabel = self.findChild(QtWidgets.QLabel, "bandLabel")
-        self.bandButton = self.findChild(QtWidgets.QPushButton, "bandButton")
-        self.bandsegmentationLabel = self.findChild(QtWidgets.QLabel, "bandsegmentationLabel")
+
         self.element_group = [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
                          self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
-                         self.maxbroadBox, self.broadbandButton]
+                         self.maxbroadBox, self.broadbandButton, self.biosignalLabel, self.biosignalBox]
 
         # --- ELEMENT SETUP ---
 
@@ -155,6 +113,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
         self.convertButton.clicked.connect(self.select_and_convert_files)
         self.broadbandButton.clicked.connect(self.show_freq_content_dialog)
+        # Biosignals
+        self.biosignalBox.currentIndexChanged.connect(self.on_combobox_changed)
         # Data preprocessing
         self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
         self.preprocessingButton.toggled.connect(self.update_select_label)
@@ -183,10 +143,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Band segmentation
         self.bandCBox.toggled.connect(self.toggle_bands_segmentation)
         self.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
-        # Sync changes in spinboxed with the band table content
-        # self.minbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
-        # self.maxbroadBox.editingFinished.connect(self._sync_broadband_spinboxes)
-        # self.maxbroadBox.editingFinished.connect(self.validate_broadband_interval)
 
         # Store the default values in a dict
         self.defaults = {
@@ -218,8 +174,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Hide elements
         for w in [
-            self.notchLabel, self.notchCBox, self.notchminLabel, self.minfreqnotchBox, self.notchmaxLabel, self.maxfreqnotchBox, self.winnotchLabel, self.winnotchBox, self.orderNotchLabel, self.orderNotchBox,
-            self.bpLabel, self.bpCBox, self.bpminLabel, self.minfreqbpBox, self.bpmaxLabel, self.maxfreqbpBox, self.orderbpLabel, self.orderbpBox, self.winbpLabel, self.winbpBox,
+            self.notchfilterLabel, self.notchCBox, self.notchminLabel, self.minfreqnotchBox, self.notchmaxLabel, self.maxfreqnotchBox, self.winnotchLabel, self.winnotchBox, self.orderNotchLabel, self.orderNotchBox,
+            self.bpLabel, self.bpCBox, self.bpminfreqLabel, self.minfreqbpBox, self.bpmaxfreqLabel, self.maxfreqbpBox, self.orderbpLabel, self.orderbpBox, self.winbpLabel, self.winbpBox,
             self.carLabel, self.carCBox, self.notchPlotWidget, self.bandpassPlotWidget, self.bpgroupBox, self.cargroupBox,
             self.notchgroupBox, self.drawnotchButton, self.drawbpButton,
         ]:
@@ -228,6 +184,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
         # Reset checkboxes
         for box in [self.notchCBox, self.bpCBox, self.carCBox, self.preprocessingButton]: box.setChecked(False)
         [elm.setDisabled(True) for elm in self.element_group]
+        self.biosignalBox.clear()
 
         # Reset spinboxes
         self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
@@ -325,10 +282,26 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         if count > 0:
             self.main_window.nextButton.setDisabled(False)
-            eeg = components.Recording.load(self.selected_files[0])
-            self.main_window.sampling_frequency = eeg.eeg.fs
-            self.main_window.num_chann = len(eeg.eeg.channel_set.l_cha)
+            recording = components.Recording.load(self.selected_files[0])
+            self.biosignals = recording.biosignals
+            for key, value in recording.biosignals.items():
+                if value['class_name'] not in ['EEG', 'EMG', 'ECG']:
+                    continue
+                self.biosignals[key]['fs'] = getattr(recording, key).fs
+                try:
+                    self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
+                except:
+                    self.biosignals[key]['num_chann'] = getattr(recording, key).channel_set['n_cha']
+                self.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
+            self.biosignalBox.setCurrentIndex(0)
+            # default_biosignal = next(iter(recording.biosignals))
+            # self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
+            # self.main_window.num_chann = len(getattr(recording, default_biosignal).channel_set.l_cha)
             self.main_window.segmentation_widget.threschanBox.setMaximum(self.main_window.num_chann)
+            self.maxbroadBox.setMaximum(self.main_window.sampling_frequency / 2)
+            self.maxfreqbpBox.setMaximum(self.main_window.sampling_frequency / 2)
+            self.minfreqnotchBox.setMaximum(self.main_window.sampling_frequency / 2)
+            self.maxfreqnotchBox.setMaximum(self.main_window.sampling_frequency / 2)
             [elm.setDisabled(False) for elm in self.element_group]
             self.minbroadBox.setValue(0.5)
             self.maxbroadBox.setValue(self.main_window.sampling_frequency/2)
@@ -336,16 +309,19 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.maxfreqbpBox.setValue(self.main_window.sampling_frequency/2)
             self.main_window.segmentation_widget.update_max_samples()
 
+            # Add elements to biosignalBox
+
         else:
             self.main_window.nextButton.setDisabled(True)
             [elm.setDisabled(True) for elm in self.element_group]
+            self.biosignalBox.clear()
 
     def open_file_list_dialog(self):
         """
             Function that opens the file list dialog, and stores the updated file list
         """
         dialog = FilesListDialog(self.selected_files, self)
-        if dialog.exec_() == QtWidgets.QDialog.Accepted:
+        if dialog.exec() == QtWidgets.QDialog.Accepted:
             self.selected_files = dialog.get_updated_files()
             self.update_select_label()
 
@@ -354,7 +330,7 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self,
             "Select .rcp.bson files to convert",
             "",
-            "BSON files (*.bson)"
+            "BSON files (*.*)"
         )
 
         if not files:
@@ -362,9 +338,10 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         valid_files = []
         for file in files:
-            if not file.endswith(".rcp.bson"):
+            if not file.endswith(".rcp.bson") and not file.endswith(".mat"):
                 continue
-            rec_path = file.replace(".rcp.bson", ".rec.bson")
+            extension = file.split(".")[-1]
+            rec_path = file.replace("." + extension, ".rec.bson")
             if os.path.exists(rec_path):
                 result = QtWidgets.QMessageBox.question(
                     self,
@@ -394,7 +371,8 @@ class PreprocessingWidget(QtWidgets.QWidget):
                 f"Successfully converted {len(valid_files)} file(s)."
             )
 
-            rec_files = [f.replace(".rcp.bson", ".rec.bson") for f in valid_files]
+            extension = file.split(".")[-1]
+            rec_files = [f.replace("." + extension, ".rec.bson") for f in valid_files]
             for f in rec_files:
                 if f not in self.selected_files:
                     self.selected_files.append(f)
@@ -409,6 +387,17 @@ class PreprocessingWidget(QtWidgets.QWidget):
         finally:
             self.convertProgressBar.setVisible(False)
             self.convertLogTextBrowser.setVisible(False)
+
+    def on_combobox_changed(self):
+        """
+            Function that updates the sampling frequency and number of channels when the biosignal type is changed.
+        """
+        selected_biosignal = self.biosignalBox.currentText()
+        if not selected_biosignal:
+            return
+        selected_biosignal = selected_biosignal.split(" ")[1]
+        self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
+        self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
 
     def toggle_preprocessing_group(self):
         """
@@ -426,14 +415,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
             self.notchgroupBox.setVisible(True)
 
             pairs = [
-                (self.notchLabel, self.notchCBox),
+                (self.notchfilterLabel, self.notchCBox),
                 (self.bpLabel, self.bpCBox),
                 (self.carLabel, self.carCBox),
             ]
             for label, checkbox in pairs:
                 label.setVisible(True)
                 checkbox.setVisible(True)
-
 
     def toggle_notch_controls(self, checked):
         """
@@ -469,9 +457,9 @@ class PreprocessingWidget(QtWidgets.QWidget):
 
         # Show (or hide)
         self.bandpassPlotWidget.setVisible(checked)
-        self.bpminLabel.setVisible(checked)
+        self.bpminfreqLabel.setVisible(checked)
         self.minfreqbpBox.setVisible(checked)
-        self.bpmaxLabel.setVisible(checked)
+        self.bpmaxfreqLabel.setVisible(checked)
         self.maxfreqbpBox.setVisible(checked)
         self.orderbpLabel.setVisible(checked)
         self.orderbpBox.setVisible(checked)
@@ -504,20 +492,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         else:
             min_val = self.minfreqnotchBox.value()
             max_val = self.maxfreqnotchBox.value()
-
-        if max_val > (self.main_window.sampling_frequency/2):
-            QMessageBox.warning(
-                self,
-                f"Invalid values for {filter_type} filter.",
-                f"For {filter_type} filtering, <b>max</b> frequency {max_val} must be lower than <b>fs</b> {self.main_window.sampling_frequency}.",
-            )
-            if filter_type == 'bandpass':
-                self.minfreqbpBox.setValue(self.defaults["minfreqbp"])
-                self.maxfreqbpBox.setValue(self.defaults["maxfreqbp"])
-            else:
-                self.minfreqnotchBox.setValue(self.defaults["minfreqnotch"])
-                self.maxfreqnotchBox.setValue(self.defaults["maxfreqnotch"])
-            return False
 
         if max_val <= min_val:
             QMessageBox.warning(
@@ -590,50 +564,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
         canvas.fig.tight_layout()
         canvas.draw()
 
-    # def validate_broadband_interval(self):
-    #     """
-    #         Function that validates the broadband bounds (Low freq < high freq)
-    #     """
-    #
-    #     start = self.minbroadBox.value()
-    #     end = self.maxbroadBox.value()
-    #     if end <= start:
-    #         # Block the signals to avoid loops
-    #         self.minbroadBox.blockSignals(True)
-    #         self.maxbroadBox.blockSignals(True)
-    #
-    #         QtWidgets.QMessageBox.warning(
-    #             self,
-    #             "Invalid Broadband range",
-    #             "Max. frequency must be higher than min. frequency."
-    #         )
-    #
-    #         self.minbroadBox.setValue(getattr(self, "default_min_broad", 0.5))
-    #         self.maxbroadBox.setValue(getattr(self, "default_max_broad", 70))
-    #
-    #         # Unlock signals
-    #         self.minbroadBox.blockSignals(False)
-    #         self.maxbroadBox.blockSignals(False)
-
-
-    # def set_defaults_broadband(self, params):
-    #     """
-    #         Set default values for the broadband interval.
-    #     """
-    #     if not self.initialized or self._params_changed(params):
-    #         if params.get("bandpass"):
-    #             self.default_min_broad = params.get("bp_min", 0)
-    #             self.default_max_broad = params.get("bp_max", 70)
-    #         else:
-    #             self.default_min_broad = 0.5
-    #             self.default_max_broad = self.main_window.sampling_frequency/2  # TO DO: use fs/2
-    #
-    #         self.minbroadBox.setValue(self.default_min_broad)
-    #         self.maxbroadBox.setValue(self.default_max_broad)
-    #
-    #         self.last_params = dict(params)
-    #         self.initialized = True
-
     def _params_changed(self, new_params):
         """
             Checks if some relevant parameters have changed.
@@ -676,12 +606,6 @@ class PreprocessingWidget(QtWidgets.QWidget):
             )
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.band_editor.show()
-        else:
-            # Before showing the band editor, update the broadband range
-            self.band_editor.sync_broadband_range(
-                self.minbroadBox.value(),
-                self.maxbroadBox.value()
-            )
         self.band_editor.show()
 
     def update_band_label(self, band_type, bands):
@@ -691,22 +615,13 @@ class PreprocessingWidget(QtWidgets.QWidget):
         self.selected_bands_by_type = getattr(self, "selected_bands_by_type", {})
         self.selected_bands_by_type[band_type] = bands
 
-        label = self.findChild(QtWidgets.QLabel, f"bandLabel")
-        if label:
-            if bands:
-                names = [f"{b['name']} ({b['min']}–{b['max']} Hz)" for b in bands]
-                label.setText(", ".join(names))
-            else:
-                label.setText("None")
+        if bands:
+            names = [f"{b['name']} ({b['min']}–{b['max']} Hz)" for b in bands]
+            self.bandLabel.setText(", ".join(names))
+        else:
+            self.bandLabel.setText("None")
 
         self.band_config_changed.emit()
-
-    # def _sync_broadband_spinboxes(self):
-    #     if self.band_editor:
-    #         self.band_editor.sync_broadband_range(
-    #             self.minbroadBox.value(),
-    #             self.maxbroadBox.value()
-    #         )
 
     def update_broadband_spinboxes(self, min_val, max_val):
         self.minbroadBox.blockSignals(True)

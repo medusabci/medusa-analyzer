@@ -1,8 +1,13 @@
-from PyQt5 import QtWidgets, uic, QtCore
+from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6.QtUiTools import loadUiType
 from Segmentation.utils import extract_condition_events
-from PyQt5.QtCore import QStringListModel
+from PySide6.QtCore import QStringListModel
 from scipy.stats import norm
-class SegmentationWidget(QtWidgets.QWidget):
+
+# Load UI class
+ui_segmentation_widget = loadUiType('Segmentation/segmentation_widget.ui')[0]
+
+class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
     """
         Main windget element. Manages the  segmentation configuration of the data. Includes selection of signal markers
         (conditions/events), segmentation window settings, normalization, thresholding, and resampling options.
@@ -10,7 +15,9 @@ class SegmentationWidget(QtWidgets.QWidget):
 
     def __init__(self, main_window):
         super().__init__()
-        uic.loadUi("Segmentation/segmentation_widget.ui", self)
+
+        # Setup UI
+        self.setupUi(self)
 
         # Define variables
         self.main_window = main_window
@@ -24,11 +31,17 @@ class SegmentationWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
-        self.topContentWidget = self.findChild(QtWidgets.QWidget, "topContentWidget")
         self.topContentWidget.setLayout(layout)
         self.segmentation_label = QtWidgets.QLabel()
         self.segmentation_label.setTextFormat(QtCore.Qt.RichText)
         self.segmentation_label.setWordWrap(True)
+        self.segmentation_label.setStyleSheet("""
+            QLabel {
+                background-color: transparent;
+                background: transparent;
+                border: none;
+            }
+        """)
         self.segmentation_label.setText("""
             <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
                 <p>
@@ -36,69 +49,11 @@ class SegmentationWidget(QtWidgets.QWidget):
                     into analyzable segments. Choose between the following segmentation strategies:
             </div>
         """)
+        # Remove background
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        self.topContentWidget.setPalette(palette)
         layout.addWidget(self.segmentation_label)
-
-        # --- GET ELEMENTS FROM UI MODULE ---
-
-        # Conditions box
-        self.conditionWidget = self.findChild(QtWidgets.QWidget, "conditionsWidget")
-        self.availableconditionsLabel = self.findChild(QtWidgets.QLabel, "availableconditionsLabel")
-        self.conditionList = self.findChild(QtWidgets.QListView, "conditionList")
-        self.conditionLabel = self.findChild(QtWidgets.QLabel, "conditionLabel")
-        # Events box
-        self.eventWidget = self.findChild(QtWidgets.QWidget, "eventWidget")
-        self.availableeventsLabel = self.findChild(QtWidgets.QLabel, "availableeventsLabel")
-        self.eventList = self.findChild(QtWidgets.QListView, "eventList")
-        self.eventLabel = self.findChild(QtWidgets.QLabel, "eventLabel")
-
-        # Segmentation properties
-        self.trials = self.findChild(QtWidgets.QVBoxLayout, "trials")
-        self.segmentationtypeLabel = self.findChild(QtWidgets.QLabel, "segmentationtypeLabel")
-        # Conditions
-        self.conditionRButton = self.findChild(QtWidgets.QRadioButton, "conditionRButton")
-        self.trialLabel = self.findChild(QtWidgets.QLabel, "trialLabel")
-        self.trialBox = self.findChild(QtWidgets.QSpinBox, "trialBox")
-        self.trialstrideLabel = self.findChild(QtWidgets.QLabel, "trialstrideLabel")
-        self.trialstrideBox = self.findChild(QtWidgets.QSpinBox, "trialstrideBox")
-        # Events
-        self.eventRButton = self.findChild(QtWidgets.QRadioButton, "eventRButton")
-        self.winLabel_1 = self.findChild(QtWidgets.QLabel, "winLabel_1")
-        self.winBox_1 = self.findChild(QtWidgets.QSpinBox, "winBox_1")
-        self.winLabel_2 = self.findChild(QtWidgets.QLabel, "winLabel_2")
-        self.winBox_2 = self.findChild(QtWidgets.QSpinBox, "winBox_2")
-
-        # Normalization
-        self.normLabel = self.findChild(QtWidgets.QLabel, "normLabel")
-        self.normCBox = self.findChild(QtWidgets.QCheckBox, "normCBox")
-        self.zscoreRButton = self.findChild(QtWidgets.QRadioButton, "zscoreRButton")
-        self.dcRButton = self.findChild(QtWidgets.QRadioButton, "dcRButton")
-        # Baseline information
-        self.baselineLabel_1 = self.findChild(QtWidgets.QLabel, "baselineLabel_1")
-        self.baselineCBox_1 = self.findChild(QtWidgets.QSpinBox, "baselineCBox_1")
-        self.baselineLabel_2 = self.findChild(QtWidgets.QLabel, "baselineLabel_2")
-        self.baselineCBox_2 = self.findChild(QtWidgets.QSpinBox, "baselineCBox_2")
-
-        # Average epochs
-        self.averageLabel = self.findChild(QtWidgets.QLabel, "averageLabel")
-        self.averageCBox = self.findChild(QtWidgets.QCheckBox, "averageCBox")
-
-        # Thresholding
-        self.thresLabel = self.findChild(QtWidgets.QLabel, "thresLabel")
-        self.thresCBox = self.findChild(QtWidgets.QCheckBox, "thresCBox")
-        self.threskLabel = self.findChild(QtWidgets.QLabel, "threskLabel")
-        self.threskBox = self.findChild(QtWidgets.QDoubleSpinBox, "threskBox")
-        self.threskLabelaux = self.findChild(QtWidgets.QLabel, "threskLabelaux")
-        self.thressampLabel = self.findChild(QtWidgets.QLabel, "thressampLabel")
-        self.thressampBox = self.findChild(QtWidgets.QSpinBox, "thressampBox")
-        self.threschanLabel = self.findChild(QtWidgets.QLabel, "threschanLabel")
-        self.threschanBox = self.findChild(QtWidgets.QSpinBox, "threschanBox")
-        self.threshelButton = self.findChild(QtWidgets.QToolButton, "threshelButton")
-
-        # Resampling
-        self.resampleLabel = self.findChild(QtWidgets.QLabel, "resampleLabel")
-        self.resampleCBox = self.findChild(QtWidgets.QCheckBox, "resampleCBox")
-        self.newfsLabel = self.findChild(QtWidgets.QLabel, "newfsLabel")
-        self.resamplefsBox = self.findChild(QtWidgets.QSpinBox, "resamplefsBox")
 
         # --- ELEMENT SETUP ---
 
@@ -201,25 +156,6 @@ class SegmentationWidget(QtWidgets.QWidget):
 
         selected_conditions = {index.data() for index in self.conditionList.selectionModel().selectedIndexes()}
         selected_events = {index.data() for index in self.eventList.selectionModel().selectedIndexes()}
-
-        # # Count conditions globally
-        # condition_counter = Counter(self.conditions)
-        # counted_conditions = ([(cnd, condition_counter[cnd]) for cnd in selected_conditions] if selected_conditions else list(
-        #         condition_counter.items()))
-        #
-        # # Filter events by selected conditions if any, then count
-        # if selected_conditions:
-        #     filtered_events = (self.events[i] for i, cond in enumerate(self.events_condition) if cond in selected_conditions)
-        #     event_counter = Counter(filtered_events)
-        # else:
-        #     event_counter = Counter(self.events)
-        #
-        # counted_events = ([(evt, event_counter[evt]) for evt in selected_events if evt in event_counter] if selected_events else list(
-        #         event_counter.items()))
-        #
-        # # Format and update labels
-        # cond_text = ", ".join(f"{cnd} ({cnt})" for cnd, cnt in counted_conditions) or "None"
-        # evt_text = ", ".join(f"{evt} ({cnt})" for evt, cnt in counted_events) or "None"
 
         # Format and update labels
         cond_text = ", ".join(f"{cnd}" for cnd in selected_conditions) or "None"
@@ -600,10 +536,3 @@ class SegmentationWidget(QtWidgets.QWidget):
         }
 
         return config
-
-
-
-
-
-
-
