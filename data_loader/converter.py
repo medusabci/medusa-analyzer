@@ -61,25 +61,25 @@ def _convert_mat_file(file):
         ROIs = [
             {
                 "label": f"ROI_{i+1}",
-                "coord": None,
+                "coord": "all",
                 "reference": None
             }
             for i in range(data.signal.shape[1])
         ]
-        channel_set = EEGChannelSet()
+        channel_set = EEGChannelSet(reference_method="average")
         channel_set.set_montage(channels=ROIs, allow_unlocated_channels=True)
     elif "MEG" in file:
         channels = [
             {
                 "label": f"MEG_{i + 1}",
-                "coord": None,
+                "coord": "all",
                 "reference": None
             }
             for i in range(data.signal.shape[1])
         ]
-        channel_set = EEGChannelSet()
+        channel_set = EEGChannelSet(reference_method="average")
         channel_set.set_montage(channels=channels, allow_unlocated_channels=True)
-    else:
+    else: # Default behaviour: assume EEG
         channels = data.cfg.channels
         replacements = {'T3': 'T7', 'T4': 'T8', 'T5': 'P7', 'T6': 'P8'}
         replace_func = np.vectorize(lambda x: replacements.get(x, x))
