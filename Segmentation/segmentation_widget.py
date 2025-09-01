@@ -116,7 +116,6 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
             widget.setVisible(False)
 
         self.update_checkboxes_state()
-        self.update_max_samples()
 
     def load_and_display_events_from_file(self, file):
         """
