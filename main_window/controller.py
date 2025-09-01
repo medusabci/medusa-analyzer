@@ -1,7 +1,4 @@
-import sys
 from PySide6.QtWidgets import QFrame
-from PySide6.QtWidgets import QApplication
-from ui import MainWindow
 import numpy as np
 
 
@@ -97,10 +94,10 @@ class MainWindowController:
             colors_hex.append("#{0:02x}{1:02x}{2:02x}".format(*rgb))
         return colors_hex
 
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    ui = MainWindow()
-    controller = MainWindowController(ui)
-    ui.show()
-    sys.exit(app.exec())
+#
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     ui = MainWindow()
+#     controller = MainWindowController(ui)
+#     ui.show()
+#     sys.exit(app.exec())
