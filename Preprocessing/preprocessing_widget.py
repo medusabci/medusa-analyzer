@@ -67,33 +67,6 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
         layout.addWidget(self.description_label)
 
         # --- GET ELEMENTS FROM UI MODULE ---
-
-        # Data loading
-        self.selected_files = []  # Store the selected files
-        self.convertButton.setStyleSheet("""
-            QPushButton {
-                color: white;
-                border: none;
-                font-size: 13pt;
-                font-weight: bold;
-                border-radius: 10px;
-                padding: 10px;
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0 #6a0dad, stop: 1 #ec407a
-                );
-            }
-            QPushButton:hover {
-                background: qlineargradient(
-                    x1: 0, y1: 0, x2: 1, y2: 0,
-                    stop: 0 #7b1fa2, stop: 1 #f06292
-                );
-            }
-        """)
-        self.convertProgressBar.setValue(0)
-        self.convertProgressBar.setVisible(False)
-        self.convertLogTextBrowser.setVisible(False)
-
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
         notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
         notchLayout.addWidget(self.notchCanvas)
@@ -104,17 +77,9 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
 
         self.element_group = [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
                          self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
-                         self.maxbroadBox, self.broadbandButton, self.biosignalLabel, self.biosignalBox]
+                         self.maxbroadBox, self.broadbandButton]
 
         # --- ELEMENT SETUP ---
-
-        # Data loading
-        self.browseButton.clicked.connect(self.select_files)
-        self.viewfilesButton.clicked.connect(self.open_file_list_dialog)
-        self.convertButton.clicked.connect(self.select_and_convert_files)
-        self.broadbandButton.clicked.connect(self.show_freq_content_dialog)
-        # Biosignals
-        self.biosignalBox.currentIndexChanged.connect(self.on_combobox_changed)
         # Data preprocessing
         self.preprocessingButton.toggled.connect(self.toggle_preprocessing_group)
         self.preprocessingButton.toggled.connect(self.update_select_label)

@@ -2,6 +2,7 @@ import sys
 from PySide6.QtWidgets import QFrame
 from PySide6.QtWidgets import QApplication
 from ui import MainWindow
+from data_loader.controller import DataLoaderController
 import numpy as np
 
 
@@ -14,6 +15,7 @@ class MainWindowController:
         # #
         # self.view.stackedWidget.currentChanged.connect(self.on_tab_changed)
         self.set_progressbar()
+        self.data_loader_controller = DataLoaderController(self.view.data_loader, self)
 
 
     def go_next(self):

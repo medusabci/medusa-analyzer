@@ -19,9 +19,6 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         # Change the title
         self.setWindowTitle("List of Files")
 
-        # Define variables
-        self.preprocessing_widget = preprocessing_widget
-
 
         # --- ELEMENT SETUP ---
         self.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -38,10 +35,10 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
 
         # Actualizar estado en PreprocessingWidget
         updated_files = self.get_updated_files()
-        if not updated_files:
-            self.preprocessing_widget.selected_files = []
-            self.preprocessing_widget.reset_all_controls()
-            self.preprocessing_widget.update_select_label()
+        # if not updated_files:
+            # self.preprocessing_widget.selected_files = []
+            # self.preprocessing_widget.reset_all_controls()
+            # self.preprocessing_widget.update_select_label()
 
     def get_updated_files(self):
         """

@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtUiTools import loadUiType
-# from data_loader.ui import DataLoaderWidget
-from mock_widget.ui import MockWidget
+from data_loader.ui import DataLoaderWidget
+# from mock_widget.ui import MockWidget
 from PySide6.QtGui import QPalette
 
 # Load UI class
@@ -76,20 +76,19 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
 
         # Base widget (Data loader)
-        # self.data_loader = DataLoaderWidget(self)
-        # self.stackedWidget.insertWidget(0, self.data_loader)
-        self.mock_widget = MockWidget(self)
-        self.stackedWidget.insertWidget(0, self.mock_widget)
-        self.stackedWidget.setCurrentIndex(0)  # Start with the Data Loader tab
+        self.data_loader = DataLoaderWidget(self)
+        self.stackedWidget.insertWidget(0, self.data_loader)
+        # self.mock_widget = MockWidget(self)
+        # self.stackedWidget.insertWidget(0, self.mock_widget)
+        # self.stackedWidget.setCurrentIndex(0)  # Start with the Data Loader tab
 
-        self.mock_init()
+        # self.mock_init()
 
-    def mock_init(self):
-        self.pipeline = ['Preprocessing', 'Segmentation', 'Signal Analysis', 'Downloads']
-        self.stackedWidget.insertWidget(1, MockWidget(self))
-        self.stackedWidget.insertWidget(2, MockWidget(self))
-        self.stackedWidget.insertWidget(3, MockWidget(self))
-        self.stackedWidget.insertWidget(4, MockWidget(self))
-        self.stackedWidget.insertWidget(5, MockWidget(self))
-        self.stackedWidget.insertWidget(6, MockWidget(self))
-
+    # def mock_init(self):
+    #     self.pipeline = ['Preprocessing', 'Segmentation', 'Signal Analysis', 'Downloads']
+    #     self.stackedWidget.insertWidget(1, MockWidget(self))
+    #     self.stackedWidget.insertWidget(2, MockWidget(self))
+    #     self.stackedWidget.insertWidget(3, MockWidget(self))
+    #     self.stackedWidget.insertWidget(4, MockWidget(self))
+    #     self.stackedWidget.insertWidget(5, MockWidget(self))
+    #     self.stackedWidget.insertWidget(6, MockWidget(self))
