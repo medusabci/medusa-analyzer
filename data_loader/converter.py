@@ -1,33 +1,12 @@
 import os
-from medusa.meeg.meeg import *
-from medusa.components import Recording, CustomExperimentData, CustomBiosignalData
 from PySide6 import QtWidgets
 import scipy.io as sio
+from medusa.meeg.meeg import *
+from medusa.components import Recording, CustomExperimentData
 
-
-def _log_message(log_browser, message):
-    """Helper function for logging messages"""
-    if log_browser:
-        log_browser.append(message)
-        QtWidgets.QApplication.processEvents()
-
-
-def _update_progress(progress_bar, current, total):
-    """Helper function for updating progress bar"""
-    if progress_bar:
-        progress_bar.setValue(int((current + 1) / total * 100))
-        QtWidgets.QApplication.processEvents()
-
-
-def _create_empty_marks():
-    """Create empty marks structure"""
-    marks = CustomExperimentData()
-    marks.events_labels = []
-    marks.events_times = []
-    marks.conditions_labels = []
-    marks.conditions_times = np.empty((0, 2))
-    marks.app_settings = {'conditions': {}, 'events': {}}
-    return marks
+# README: To include a new converter, just create a function that takes a file path as input (e.g.
+# _convert_newformat_file(filepath)) and returns the new filepath, and include it in the CONVERTERS dictionary with the
+# corresponding file extension.
 
 
 def _convert_rcp_file(file):
@@ -78,15 +57,40 @@ def _convert_mat_file(file):
     marks = _create_empty_marks()
 
     # Channel set
-    channels = data.cfg.channels
-    replacements = {'T3': 'T7', 'T4': 'T8', 'T5': 'P7', 'T6': 'P8'}
-    replace_func = np.vectorize(lambda x: replacements.get(x, x))
-    channels = replace_func(channels)
-    channel_set = EEGChannelSet()
-    channel_set.set_standard_montage(l_cha=channels, montage='10-05')
+    if "SOURCES" in file:
+        ROIs = [
+            {
+                "label": f"ROI_{i+1}",
+                "coord": None,
+                "reference": None
+            }
+            for i in range(data.signal.shape[1])
+        ]
+        channel_set = EEGChannelSet()
+        channel_set.set_montage(channels=ROIs, allow_unlocated_channels=True)
+    elif "MEG" in file:
+        channels = [
+            {
+                "label": f"MEG_{i + 1}",
+                "coord": None,
+                "reference": None
+            }
+            for i in range(data.signal.shape[1])
+        ]
+        channel_set = EEGChannelSet()
+        channel_set.set_montage(channels=channels, allow_unlocated_channels=True)
+    else:
+        channels = data.cfg.channels
+        replacements = {'T3': 'T7', 'T4': 'T8', 'T5': 'P7', 'T6': 'P8'}
+        replace_func = np.vectorize(lambda x: replacements.get(x, x))
+        channels = replace_func(channels)
+        channel_set = EEGChannelSet()
+        channel_set.set_standard_montage(l_cha=channels, montage='10-05')
+
+    # Create the times vector
+    times = np.linspace(0, data.signal.shape[0]/ data.cfg.fs, data.signal.shape[0], endpoint=False)
 
     # Create the EEG object
-    times = np.linspace(0, data.signal.shape[0]/ data.cfg.fs, data.signal.shape[0], endpoint=False)
     eeg = EEG(times=times, signal=data.signal, fs=data.cfg.fs, channel_set=channel_set)
 
     # Fill the Recording object
@@ -102,19 +106,42 @@ def _convert_mat_file(file):
 # Converter registry
 CONVERTERS = {
     ".rcp.bson": {
-        "converter": _convert_rcp_file,
-        "output_extension": ".rec.bson"
+        "converter": _convert_rcp_file
     },
     ".mat": {
-        "converter": _convert_mat_file,
-        "output_extension": ".rec.bson"
+        "converter": _convert_mat_file
     }
 }
 
 
+def _log_message(log_browser, message):
+    """Helper function for logging messages"""
+    if log_browser:
+        log_browser.append(message)
+        QtWidgets.QApplication.processEvents()
+
+
+def _update_progress(progress_bar, current, total):
+    """Helper function for updating progress bar"""
+    if progress_bar:
+        progress_bar.setValue(int((current + 1) / total * 100))
+        QtWidgets.QApplication.processEvents()
+
+
+def _create_empty_marks():
+    """Create empty marks structure"""
+    marks = CustomExperimentData()
+    marks.events_labels = []
+    marks.events_times = []
+    marks.conditions_labels = []
+    marks.conditions_times = np.empty((0, 2))
+    marks.app_settings = {'conditions': {}, 'events': {}}
+    return marks
+
+
 def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_paths=True):
     """
-        Convert different types of MEDUSA Files to .rec format
+        Convert different types files to .rec format
     """
     total = len(files)
     converted_paths = []
@@ -142,7 +169,7 @@ def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_path
                 # Success logging
                 output_filename = filename.replace(
                     next(ext for ext in CONVERTERS.keys() if file.endswith(ext)),
-                    converter_info["output_extension"]
+                    ".rec.bson"
                 )
                 _log_message(log_browser,
                     f"✅ <b>{output_filename}</b> → <span style='color:green;'>Conversion successful</span>")
