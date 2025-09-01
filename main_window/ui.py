@@ -1,12 +1,11 @@
-import sys
 from PySide6 import QtWidgets, QtGui
-from PySide6.QtWidgets import QApplication
 from PySide6.QtUiTools import loadUiType
-from data_loader.ui import DataLoaderWidget
+# from data_loader.ui import DataLoaderWidget
+from mock_widget.ui import MockWidget
 from PySide6.QtGui import QPalette
 
 # Load UI class
-ui_main_window = loadUiType('ui.ui')[0]
+ui_main_window = loadUiType('main_window/ui.ui')[0]
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -73,38 +72,24 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         # Navigation Buttons
         self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
-        self.nextButton.clicked.connect(self.go_next)
-        self.backButton.clicked.connect(self.go_back)
-        #
-        self.stackedWidget.currentChanged.connect(self.on_tab_changed)
-
 
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
 
         # Base widget (Data loader)
-        self.data_loader = DataLoaderWidget(self)
-        self.stackedWidget.insertWidget(0, self.data_loader)
+        # self.data_loader = DataLoaderWidget(self)
+        # self.stackedWidget.insertWidget(0, self.data_loader)
+        self.mock_widget = MockWidget(self)
+        self.stackedWidget.insertWidget(0, self.mock_widget)
         self.stackedWidget.setCurrentIndex(0)  # Start with the Data Loader tab
 
+        self.mock_init()
 
-    def go_next(self):
-        """
-            Controls the next (and finish) button behaviour
-        """
-        idx = self.stackedWidget.currentIndex()
-        self.nextButton.setText("Finish" if idx == self.total_steps - 1 else "Next")
+    def mock_init(self):
+        self.pipeline = ['Preprocessing', 'Segmentation', 'Signal Analysis', 'Downloads']
+        self.stackedWidget.insertWidget(1, MockWidget(self))
+        self.stackedWidget.insertWidget(2, MockWidget(self))
+        self.stackedWidget.insertWidget(3, MockWidget(self))
+        self.stackedWidget.insertWidget(4, MockWidget(self))
+        self.stackedWidget.insertWidget(5, MockWidget(self))
+        self.stackedWidget.insertWidget(6, MockWidget(self))
 
-
-    def go_back(self):
-        """
-            Controls the back button behaviour
-        """
-        idx = self.stackedWidget.currentIndex()
-        self.view.backButton.setVisible(idx > 0)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec())
