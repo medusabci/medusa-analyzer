@@ -53,5 +53,5 @@ venv/Scripts/activate
 ```
 and finally, run the Python script:
 ````bash
-python main_window.py
+python ui.py
 ````
