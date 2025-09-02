@@ -59,16 +59,22 @@ class DataLoaderController:
             self.biosignals = recording.biosignals
             # For each biosignal, get its sampling frequency and number of channels
             for key, value in recording.biosignals.items():
+
                 # Only consider the biosignals in the experiment
-                if value['class_name'] not in self.main_window.experiment['biosignals']:
+                if value['class_name'] not in self.main_window.view.experiment['biosignals']:
                     continue
-                # Get the fs
-                self.biosignals[key]['fs'] = getattr(recording, key).fs
-                # Get the number of channels (considering ChannelSet as object or dict)
-                try:
-                    self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
-                except:
-                    self.biosignals[key]['num_chann'] = getattr(recording, key).channel_set['n_cha']
+
+                # Get the fs (if required)
+                if 'fs' in self.main_window.view.experiment['biosignal_information']:
+                    self.biosignals[key]['fs'] = getattr(recording, key).fs
+
+                # Get the number of channels (if required), considering ChannelSet as object or dict
+                if 'n_chan' in self.main_window.view.experiment['biosignal_information']:
+                    try:
+                        self.biosignals[key]['n_chan'] = len(getattr(recording, key).channel_set.l_cha)
+                    except:
+                        self.biosignals[key]['n_chan'] = getattr(recording, key).channel_set['n_cha']
+
                 # Add the biosignal to the biosignal combobox
                 self.view.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
 
@@ -78,7 +84,7 @@ class DataLoaderController:
             default_biosignal = self.view.biosignalBox.currentText()
             default_biosignal = default_biosignal.split(" ")[1]
             self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
-            self.main_window.num_chann = len(getattr(recording, default_biosignal).channel_set.l_cha)
+            self.main_window.n_chan = len(getattr(recording, default_biosignal).channel_set.l_cha)
 
         else: # No files selected, deactivate the next button and clear the biosignal combobox
             self.main_window.view.nextButton.setDisabled(True)
@@ -168,7 +174,7 @@ class DataLoaderController:
             return
         selected_biosignal = selected_biosignal.split(" ")[1]
         self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
-        self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
+        self.main_window.n_chan = self.biosignals[selected_biosignal]['n_chan']
 
 
     def get_data_loader_config(self):

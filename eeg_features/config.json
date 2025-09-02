@@ -2,7 +2,7 @@
   "name": "EEG Feature Extraction",
   "experiment_path": "eeg_params",
   "biosignals": ["EEG"],
-  "biosignal_information": ["fs", "n_channels"],
+  "biosignal_information": ["fs", "n_chan"],
   "pipeline": [
     {
       "step": "Data Loading",

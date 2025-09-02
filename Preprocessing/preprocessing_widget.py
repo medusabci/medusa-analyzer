@@ -253,15 +253,14 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
                     continue
                 self.biosignals[key]['fs'] = getattr(recording, key).fs
                 try:
-                    self.biosignals[key]['num_chann'] = len(getattr(recording, key).channel_set.l_cha)
+                    self.biosignals[key]['n_chan'] = len(getattr(recording, key).channel_set.l_cha)
                 except:
-                    self.biosignals[key]['num_chann'] = getattr(recording, key).channel_set['n_cha']
+                    self.biosignals[key]['n_chan'] = getattr(recording, key).channel_set['n_cha']
                 self.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
             self.biosignalBox.setCurrentIndex(0)
             # default_biosignal = next(iter(recording.biosignals))
             # self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
-            # self.main_window.num_chann = len(getattr(recording, default_biosignal).channel_set.l_cha)
-            self.main_window.segmentation_widget.threschanBox.setMaximum(self.main_window.num_chann)
+            self.main_window.segmentation_widget.threschanBox.setMaximum(self.main_window.n_chan)
             self.maxbroadBox.setMaximum(self.main_window.sampling_frequency / 2)
             self.maxfreqbpBox.setMaximum(self.main_window.sampling_frequency / 2)
             self.minfreqnotchBox.setMaximum(self.main_window.sampling_frequency / 2)
@@ -361,7 +360,7 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
             return
         selected_biosignal = selected_biosignal.split(" ")[1]
         self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
-        self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
+        self.main_window.n_chan = self.biosignals[selected_biosignal]['n_chan']
 
     def toggle_preprocessing_group(self):
         """

@@ -77,6 +77,16 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         # Read the corresponding config file
         with open(experiment_id + "/config.json", "r") as f:
             experiment_data = json.load(f)
+
+            # # Include the Data Loading
+            # data_loader = {
+            #     "step": "Data Loading",
+            #     "path": "data_loader/controller",
+            #     "widget": "DataLoaderrController"
+            # }
+            # # Insert at the beginning of the pipeline
+            # experiment_data["pipeline"].insert(0, data_loader)
+
             self.main_window.experiment = experiment_data
 
         # Update total steps and progress bar in the main window
