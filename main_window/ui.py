@@ -40,7 +40,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
 class MainWindow(QtWidgets.QMainWindow, ui_main_window):
     """
         Main application window. Manages navigation through the main stages of the workflow:
-        Preprocessing, Segmentation, Signal Analysis, and Downloads.
+        Preprocessing, segmentation, Signal Analysis, and Downloads.
     """
 
     def __init__(self):
@@ -89,7 +89,7 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         # self.mock_init()
 
     # def mock_init(self):
-    #     self.pipeline = ['Preprocessing', 'Segmentation', 'Signal Analysis', 'Downloads']
+    #     self.pipeline = ['Preprocessing', 'segmentation', 'Signal Analysis', 'Downloads']
     #     self.stackedWidget.insertWidget(1, MockWidget(self))
     #     self.stackedWidget.insertWidget(2, MockWidget(self))
     #     self.stackedWidget.insertWidget(3, MockWidget(self))

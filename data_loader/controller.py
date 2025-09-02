@@ -19,6 +19,7 @@ class DataLoaderController:
         self.view.featureseegRButton.toggled.connect(self.on_tab_experiment)
         self.view.featuresecgRButton.toggled.connect(self.on_tab_experiment)
 
+
     def on_tab_experiment(self):
         """
         Activate DataLoader groupbox if at least one experiment is selected.
@@ -29,6 +30,8 @@ class DataLoaderController:
             or self.view.featuresecgRButton.isChecked()
         )
         self.view.dataloadergroupBox.setEnabled(any_checked)
+
+
     def select_files(self):
         """
             Function to select multiple .rec.bson files from various folders.

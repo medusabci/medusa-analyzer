@@ -3,26 +3,6 @@ from medusa import components
 import medusa.bci.erp_spellers
 import medusa.ecg
 
-def find_valid_conditions(vector):
-    """
-    Find the index of the init of all the valid conditions
-
-    Args:
-        vector (list or array): numerical vector
-
-    Returns:
-        list: Indices of valid conditions
-    """
-    indices = []
-    i = 0
-    while i < len(vector) - 1:
-        if vector[i] == vector[i + 1]:
-            indices.append(i)
-            i += 2  # The next iteration will be skipped, as it is the end of the current condition
-        else:
-            i += 1
-    return indices
-
 
 def events_whithin_condition(times, interval):
     """
