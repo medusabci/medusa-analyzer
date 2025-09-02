@@ -1,6 +1,7 @@
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtUiTools import loadUiType
 from data_loader.ui import DataLoaderWidget
+from experiments.ui import ExperimentWidget
 # from mock_widget.ui import MockWidget
 from PySide6.QtGui import QPalette
 
@@ -80,8 +81,10 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
 
         # Base widget (Data loader)
-        self.data_loader = DataLoaderWidget(self)
+        self.experiments = ExperimentWidget(self)
         self.stackedWidget.insertWidget(0, self.data_loader)
+        self.data_loader = DataLoaderWidget(self)
+        self.stackedWidget.insertWidget(1, self.data_loader)
         # self.mock_widget = MockWidget(self)
         # self.stackedWidget.insertWidget(0, self.mock_widget)
         # self.stackedWidget.setCurrentIndex(0)  # Start with the Data Loader tab

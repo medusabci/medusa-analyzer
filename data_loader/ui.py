@@ -1,6 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtGui import QPalette
 import os
 
 # Load UI class
@@ -38,23 +37,6 @@ class DataLoaderWidget(QtWidgets.QWidget, ui_data_loader):
 
         ### ELEMENT CONFIGURATION ###
 
-        # Experiments
-        #  --- Feature extraction EEG
-        icon_path = os.path.join(os.path.dirname(__file__), "..", "media", "brain2.png")
-        self.eeg_icon.setAlignment(QtCore.Qt.AlignCenter)
-        pixmap = QtGui.QPixmap(icon_path)
-        self.eeg_icon.setPixmap(pixmap.scaled(130, 130, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-        self.eeg_icon_layout.setAlignment(QtCore.Qt.AlignCenter)
-        self.eeg_icon.setFixedSize(100, 100)
-
-        #  --- Feature extraction EEG
-        icon_path = os.path.join(os.path.dirname(__file__), "..", "media", "heart.png")
-        self.ecg_icon.setAlignment(QtCore.Qt.AlignCenter)
-        pixmap = QtGui.QPixmap(icon_path)
-        self.ecg_icon.setPixmap(pixmap.scaled(130, 130, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-        self.ecg_icon_layout.setAlignment(QtCore.Qt.AlignCenter)
-        self.ecg_icon.setFixedSize(100, 100)
-
         # Data loading
         self.selected_files = []  # Store the selected files
         self.main_window.selected_files = self.selected_files
@@ -82,7 +64,3 @@ class DataLoaderWidget(QtWidgets.QWidget, ui_data_loader):
         self.convertProgressBar.setValue(0)
         self.convertProgressBar.setVisible(False)
         self.convertLogTextBrowser.setVisible(False)
-
-        # Biosignals
-        # self.biosignalLabel.setVisible(False)
-        # self.biosignalBox.setVisible(False)

@@ -16,19 +16,6 @@ class DataLoaderController:
         self.view.convertButton.clicked.connect(self.select_and_convert_files)
         self.view.biosignalBox.currentIndexChanged.connect(self.on_combobox_changed)
 
-        self.view.featureseegRButton.toggled.connect(self.on_tab_experiment)
-        self.view.featuresecgRButton.toggled.connect(self.on_tab_experiment)
-
-    def on_tab_experiment(self):
-        """
-        Activate DataLoader groupbox if at least one experiment is selected.
-        """
-        print('Hola')
-        any_checked = (
-            self.view.featureseegRButton.isChecked()
-            or self.view.featuresecgRButton.isChecked()
-        )
-        self.view.dataloadergroupBox.setEnabled(any_checked)
     def select_files(self):
         """
             Function to select multiple .rec.bson files from various folders.
@@ -224,29 +211,8 @@ class DataLoaderController:
         """
             Function that creates a dictionary with preprocessing configurations.
         """
-        # Selected experiment
-        if self.view.featureseegRButton.isChecked():
-            experiment = {
-                "name": "EEG_Params",
-                # "file_of_widgets": "experiments/eeg_widgets.py",
-                # "num_of_widgets": 5,
-                # "widgets": ["a", "b", "c", "d", "e"],
-                "file_of_widgets": "Preprocessing",
-                "num_of_widgets": 1,
-                "widgets": ["preprocessing_widget.ui"],
-            }
-        elif self.view.featuresecgRButton.isChecked():
-            experiment = {
-                "name": "ECG_Params",
-                "file_of_widgets": "experiments/ecg_widgets.py",  # <-- path a mano
-                "num_of_widgets": 3,
-                "widgets": ["h", "i", "f"],
-            }
-        else:
-            experiment = None
         config = {
             "selected_files": self.view.selected_files if self.view.selected_files else None,
-            "experiment": experiment,
             "selected_biosignal": self.view.biosignalBox.currentText().split(" ")[1] if self.view.biosignalBox.currentText() else None
         }
         return config
