@@ -1,7 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtWidgets import QFileDialog, QMessageBox
-from Preprocessing.files_list_dialog import FilesListDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from scipy.signal import firwin, freqz

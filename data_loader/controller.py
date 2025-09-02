@@ -110,11 +110,11 @@ class DataLoaderController:
         self.view.selectLabel.setText(f"{count} selected files")
 
         # Sync with main_window
-        # self.main_window.selected_files = self.selected_files.copy()
-        # self.main_window.segmentation_widget.reset_segmentation_state()
+        self.main_window.selected_files = self.selected_files.copy()
+        # self.main_window.segmentation_widget.reset_segmentation_state() # TODO check if needed
 
         if count > 0:
-            # self.main_window.nextButton.setDisabled(False)
+            self.main_window.view.nextButton.setDisabled(False)
             recording = components.Recording.load(self.selected_files[0])
             self.biosignals = recording.biosignals
             for key, value in recording.biosignals.items():
@@ -127,15 +127,14 @@ class DataLoaderController:
                     self.biosignals[key]['num_chann'] = getattr(recording, key).channel_set['n_cha']
                 self.view.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
             self.view.biosignalBox.setCurrentIndex(0)
-            # default_biosignal = next(iter(recording.biosignals))
-            # self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
-            # self.main_window.num_chann = len(getattr(recording, default_biosignal).channel_set.l_cha
+            default_biosignal = next(iter(recording.biosignals))
+            self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
+            self.main_window.num_chann = len(getattr(recording, default_biosignal).channel_set.l_cha)
 
             # Add elements to biosignalBox
 
         else:
-            # self.main_window.nextButton.setDisabled(True)
-            # [elm.setDisabled(True) for elm in self.element_group]
+            self.main_window.view.nextButton.setDisabled(True)
             self.view.biosignalBox.clear()
 
     def open_file_list_dialog(self):
@@ -218,5 +217,36 @@ class DataLoaderController:
         if not selected_biosignal:
             return
         selected_biosignal = selected_biosignal.split(" ")[1]
-        # self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
-        # self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
+        self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
+        self.main_window.num_chann = self.biosignals[selected_biosignal]['num_chann']
+
+    def get_data_loader_config(self):
+        """
+            Function that creates a dictionary with preprocessing configurations.
+        """
+        # Selected experiment
+        if self.view.featureseegRButton.isChecked():
+            experiment = {
+                "name": "EEG_Params",
+                # "file_of_widgets": "experiments/eeg_widgets.py",
+                # "num_of_widgets": 5,
+                # "widgets": ["a", "b", "c", "d", "e"],
+                "file_of_widgets": "Preprocessing",
+                "num_of_widgets": 1,
+                "widgets": ["preprocessing_widget.ui"],
+            }
+        elif self.view.featuresecgRButton.isChecked():
+            experiment = {
+                "name": "ECG_Params",
+                "file_of_widgets": "experiments/ecg_widgets.py",  # <-- path a mano
+                "num_of_widgets": 3,
+                "widgets": ["h", "i", "f"],
+            }
+        else:
+            experiment = None
+        config = {
+            "selected_files": self.view.selected_files if self.view.selected_files else None,
+            "experiment": experiment,
+            "selected_biosignal": self.view.biosignalBox.currentText().split(" ")[1] if self.view.biosignalBox.currentText() else None
+        }
+        return config

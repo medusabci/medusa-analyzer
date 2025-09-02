@@ -69,6 +69,10 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
 
         ### ELEMENT CONFIGURATION ###
+        # Variables
+        self.selected_files = []
+        self.sampling_frequency = 0
+        self.num_chann = 0
 
         # Navigation Buttons
         self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided

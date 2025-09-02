@@ -1,9 +1,10 @@
 import sys
 from PySide6.QtWidgets import QFrame
 from PySide6.QtWidgets import QApplication
-from ui import MainWindow
+from main_window.ui import MainWindow
 from data_loader.controller import DataLoaderController
 import numpy as np
+from medusa import ecg
 
 
 class MainWindowController:

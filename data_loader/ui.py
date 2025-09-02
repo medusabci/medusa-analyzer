@@ -57,6 +57,7 @@ class DataLoaderWidget(QtWidgets.QWidget, ui_data_loader):
 
         # Data loading
         self.selected_files = []  # Store the selected files
+        self.main_window.selected_files = self.selected_files
         self.convertButton.setStyleSheet("""
                     QPushButton {
                         color: white;
