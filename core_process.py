@@ -476,7 +476,7 @@ def run_pipeline(self, settings_dic, total_tasks):
                     else:
                         processed_signal = current_signal
 
-                # Segmentation and parameter's computation
+                # segmentation and parameter's computation
                 if segmentation_type == 'condition':
                     segment_by_condition(data, processed_signal, settings_dic, base_name, norm,
                                          band=band_name if band_seg else None)

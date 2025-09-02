@@ -13,9 +13,6 @@ class MainWindowController:
 
         self.view.nextButton.clicked.connect(self.go_next)
         self.view.backButton.clicked.connect(self.go_back)
-        # #
-        # self.view.stackedWidget.currentChanged.connect(self.on_tab_changed)
-        self.set_progressbar()
         self.data_loader_controller = DataLoaderController(self.view.data_loader, self)
 
 
@@ -101,9 +98,9 @@ class MainWindowController:
         return colors_hex
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    ui = MainWindow()
-    controller = MainWindowController(ui)
-    ui.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     ui = MainWindow()
+#     controller = MainWindowController(ui)
+#     ui.show()
+#     sys.exit(app.exec())
