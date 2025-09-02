@@ -3,6 +3,7 @@ from PySide6 import QtWidgets
 import scipy.io as sio
 from medusa.meeg.meeg import *
 from medusa.components import Recording, CustomExperimentData
+from medusa.bci import erp_spellers
 
 # README: To include a new converter, just create a function that takes a file path as input (e.g.
 # _convert_newformat_file(filepath)) and returns the new filepath, and include it in the CONVERTERS dictionary with the
