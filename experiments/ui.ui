@@ -99,7 +99,7 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
-              <widget class="QLabel" name="eeg_icon">
+              <widget class="QLabel" name="eegIcon">
                <property name="styleSheet">
                 <string notr="true">QLabel {
     border: none;
@@ -267,7 +267,7 @@
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_4">
              <item>
-              <widget class="QLabel" name="ecg_icon">
+              <widget class="QLabel" name="ecgIcon">
                <property name="styleSheet">
                 <string notr="true">QLabel {
     border: none;
@@ -382,6 +382,15 @@
         <property name="frameShadow">
          <enum>QFrame::Raised</enum>
         </property>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <item>
+          <widget class="QLabel" name="medusaIcon">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </item>
       <item>

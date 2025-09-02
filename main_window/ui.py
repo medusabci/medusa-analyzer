@@ -82,20 +82,6 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         # Base widget (Data loader)
         self.experiments = ExperimentWidget(self)
-        self.stackedWidget.insertWidget(0, self.data_loader)
+        self.stackedWidget.insertWidget(0, self.experiments)
         self.data_loader = DataLoaderWidget(self)
         self.stackedWidget.insertWidget(1, self.data_loader)
-        # self.mock_widget = MockWidget(self)
-        # self.stackedWidget.insertWidget(0, self.mock_widget)
-        # self.stackedWidget.setCurrentIndex(0)  # Start with the Data Loader tab
-
-        # self.mock_init()
-
-    # def mock_init(self):
-    #     self.pipeline = ['Preprocessing', 'segmentation', 'Signal Analysis', 'Downloads']
-    #     self.stackedWidget.insertWidget(1, MockWidget(self))
-    #     self.stackedWidget.insertWidget(2, MockWidget(self))
-    #     self.stackedWidget.insertWidget(3, MockWidget(self))
-    #     self.stackedWidget.insertWidget(4, MockWidget(self))
-    #     self.stackedWidget.insertWidget(5, MockWidget(self))
-    #     self.stackedWidget.insertWidget(6, MockWidget(self))

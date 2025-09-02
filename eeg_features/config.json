@@ -1,0 +1,16 @@
+{
+  "name": "EEG Feature Extraction",
+  "experiment_path": "eeg_params",
+  "pipeline": [
+    {
+      "step": "Preprocesing",
+      "path": "eeg_features/preprocessing/controller",
+      "widget": "PreprocesingController"
+    },
+    {
+      "step": "Segmentation",
+      "path": "eeg_features/segmentation/controller",
+      "widget": "SegmentationController"
+    }
+  ]
+}

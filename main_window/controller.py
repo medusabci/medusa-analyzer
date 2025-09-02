@@ -21,10 +21,9 @@ class MainWindowController:
             Controls the next (and finish) button behaviour
         """
         idx = self.view.stackedWidget.currentIndex()
-        self.view.nextButton.setText("Finish" if idx == self.total_steps - 1 else "Next")
+        self.view.nextButton.setText("Finish" if idx == self.view.total_steps - 1 else "Next")
         if idx < self.view.total_steps - 1:
             self.view.stackedWidget.setCurrentIndex(idx + 1)
-            self.view.update_ui()
         else:
             self.view.close()
 
@@ -37,7 +36,6 @@ class MainWindowController:
         self.view.backButton.setVisible(idx > 0)
         if idx > 0:
             self.view.stackedWidget.setCurrentIndex(idx - 1)
-            self.view.update_ui()
 
 
     def set_progressbar(self):

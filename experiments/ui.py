@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-import os
+import os, json
 
 # Load UI class
 ui_experiments = loadUiType('experiments/ui.ui')[0]
@@ -35,19 +35,19 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         layout.addWidget(self.description_label)
 
         ### ELEMENT CONFIGURATION ###
-        self._set_icon(self.eeg_icon, "brain2.png", size=130)
-        self._set_icon(self.ecg_icon, "heart.png", size=130)
-        self._set_icon(self.medusa_icon, "medusa_icon.png", size=300)
-
+        # Icons
+        self._set_icon(self.eegIcon, "brain2.png", size=130)
+        self._set_icon(self.ecgIcon, "heart.png", size=130)
+        # Create radioButton group
         self.button_group = QtWidgets.QButtonGroup(self)
         self.button_group.addButton(self.featureseegRButton)
         self.button_group.addButton(self.featuresecgRButton)
         self.button_group.setExclusive(True)
         self.featureseegRButton.setChecked(True)
 
-        # Connexions
-        self.featureseegRButton.toggled.connect(self.on_tab_experiment)
-        self.featuresecgRButton.toggled.connect(self.on_tab_experiment)
+        self.main_window.nextButton.clicked.connect(self.on_next_clicked)
+        self.main_window.nextButton.setDisabled(False)
+
 
     def _set_icon(self, label, filename, size):
         """Helper para configurar íconos en QLabel."""
@@ -57,20 +57,16 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         label.setPixmap(pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
         label.setFixedSize(100, 100)
 
-    def on_tab_experiment(self):
-        """Activa el siguiente paso si hay algún experimento seleccionado."""
-        any_checked = (
-            self.featureseegRButton.isChecked() or self.featuresecgRButton.isChecked()
-        )
-        self.main_window.view.nextButton.setEnabled(any_checked)
 
-    def get_experiment_config(self):
-        """
-            Function that creates a dictionary with preprocessing configurations.
-        """
-        config = {
-            "experiment_name": "eeg_features" if self.featureseegRButton else "ecg_features",
-        }
-        return config
+    def on_next_clicked(self):
 
+        if self.featuresecgRButton.isChecked():
+            print('Hola')
+        elif self.featureseegRButton.isChecked():
+            with open("eeg_features/config.json", "r") as f:
+                experiment_data = json.load(f)
+
+            self.main_window.experiment = experiment_data
+
+        self.main_window.total_steps = len(self.main_window.experiment['pipeline']) + 1 # +1 for data loader
 

@@ -4,7 +4,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication
-from core_process import run_pipeline
+from eeg_features.core_process import run_pipeline
 
 # Load UI class
 ui_save_widget = loadUiType("Save/save_widget.ui")[0]
