@@ -45,12 +45,19 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.button_group.setExclusive(True)
         self.featureseegRButton.setChecked(True)
 
+        # Experiment button configuration
+        self.featureseegRButton.setProperty("experiment_id", "eeg_features")
+        self.featuresecgRButton.setProperty("experiment_id", "ecg_features")
+
+        # Next button configuration
         self.main_window.nextButton.clicked.connect(self.on_next_clicked)
         self.main_window.nextButton.setDisabled(False)
 
 
     def _set_icon(self, label, filename, size):
-        """Helper para configurar íconos en QLabel."""
+        """
+        Helper para configurar íconos en QLabel.
+        """
         icon_path = os.path.join(os.path.dirname(__file__), "..", "media", filename)
         label.setAlignment(QtCore.Qt.AlignCenter)
         pixmap = QtGui.QPixmap(icon_path)
@@ -59,6 +66,9 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
 
 
     def on_next_clicked(self):
+        #
+        # COGER CUAL RB ESTÁ MARCADO
+        # PONER NOMBRES A LOS RB ACCORDINGLY
 
         if self.featuresecgRButton.isChecked():
             print('Hola')
