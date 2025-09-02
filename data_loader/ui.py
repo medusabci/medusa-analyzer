@@ -22,10 +22,8 @@ class DataLoaderWidget(QtWidgets.QWidget, ui_data_loader):
         self.description_label.setWordWrap(True)
         self.description_label.setText("""
             <p style="font-size: 11pt; font-family: Arial;">
-            Welcome to <i>MEDUSA Analyzer</i>, a graphical interface for processing biomedical signals. 
-            For more information, see the <a href="https://editorialcirculorojo.com/feliz-dia-lleno-de-colores/" style="color:#007acc; font-weight:bold; text-decoration:none;">manual of use</a>. <p>
-            <p style="font-size: 11pt; font-family: Arial;">
-            Please select one experiment to begin. Then select at least one <span style="color:#007acc; font-weight:bold;">rec</span> file
+            Please, select at least one <span style="color:#007acc; font-weight:bold;">rec</span> file. If not, you can
+            use de MEDUSA Converter tool. 
             </p>
         """)
         # Remove background
@@ -60,7 +58,6 @@ class DataLoaderWidget(QtWidgets.QWidget, ui_data_loader):
                         );
                     }
                 """)
-        self.dataloadergroupBox.setDisabled(True)
         self.convertProgressBar.setValue(0)
         self.convertProgressBar.setVisible(False)
         self.convertLogTextBrowser.setVisible(False)
