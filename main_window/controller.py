@@ -10,6 +10,7 @@ from medusa import ecg
 class MainWindowController:
     def __init__(self, ui):
         self.view = ui
+        self.view.controller = self
 
         self.view.nextButton.clicked.connect(self.go_next)
         self.view.backButton.clicked.connect(self.go_back)
@@ -43,13 +44,11 @@ class MainWindowController:
         Automatically creates the progress bar based on the number of steps in the stacked widget. It also activate the
         "Progress" label.
         """
-        # Get current index and total steps of the selected experiment
-        self.total_steps = self.view.stackedWidget.count()
 
         # Create the basis of the current progress bar
         layout = self.view.widget.layout()  # get the layout from the widget where the progress bar is located
         label_index = layout.indexOf(self.view.progressLabel)  # find the position of the label
-        for n_step in reversed(range(self.total_steps)):
+        for n_step in reversed(range(self.view.total_steps)):
             frame = QFrame()
             frame.setFixedWidth(25)                  # fixed width
             frame.setObjectName(f"frame_{n_step}")
@@ -70,10 +69,11 @@ class MainWindowController:
         idx = self.view.stackedWidget.currentIndex()
 
         # Update the label content
-        # self.view.progressLabel.setText(f"Step {idx + 1} of {self.total_steps}: {self.view.pipeline[idx]}")
+        self.view.progressLabel.setText(f"Step {idx + 1} of {self.view.total_steps}: "
+                                        f"{self.view.experiment['pipeline'][0]['step']}")
         # Paint the progress bar
-        colors = self.interpolate_colors_hex((106, 13, 173), (235, 64, 122), self.total_steps) # Get the color palette for the progress bar
-        for n_step in range(self.total_steps):
+        colors = self.interpolate_colors_hex((106, 13, 173), (235, 64, 122), self.view.total_steps) # Get the color palette for the progress bar
+        for n_step in range(self.view.total_steps):
             frame = self.view.widget.findChild(QFrame, f"frame_{n_step}")
             if n_step <= idx:
                 frame.setStyleSheet(f"background-color: {colors[n_step]};")

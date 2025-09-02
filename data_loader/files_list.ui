@@ -33,16 +33,23 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="deletefilesButton">
+      <widget class="QPushButton" name="acceptButton">
+       <property name="text">
+        <string>Accept</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="deleteButton">
        <property name="text">
         <string>Delete</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="acceptfilesButton">
+      <widget class="QPushButton" name="deleteallButton">
        <property name="text">
-        <string>Accept</string>
+        <string>Delete All</string>
        </property>
       </widget>
      </item>

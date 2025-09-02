@@ -19,29 +19,30 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         # Change the title
         self.setWindowTitle("List of Files")
 
+        # Store reference to preprocessing widget
+        self.preprocessing_widget = preprocessing_widget
 
         # --- ELEMENT SETUP ---
         self.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.filelistWidget.addItems(files)
-        self.deletefilesButton.clicked.connect(self.delete_selected)
-        self.acceptfilesButton.clicked.connect(self.accept)
+        self.deleteButton.clicked.connect(self.delete_selected)
+        self.deleteallButton.clicked.connect(self.delete_all)
+        self.acceptButton.clicked.connect(self.accept)
 
     def delete_selected(self):
-        """
-            Remove the selected files.
-        """
+        """Remove selected files from the list."""
         for item in self.filelistWidget.selectedItems():
             self.filelistWidget.takeItem(self.filelistWidget.row(item))
+        self._update_preprocessing_widget()
 
-        # Actualizar estado en PreprocessingWidget
-        updated_files = self.get_updated_files()
-        # if not updated_files:
-            # self.preprocessing_widget.selected_files = []
-            # self.preprocessing_widget.reset_all_controls()
-            # self.preprocessing_widget.update_select_label()
+    def delete_all(self):
+        """Remove all files from the list."""
+        self.filelistWidget.clear()
+        self._update_preprocessing_widget()
 
-    def get_updated_files(self):
-        """
-            Return the current file list.
-        """
-        return [self.filelistWidget.item(i).text() for i in range(self.filelistWidget.count())]
+    def _update_preprocessing_widget(self):
+        """Update the preprocessing widget with current file list."""
+        updated_files = [self.filelistWidget.item(i).text()
+                        for i in range(self.filelistWidget.count())]
+
+        return updated_files

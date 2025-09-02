@@ -1,7 +1,14 @@
 {
   "name": "EEG Feature Extraction",
   "experiment_path": "eeg_params",
+  "biosignals": ["EEG"],
+  "biosignal_information": ["fs", "n_channels"],
   "pipeline": [
+    {
+      "step": "Data Loading",
+      "path": "data_loader/controller",
+      "widget": "DataLoaderController"
+    },
     {
       "step": "Preprocesing",
       "path": "eeg_features/preprocessing/controller",

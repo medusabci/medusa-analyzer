@@ -11,6 +11,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.setupUi(self)
         self.main_window = main_window
 
+
         ### EXPERIMENTS HEADER ###
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -33,6 +34,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window))
         self.topContentWidget.setPalette(palette)
         layout.addWidget(self.description_label)
+
 
         ### ELEMENT CONFIGURATION ###
         # Icons
@@ -66,17 +68,18 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
 
 
     def on_next_clicked(self):
-        #
-        # COGER CUAL RB ESTÁ MARCADO
-        # PONER NOMBRES A LOS RB ACCORDINGLY
-
-        if self.featuresecgRButton.isChecked():
-            print('Hola')
-        elif self.featureseegRButton.isChecked():
-            with open("eeg_features/config.json", "r") as f:
-                experiment_data = json.load(f)
-
+        """
+        Handles the event when the "Next" button is clicked. It loads the selected experiment configuration
+        """
+        # Get selected experiment
+        checked_button = self.button_group.checkedButton()
+        experiment_id = checked_button.property("experiment_id")
+        # Read the corresponding config file
+        with open(experiment_id + "/config.json", "r") as f:
+            experiment_data = json.load(f)
             self.main_window.experiment = experiment_data
 
-        self.main_window.total_steps = len(self.main_window.experiment['pipeline']) + 1 # +1 for data loader
+        # Update total steps and progress bar in the main window
+        self.main_window.total_steps = len(self.main_window.experiment['pipeline'])
+        self.main_window.controller.set_progressbar()
 

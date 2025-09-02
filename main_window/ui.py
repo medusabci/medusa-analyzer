@@ -77,6 +77,7 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         # Navigation Buttons
         self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
+        self.progressLabel.setVisible(False)
 
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
 
