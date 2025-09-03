@@ -431,7 +431,7 @@ def run_pipeline(self, settings_dic, total_tasks):
     # For each file...
     for i, file in enumerate(selected_files):
         try:
-            # Logging: Preprocessing
+            # Logging: preprocessing
             self.log_message(f"Processing file: {file}")
             self.progressLabel.setText(f"Processing: {basename(file)}")
             QtWidgets.QApplication.processEvents()
@@ -458,7 +458,7 @@ def run_pipeline(self, settings_dic, total_tasks):
                     bp_max -= 1e-6
                 cfg = {**settings_dic['preprocessing']}
 
-                # Preprocessing
+                # preprocessing
                 if settings_dic['preprocessing'].get('apply_preprocessing'):
                     if band_seg:
                         cfg.update({'bp_min': bp_min, 'bp_max': bp_max})

@@ -1,6 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-import os
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
@@ -15,8 +14,9 @@ class MplCanvas(FigureCanvas):
         self.setParent(parent)
 
 # Load UI class
-ui_preprocessing = loadUiType('preprocessing/ui.ui')[0]
-class EEGParamsPreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
+ui_preprocessing = loadUiType('eeg_features/preprocessing/ui.ui')[0]
+
+class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
     def __init__(self, main_window):
         super().__init__()
         self.setupUi(self)
@@ -44,6 +44,7 @@ class EEGParamsPreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         self.topContentWidget.setPalette(palette)
         layout.addWidget(self.description_label)
 
+
         ### ELEMENT CONFIGURATION ###
 
         # Define variables
@@ -54,19 +55,15 @@ class EEGParamsPreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         self.band_editor = None
         self.initialized = False
 
+        # Filter plots setup
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
         notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
         notchLayout.addWidget(self.notchCanvas)
-
         self.bandpassCanvas = MplCanvas(self.bandpassPlotWidget)
         bpLayout = QtWidgets.QVBoxLayout(self.bandpassPlotWidget)
         bpLayout.addWidget(self.bandpassCanvas)
 
         # Set initial state
-        for widget in [self.preprocessingButton, self.preprocessingLabel, self.bandCBox, self.bandsegmentationLabel,
-                              self.broadbandLabel, self.broadbandauxLabel, self.hzbroadbandLabel, self.minbroadBox,
-                              self.maxbroadBox, self.broadbandButton]:
-            widget.setDisabled(True)
         for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
             widget.setVisible(False)
 

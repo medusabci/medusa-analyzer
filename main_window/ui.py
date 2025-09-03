@@ -40,7 +40,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
 class MainWindow(QtWidgets.QMainWindow, ui_main_window):
     """
         Main application window. Manages navigation through the main stages of the workflow:
-        Preprocessing, segmentation, Signal Analysis, and Downloads.
+        preprocessing, segmentation, Signal Analysis, and Downloads.
     """
 
     def __init__(self):
@@ -49,7 +49,7 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         # Setup UI
         self.setupUi(self)
         # Set the icon
-        self.setWindowIcon(QtGui.QIcon("../media/medusa_icon.png"))
+        self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
 
 
         ### MAIN WINDOW HEADER ###
@@ -71,11 +71,11 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         ### ELEMENT CONFIGURATION ###
         # Variables
         self.selected_files = []
-        self.sampling_frequency = 0
-        self.n_chan = 0
+        self.current_widget = 0
 
         # Navigation Buttons
         self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
+        self.backButton.setVisible(False)
         self.progressLabel.setVisible(False)
 
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###

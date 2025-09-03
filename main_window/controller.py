@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QFrame
 from data_loader.files.controller import FilesController
-from main_window.flow import go_next, go_back
+from main_window.flow import on_next_click, on_back_click
 import numpy as np
 
 
@@ -9,8 +9,8 @@ class MainWindowController:
         self.view = ui
         self.view.controller = self
 
-        self.view.nextButton.clicked.connect(lambda: go_next(self))
-        self.view.backButton.clicked.connect(lambda: go_back(self))
+        self.view.nextButton.clicked.connect(lambda: on_next_click(self))
+        self.view.backButton.clicked.connect(lambda: on_back_click(self))
         self.data_loader_controller = FilesController(self.view.data_loader, self)
 
 

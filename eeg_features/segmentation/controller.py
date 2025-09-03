@@ -7,6 +7,7 @@ from scipy.stats import norm
 class SegmentationController:
     def __init__(self, ui):
         self.view = ui
+        self.view.controller = self
 
         # Conditions/Events
         self.view.conditionRButton.clicked.connect(self.on_segmentation_toggle)
@@ -16,13 +17,13 @@ class SegmentationController:
         self.view.winBox_2.editingFinished.connect(self.update_max_samples)
 
         # Normalization
-        self.view.normCBox.toggled.connect(self.on_normalization_click)
+        self.view.normCBox.toggled.connect(self.on_normalization_toggle)
         # Thresholding
-        self.view.thresCBox.toggled.connect(self.on_threshold_click)
+        self.view.thresCBox.toggled.connect(self.on_threshold_toggle)
         self.view.threshelpButton.clicked.connect(self.show_threshold_help)
         self.view.threskBox.valueChanged.connect(self._set_sigma_percent)
         # Resample
-        self.view.resampleCBox.toggled.connect(self.on_resample_click)
+        self.view.resampleCBox.toggled.connect(self.on_resample_toggle)
 
 
     def on_segmentation_toggle(self):
@@ -43,7 +44,7 @@ class SegmentationController:
             self._condition_element_visibility(False)
 
         self._reset_segmentation_params()
-        self.on_normalization_click(self.view.normCBox.isChecked())
+        self.on_normalization_toggle(self.view.normCBox.isChecked())
         self.update_next_button_state()
     # Helpers to show/hide event/condition elements
     def _event_element_visibility(self, enabled: bool):
@@ -60,7 +61,7 @@ class SegmentationController:
         self.view.winBox_2.setValue(self.defaults["windowbox2"])
 
 
-    def on_threshold_click(self, checked):
+    def on_threshold_toggle(self, checked):
         """
         Show or hide threshold-related controls based on the checkbox state.
         Resets spinboxes to default values when disabled.
@@ -119,7 +120,7 @@ class SegmentationController:
         self.view.thressampBox.setMaximum(int(max_samples))
 
 
-    def on_normalization_click(self, checked):
+    def on_normalization_toggle(self, checked):
         """
         Show or hide normalization controls based on the checkbox state and segmentation mode.
         Resets baseline spinboxes and radio buttons when normalization is disabled.
@@ -155,7 +156,7 @@ class SegmentationController:
         self.view.baselineCBox_2.setValue(self.defaults["baselinewin2"])
 
 
-    def on_resample_click(self, checked):
+    def on_resample_toggle(self, checked):
         """
         Show or hide resampling controls based on the checkbox state. Resets resample frequency spinbox when disabled.
         """
@@ -230,47 +231,3 @@ class SegmentationController:
 
         self.view.conditionLabel.setText(f"Conditions: {cond_text}")
         self.view.eventLabel.setText(f"Events: {evt_text}")
-
-
-    def get_segmentation_config(self):
-        """
-        Function that creates a dictionary with segmentation configurations.
-        """
-        # Get selected conditions/events
-        selected_conditions = [
-            index.data() for index in self.view.conditionList.selectionModel().selectedIndexes()
-        ] if self.view.conditionList.selectionModel() else []
-        selected_events = [
-            index.data() for index in self.view.eventList.selectionModel().selectedIndexes()
-        ] if self.view.eventList.selectionModel() else []
-
-        # Create segmentation dictionary
-        config = {
-            # Type of segmentation
-            "segmentation_type": "condition" if self.view.conditionRButton.isChecked() else "event" if self.view.eventRButton.isChecked() else None,
-            # Selected conditions/events
-            "selected_conditions": selected_conditions,
-            "selected_events": selected_events if self.view.eventRButton.isChecked() else None,
-            # Trial configuration
-            "trial_length": self.view.trialBox.value() if self.view.conditionRButton.isChecked() else None,
-            "trial_stride": self.view.trialstrideBox.value() if self.view.conditionRButton.isChecked() else None,
-            "window_start": self.view.winBox_1.value() if self.view.eventRButton.isChecked() else None,
-            "window_end": self.view.winBox_2.value() if self.view.eventRButton.isChecked() else None,
-            # Normalization
-            'norm': self.view.normCBox.isChecked() if self.view.normCBox else None,
-            "norm_type": "z" if self.view.normCBox.isChecked() and self.view.zscoreRButton.isChecked() else
-             "dc" if self.view.normCBox.isChecked() and self.view.dcRButton.isChecked() else None,
-            "baseline_start": self.view.baselineCBox_1.value() if self.view.eventRButton.isChecked() and self.view.normCBox.isChecked() else None,
-            "baseline_end": self.view.baselineCBox_2.value() if self.view.eventRButton.isChecked() and self.view.normCBox.isChecked() else None,
-            'average': self.view.averageCBox.isChecked() if self.view.averageCBox else None,
-            # Thresholding
-            "thresholding": self.view.thresCBox.isChecked() if self.view.thresCBox else None,
-            "thres_k": self.view.threskBox.value() if self.view.thresCBox.isChecked() else None,
-            "thres_samples": self.view.thressampBox.value() if self.view.thresCBox.isChecked() else None,
-            "thres_channels": self.view.threschanBox.value() if self.view.thresCBox.isChecked() else None,
-            # Resample
-            "resample": self.view.resampleCBox.isChecked() if self.view.resampleCBox else None,
-            "resample_fs": self.view.resamplefsBox.value() if self.view.resampleCBox.isChecked() else None,
-        }
-
-        return config

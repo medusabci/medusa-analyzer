@@ -3,7 +3,8 @@
   "experiment_path": "eeg_params",
   "biosignals": ["EEG"],
   "biosignal_information": ["fs", "n_chan"],
-  "pipeline": [
+  "pipeline":
+  [
     {
       "step": "Data Loading",
       "path": "data_loader/controller",

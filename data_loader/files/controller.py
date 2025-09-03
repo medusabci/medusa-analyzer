@@ -11,12 +11,14 @@ class FilesController:
         self.view = ui
         self.main_window = main_window
         self.selected_files = []
+        self.view.controller = self
 
         self.view.browseButton.clicked.connect(self.on_select_files_click)
         self.view.viewfilesButton.clicked.connect(self.on_view_files_click)
         self.view.convertButton.clicked.connect(self.on_converter_click)
         self.view.biosignalBox.currentIndexChanged.connect(self.on_biosignal_changed)
 
+        # self.view.main_window.nextButton.clicked.connect(lambda: on_next_clicked(self, self.view.main_window.stackedWidget.currentWidget()))
 
     def on_select_files_click(self):
         """
@@ -102,6 +104,9 @@ class FilesController:
 
 
     def on_converter_click(self):
+        """
+        Function that opens a file dialog to select files to convert, and uses the conversor_to_rec
+        """
         files, _ = QtWidgets.QFileDialog.getOpenFileNames(
             self.view,
             "Select files to convert",
@@ -177,12 +182,3 @@ class FilesController:
         self.main_window.n_chan = self.biosignals[selected_biosignal]['n_chan']
 
 
-    def get_data_loader_config(self):
-        """
-        Function that creates a dictionary with preprocessing configurations.
-        """
-        config = {
-            "selected_files": self.view.selected_files if self.view.selected_files else None,
-            "selected_biosignal": self.view.biosignalBox.currentText().split(" ")[1] if self.view.biosignalBox.currentText() else None
-        }
-        return config

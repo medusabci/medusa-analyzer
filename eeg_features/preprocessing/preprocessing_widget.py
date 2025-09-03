@@ -4,14 +4,14 @@ from PySide6.QtWidgets import QFileDialog, QMessageBox
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from scipy.signal import firwin, freqz
-from bands_table import BandTable
+from eeg_features.bands_table import BandTable
 import numpy as np
 import os
 from data_loader.files import conversor_to_rec
 from medusa import components
 
 # Load UI class
-ui_preprocessing_widget = loadUiType('Preprocessing/preprocessing_widget.ui')[0]
+ui_preprocessing_widget = loadUiType('preprocessing/ui.ui')[0]
 
 class MplCanvas(FigureCanvas):
     """
@@ -55,7 +55,7 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing_widget):
         self.description_label.setWordWrap(True)
         self.description_label.setText("""
                 <p style="font-size: 11pt; font-family: Arial;">
-                Welcome to the <b>Preprocessing Module</b> of <i>MEDUSA Analyzer</i>. 
+                Welcome to the <b>preprocessing Module</b> of <i>MEDUSA Analyzer</i>. 
                 Please select at least one <span style="color:#007acc; font-weight:bold;">rec</span> file to begin.
                 </p>
                 """)

@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from bands_table import BandTable
+from eeg_features.bands_table import BandTable
 import ast
 
 # Load UI class

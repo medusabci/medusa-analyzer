@@ -11,8 +11,8 @@ class FilesWidget(QtWidgets.QWidget, ui_data_loader):
         self.setupUi(self)
         self.main_window = main_window
 
-        ### DATA LOADER HEADER ###
 
+        ### DATA LOADER HEADER ###
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -38,26 +38,32 @@ class FilesWidget(QtWidgets.QWidget, ui_data_loader):
         # Data loading
         self.selected_files = []  # Store the selected files
         self.main_window.selected_files = self.selected_files
-        self.convertButton.setStyleSheet("""
-                    QPushButton {
-                        color: white;
-                        border: none;
-                        font-size: 13pt;
-                        font-weight: bold;
-                        border-radius: 10px;
-                        padding: 10px;
-                        background: qlineargradient(
-                            x1: 0, y1: 0, x2: 1, y2: 0,
-                            stop: 0 #6a0dad, stop: 1 #ec407a
-                        );
-                    }
-                    QPushButton:hover {
-                        background: qlineargradient(
-                            x1: 0, y1: 0, x2: 1, y2: 0,
-                            stop: 0 #7b1fa2, stop: 1 #f06292
-                        );
-                    }
-                """)
+        self.set_button_stylesheet(self.convertButton)
+        self.set_button_stylesheet(self.explorerButton)
         self.convertProgressBar.setValue(0)
         self.convertProgressBar.setVisible(False)
         self.convertLogTextBrowser.setVisible(False)
+
+        self.explorerButton.setVisible(False)
+
+    def set_button_stylesheet(self, element):
+        element.setStyleSheet("""
+                            QPushButton {
+                                color: white;
+                                border: none;
+                                font-size: 13pt;
+                                font-weight: bold;
+                                border-radius: 10px;
+                                padding: 10px;
+                                background: qlineargradient(
+                                    x1: 0, y1: 0, x2: 1, y2: 0,
+                                    stop: 0 #6a0dad, stop: 1 #ec407a
+                                );
+                            }
+                            QPushButton:hover {
+                                background: qlineargradient(
+                                    x1: 0, y1: 0, x2: 1, y2: 0,
+                                    stop: 0 #7b1fa2, stop: 1 #f06292
+                                );
+                            }
+                        """)

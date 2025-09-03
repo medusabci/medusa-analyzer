@@ -1,7 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from data_loader.experiments.flow import on_next_clicked
-import os
 
 # Load UI class
 ui_experiments = loadUiType('data_loader/experiments/ui.ui')[0]
@@ -38,9 +36,6 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
 
 
         ### ELEMENT CONFIGURATION ###
-        # Icons
-        self._set_icon(self.eegIcon, "brain2.png", size=130)
-        self._set_icon(self.ecgIcon, "heart.png", size=130)
         # Create radioButton group
         self.button_group = QtWidgets.QButtonGroup(self)
         self.button_group.addButton(self.featureseegRButton)
@@ -53,16 +48,4 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.featuresecgRButton.setProperty("experiment_id", "ecg_features")
 
         # Next button configuration
-        self.main_window.nextButton.clicked.connect(lambda: on_next_clicked(self))
         self.main_window.nextButton.setDisabled(False)
-
-
-    def _set_icon(self, label, filename, size):
-        """
-        Helper para configurar íconos en QLabel.
-        """
-        icon_path = os.path.join("media", filename)
-        label.setAlignment(QtCore.Qt.AlignCenter)
-        pixmap = QtGui.QPixmap(icon_path)
-        label.setPixmap(pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-        label.setFixedSize(100, 100)

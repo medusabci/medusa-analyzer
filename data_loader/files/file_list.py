@@ -31,14 +31,16 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
 
     def delete_selected(self):
         """Remove selected files from the list."""
-        for item in self.filelistWidget.selectedItems():
-            self.filelistWidget.takeItem(self.filelistWidget.row(item))
-        self._update_preprocessing_widget()
+        if self.confirm_deletion():
+            for item in self.filelistWidget.selectedItems():
+                self.filelistWidget.takeItem(self.filelistWidget.row(item))
+            self._update_preprocessing_widget()
 
     def delete_all(self):
         """Remove all files from the list."""
-        self.filelistWidget.clear()
-        self._update_preprocessing_widget()
+        if self.confirm_deletion():
+            self.filelistWidget.clear()
+            self._update_preprocessing_widget()
 
     def _update_preprocessing_widget(self):
         """Update the preprocessing widget with current file list."""
@@ -46,3 +48,20 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
                         for i in range(self.filelistWidget.count())]
 
         return updated_files
+
+    def confirm_deletion(self):
+        # Create the confirmation dialog
+        confirmation_dialog = QtWidgets.QMessageBox(self)
+        confirmation_dialog.setWindowTitle("Confirm Deletion")
+        confirmation_dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        confirmation_dialog.setText("Are you sure you want to delete these files?")
+        confirmation_dialog.setInformativeText("This action cannot be undone.")
+
+        # Add 'Yes' and 'No' buttons
+        confirmation_dialog.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        confirmation_dialog.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
+
+        # Show the dialog and get the user's response
+        response = confirmation_dialog.exec()
+
+        return response == QtWidgets.QMessageBox.StandardButton.Yes
