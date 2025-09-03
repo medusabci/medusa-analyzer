@@ -1,7 +1,5 @@
 from PySide6.QtWidgets import QFrame
-from PySide6.QtWidgets import QApplication
-from main_window.ui import MainWindow
-from data_loader.controller import DataLoaderController
+from data_loader.files.controller import FilesController
 from main_window.flow import go_next, go_back
 import numpy as np
 
@@ -13,7 +11,7 @@ class MainWindowController:
 
         self.view.nextButton.clicked.connect(lambda: go_next(self))
         self.view.backButton.clicked.connect(lambda: go_back(self))
-        self.data_loader_controller = DataLoaderController(self.view.data_loader, self)
+        self.data_loader_controller = FilesController(self.view.data_loader, self)
 
 
     def set_progressbar(self):

@@ -7,7 +7,7 @@ from scipy.signal import firwin, freqz
 from bands_table import BandTable
 import numpy as np
 import os
-from data_loader.converter import conversor_to_rec
+from data_loader.files import conversor_to_rec
 from medusa import components
 
 # Load UI class

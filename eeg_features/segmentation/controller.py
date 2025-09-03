@@ -1,7 +1,6 @@
 from PySide6 import QtWidgets
 from PySide6.QtCore import QStringListModel
-from ui import SegmentationWidget
-import utils
+import marks_utils
 from scipy.stats import norm
 
 
@@ -46,8 +45,6 @@ class SegmentationController:
         self._reset_segmentation_params()
         self.on_normalization_click(self.view.normCBox.isChecked())
         self.update_next_button_state()
-
-
     # Helpers to show/hide event/condition elements
     def _event_element_visibility(self, enabled: bool):
         for w in [self.view.winLabel_1, self.view.winBox_1, self.view.winLabel_2, self.view.winBox_2]:
@@ -61,21 +58,6 @@ class SegmentationController:
         self.view.trialstrideBox.setValue(self.defaults["trialstride"])
         self.view.winBox_1.setValue(self.defaults["windowbox1"])
         self.view.winBox_2.setValue(self.defaults["windowbox2"])
-
-
-    def update_next_button_state(self):
-        """
-        Enable or disable the 'Next' button based on the current segmentation mode and list content.
-        Enables 'Next' if:
-          * Event mode is selected and events exist.
-            NOTE: Conditions will always exist (if no conditions, null condition will be created).
-        Otherwise, disables the button.
-        """
-        has_events = self.view.eventList.model() and self.view.eventList.model().rowCount() > 0
-
-        enable_next = self.view.conditionRButton.isChecked() or \
-                      (self.view.eventRButton.isChecked() and has_events)
-        self.view.main_window.nextButton.setEnabled(enable_next)
 
 
     def on_threshold_click(self, checked):
@@ -100,6 +82,41 @@ class SegmentationController:
         percent = norm.cdf(self.view.threskBox.value()) - norm.cdf(-self.view.threskBox.value())
         percent *= 100
         self.view.threskLabelaux.setText(f"Percentile:{percent:.2f}%")
+
+
+    def show_threshold_help(self):
+        """
+        Show or hide threshold-related help text.
+        """
+        QtWidgets.QMessageBox.information(
+            self,
+            "Help - Thresholding",
+            """
+            <html>
+            <head><style>p { text-align: justify; }</style></head>
+            <body>
+            <p>This preprocessing step <b>discards epochs</b> exceeding a statistical threshold based on samples and channels.</p>
+            <p><b>Statistical Thresholding:</b><br><br>
+               &bull; <b>k</b>: Std deviation multiplier for threshold calculation.<br>
+               &bull; <b>Samples</b>: Minimum samples exceeding threshold to discard an epoch.<br>
+               &bull; <b>Channels</b>: Minimum channels exceeding sample threshold.</p>
+            </body>
+            </html>
+            """
+        )
+
+
+    def update_max_samples(self):
+        """
+        Update the maximum allowable samples for thresholding based on segmentation mode and parameters.
+        """
+        if self.view.conditionRButton.isChecked():
+            max_samples = (self.view.trialBox.value()/1000) * self.view.main_window.sampling_frequency
+        else:
+            max_samples = -self.view.winBox_1.value() + self.view.winBox_2.value()
+            max_samples = (max_samples/1000) * self.view.main_window.sampling_frequency
+
+        self.view.thressampBox.setMaximum(int(max_samples))
 
 
     def on_normalization_click(self, checked):
@@ -151,36 +168,19 @@ class SegmentationController:
             self.view.resamplefsBox.setValue(self.defaults["resamplefs"])
 
 
-    def show_threshold_help(self):
+    def update_next_button_state(self):
         """
-        Show or hide threshold-related help text.
+        Enable or disable the 'Next' button based on the current segmentation mode and list content.
+        Enables 'Next' if:
+          * Event mode is selected and events exist.
+            NOTE: Conditions will always exist (if no conditions, null condition will be created).
+        Otherwise, disables the button.
         """
-        QtWidgets.QMessageBox.information(
-            self,
-            "Help - Thresholding",
-            """
-            <html>
-            <head><style>p { text-align: justify; }</style></head>
-            <body>
-            <p>This preprocessing step <b>discards epochs</b> exceeding a statistical threshold based on samples and channels.</p>
-            <p><b>Statistical Thresholding:</b><br><br>
-               &bull; <b>k</b>: Std deviation multiplier for threshold calculation.<br>
-               &bull; <b>Samples</b>: Minimum samples exceeding threshold to discard an epoch.<br>
-               &bull; <b>Channels</b>: Minimum channels exceeding sample threshold.</p>
-            </body>
-            </html>
-            """
-        )
+        has_events = self.view.eventList.model() and self.view.eventList.model().rowCount() > 0
 
-
-    def update_max_samples(self):
-        if self.view.conditionRButton.isChecked():
-            max_samples = (self.view.trialBox.value()/1000) * self.view.main_window.sampling_frequency
-        else:
-            max_samples = -self.view.winBox_1.value() + self.view.winBox_2.value()
-            max_samples = (max_samples/1000) * self.view.main_window.sampling_frequency
-
-        self.view.thressampBox.setMaximum(int(max_samples))
+        enable_next = self.view.conditionRButton.isChecked() or \
+                      (self.view.eventRButton.isChecked() and has_events)
+        self.view.main_window.nextButton.setEnabled(enable_next)
 
 
     def load_marks_from_file(self, file):
@@ -193,7 +193,7 @@ class SegmentationController:
             - Handles and reports any errors encountered during file processing.
         """
         try:
-            self.conditions, self.events, self.events_condition = utils.extract_condition_events([file])
+            self.conditions, self.events, self.events_condition = marks_utils.extract_condition_events([file])
 
             # Set unique sorted conditions and events in models
             self.view.conditionList.setModel(QStringListModel(sorted(set(self.conditions))))
@@ -230,62 +230,6 @@ class SegmentationController:
 
         self.view.conditionLabel.setText(f"Conditions: {cond_text}")
         self.view.eventLabel.setText(f"Events: {evt_text}")
-
-
-    def reset_segmentation_state(self):
-        """
-        Reset the segmentation UI and state to default:
-        - Check the condition radio button
-        - Clear condition and event lists.
-        - Reset labels and parameters.
-        - Hide parameter widgets.
-        - Reset thresholding and resampling controls.
-        - Disable 'Next' button.
-        """
-
-        # Check the condition radio button
-        self.view.conditionRButton.setChecked(True)
-
-        # Clear condition and event lists
-        empty_model = QStringListModel()
-        self.view.conditionList.setModel(empty_model)
-        self.view.eventList.setModel(empty_model)
-        # Reset labels and UI elements
-        self.view.conditionLabel.setText("Conditions: None")
-        self.view.eventLabel.setText("Events: None")
-        self._event_element_visibility(False)
-        self._reset_segmentation_params()
-
-        # Disable checkboxes
-        for checkbox in [self.view.normCBox, self.view.thresCBox, self.view.resampleCBox, self.view.averageCBox]:
-            checkbox.setChecked(False)
-
-        # Hide normalization, thresholding and resampling elements
-        elements = [
-            self.view.zscoreRButton, self.view.dcRButton,
-            self.view.threskBox, self.view.threschanBox, self.view.thressampBox,
-            self.view.threskLabel, self.view.threskLabelaux, self.view.threschanLabel, self.view.thressampLabel,
-            self.view.threshelpButton,
-            self.view.resamplefsBox, self.view.newfsLabel
-        ]
-        for w in elements:
-            w.setVisible(False)
-
-        # Show descriptive labels
-        elements = [
-            self.view.thresLabel, self.view.normLabel, self.view.resampleLabel
-        ]
-        for w in elements:
-            w.setVisible(True)
-
-        # Reset spinboxes values to default
-        self.view.threskBox.setValue(self.defaults["threshold"])
-        self.view.threschanBox.setValue(self.defaults["threschannels"])
-        self.view.thressampBox.setValue(self.defaults["thressamples"])
-        self.view.resamplefsBox.setValue(self.defaults["resamplefs"])
-
-        # Update the next button state
-        self.update_next_button_state()
 
 
     def get_segmentation_config(self):

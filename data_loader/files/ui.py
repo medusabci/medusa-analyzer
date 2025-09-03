@@ -3,9 +3,9 @@ from PySide6.QtUiTools import loadUiType
 import os
 
 # Load UI class
-ui_data_loader = loadUiType('data_loader/ui.ui')[0]
+ui_data_loader = loadUiType('data_loader/files/ui.ui')[0]
 
-class DataLoaderWidget(QtWidgets.QWidget, ui_data_loader):
+class FilesWidget(QtWidgets.QWidget, ui_data_loader):
     def __init__(self, main_window):
         super().__init__()
         self.setupUi(self)

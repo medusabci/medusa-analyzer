@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 import os
 
 # Load UI class
-ui_files_list_dialog = loadUiType(os.path.join(os.path.dirname(__file__), "file_list.ui"))[0]
+ui_files_list_dialog = loadUiType("data_loader/files/file_list.ui")[0]
 
 class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
     def __init__(self, files, preprocessing_widget):

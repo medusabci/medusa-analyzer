@@ -12,13 +12,13 @@ def on_next_clicked(controller):
         experiment_data = json.load(f)
 
         # # Include the Data Loading
-        # data_loader = {
+        # files = {
         #     "step": "Data Loading",
-        #     "path": "data_loader/controller",
+        #     "path": "files/controller",
         #     "widget": "DataLoaderrController"
         # }
         # # Insert at the beginning of the pipeline
-        # experiment_data["pipeline"].insert(0, data_loader)
+        # experiment_data["pipeline"].insert(0, files)
 
         controller.main_window.experiment = experiment_data
 

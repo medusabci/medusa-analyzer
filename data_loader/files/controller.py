@@ -1,12 +1,12 @@
 from PySide6 import QtWidgets
-from data_loader.converter import conversor_to_rec
+from data_loader.files.converter import conversor_to_rec
 from medusa import components
-from data_loader.file_list import FilesListDialog
-from data_loader.converter import CONVERTERS
+from data_loader.files.file_list import FilesListDialog
+from data_loader.files.converter import CONVERTERS
 import os
 
 
-class DataLoaderController:
+class FilesController:
     def __init__(self, ui, main_window):
         self.view = ui
         self.main_window = main_window

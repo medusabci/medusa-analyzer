@@ -1,118 +1,11 @@
 import numpy as np
 from medusa import components
-import medusa.bci.erp_spellers
-import medusa.ecg
-
-
-def events_whithin_condition(times, interval):
-    """
-    Returns the elements of times whithin interval
-
-    Args:
-        times (list or array): times
-        interval (list or tuple):
-
-    Returns:
-        list: elements of times whithin interval
-    """
-    A, B = interval
-    return [times.index(t) for t in times if A <= t <= B]
-
-
-def remove_consecutive_duplicates(arr):
-    """
-    Remove consecutive duplicate elements from a list, and return both the filtered elements
-    and their original indices.
-
-    Parameters:
-    arr (list): The input list from which consecutive duplicates will be removed.
-
-    Returns:
-    tuple: A tuple (elements, indices), where:
-        - elements is a list of the filtered elements.
-        - indices is a list of the positions in the original list where those elements occurred.
-
-    Example:
-    >>> remove_consecutive_duplicates([1, 1, 2, 2, 2, 3, 1, 1, 4, 4, 5])
-    ([1, 2, 3, 1, 4, 5], [0, 2, 5, 6, 8, 10])
-    """
-    if not arr:
-        return [], []
-
-    elements = [arr[0]]
-    indices = [0]
-
-    for idx, item in enumerate(arr[1:], start=1):
-        if item != elements[-1]:
-            elements.append(item)
-            indices.append(idx)
-
-    return elements, indices
-
-
-def remove_key(obj, key_to_remove):
-    """
-    Recursively removes all keys named 'key_to_remove' from a nested data structure.
-
-    This function traverses dictionaries, lists, and tuples at any depth and
-    removes any occurrence of the key 'key_to_remove' from dictionaries. The modification
-    is done in-place.
-
-    Parameters:
-    obj (any): A Python object, typically a dictionary, list, or tuple, potentially
-               containing nested dictionaries with 'key_to_remove' keys.
-
-    Returns:
-    None: The input object is modified in-place. Nothing is returned.
-
-    Example:
-    >>> data = {'a': {'times': [1, 2], 'b': [{'times': [3, 4]}]}}
-    >>> remove_times_key(data, 'times')
-    >>> print(data)
-    {'a': {'b': [{}]}}
-    """
-    if isinstance(obj, dict):
-        obj.pop(key_to_remove, None)  # safely remove 'times' key if present
-        for key, value in obj.items():
-            remove_key(value, key_to_remove)
-    elif isinstance(obj, list) or isinstance(obj, tuple):
-        for item in obj:
-            remove_key(item, key_to_remove)
-    return obj
-
-
-def merge_segmentation_dict(segmentation_dict, group_segmentation_dict=None):
-    """
-    Merge segmentation dictionaries to create a group-wise segmentation dictionary.
-
-    Parameters:
-    segmentation_dict (dict): subject-wise segmentation dictionary.
-    group_segmentation_dict (dict): group-wise segmentation dictionary, that will be accumulating all the info
-
-    Returns:
-    group_segmentation_dict (dict):
-    """
-    # Remove the time information
-    segmentation_dict = remove_key(segmentation_dict, 'times')
-
-    # If there is no group dict, the subject-wise dict will be stored as is
-    if group_segmentation_dict is None:
-        group_segmentation_dict = segmentation_dict
-    else:
-        for key in segmentation_dict.keys():
-            # If a condition (included in the subject-wise dict) is not in the group dict, include it
-            if key not in group_segmentation_dict:
-                group_segmentation_dict[key] = segmentation_dict[key]
-            else:
-                for event in segmentation_dict[key]['events'].keys():
-                    # If a event (included in the subject-wise dict) is not in the group dict, include it
-                    if event not in group_segmentation_dict[key]['events']:
-                        group_segmentation_dict[key]['events'][event] = {}
-
-    return group_segmentation_dict
 
 
 def extract_condition_events(files):
+    """
+    Extract conditions and events from a list of files.
+    """
     conditions = []
     events = []
     events_condition = []
@@ -141,6 +34,9 @@ def extract_condition_events(files):
 
 
 def recording_to_dict(rec):
+    """
+    Convert the conditions and events from a Recording object to standard dictionaries
+    """
     times = rec.eeg.times - rec.eeg.times[0]
 
     # Vector to transform numeric labels to standard names, and array with the names

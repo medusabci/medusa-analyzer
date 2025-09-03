@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from eeg_features.segmentation.utils import extract_condition_events
+from eeg_features.segmentation.marks_utils import extract_condition_events
 from PySide6.QtCore import QStringListModel
 
 # Load UI class

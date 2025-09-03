@@ -1,10 +1,10 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from experiments.flow import on_next_clicked
-import os, json
+from data_loader.experiments.flow import on_next_clicked
+import os
 
 # Load UI class
-ui_experiments = loadUiType('experiments/ui.ui')[0]
+ui_experiments = loadUiType('data_loader/experiments/ui.ui')[0]
 
 class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
     def __init__(self, main_window):
@@ -61,7 +61,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         """
         Helper para configurar íconos en QLabel.
         """
-        icon_path = os.path.join(os.path.dirname(__file__), "..", "media", filename)
+        icon_path = os.path.join("media", filename)
         label.setAlignment(QtCore.Qt.AlignCenter)
         pixmap = QtGui.QPixmap(icon_path)
         label.setPixmap(pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
