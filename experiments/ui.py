@@ -1,5 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
+from experiments.flow import on_next_clicked
 import os, json
 
 # Load UI class
@@ -52,7 +53,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.featuresecgRButton.setProperty("experiment_id", "ecg_features")
 
         # Next button configuration
-        self.main_window.nextButton.clicked.connect(self.on_next_clicked)
+        self.main_window.nextButton.clicked.connect(lambda: on_next_clicked(self))
         self.main_window.nextButton.setDisabled(False)
 
 
@@ -65,31 +66,3 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         pixmap = QtGui.QPixmap(icon_path)
         label.setPixmap(pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
         label.setFixedSize(100, 100)
-
-
-    def on_next_clicked(self):
-        """
-        Handles the event when the "Next" button is clicked. It loads the selected experiment configuration
-        """
-        # Get selected experiment
-        checked_button = self.button_group.checkedButton()
-        experiment_id = checked_button.property("experiment_id")
-        # Read the corresponding config file
-        with open(experiment_id + "/config.json", "r") as f:
-            experiment_data = json.load(f)
-
-            # # Include the Data Loading
-            # data_loader = {
-            #     "step": "Data Loading",
-            #     "path": "data_loader/controller",
-            #     "widget": "DataLoaderrController"
-            # }
-            # # Insert at the beginning of the pipeline
-            # experiment_data["pipeline"].insert(0, data_loader)
-
-            self.main_window.experiment = experiment_data
-
-        # Update total steps and progress bar in the main window
-        self.main_window.total_steps = len(self.main_window.experiment['pipeline'])
-        self.main_window.controller.set_progressbar()
-

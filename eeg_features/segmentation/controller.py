@@ -172,6 +172,7 @@ class SegmentationController:
             """
         )
 
+
     def update_max_samples(self):
         if self.view.conditionRButton.isChecked():
             max_samples = (self.view.trialBox.value()/1000) * self.view.main_window.sampling_frequency

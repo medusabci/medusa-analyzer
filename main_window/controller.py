@@ -1,10 +1,9 @@
-import sys
 from PySide6.QtWidgets import QFrame
 from PySide6.QtWidgets import QApplication
 from main_window.ui import MainWindow
 from data_loader.controller import DataLoaderController
+from main_window.flow import go_next, go_back
 import numpy as np
-from medusa import ecg
 
 
 class MainWindowController:
@@ -12,31 +11,9 @@ class MainWindowController:
         self.view = ui
         self.view.controller = self
 
-        self.view.nextButton.clicked.connect(self.go_next)
-        self.view.backButton.clicked.connect(self.go_back)
+        self.view.nextButton.clicked.connect(lambda: go_next(self))
+        self.view.backButton.clicked.connect(lambda: go_back(self))
         self.data_loader_controller = DataLoaderController(self.view.data_loader, self)
-
-
-    def go_next(self):
-        """
-            Controls the next (and finish) button behaviour
-        """
-        idx = self.view.stackedWidget.currentIndex()
-        self.view.nextButton.setText("Finish" if idx == self.view.total_steps - 1 else "Next")
-        if idx < self.view.total_steps - 1:
-            self.view.stackedWidget.setCurrentIndex(idx + 1)
-        else:
-            self.view.close()
-
-
-    def go_back(self):
-        """
-            Controls the back button behaviour
-        """
-        idx = self.view.stackedWidget.currentIndex()
-        self.view.backButton.setVisible(idx > 0)
-        if idx > 0:
-            self.view.stackedWidget.setCurrentIndex(idx - 1)
 
 
     def set_progressbar(self):
