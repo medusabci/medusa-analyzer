@@ -6,19 +6,22 @@
   "pipeline":
   [
     {
-      "step": "Data Loading",
-      "path": "data_loader/controller",
-      "widget": "DataLoaderController"
+      "step": "Files",
+      "path": "data_loader/files",
+      "widget": "FilesWidget",
+      "controller": "FilesController"
     },
     {
-      "step": "Preprocesing",
-      "path": "eeg_features/preprocessing/controller",
-      "widget": "PreprocesingController"
+      "step": "Preprocessing",
+      "path": "eeg_features/preprocessing",
+      "widget": "PreprocessingWidget",
+      "controller": "PreprocessingController"
     },
     {
       "step": "Segmentation",
-      "path": "eeg_features/segmentation/controller",
-      "widget": "SegmentationController"
+      "path": "eeg_features/segmentation",
+      "widget": "SegmentationWidget",
+      "controller": "SegmentationController"
     }
   ]
 }

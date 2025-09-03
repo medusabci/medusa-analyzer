@@ -1,4 +1,4 @@
-def get_data_loader_config(controller):
+def get_files_config(controller):
     """
     Function that creates a dictionary with preprocessing configurations.
     """

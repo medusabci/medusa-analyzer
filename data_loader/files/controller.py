@@ -9,16 +9,15 @@ import os
 class FilesController:
     def __init__(self, ui, main_window):
         self.view = ui
+        self.view.controller = self
         self.main_window = main_window
         self.selected_files = []
-        self.view.controller = self
 
         self.view.browseButton.clicked.connect(self.on_select_files_click)
         self.view.viewfilesButton.clicked.connect(self.on_view_files_click)
         self.view.convertButton.clicked.connect(self.on_converter_click)
         self.view.biosignalBox.currentIndexChanged.connect(self.on_biosignal_changed)
 
-        # self.view.main_window.nextButton.clicked.connect(lambda: on_next_clicked(self, self.view.main_window.stackedWidget.currentWidget()))
 
     def on_select_files_click(self):
         """

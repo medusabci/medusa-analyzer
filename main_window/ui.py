@@ -1,7 +1,9 @@
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtUiTools import loadUiType
-from data_loader.files.ui import FilesWidget
 from data_loader.experiments.ui import ExperimentWidget
+from data_loader.experiments.controller import ExperimentsController
+from data_loader.files.ui import FilesWidget
+from data_loader.files.controller import FilesController
 from PySide6.QtGui import QPalette
 
 # Load UI class
@@ -82,6 +84,8 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         # Base widget (Data loader)
         self.experiments = ExperimentWidget(self)
+        ExperimentsController(self.experiments , self) # This instantiates the controller and links it to the view
         self.stackedWidget.insertWidget(0, self.experiments)
-        self.data_loader = FilesWidget(self)
-        self.stackedWidget.insertWidget(1, self.data_loader)
+        # self.files = FilesWidget(self)
+        # FilesController(self.files, self) # This instantiates the controller and links it to the view
+        # self.stackedWidget.insertWidget(1, self.files)

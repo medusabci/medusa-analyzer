@@ -9,10 +9,9 @@ class MainWindowController:
         self.view = ui
         self.view.controller = self
 
+        # Buttons connections
         self.view.nextButton.clicked.connect(lambda: on_next_click(self))
         self.view.backButton.clicked.connect(lambda: on_back_click(self))
-        self.data_loader_controller = FilesController(self.view.data_loader, self)
-
 
     def set_progressbar(self):
         """
@@ -69,11 +68,3 @@ class MainWindowController:
             rgb = ((c1 + (c2 - c1) * i / (n - 1)).astype(int))
             colors_hex.append("#{0:02x}{1:02x}{2:02x}".format(*rgb))
         return colors_hex
-
-
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     ui = MainWindow()
-#     controller = MainWindowController(ui)
-#     ui.show()
-#     sys.exit(app.exec())

@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 # Load UI class
-ui_bands_table = loadUiType("bands_table.ui")[0]
+ui_bands_table = loadUiType("eeg_features/bands_table.ui")[0]
 
 # This code enable the drag and drop of bands in the table
 class BandTableWidget(QtWidgets.QTableWidget):

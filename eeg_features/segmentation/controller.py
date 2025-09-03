@@ -1,13 +1,14 @@
 from PySide6 import QtWidgets
 from PySide6.QtCore import QStringListModel
-import marks_utils
+from eeg_features.segmentation import marks_utils
 from scipy.stats import norm
 
 
 class SegmentationController:
-    def __init__(self, ui):
+    def __init__(self, ui, main_window):
         self.view = ui
         self.view.controller = self
+        self.main_window = main_window
 
         # Conditions/Events
         self.view.conditionRButton.clicked.connect(self.on_segmentation_toggle)

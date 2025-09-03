@@ -9,7 +9,7 @@ def on_next_click(controller):
     current_widget = controller.view.stackedWidget.widget(idx)
     widget_module = current_widget.__module__.rsplit('.', 1)[0]
     flow_module = __import__(widget_module + '.flow', fromlist=['on_next_click'])
-    flow_module.on_next_clicked(current_widget)
+    flow_module.on_next_click(current_widget)
 
     # Update the buttons and the stacked widget
     controller.view.nextButton.setText("Finish" if idx == controller.view.total_steps - 1 else "Next")

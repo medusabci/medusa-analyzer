@@ -1,10 +1,8 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from eeg_features.segmentation.marks_utils import extract_condition_events
-from PySide6.QtCore import QStringListModel
 
 # Load UI class
-ui_segmentation_widget = loadUiType('eeg_params/segmentation/ui.ui')[0]
+ui_segmentation_widget = loadUiType('eeg_features/segmentation/ui.ui')[0]
 
 class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
     """
