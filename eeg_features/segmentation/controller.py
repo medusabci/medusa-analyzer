@@ -5,10 +5,9 @@ from scipy.stats import norm
 
 
 class SegmentationController:
-    def __init__(self, ui, main_window):
+    def __init__(self, ui):
         self.view = ui
         self.view.controller = self
-        self.main_window = main_window
 
         # Conditions/Events
         self.view.conditionRButton.clicked.connect(self.on_segmentation_toggle)

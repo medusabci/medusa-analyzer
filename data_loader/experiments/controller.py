@@ -2,10 +2,9 @@ from PySide6 import QtGui, QtCore
 import os
 
 class ExperimentsController:
-    def __init__(self, ui, main_window):
+    def __init__(self, ui):
         self.view = ui
         self.view.controller = self
-        self.main_window = main_window
 
         # Icons
         self._set_icon(self.view.eegIcon, "brain2.png", size=130)

@@ -84,8 +84,6 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         # Base widget (Data loader)
         self.experiments = ExperimentWidget(self)
-        ExperimentsController(self.experiments , self) # This instantiates the controller and links it to the view
+        ExperimentsController(self.experiments) # This instantiates the controller and links it to the view
         self.stackedWidget.insertWidget(0, self.experiments)
-        # self.files = FilesWidget(self)
-        # FilesController(self.files, self) # This instantiates the controller and links it to the view
-        # self.stackedWidget.insertWidget(1, self.files)
+

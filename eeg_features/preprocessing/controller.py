@@ -5,10 +5,9 @@ from eeg_features.bands_table import BandTable
 
 
 class PreprocessingController:
-    def __init__(self, ui, main_window):
+    def __init__(self, ui):
         self.view = ui
         self.view.controller = self
-        self.main_window = main_window
 
         # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)

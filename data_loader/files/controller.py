@@ -7,10 +7,9 @@ import os
 
 
 class FilesController:
-    def __init__(self, ui, main_window):
+    def __init__(self, ui):
         self.view = ui
         self.view.controller = self
-        self.main_window = main_window
         self.selected_files = []
 
         self.view.browseButton.clicked.connect(self.on_select_files_click)
