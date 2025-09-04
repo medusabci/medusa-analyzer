@@ -5,7 +5,7 @@ def reset_all_controls(controller):
     Called at:
         - Analyzer startup
         - When 'Preprocess data' is unchecked
-        - When files are deleted #TODO
+        - When files are deleted
     """
 
     # Widgets to hide

@@ -22,12 +22,16 @@ class PreprocessingController:
         bg_color = self.view.palette().color(self.view.backgroundRole()).name()
         self.view.notchCanvas.fig.patch.set_facecolor(bg_color)
         self.view.notchCanvas.ax.set_facecolor(bg_color)
+        self.view.minfreqnotchBox.editingFinished.connect(lambda: self.validate_filter_bounds("notch"))
+        self.view.maxfreqnotchBox.editingFinished.connect(lambda: self.validate_filter_bounds("notch"))
         # Bandpass
         self.view.bpCBox.toggled.connect(self.on_bandpass_toggle)
         self.view.bpCBox.toggled.connect(lambda: self.update_filter_plot('bandpass'))
         self.view.drawbpButton.clicked.connect(lambda: self.update_filter_plot('bandpass'))
         self.view.bandpassCanvas.fig.patch.set_facecolor(bg_color)
         self.view.bandpassCanvas.ax.set_facecolor(bg_color)
+        self.view.minfreqbpBox.editingFinished.connect(lambda: self.validate_filter_bounds("bandpass"))
+        self.view.maxfreqbpBox.editingFinished.connect(lambda: self.validate_filter_bounds("bandpass"))
         self.view.minfreqbpBox.valueChanged.connect(lambda: self.view.minbroadBox.setValue(self.view.minfreqbpBox.value()))
         self.view.maxfreqbpBox.valueChanged.connect(lambda: self.view.maxbroadBox.setValue(self.view.maxfreqbpBox.value()))
         self.view.minfreqbpBox.valueChanged.connect(self.disable_band_segmentation)
@@ -103,6 +107,7 @@ class PreprocessingController:
         self.view.drawbpButton.setVisible(checked)
         self.view.winbpLabel.setVisible(checked)
         self.view.winbpBox.setVisible(checked)
+        self.view.maxbroadBox.setValue(self.view.maxfreqbpBox.value())
 
         # Reset default values
         if not checked:
@@ -197,9 +202,20 @@ class PreprocessingController:
 
 
     def on_show_event(self):
+        fs = self.view.main_window.biosignal_info['fs']
+        nyquist = fs / 2
+        # Limit max values of the spinboxes to fs/2
+        spinboxes = [
+            self.view.minbroadBox, self.view.maxbroadBox,
+            self.view.minfreqnotchBox, self.view.maxfreqnotchBox,
+            self.view.minfreqbpBox, self.view.maxfreqbpBox,
+        ]
+        for sb in spinboxes:
+            sb.setMaximum(nyquist)
+
         # Set default values for broadband
         self.view.minbroadBox.setValue(0.5)
-        self.view.maxbroadBox.setValue(self.view.main_window.biosignal_info['fs']/2)
+        self.view.maxbroadBox.setValue(nyquist)
 
         if not self.view.main_window.stackedWidget.widget(1).selected_files: # widget(1) is the file selection widget
             reset_all_controls(self)

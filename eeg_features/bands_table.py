@@ -111,7 +111,7 @@ class BandTableWidget(QtWidgets.QTableWidget):
 class BandTable(QtWidgets.QDialog, ui_bands_table):
     def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None,
                  min_broad=0.5, max_broad=69.0):
-        super().__init__(parameters_widget or preprocessing_widget)
+        super().__init__((parameters_widget or preprocessing_widget).view)
 
         # Setup UI
         self.setupUi(self)

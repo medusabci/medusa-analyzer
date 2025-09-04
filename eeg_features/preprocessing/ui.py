@@ -2,7 +2,6 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from eeg_features.preprocessing.flow import reset_all_controls
 
 class MplCanvas(FigureCanvas):
     """
@@ -19,6 +18,7 @@ ui_preprocessing = loadUiType('eeg_features/preprocessing/ui.ui')[0]
 
 class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
     shown = QtCore.Signal()
+    band_config_changed = QtCore.Signal()
 
     def __init__(self, main_window):
         super().__init__()
