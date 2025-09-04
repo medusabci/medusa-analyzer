@@ -48,11 +48,11 @@ class FilesController:
         self.view.selectLabel.setText(f"{count} selected files")
 
         # Sync with main_window
-        self.main_window.selected_files = self.selected_files.copy()
+        self.view.main_window.selected_files = self.selected_files.copy()
 
         if count > 0:
             # Enable the next button
-            self.main_window.view.nextButton.setDisabled(False)
+            self.view.main_window.nextButton.setDisabled(False)
 
             # Get information from the biosignals in the first file
             recording = components.Recording.load(self.selected_files[0])
@@ -61,15 +61,15 @@ class FilesController:
             for key, value in recording.biosignals.items():
 
                 # Only consider the biosignals in the experiment
-                if value['class_name'] not in self.main_window.view.experiment['biosignals']:
+                if value['class_name'] not in self.view.main_window.experiment['biosignals']:
                     continue
 
                 # Get the fs (if required)
-                if 'fs' in self.main_window.view.experiment['biosignal_information']:
+                if 'fs' in self.view.main_window.experiment['biosignal_information']:
                     self.biosignals[key]['fs'] = getattr(recording, key).fs
 
                 # Get the number of channels (if required), considering ChannelSet as object or dict
-                if 'n_chan' in self.main_window.view.experiment['biosignal_information']:
+                if 'n_chan' in self.view.main_window.experiment['biosignal_information']:
                     try:
                         self.biosignals[key]['n_chan'] = len(getattr(recording, key).channel_set.l_cha)
                     except:
@@ -83,11 +83,11 @@ class FilesController:
             # Get its fs and number of channels and store them in main_window
             default_biosignal = self.view.biosignalBox.currentText()
             default_biosignal = default_biosignal.split(" ")[1]
-            self.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
-            self.main_window.n_chan = len(getattr(recording, default_biosignal).channel_set.l_cha)
+            self.view.main_window.sampling_frequency = getattr(recording, default_biosignal).fs
+            self.view.main_window.n_chan = len(getattr(recording, default_biosignal).channel_set.l_cha)
 
         else: # No files selected, deactivate the next button and clear the biosignal combobox
-            self.main_window.view.nextButton.setDisabled(True)
+            self.view.main_window.nextButton.setDisabled(True)
             self.view.biosignalBox.clear()
 
 
@@ -176,7 +176,7 @@ class FilesController:
         if not selected_biosignal:
             return
         selected_biosignal = selected_biosignal.split(" ")[1]
-        self.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
-        self.main_window.n_chan = self.biosignals[selected_biosignal]['n_chan']
+        self.view.main_window.sampling_frequency = self.biosignals[selected_biosignal]['fs']
+        self.view.main_window.n_chan = self.biosignals[selected_biosignal]['n_chan']
 
 

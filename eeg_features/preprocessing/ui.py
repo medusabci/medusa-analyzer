@@ -2,6 +2,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from eeg_features.preprocessing.flow import reset_all_controls
 
 class MplCanvas(FigureCanvas):
     """
@@ -17,6 +18,8 @@ class MplCanvas(FigureCanvas):
 ui_preprocessing = loadUiType('eeg_features/preprocessing/ui.ui')[0]
 
 class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
+    shown = QtCore.Signal()
+
     def __init__(self, main_window):
         super().__init__()
         self.setupUi(self)
@@ -53,7 +56,6 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         self.validating_notch = False
         self.selected_bands = []
         self.band_editor = None
-        self.initialized = False
 
         # Filter plots setup
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
@@ -67,6 +69,10 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         for widget in [self.selectedbandsLabel, self.selectedbandsauxLabel, self.bandLabel, self.bandButton]:
             widget.setVisible(False)
 
+        # Set default values for broadband
+        self.minbroadBox.setValue(0.5)
+        self.maxbroadBox.setValue(70) # Mock value
+
         # Default values in a dict
         self.defaults = {
             "minfreqnotch": self.minfreqnotchBox.value(),
@@ -75,4 +81,10 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
             "minfreqbp": self.minfreqbpBox.value(),
             "maxfreqbp": self.maxfreqbpBox.value(),
             "orderbp": self.orderbpBox.value(),
+            "minbroadBox": self.minbroadBox.value(),
+            "maxbroadBox": self.maxbroadBox.value()
         }
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.shown.emit()

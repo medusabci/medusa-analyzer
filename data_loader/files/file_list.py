@@ -31,16 +31,18 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
 
     def delete_selected(self):
         """Remove selected files from the list."""
-        if self.confirm_deletion():
-            for item in self.filelistWidget.selectedItems():
-                self.filelistWidget.takeItem(self.filelistWidget.row(item))
-            self._update_preprocessing_widget()
+        if self.filelistWidget.selectedItems():
+            if self.confirm_deletion():
+                for item in self.filelistWidget.selectedItems():
+                    self.filelistWidget.takeItem(self.filelistWidget.row(item))
+                self._update_preprocessing_widget()
 
     def delete_all(self):
         """Remove all files from the list."""
-        if self.confirm_deletion():
-            self.filelistWidget.clear()
-            self._update_preprocessing_widget()
+        if self.filelistWidget.count():
+            if self.confirm_deletion():
+                self.filelistWidget.clear()
+                self._update_preprocessing_widget()
 
     def _update_preprocessing_widget(self):
         """Update the preprocessing widget with current file list."""

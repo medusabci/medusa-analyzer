@@ -1,3 +1,4 @@
+
 def reset_all_controls(controller):
     """
     Hides all elements of the data preprocessing groupbox and resets them to defaults.
@@ -27,10 +28,6 @@ def reset_all_controls(controller):
     for box in (controller.view.notchCBox, controller.view.bpCBox, controller.view.carCBox, controller.view.preprocessingButton):
         box.setChecked(False)
 
-    # Disable grouped elements
-    for elm in controller.view.element_group:
-        elm.setDisabled(True)
-
     # Reset spinboxes using defaults
     spinbox_defaults = {
         controller.view.minfreqnotchBox: "minfreqnotch",
@@ -44,39 +41,39 @@ def reset_all_controls(controller):
         box.setValue(controller.view.defaults[key])
 
 
-def get_preprocessing_config(self):
+def get_preprocessing_config(controller):
     """
         Function that creates a dictionary with preprocessing configurations.
     """
     config = {
-        "fs": self.main_window.sampling_frequency,
-        "band_segmentation": True if self.view.bandCBox.isChecked() else None,
-        "broadband_min": self.view.minbroadBox.value(),
-        "broadband_max": self.view.maxbroadBox.value(),
+        "fs": controller.main_window.sampling_frequency,
+        "band_segmentation": True if controller.view.bandCBox.isChecked() else None,
+        "broadband_min": controller.view.minbroadBox.value(),
+        "broadband_max": controller.view.maxbroadBox.value(),
         "selected_bands": (
             None
-            if (not self.view.bandCBox.isChecked() or (
-                    len(self.view.selected_bands_by_type.get("segmentation", [])) == 1 and
-                    str(self.view.selected_bands_by_type.get("segmentation", [])[0].get("name",
+            if (not controller.view.bandCBox.isChecked() or (
+                    len(controller.view.selected_bands_by_type.get("segmentation", [])) == 1 and
+                    str(controller.view.selected_bands_by_type.get("segmentation", [])[0].get("name",
                                                                                         "")).lower() == "broadband"
             ))
-            else self.view.selected_bands_by_type.get("segmentation", [])
+            else controller.view.selected_bands_by_type.get("segmentation", [])
         ),
-        "selected_files": self.view.selected_files if self.view.selected_files else None,
-        "apply_preprocessing": True if self.view.preprocessingButton.isChecked() else None,
+        "selected_files": controller.view.selected_files if controller.view.selected_files else None,
+        "apply_preprocessing": True if controller.view.preprocessingButton.isChecked() else None,
 
-        "notch": self.view.notchCBox.isChecked() if self.view.notchCBox else None,
-        "notch_min": self.view.minfreqnotchBox.value() if self.view.notchCBox.isChecked() else None,
-        "notch_max": self.view.maxfreqnotchBox.value() if self.view.notchCBox.isChecked() else None,
-        "notch_order": self.view.orderNotchBox.value() if self.view.notchCBox.isChecked() else None,
-        "notch_win": self.view.winnotchBox.currentText() if self.view.notchCBox.isChecked() else None,
+        "notch": controller.view.notchCBox.isChecked() if controller.view.notchCBox else None,
+        "notch_min": controller.view.minfreqnotchBox.value() if controller.view.notchCBox.isChecked() else None,
+        "notch_max": controller.view.maxfreqnotchBox.value() if controller.view.notchCBox.isChecked() else None,
+        "notch_order": controller.view.orderNotchBox.value() if controller.view.notchCBox.isChecked() else None,
+        "notch_win": controller.view.winnotchBox.currentText() if controller.view.notchCBox.isChecked() else None,
 
-        "bandpass": self.view.bpCBox.isChecked() if self.view.bpCBox else None,
-        "bp_min": self.view.minfreqbpBox.value() if self.view.bpCBox.isChecked() else None,
-        "bp_max": self.view.maxfreqbpBox.value() if self.view.bpCBox.isChecked() else None,
-        "bp_order": self.view.orderbpBox.value() if self.view.bpCBox.isChecked() else None,
-        "bp_win": self.view.winbpBox.currentText() if self.view.bpCBox.isChecked() else None,
+        "bandpass": controller.view.bpCBox.isChecked() if controller.view.bpCBox else None,
+        "bp_min": controller.view.minfreqbpBox.value() if controller.view.bpCBox.isChecked() else None,
+        "bp_max": controller.view.maxfreqbpBox.value() if controller.view.bpCBox.isChecked() else None,
+        "bp_order": controller.view.orderbpBox.value() if controller.view.bpCBox.isChecked() else None,
+        "bp_win": controller.view.winbpBox.currentText() if controller.view.bpCBox.isChecked() else None,
 
-        "car": self.view.carCBox.isChecked() if self.view.carCBox else None,
+        "car": controller.view.carCBox.isChecked() if controller.view.carCBox else None,
     }
     return config

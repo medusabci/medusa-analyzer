@@ -2,12 +2,13 @@ import numpy as np
 from PySide6 import QtWidgets
 from scipy.signal import firwin, freqz
 from eeg_features.bands_table import BandTable
-
+from eeg_features.preprocessing.flow import reset_all_controls
 
 class PreprocessingController:
     def __init__(self, ui):
         self.view = ui
         self.view.controller = self
+
 
         # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)
@@ -36,6 +37,10 @@ class PreprocessingController:
         self.view.bandCBox.toggled.connect(self.on_band_filtering_toggle)
         self.view.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
 
+        # Set initial state
+        self.view.shown.connect(self.on_show_event)
+        reset_all_controls(self)
+
 
     def on_preprocessing_toggle(self, checked):
         """
@@ -43,7 +48,7 @@ class PreprocessingController:
         or not.
         """
         if not checked:
-            self.view.reset_all_controls(self)
+            reset_all_controls(self)
             return
         else: # Show all the checkboxes, but keep their parameters hidden
             elements = [
@@ -191,25 +196,31 @@ class PreprocessingController:
         self.view.band_config_changed.emit()
 
 
+    def on_show_event(self):
+        # Set default values for broadband
+        self.view.minbroadBox.setValue(0.5)
+        self.view.maxbroadBox.setValue(self.view.main_window.biosignal_info['fs']/2)
+
+        if not self.view.main_window.stackedWidget.widget(1).selected_files: # widget(1) is the file selection widget
+            reset_all_controls(self)
+
+        # Default values in a dict
+        self.defaults = {
+            "minbroadBox": self.view.minbroadBox.value(),
+            "maxbroadBox": self.view.maxbroadBox.value()
+        }
+
     def update_filter_plot(self, filter_type):
         """
         Function that plots a filter
         """
         if filter_type == 'bandpass':
-            if not self.view.bpCBox.isChecked():
-                self.view.bandpassCanvas.ax.clear()
-                self.view.bandpassCanvas.draw()
-                return
             low = self.view.minfreqbpBox.value()
-            high = self.view.maxfreqbpBox.value() - 1e-6
+            high = self.view.maxfreqbpBox.value() - 1e-6 # So that high = fs/2 is allowed
             numtaps = self.view.orderbpBox.value()
             win = self.view.winbpBox.currentText()
 
         else:  # notch
-            if not self.view.notchCBox.isChecked():
-                self.view.notchCanvas.ax.clear()
-                self.view.notchCanvas.draw()
-                return
             low = self.view.minfreqnotchBox.value()
             high = self.view.maxfreqnotchBox.value()
             numtaps = self.view.orderNotchBox.value()
@@ -222,7 +233,7 @@ class PreprocessingController:
         if not self.validate_filter_bounds(filter_type):
             return
 
-        fs = self.main_window.sampling_frequency # todo - meter en self.main_window
+        fs = self.view.main_window.biosignal_info['fs']
         b = firwin(
             numtaps,
             [low, high],

@@ -35,8 +35,6 @@ def on_next_click(view):
         # Optionally, add the widget to a stackedWidget
         view.main_window.stackedWidget.insertWidget(idx+1, widget)
 
-        # break # ESTO HAY QUE BORRARLOOOOOOOOOOOOOO
-
     # Update total steps and progress bar in the main window
     view.main_window.total_steps = len(view.main_window.experiment['pipeline'])
     view.main_window.controller.set_progressbar()

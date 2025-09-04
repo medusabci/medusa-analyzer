@@ -12,6 +12,7 @@ def on_next_click(controller):
     flow_module.on_next_click(current_widget)
 
     # Update the buttons and the stacked widget
+    controller.update_progressbar()
     controller.view.nextButton.setText("Finish" if idx == controller.view.total_steps - 1 else "Next")
     controller.view.backButton.setVisible(idx + 1 > 0)
     if idx < controller.view.total_steps - 1:

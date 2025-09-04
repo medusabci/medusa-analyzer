@@ -13,4 +13,4 @@ def get_files_config(controller):
 def on_next_click(view):
     default_biosignal = view.biosignalBox.currentText()
     default_biosignal = default_biosignal.split(" ")[1]
-    view.biosignal_info = view.controller.biosignals[default_biosignal]
+    view.main_window.biosignal_info = view.controller.biosignals[default_biosignal]
