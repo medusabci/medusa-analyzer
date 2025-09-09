@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets
 from data_loader.files.converter import conversor_to_rec
-from medusa import components
+from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
 from data_loader.files.converter import CONVERTERS
 import os

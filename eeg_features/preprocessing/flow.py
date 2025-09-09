@@ -77,3 +77,9 @@ def get_preprocessing_config(controller):
         "car": controller.view.carCBox.isChecked() if controller.view.carCBox else None,
     }
     return config
+
+def on_next_click(widget):
+    """
+    """
+    # widget.load_marks_from_file(self.main_window.selected_files[0])
+    print(" Victor tonto^2.")

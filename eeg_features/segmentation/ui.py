@@ -51,7 +51,7 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
 
         ### ELEMENT CONFIGURATION ###
 
-        # Allow multiple selection in ondition and event boxes
+        # Allow multiple selection in condition and event boxes
         self.conditionList.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.eventList.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 

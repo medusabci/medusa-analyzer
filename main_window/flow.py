@@ -15,7 +15,7 @@ def on_next_click(controller):
     controller.update_progressbar()
     controller.view.nextButton.setText("Finish" if idx == controller.view.total_steps - 1 else "Next")
     controller.view.backButton.setVisible(idx + 1 > 0)
-    if idx < controller.view.total_steps - 1:
+    if idx < controller.view.total_steps:
         controller.view.stackedWidget.setCurrentIndex(idx + 1)
     else:
         controller.view.close()
@@ -31,4 +31,8 @@ def on_back_click(controller):
         controller.view.stackedWidget.setCurrentIndex(idx - 1)
     controller.view.nextButton.setDisabled(False)
     controller.view.backButton.setVisible(idx - 1 > 0)
+    controller.view.nextButton.setText("Finish" if idx == controller.view.total_steps - 1 else "Next")
+    idx = controller.view.stackedWidget.currentIndex()
+    controller.update_progressbar()
+    print(idx)
 
