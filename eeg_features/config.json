@@ -22,6 +22,12 @@
       "path": "eeg_features/segmentation",
       "widget": "SegmentationWidget",
       "controller": "SegmentationController"
+    },
+    {
+      "step": "Parameters",
+      "path": "eeg_features/parameters",
+      "widget": "ParametersWidget",
+      "controller": "ParametersController"
     }
   ]
 }

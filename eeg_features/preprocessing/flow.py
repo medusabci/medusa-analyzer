@@ -78,8 +78,12 @@ def get_preprocessing_config(controller):
     }
     return config
 
-def on_next_click(widget):
+def on_next_click(view):
     """
     """
-    # widget.load_marks_from_file(self.main_window.selected_files[0])
-    print(" Victor tonto^2.")
+    # Get the current index
+    idx = view.main_window.stackedWidget.currentIndex()
+    # Get the next widget (that will be the segmentation widget
+    segmentation = view.main_window.stackedWidget.widget(idx + 1)
+    # Initialize stuff in the segmentation widget
+    segmentation.controller.load_marks_from_file(view.main_window.selected_files[0])

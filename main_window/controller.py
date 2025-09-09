@@ -32,27 +32,34 @@ class MainWindowController:
         self.view.progressLabel.setVisible(True)
 
         # Call update progressbar to paint the initial state
-        self.update_progressbar()
+        self.update_progressbar(1)
 
 
-    def update_progressbar(self):
+    def update_progressbar(self, idx):
         """
         Updates the progress bar according to the current index
         """
-        # Get current index and total steps of the selected experiment
-        idx = self.view.stackedWidget.currentIndex()
 
-        # Update the label content
-        self.view.progressLabel.setText(f"Step {idx + 1} of {self.view.total_steps}: "
-                                        f"{self.view.experiment['pipeline'][0]['step']}")
-        # Paint the progress bar
-        colors = self.interpolate_colors_hex((106, 13, 173), (235, 64, 122), self.view.total_steps) # Get the color palette for the progress bar
-        for n_step in range(self.view.total_steps):
-            frame = self.view.widget.findChild(QFrame, f"frame_{n_step}")
-            if n_step <= idx:
-                frame.setStyleSheet(f"background-color: {colors[n_step]};")
-            else:
-                frame.setStyleSheet("background-color: lightgray;")
+        if idx == 0:
+            # Update the label content
+            self.view.progressLabel.setVisible(False)
+            for n_step in range(self.view.total_steps):
+                frame = self.view.widget.findChild(QFrame, f"frame_{n_step}")
+                frame.setVisible(False)
+        else:
+            # Update the label content
+            self.view.progressLabel.setVisible(True)
+            self.view.progressLabel.setText(f"Step {idx} of {self.view.total_steps}: "
+                                            f"{self.view.experiment['pipeline'][0]['step']}")
+            # Paint the progress bar
+            colors = self.interpolate_colors_hex((106, 13, 173), (235, 64, 122), self.view.total_steps) # Get the color palette for the progress bar
+            for n_step in range(self.view.total_steps):
+                frame = self.view.widget.findChild(QFrame, f"frame_{n_step}")
+                frame.setVisible(True)
+                if n_step <= idx-1:
+                    frame.setStyleSheet(f"background-color: {colors[n_step]};")
+                else:
+                    frame.setStyleSheet("background-color: lightgray;")
 
 
     def interpolate_colors_hex(self, color1, color2, n):

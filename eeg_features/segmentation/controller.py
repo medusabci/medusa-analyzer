@@ -25,6 +25,7 @@ class SegmentationController:
         # Resample
         self.view.resampleCBox.toggled.connect(self.on_resample_toggle)
 
+        self.on_segmentation_toggle()
 
     def on_segmentation_toggle(self):
         """
@@ -36,12 +37,16 @@ class SegmentationController:
             self.view.averageLabel.setText('- Average all the epochs of each condition')
             self._event_element_visibility(False)
             self._condition_element_visibility(True)
+            self.view.eventList.setEnabled(False)
+            self.view.eventList.clearSelection()
+
         # Event
         if self.view.eventRButton.isChecked():
             self.view.normLabel.setText('- Over event window')
             self.view.averageLabel.setText('- Average all the epochs of each event')
             self._event_element_visibility(True)
             self._condition_element_visibility(False)
+            self.view.eventList.setEnabled(True)
 
         self._reset_segmentation_params()
         self.on_normalization_toggle(self.view.normCBox.isChecked())
@@ -55,10 +60,10 @@ class SegmentationController:
             w.setVisible(enabled)
     # Helper to reset the boxes values to default
     def _reset_segmentation_params(self):
-        self.view.trialBox.setValue(self.defaults["triallength"])
-        self.view.trialstrideBox.setValue(self.defaults["trialstride"])
-        self.view.winBox_1.setValue(self.defaults["windowbox1"])
-        self.view.winBox_2.setValue(self.defaults["windowbox2"])
+        self.view.trialBox.setValue(self.view.defaults["triallength"])
+        self.view.trialstrideBox.setValue(self.view.defaults["trialstride"])
+        self.view.winBox_1.setValue(self.view.defaults["windowbox1"])
+        self.view.winBox_2.setValue(self.view.defaults["windowbox2"])
 
 
     def on_threshold_toggle(self, checked):
@@ -69,15 +74,15 @@ class SegmentationController:
         # Update the maximum number of samples
         self.update_max_samples()
 
-        for w in [self.view.threskLabel, self.view.threskBox, self.view.threskLabelaux, self.view.thressampLabel,
-                  self.view.thressampBox, self.view.threschanLabel, self.view.threschanBox, self.view.threshelButton]:
-            w.setVisible(checked)
         self.view.thresLabel.setVisible(not checked)
+        for w in [self.view.threskLabel, self.view.threskBox, self.view.threskLabelaux, self.view.thressampLabel,
+                  self.view.thressampBox, self.view.threschanLabel, self.view.threschanBox, self.view.threshelpButton]:
+            w.setVisible(checked)
         # If deactivated, reset values to default
         if not checked:
-            self.view.threskBox.setValue(self.defaults["threshold"])
-            self.view.thressampBox.setValue(self.defaults["thressamples"])
-            self.view.threschanBox.setValue(self.defaults["threschannels"])
+            self.view.threskBox.setValue(self.view.defaults["threshold"])
+            self.view.thressampBox.setValue(self.view.defaults["thressamples"])
+            self.view.threschanBox.setValue(self.view.defaults["threschannels"])
     # Helper function to estimate the percentile based on the sigma value
     def _set_sigma_percent(self):
         percent = norm.cdf(self.view.threskBox.value()) - norm.cdf(-self.view.threskBox.value())
@@ -90,7 +95,7 @@ class SegmentationController:
         Show or hide threshold-related help text.
         """
         QtWidgets.QMessageBox.information(
-            self,
+            self.view,
             "Help - Thresholding",
             """
             <html>
@@ -126,9 +131,9 @@ class SegmentationController:
         Resets baseline spinboxes and radio buttons when normalization is disabled.
         """
         # Element visibility
+        self.view.normLabel.setVisible(not checked)
         for w in (self.view.zscoreRButton, self.view.dcRButton):
             w.setVisible(checked)
-        self.view.normLabel.setVisible(not checked)
         # Only in event mode, show baseline elements
         for w in (self.view.baselineLabel_1, self.view.baselineLabel_2,
                   self.view.baselineCBox_1, self.view.baselineCBox_2):
@@ -152,21 +157,21 @@ class SegmentationController:
         for w in (self.view.baselineLabel_1, self.view.baselineLabel_2,
                   self.view.baselineCBox_1, self.view.baselineCBox_2):
             w.setVisible(False)
-        self.view.baselineCBox_1.setValue(self.defaults["baselinewin1"])
-        self.view.baselineCBox_2.setValue(self.defaults["baselinewin2"])
+        self.view.baselineCBox_1.setValue(self.view.defaults["baselinewin1"])
+        self.view.baselineCBox_2.setValue(self.view.defaults["baselinewin2"])
 
 
     def on_resample_toggle(self, checked):
         """
         Show or hide resampling controls based on the checkbox state. Resets resample frequency spinbox when disabled.
         """
+        self.view.resampleLabel.setVisible(not checked)
         for w in [self.view.newfsLabel, self.view.resamplefsBox]:
             w.setVisible(checked)
-        self.view.resampleLabel.setVisible(not checked)
 
         # Reset default values
         if not checked:
-            self.view.resamplefsBox.setValue(self.defaults["resamplefs"])
+            self.view.resamplefsBox.setValue(self.view.defaults["resamplefs"])
 
 
     def update_next_button_state(self):
@@ -210,7 +215,7 @@ class SegmentationController:
         except Exception as e:
             import traceback
             traceback.print_exc()
-            QtWidgets.QMessageBox.critical(self, "Error", f"An error occurred while loading conditions and events from the data:\n{e}")
+            QtWidgets.QMessageBox.critical(self.view, "Error", f"An error occurred while loading conditions and events from the data:\n{e}")
 
 
     def update_labels(self):

@@ -63,6 +63,11 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
 
         # Disable event box by default
         self.eventList.setEnabled(False)
+        self.eventList.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.conditionList.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        # Conditions by default
+        self.conditionRButton.setChecked(True)
 
         # Hide elements
         for element in [
