@@ -153,12 +153,6 @@ class SegmentationController:
         # Reset default values
         if not checked:
             self._reset_baseline_elements()
-            # Disable both radiobuttons
-            for rb in (self.view.zscoreRButton, self.view.dcRButton):
-                rb.setAutoExclusive(False)
-                rb.setChecked(False)
-                rb.setAutoExclusive(True)
-                rb.setVisible(False)
     # Helper function to reset baseline elements values
     def _reset_baseline_elements(self):
         for w in (self.view.baselineLabel_1, self.view.baselineLabel_2,
@@ -245,3 +239,60 @@ class SegmentationController:
         # Show in the labels
         self.view.conditionLabel.setText(f"Conditions: {cond_text}")
         self.view.eventLabel.setText(f"Events: {evt_text}")
+
+
+    def reset_segmentation_state(self):
+        """
+        Reset the segmentation UI and state to default:
+            - Check the condition radio button
+            - Clear condition and event lists.
+            - Reset labels and parameters.
+            - Hide parameter widgets.
+            - Reset thresholding and resampling controls.
+            - Disable 'Next' button.
+        """
+
+        # Check the condition radio button and DC normalization by default
+        self.view.conditionRButton.setChecked(True)
+        self.view.dcRButton.setChecked(True)
+
+        # Clear condition and event lists
+        empty_model = QStringListModel()
+        self.view.conditionList.setModel(empty_model)
+        self.view.eventList.setModel(empty_model)
+        # Reset labels and UI elements
+        self.view.conditionLabel.setText("Conditions: None")
+        self.view.eventLabel.setText("Events: None")
+        self._event_element_visibility(False)
+        self._reset_segmentation_params()
+
+        # Disable checkboxes
+        for checkbox in [self.view.normCBox, self.view.thresCBox, self.view.resampleCBox, self.view.averageCBox]:
+            checkbox.setChecked(False)
+
+        # Hide normalization, thresholding and resampling elements
+        elements = [
+            self.view.zscoreRButton, self.view.dcRButton,
+            self.view.threskBox, self.view.threschanBox, self.view.thressampBox,
+            self.view.threskLabel, self.view.threskLabelaux, self.view.threschanLabel, self.view.thressampLabel,
+            self.view.threshelpButton,
+            self.view.resamplefsBox, self.view.newfsLabel
+        ]
+        for w in elements:
+            w.setVisible(False)
+
+        # Show descriptive labels
+        elements = [
+            self.view.thresLabel, self.view.normLabel, self.view.resampleLabel
+        ]
+        for w in elements:
+            w.setVisible(True)
+
+        # Reset spinboxes values to default
+        self.view.threskBox.setValue(self.defaults["threshold"])
+        self.view.threschanBox.setValue(self.defaults["threschannels"])
+        self.view.thressampBox.setValue(self.defaults["thressamples"])
+        self.view.resamplefsBox.setValue(self.defaults["resamplefs"])
+
+        # Update the next button state
+        self.update_next_button_state()

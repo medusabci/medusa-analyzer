@@ -88,3 +88,5 @@ def on_next_click(view):
     segmentation = view.main_window.stackedWidget.widget(idx + 1)
     # Initialize the segmentation widget
     segmentation.controller.load_marks_from_file(view.main_window.selected_files[0])
+
+    return True

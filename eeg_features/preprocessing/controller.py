@@ -8,6 +8,7 @@ class PreprocessingController:
     def __init__(self, ui):
         self.view = ui
         self.view.controller = self
+        self.first_show = False
 
 
         # Data preprocessing
@@ -202,29 +203,31 @@ class PreprocessingController:
 
 
     def on_show_event(self):
-        fs = self.view.main_window.biosignal_info['fs']
-        nyquist = fs / 2
-        # Limit max values of the spinboxes to fs/2
-        spinboxes = [
-            self.view.minbroadBox, self.view.maxbroadBox,
-            self.view.minfreqnotchBox, self.view.maxfreqnotchBox,
-            self.view.minfreqbpBox, self.view.maxfreqbpBox,
-        ]
-        for sb in spinboxes:
-            sb.setMaximum(nyquist)
+        if not self.first_show:
+            self.first_show = True
+            fs = self.view.main_window.biosignal_info['fs']
+            nyquist = fs / 2
+            # Limit max values of the spinboxes to fs/2
+            spinboxes = [
+                self.view.minbroadBox, self.view.maxbroadBox,
+                self.view.minfreqnotchBox, self.view.maxfreqnotchBox,
+                self.view.minfreqbpBox, self.view.maxfreqbpBox,
+            ]
+            for sb in spinboxes:
+                sb.setMaximum(nyquist)
 
-        # Set default values for broadband
-        self.view.minbroadBox.setValue(0.5)
-        self.view.maxbroadBox.setValue(nyquist)
+            # Set default values for broadband
+            self.view.minbroadBox.setValue(0.5)
+            self.view.maxbroadBox.setValue(nyquist)
 
-        if not self.view.main_window.stackedWidget.widget(1).selected_files: # widget(1) is the file selection widget
-            reset_all_controls(self)
+            if not self.view.main_window.stackedWidget.widget(1).selected_files: # widget(1) is the file selection widget
+                reset_all_controls(self)
 
-        # Default values in a dict
-        self.defaults = {
-            "minbroadBox": self.view.minbroadBox.value(),
-            "maxbroadBox": self.view.maxbroadBox.value()
-        }
+            # Default values in a dict
+            self.defaults = {
+                "minbroadBox": self.view.minbroadBox.value(),
+                "maxbroadBox": self.view.maxbroadBox.value()
+            }
 
 
     def update_filter_plot(self, filter_type):

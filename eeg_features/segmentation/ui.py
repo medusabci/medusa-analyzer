@@ -61,13 +61,14 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
         self.zscoreRButton.setAutoExclusive(True)
         self.dcRButton.setAutoExclusive(True)
 
+        # Conditions by default
+        self.conditionRButton.setChecked(True)
         # Disable event box by default
         self.eventList.setEnabled(False)
         self.eventList.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.conditionList.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-
-        # Conditions by default
-        self.conditionRButton.setChecked(True)
+        # DC normalization by default
+        self.dcRButton.setChecked(True)
 
         # Hide elements
         for element in [

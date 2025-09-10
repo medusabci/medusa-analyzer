@@ -281,7 +281,7 @@ class BandTable(QtWidgets.QDialog, ui_bands_table):
 
         # Remove
         remove_button = QtWidgets.QPushButton()
-        icon = QtGui.QIcon("../media/delete_icon.png")
+        icon = QtGui.QIcon("media/delete_icon.png")
         remove_button.setIcon(icon)
         remove_button.setFixedSize(20, 20)
         remove_button.setStyleSheet("margin-left:auto; margin-right:auto;")
