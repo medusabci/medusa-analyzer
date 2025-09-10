@@ -11,6 +11,10 @@ def get_files_config(controller):
 
 
 def on_next_click(view):
-    default_biosignal = view.biosignalBox.currentText()
-    default_biosignal = default_biosignal.split(" ")[1]
-    view.main_window.biosignal_info = view.controller.biosignals[default_biosignal]
+    """
+    Handles the event when the "Next" button is clicked. It loads the selected biosignal information
+    """
+    # Get the selected biosignal
+    biosignal_txt = view.biosignalBox.currentText()
+    biosignal = biosignal_txt.split(" ")[1]
+    view.main_window.biosignal_info = view.controller.biosignals[biosignal]

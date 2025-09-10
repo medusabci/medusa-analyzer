@@ -56,6 +56,7 @@ def reset_segmentation_state(controller):
     # Update the next button state
     controller.update_next_button_state()
 
+
 def get_segmentation_config(controller):
     """
     Function that creates a dictionary with segmentation configurations.

@@ -28,6 +28,12 @@
       "path": "eeg_features/parameters",
       "widget": "ParametersWidget",
       "controller": "ParametersController"
+    },
+    {
+      "step": "Save",
+      "path": "eeg_features/save",
+      "widget": "SaveWidget",
+      "controller": "SaveController"
     }
   ]
 }

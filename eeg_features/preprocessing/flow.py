@@ -43,7 +43,7 @@ def reset_all_controls(controller):
 
 def get_preprocessing_config(controller):
     """
-        Function that creates a dictionary with preprocessing configurations.
+    Function that creates a dictionary with preprocessing configurations.
     """
     config = {
         "fs": controller.main_window.sampling_frequency,
@@ -80,10 +80,11 @@ def get_preprocessing_config(controller):
 
 def on_next_click(view):
     """
+    Handles the event when the "Next" button is clicked. It initializes the segmentation widget with the information of
+    the events and conditions of the selected file
     """
-    # Get the current index
+    # Get the next widget (that will be the segmentation widget)
     idx = view.main_window.stackedWidget.currentIndex()
-    # Get the next widget (that will be the segmentation widget
     segmentation = view.main_window.stackedWidget.widget(idx + 1)
-    # Initialize stuff in the segmentation widget
+    # Initialize the segmentation widget
     segmentation.controller.load_marks_from_file(view.main_window.selected_files[0])

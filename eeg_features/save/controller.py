@@ -1,65 +1,21 @@
 import os
 import json
-from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtUiTools import loadUiType
+from PySide6 import QtWidgets
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication
 from eeg_features.core_process import run_pipeline
 
-# Load UI class
-ui_save_widget = loadUiType("Save/save_widget.ui")[0]
 
-class SaveWidget(QtWidgets.QWidget, ui_save_widget):
-    """
-        Main windget element. Manages the saving options. It also manages the functions to preprocess, segment and
-        compute paramters with the previously selected options.
-    """
-    def __init__(self, main_window):
-        super().__init__()
-        self.main_window = main_window
-
-        # Setup UI
-        self.setupUi(self)
-
-        # Define the header (description) of the widget
-        layout = QtWidgets.QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        self.topContentWidget.setLayout(layout)
-        self.save_label = QtWidgets.QLabel()
-        self.save_label.setTextFormat(QtCore.Qt.RichText)
-        self.save_label.setWordWrap(True)
-        # self.save_label.setStyleSheet("""
-        #     QLabel {
-        #         background-color: transparent;
-        #         background: transparent;
-        #         border: none;
-        #     }
-        # """)
-        self.save_label.setText("""
-            <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
-                <p>
-                    Please select an <b>empty folder</b> where processed data will be saved. This step allows you to export 
-                    results from each stage of the workflow.
-            </div>
-        """)
-        # Remove background
-        palette = QtGui.QPalette()
-        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
-        self.topContentWidget.setPalette(palette)
-        layout.addWidget(self.save_label)
+class SaveController:
+    def __init__(self, ui):
+        self.view = ui
+        self.view.controller = self
+        self.selected_files = []
 
         self.settings = {}
 
-        # --- ELEMENT SETUP ---
-        self.selectfolderButton.clicked.connect(self.select_folder)
-        self.runButton.clicked.connect(self.run_tasks)
-        # States
-        self.progressLabel.hide()
-        self.progressBar.hide()
-        self.selected_folder = None
-        for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
-            w.setChecked(True)
+        self.view.selectfolderButton.clicked.connect(self.select_folder)
+        self.view.runButton.clicked.connect(self.run_tasks)
 
     def handle_exception(func):
         """
@@ -94,7 +50,7 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
                 json.dump(self.settings_dic, f, indent=4)
         except Exception as e:
             self.log_message(f"ERROR SAVING JSON: {e}")
-            QtWidgets.QMessageBox.critical(self, "Error", f"Could not save the JSON file: {str(e)}")
+            QtWidgets.QMessageBox.critical(self.view, "Error", f"Could not save the JSON file: {str(e)}")
 
     def select_folder(self, *args, **kwargs):
         """
@@ -102,14 +58,14 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         """
 
         while True:
-            folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Folder")
+            folder = QtWidgets.QFileDialog.getExistingDirectory(self.view, "Select Folder")
             if not folder:
                 return  # User cancelled
             if os.listdir(folder):
-                QtWidgets.QMessageBox.warning(self, "Error", "The selected folder is not empty. Please select an empty folder.")
+                QtWidgets.QMessageBox.warning(self.view, "Error", "The selected folder is not empty. Please select an empty folder.")
             else:
                 self.selected_folder = folder
-                self.selectfolderLabel.setText(folder)
+                self.view.selectfolderLabel.setText(folder)
                 break
 
     @handle_exception
@@ -118,31 +74,31 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
             Main function that runs all the tasks: preprocessing, segmentation and paramters computation.
         """
         if not self.selected_folder:
-            QtWidgets.QMessageBox.warning(self, "Error", "Please, select one folder to save the data.")
+            QtWidgets.QMessageBox.warning(self.view, "Error", "Please, select one folder to save the data.")
             return
 
         # Visibility of progress bars
-        self.progressLabel.show()
-        self.progressBar.show()
-        self.progressBar.setValue(0)
-        self.error_occurred = False
+        self.view.progressLabel.show()
+        self.view.progressBar.show()
+        self.view.progressBar.setValue(0)
+        self.view.error_occurred = False
 
         # Get the total number of tasks to perform
         total_tasks = sum([
-            self.settingsCBox.isChecked(),
-            self.prepsignalsCBox.isChecked(),
-            self.segsignalsCBox.isChecked(),
-            self.paramsignalsCBox.isChecked()
+            self.view.settingsCBox.isChecked(),
+            self.view.prepsignalsCBox.isChecked(),
+            self.view.segsignalsCBox.isChecked(),
+            self.view.paramsignalsCBox.isChecked()
         ])
         total_tasks = max(total_tasks, 1)  # To avoid division by 0
 
         # Get configuration data
         try:
-            preprocessing = self.main_window.preproc_widget.get_preprocessing_config()
-            segmentation = self.main_window.segmentation_widget.get_segmentation_config()
-            parameters = self.main_window.parameters_widget.get_parameters_config()
+            preprocessing = self.view.main_window.preproc_widget.get_preprocessing_config()
+            segmentation = self.view.main_window.segmentation_widget.get_segmentation_config()
+            parameters = self.view.main_window.parameters_widget.get_parameters_config()
         except AttributeError as e:
-            QtWidgets.QMessageBox.critical(self, "Error",
+            QtWidgets.QMessageBox.critical(self.view, "Error",
                                            f"Unable to obtain the data from the main window: {e}")
             return
         self.settings_dic = {
@@ -150,13 +106,13 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
             "segmentation": segmentation,
             "parameters": parameters
         }
-        # Save the settings
-        if self.settingsCBox.isChecked():
+        # save the settings
+        if self.view.settingsCBox.isChecked():
             self.prepare_data(preprocessing, segmentation, parameters)
 
         # Run the pipeline
         success = run_pipeline(self, self.settings_dic, total_tasks)
-        self.main_window.validate_save_step(success)
+        self.view.main_window.validate_save_step(success)
 
     def log_message(self, msg, style=None):
         """
@@ -181,6 +137,6 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         style_str = ';'.join(f'{k}: {v}' for k, v in style.items())
 
         formatted = f'<p style="margin:0;margin-top:2;{style_str}"> >> {msg} </p>'
-        self.logtextBrowser.append(formatted)
-        self.logtextBrowser.moveCursor(QTextCursor.End)
+        self.view.logtextBrowser.append(formatted)
+        self.view.logtextBrowser.moveCursor(QTextCursor.End)
         QApplication.processEvents()

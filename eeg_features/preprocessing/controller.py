@@ -226,6 +226,7 @@ class PreprocessingController:
             "maxbroadBox": self.view.maxbroadBox.value()
         }
 
+
     def update_filter_plot(self, filter_type):
         """
         Function that plots a filter

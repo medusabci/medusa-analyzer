@@ -1,6 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-import os
 
 # Load UI class
 ui_files = loadUiType('data_loader/files/ui.ui')[0]

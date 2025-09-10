@@ -25,6 +25,7 @@ class SegmentationController:
         # Resample
         self.view.resampleCBox.toggled.connect(self.on_resample_toggle)
 
+        # Initialize the UI based on default segementation mode
         self.on_segmentation_toggle()
 
     def on_segmentation_toggle(self):
@@ -38,6 +39,7 @@ class SegmentationController:
             self._event_element_visibility(False)
             self._condition_element_visibility(True)
             self.view.eventList.setEnabled(False)
+            # Clear any selected events
             self.view.eventList.clearSelection()
 
         # Event
@@ -48,8 +50,11 @@ class SegmentationController:
             self._condition_element_visibility(False)
             self.view.eventList.setEnabled(True)
 
+        # Reset the default values of the segmentation
         self._reset_segmentation_params()
+        # Required to show the baseline elements if the event mode is selected and normalization is checked
         self.on_normalization_toggle(self.view.normCBox.isChecked())
+        # Update the next button state
         self.update_next_button_state()
     # Helpers to show/hide event/condition elements
     def _event_element_visibility(self, enabled: bool):
@@ -74,6 +79,7 @@ class SegmentationController:
         # Update the maximum number of samples
         self.update_max_samples()
 
+        # Show/hide elements
         self.view.thresLabel.setVisible(not checked)
         for w in [self.view.threskLabel, self.view.threskBox, self.view.threskLabelaux, self.view.thressampLabel,
                   self.view.thressampBox, self.view.threschanLabel, self.view.threschanBox, self.view.threshelpButton]:
@@ -116,6 +122,7 @@ class SegmentationController:
         """
         Update the maximum allowable samples for thresholding based on segmentation mode and parameters.
         """
+        # Update the maximum number of samples based on the segmentation mode
         if self.view.conditionRButton.isChecked():
             max_samples = (self.view.trialBox.value()/1000) * self.view.main_window.sampling_frequency
         else:
@@ -130,7 +137,7 @@ class SegmentationController:
         Show or hide normalization controls based on the checkbox state and segmentation mode.
         Resets baseline spinboxes and radio buttons when normalization is disabled.
         """
-        # Element visibility
+        # Show/hide elements
         self.view.normLabel.setVisible(not checked)
         for w in (self.view.zscoreRButton, self.view.dcRButton):
             w.setVisible(checked)
@@ -165,6 +172,7 @@ class SegmentationController:
         """
         Show or hide resampling controls based on the checkbox state. Resets resample frequency spinbox when disabled.
         """
+        # Show/hide elements
         self.view.resampleLabel.setVisible(not checked)
         for w in [self.view.newfsLabel, self.view.resamplefsBox]:
             w.setVisible(checked)
@@ -226,7 +234,7 @@ class SegmentationController:
             - Displays a summary of selected items in the UI labels.
             - Enables the "Next" button.
         """
-
+        # Get selected conditions and events
         selected_conditions = {index.data() for index in self.view.conditionList.selectionModel().selectedIndexes()}
         selected_events = {index.data() for index in self.view.eventList.selectionModel().selectedIndexes()}
 
@@ -234,5 +242,6 @@ class SegmentationController:
         cond_text = ", ".join(f"{cnd}" for cnd in selected_conditions) or "None"
         evt_text = ", ".join(f"{evt}" for evt in selected_events) or "None"
 
+        # Show in the labels
         self.view.conditionLabel.setText(f"Conditions: {cond_text}")
         self.view.eventLabel.setText(f"Events: {evt_text}")

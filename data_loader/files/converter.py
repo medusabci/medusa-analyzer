@@ -38,7 +38,7 @@ def _convert_rcp_file(file):
     recording.add_biosignal(biosignal=data.eeg)
     recording.add_experiment_data(marks, key='marks')
 
-    # Save and return new file path
+    # save and return new file path
     new_file = file.replace(".rcp.bson", ".rec.bson")
     recording.save(new_file)
     return new_file
@@ -98,7 +98,7 @@ def _convert_mat_file(file):
     recording.add_biosignal(biosignal=eeg)
     recording.add_experiment_data(marks, key='marks')
 
-    # Save and return new file path
+    # save and return new file path
     new_file = file.replace(".mat", ".rec.bson")
     recording.save(new_file)
     return new_file

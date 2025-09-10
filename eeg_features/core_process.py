@@ -103,7 +103,7 @@ def run_pipeline(self, settings_dic, total_tasks):
 
         def save_and_compute(epoched, cond_name):
             """
-                Save the segmented signals, compute the parameters, and store them
+                save the segmented signals, compute the parameters, and store them
             """
             if epoched is None:
                 return
@@ -172,7 +172,7 @@ def run_pipeline(self, settings_dic, total_tasks):
 
         def save_and_compute(epoched, cond, evt):
             """
-                Save the segmented signals, compute the parameters, and store them
+                save the segmented signals, compute the parameters, and store them
             """
             if epoched is None:
                 return
