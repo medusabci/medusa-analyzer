@@ -4,7 +4,7 @@ from eeg_features.bands_table import BandTable
 import ast
 
 # Load UI class
-ui_parameters_widget = loadUiType('Parameters/parameters_widget.ui')[0]
+ui_parameters_widget = loadUiType('Parameters/ui.ui')[0]
 
 class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
     """
@@ -66,8 +66,6 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
                        self.seselectedbandsLabel, self.rpselectedbandsauxLabel, self.mfLabel, self.seLabel,
                        self.rpLabel, self.apLabel, self.rpButton]:
             widget.setVisible(False)
-        self.rpCBox.toggled.connect(self.toggle_relative_power)
-        self.rpButton.clicked.connect(lambda: self.open_band_table("rp"))
 
         # STATISTICS AND NONLINEAR - Element setup
         for widget in [self.ctmrLabel, self.ctmrBox, self.sampenmLabel, self.sampenmBox, self.sampenrLabel, self.sampenrBox,

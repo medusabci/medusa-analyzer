@@ -1,5 +1,5 @@
 from PySide6.QtCore import QStringListModel
-
+from PySide6 import QtWidgets
 
 def reset_segmentation_state(controller):
     """
@@ -99,3 +99,17 @@ def get_segmentation_config(controller):
     }
 
     return config
+
+def on_next_click(view):
+    """
+    """
+    if not view.conditionRButton.isChecked() and not view.eventRButton.isChecked():
+        QtWidgets.QMessageBox.warning(view, "Segmentation Selection Required", "Please select at least one segmentation type before proceeding.")
+        view.main_window.nextButton.setEnabled(False)
+        return False
+
+    if view.conditionRButton.isChecked() and not view.conditionList.selectionModel().selectedIndexes():
+        QtWidgets.QMessageBox.warning(view,"Condition Selection Required", "Please select at least one condition before proceeding.")
+        view.main_window.nextButton.setEnabled(False)
+
+        return False
