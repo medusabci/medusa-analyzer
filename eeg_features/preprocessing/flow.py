@@ -1,3 +1,4 @@
+from PySide6 import QtWidgets
 
 def reset_all_controls(controller):
     """
@@ -83,6 +84,11 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked. It initializes the segmentation widget with the information of
     the events and conditions of the selected file
     """
+    # If band segmentation is selected, ensure at least one band is chosen
+    if view.bandCBox.isChecked() and view.bandLabel.text() == 'None':
+        QtWidgets.QMessageBox.critical(view, "Error", "Please, select at least one frequency band for segmentation, or uncheck \"Band filtering\" selection.")
+        return False
+
     # Get the next widget (that will be the segmentation widget)
     idx = view.main_window.stackedWidget.currentIndex()
     segmentation = view.main_window.stackedWidget.widget(idx + 1)
@@ -90,3 +96,4 @@ def on_next_click(view):
     segmentation.controller.load_marks_from_file(view.main_window.selected_files[0])
 
     return True
+

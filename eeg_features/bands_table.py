@@ -63,9 +63,9 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             {"name": "gamma", "min": 30, "max": 70},
         ]
 
-        self.addButton.clicked.connect(self.add_band)
+        self.addButton.clicked.connect(lambda: self.add_band()) # Add a new band with default values
         self.resetButton.clicked.connect(self.on_reset_click)
-        self.acceptButton.clicked.connect(self.accept_and_close)
+        self.acceptButton.clicked.connect(self._accept_and_close)
 
         # Set initial state
         self.setup_table()
@@ -133,15 +133,10 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
                 self.bandsTable.setItem(dest_row, col, QtWidgets.QTableWidgetItem(content))
 
 
-    def setup_table(self, min_broad=None, max_broad=None):
+    def setup_table(self):
         """
         Set (or reset) the table to its initial state
         """
-        # Store the min and max broadband values if provided
-        if min_broad is not None:
-            self.min_broad = min_broad
-        if max_broad is not None:
-            self.max_broad = max_broad
 
         # Set the number of columns and their names
         self.bandsTable.setColumnCount(4)
@@ -168,26 +163,8 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         for band in self.default_bands:
             self.add_band(band["name"], band["min"], band["max"])
 
-        # # Get the previous band values (if they are passed from another iteration of the bands table widget)
-        # previous_dict = {band["name"]: band for band in self.previous_bands} if self.previous_bands else {}
-        # # For each default band...
-        # for band in self.default_bands:
-        #     name = band["name"]
-        #     if name in previous_dict: # If it was in the previous bands, use those values
-        #         prev_band = previous_dict[name]
-        #         self.add_band(name, prev_band["min"], prev_band["max"])
-        #         del previous_dict[name] # Remove it from the dict to avoid adding it again later
-        #     else: # Else, use the default values
-        #         self.add_band(name, band["min"], band["max"])
-        #
-        # # Personalized bands (different from default, that have been already added and removed from previous_dict)
-        # for name, band in previous_dict.items():
-        #     if name == 'broadband':
-        #         continue
-        #     self.add_band(name, band["min"], band["max"])
 
-
-    def add_band(self, name="custom", min_freq=None, max_freq=None):
+    def add_band(self, name="custom_band", min_freq=None, max_freq=None):
         """
         Add a new band row to the table with default or provided values.
         """
@@ -216,7 +193,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         remove_button.setIcon(icon)
         remove_button.setFixedSize(20, 20)
         remove_button.setStyleSheet("margin-left:auto; margin-right:auto;")
-        remove_button.clicked.connect(lambda _, r=row: self.bandsTable.removeRow(r))
+        remove_button.clicked.connect(self._delete_row)
         self.bandsTable.setCellWidget(row, 3, self._center_widget(remove_button))
     # Helper function to center widgets in table cells
     def _center_widget(self, widget):
@@ -226,20 +203,37 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         layout.setAlignment(Qt.AlignCenter)
         layout.addWidget(widget)
         return container
+    # Helper function to delete a row when the trash button is clicked
+    def _delete_row(self):
+        # Get the button that was clicked
+        button = self.sender()
+        # Find the row of that button and remove it
+        for row in range(self.bandsTable.rowCount()):
+            if self.bandsTable.cellWidget(row, 3).findChild(QtWidgets.QPushButton) == button:
+                self.bandsTable.removeRow(row)
+                break
 
 
     def on_reset_click(self):
         """
         Reset the table to its default state.
         """
-        try: # Try to disconnect the cell change signal
-            self.bandsTable.cellChanged.disconnect(self.on_cell_change)
-        except TypeError:
-            pass
-        # Set table to default state
-        self.setup_table(min_broad=self.default_min, max_broad=self.default_max, preserve_broadband=False)
-        # Connect again the cell change signal
-        self.bandsTable.cellChanged.connect(self.on_cell_change)
+        # Create the confirmation dialog
+        confirmation_dialog = QtWidgets.QMessageBox(self)
+        confirmation_dialog.setWindowTitle("Confirm Reset")
+        confirmation_dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        confirmation_dialog.setText("Are you sure you want to reset the bands?")
+        confirmation_dialog.setInformativeText("This action cannot be undone.")
+
+        # Add 'Yes' and 'No' buttons
+        confirmation_dialog.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        confirmation_dialog.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
+
+        response = confirmation_dialog.exec()
+
+        if response == QtWidgets.QMessageBox.StandardButton.Yes:
+            # Set table to default state
+            self.setup_table()
 
 
     # Helper function that returns the broadband values
@@ -254,8 +248,19 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.minbroadbandLabel.setText(f"{min_broad:.1f}")
         self.maxbroadbandLabel.setText(f"{max_broad:.1f}")
 
-
-
+    def closeEvent(self, event):
+        """
+        Handle the close event to discard all the non-accepted changes.
+        """
+        if event.spontaneous():
+            if self.accepted_bands:
+                self.bandsTable.clearContents()
+                self.bandsTable.setRowCount(0)
+                for band in self.accepted_bands:
+                    self.add_band(band["name"], band["min"], band["max"])
+            else:
+                self.setup_table()
+            event.accept()
 
 
 
