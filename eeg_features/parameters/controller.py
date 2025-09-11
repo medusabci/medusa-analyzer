@@ -9,24 +9,25 @@ class ParametersController:
         self.view.controller = self
 
         # Relative power
-        self.view.rpCBox.toggled.connect(self.toggle_relative_power)
-        self.view.rpButton.clicked.connect(lambda: self.open_band_table("rp"))
+        self.view.rpCBox.toggled.connect(self.on_rpCBox_toggled)
+        self.view.rpButton.clicked.connect(lambda: self.on_bandTableButton_clicked("rp"))
 
         # STATISTICS AND NONLINEAR - Element setup
-        self.view.msampenCBox.toggled.connect(self.toggle_msampen)
-        self.view.sampenCBox.toggled.connect(self.toggle_sampen)
-        self.view.ctmCBox.toggled.connect(self.toggle_ctm)
-        self.view.psdCBox.toggled.connect(self.toggle_psd)
-        self.view.mlzcCBox.toggled.connect(self.toggle_mlzc)
+        self.view.msampenCBox.toggled.connect(self.on_msampenCBox_toggled)
+        self.view.sampenCBox.toggled.connect(self.on_sampenCBox_toggled)
+        self.view.ctmCBox.toggled.connect(self.on_ctmCBox_toggled)
+        self.view.psdCBox.toggled.connect(self.on_psdCBox_toggled)
+        self.view.mlzcCBox.toggled.connect(self.on_mlzcCBox_toggled)
 
         # CONNECTIVITY - Element setup
-        self.view.aecCBox.toggled.connect(self.toggle_aec)
-        self.view.iacCBox.toggled.connect(self.toggle_iac)
+        self.view.aecCBox.toggled.connect(self.on_aecCBox_toggled)
+        self.view.iacCBox.toggled.connect(self.on_iacCBox_toggled)
 
-    # RP AP MF SE
-    def toggle_psd(self):
+    # PSD RP AP MF SE
+    def on_psdCBox_toggled(self):
         """
-            Manages the visibility of the PSD config parameters
+        Triggered when the PSD checkbox is toggled.
+        Manages the visibility of the PSD config parameters.
         """
         visible = self.view.psdCBox.isChecked()
         for widget in [self.view.segmentpsdLabel, self.view.segmentpsdBox, self.view.overlappsdLabel, self.view.overlappsdBox,
@@ -36,9 +37,10 @@ class ParametersController:
         self.view.overlappsdBox.setValue(self.view.defaults["psdoverlap"])
         self.view.psdcomboBox.setCurrentIndex(6)
 
-    def toggle_relative_power(self):
+    def on_rpCBox_toggled(self):
         """
-            Manages the visibility of the RP config parameters
+        Triggered when the relative power checkbox is toggled.
+        Manages the visibility of the RP config parameters.
         """
         visible = self.view.rpCBox.isChecked()
 
@@ -70,21 +72,24 @@ class ParametersController:
             self.view.selected_bands_by_type["rp"] = [broadband]
             self.view.rpLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
-    def reset_relative_power(self):
+    def on_rpCBox_reset(self): # TODO: conectar con la tabla?
+        """Resets Relative Power config by unchecking the box."""
         self.view.rpCBox.setChecked(False)
 
-    def toggle_ctm(self):
+    def on_ctmCBox_toggled(self):
         """
-            Manages the visibility of the CTM config parameters
+        Triggered when the CTM checkbox is toggled.
+        Manages the visibility of the CTM config parameters.
         """
         visible = self.view.ctmCBox.isChecked()
         for widget in [self.view.ctmrLabel, self.view.ctmrBox]:
             widget.setVisible(visible)
         self.view.ctmrBox.setValue(self.view.defaults["ctmradius"])
 
-    def toggle_sampen(self):
+    def on_sampenCBox_toggled(self):
         """
-            Manages the visibility of the SampEn config parameters
+        Triggered when the SampEn checkbox is toggled.
+        Manages the visibility of the SampEn config parameters.
         """
         visible = self.view.sampenCBox.isChecked()
         for widget in [self.view.sampenmLabel, self.view.sampenmBox, self.view.sampenrLabel, self.view.sampenrBox]:
@@ -92,9 +97,10 @@ class ParametersController:
         self.view.sampenmBox.setValue(self.view.defaults["sampm"])
         self.view.sampenrBox.setValue(self.view.defaults["sampradius"])
 
-    def toggle_msampen(self):
+    def on_msampenCBox_toggled(self):
         """
-            Manages the visibility of the Multiscale SampEn config parameters
+        Triggered when the Multiscale SampEn checkbox is toggled.
+        Manages the visibility of the Multiscale SampEn config parameters.
         """
         visible = self.view.msampenCBox.isChecked()
         for widget in [self.view.maxscaleLabel, self.view.msampenscaleBox, self.view.msampenmLabel, self.view.msampenmBox,
@@ -104,18 +110,20 @@ class ParametersController:
         self.view.msampenmBox.setValue(self.view.defaults["multisampm"])
         self.view.msampenrBox.setValue(self.view.defaults["multisampradius"])
 
-    def toggle_mlzc(self):
+    def on_mlzcCBox_toggled(self):
         """
-            Manages the visibility of the Multiscale LZC config parameters
+        Triggered when the Multiscale LZC checkbox is toggled.
+        Manages the visibility of the Multiscale LZC config parameters.
         """
         visible = self.view.mlzcCBox.isChecked()
         for widget in [self.view.mlzcscalesLabel, self.view.mlzcEdit]:
             widget.setVisible(visible)
         self.view.mlzcEdit.setText('[1, 3, 5]')
 
-    def toggle_iac(self):
+    def on_iacCBox_toggled(self):
         """
-            Manages the visibility of the IAC config parameters
+        Triggered when the IAC checkbox is toggled.
+        Manages the visibility of the IAC config parameters.
         """
         visible = self.view.iacCBox.isChecked()
         if visible:
@@ -125,9 +133,10 @@ class ParametersController:
         for widget in [self.view.iacortLabel, self.view.iacortButton]:
             widget.setVisible(visible)
 
-    def toggle_aec(self):
+    def on_aecCBox_toggled(self):
         """
-            Manages the visibility of the AEC config parameters
+        Triggered when the AEC checkbox is toggled.
+        Manages the visibility of the AEC config parameters.
         """
         visible = self.view.aecCBox.isChecked()
         if visible:
@@ -137,9 +146,10 @@ class ParametersController:
         for widget in [self.view.aecortLabel, self.view.aecortButton]:
             widget.setVisible(visible)
 
-    def open_band_table(self, band_type):
+    def on_bandTableButton_clicked(self, band_type):
         """
-        Opens the band table dialog for a specific band type (e.g., 'rp', 'ap', etc.)
+        Triggered when the 'Edit bands' button is clicked.
+        Opens the band table dialog for relative power band selection.
         """
         if not hasattr(self, "band_table_editors"):
             self.band_table_editors = {}
@@ -160,6 +170,9 @@ class ParametersController:
             editor.show()
 
     def update_band_label(self, band_type, bands):
+        """
+        Updates the band label when the selection of bands changes.
+        """
         broadband = {
             "name": "broadband",
             "min": self.view.main_window.preproc_config["broadband_min"],
@@ -179,6 +192,9 @@ class ParametersController:
             label.setText(txt)
 
     def get_parameters_config(self):
+        """
+       Collects the current configuration of parameters from the UI.
+       """
         # Configuration dict
         config = {
             "mean": True if self.view.meanCBox.isChecked() else None,

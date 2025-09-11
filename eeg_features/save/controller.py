@@ -14,12 +14,13 @@ class SaveController:
 
         self.settings = {}
 
-        self.view.selectfolderButton.clicked.connect(self.select_folder)
-        self.view.runButton.clicked.connect(self.run_tasks)
+        self.view.selectfolderButton.clicked.connect(self.on_selectFolderButton_clicked)
+        self.view.runButton.clicked.connect(self.on_runButton_clicked)
 
-    def handle_exception(func):
+    def handle_exceptions(func):
         """
-            Manages the exceptions
+        Decorator that manages exceptions raised inside UI actions.
+        Logs the error if possible, otherwise prints it.
         """
         def wrapper(self, *args, **kwargs):
             try:
@@ -31,9 +32,9 @@ class SaveController:
                     print(f"[ERROR] {func.__name__}: {str(e)}")
         return wrapper
 
-    def prepare_data(self, preprocessing, segmentation, parameters):
+    def save_settings_to_json(self, preprocessing, segmentation, parameters):
         """
-            Prepares the configuration parameters for the data processing.
+        Prepares and saves the configuration parameters into a JSON file.
         """
         self.settings_dic = {
             "preprocessing": preprocessing,
@@ -52,9 +53,11 @@ class SaveController:
             self.log_message(f"ERROR SAVING JSON: {e}")
             QtWidgets.QMessageBox.critical(self.view, "Error", f"Could not save the JSON file: {str(e)}")
 
-    def select_folder(self, *args, **kwargs):
+    def on_selectFolderButton_clicked(self, *args, **kwargs):
         """
-            Manages the selection of an empty folder to save the results. It includes all the associated error check
+        Triggered when the 'Select Folder' button is clicked.
+        Lets the user choose an empty folder to save results.
+        Includes error checks.
         """
 
         while True:
@@ -68,10 +71,11 @@ class SaveController:
                 self.view.selectfolderLabel.setText(folder)
                 break
 
-    @handle_exception
-    def run_tasks(self, *args, **kwargs):
+    @handle_exceptions
+    def on_runButton_clicked(self, *args, **kwargs):
         """
-            Main function that runs all the tasks: preprocessing, segmentation and paramters computation.
+        Triggered when the 'Run' button is clicked.
+        Executes the pipeline: preprocessing, segmentation, and parameter computation.
         """
         if not self.selected_folder:
             QtWidgets.QMessageBox.warning(self.view, "Error", "Please, select one folder to save the data.")
@@ -108,7 +112,7 @@ class SaveController:
         }
         # save the settings
         if self.view.settingsCBox.isChecked():
-            self.prepare_data(preprocessing, segmentation, parameters)
+            self.save_settings_to_json(preprocessing, segmentation, parameters)
 
         # Run the pipeline
         success = run_pipeline(self, self.settings_dic, total_tasks)
@@ -116,7 +120,8 @@ class SaveController:
 
     def log_message(self, msg, style=None):
         """
-            Manages the format of the error and warning messages
+        Logs messages with custom formatting and styles.
+        Used for errors, warnings, and progress info.
         """
         # Styles adapted to the white format
         theme_colors = {

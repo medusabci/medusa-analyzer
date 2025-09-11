@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 def run_pipeline(self, settings_dic, total_tasks):
     """
-        This function runs all the tasks after the data preparation in "run_tasks".
+        This function runs all the tasks after the data preparation in "on_runButton_clicked".
     """
     import medusa
     import medusa.artifact_removal
