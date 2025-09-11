@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from eeg_features.bands_table import BandTable
+from eeg_features.bands_table import BandTableWidget
 import ast
 
 # Load UI class
@@ -218,7 +218,7 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
 
         if band_type not in self.band_table_editors or self.band_table_editors[band_type] is None:
             previous_bands = self.selected_bands_by_type.get(band_type, [])
-            editor = BandTable(
+            editor = BandTableWidget(
                 parameters_widget=self,
                 band_type=band_type,
                 previous_bands=previous_bands,

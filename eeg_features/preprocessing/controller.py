@@ -1,7 +1,7 @@
 import numpy as np
 from PySide6 import QtWidgets
 from scipy.signal import firwin, freqz
-from eeg_features.bands_table import BandTable
+from eeg_features.bands_table import BandTableWidget
 from eeg_features.preprocessing.flow import reset_all_controls
 
 class PreprocessingController:
@@ -167,7 +167,7 @@ class PreprocessingController:
         """
         # If it is not initialized, do it
         if self.view.band_editor is None:
-            self.view.band_editor = BandTable(
+            self.view.band_editor = BandTableWidget(
                 preprocessing_widget=self,
                 band_type=band_type,
                 min_broad=self.view.minbroadBox.value(),
