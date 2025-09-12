@@ -9,6 +9,10 @@ class SegmentationController:
         self.view = ui
         self.view.controller = self
 
+        # Define variables
+        self.files = self.view.main_window.stackedWidget.widget(1).controller.selected_files
+        self.validating_window = False
+
         # Conditions/Events
         self.view.conditionRButton.clicked.connect(self.on_segmentation_toggle)
         self.view.eventRButton.clicked.connect(self.on_segmentation_toggle)

@@ -72,7 +72,6 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         ### ELEMENT CONFIGURATION ###
         # Variables
-        self.selected_files = []
         self.current_widget = 0
 
         # Navigation Buttons

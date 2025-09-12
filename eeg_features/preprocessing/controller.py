@@ -10,7 +10,6 @@ class PreprocessingController:
         self.view.controller = self
         self.first_show = False
 
-
         # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)
         # Broadband
@@ -41,6 +40,8 @@ class PreprocessingController:
         # Band segmentation
         self.view.bandCBox.toggled.connect(self.on_band_filtering_toggle)
         self.view.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
+        # self.selected_bands = []
+        self.band_editor = None
 
         # Set initial state
         self.view.shown.connect(self.on_show_event)
@@ -157,7 +158,7 @@ class PreprocessingController:
         for widget in [self.view.selectedbandsLabel, self.view.selectedbandsauxLabel, self.view.bandLabel, self.view.bandButton]:
             widget.setVisible(checked)
         self.view.bandLabel.setText("None")
-        self.view.band_editor = None
+        self.band_editor = None
         self.view.band_config_changed.emit()
 
 
@@ -166,16 +167,16 @@ class PreprocessingController:
         Opens the band editor
         """
         # If it is not initialized, do it
-        if self.view.band_editor is None:
-            self.view.band_editor = BandTableWidget(
+        if self.band_editor is None:
+            self.band_editor = BandTableWidget(
                 preprocessing_widget=self,
                 band_type=band_type,
                 min_broad=self.view.minbroadBox.value(),
                 max_broad=self.view.maxbroadBox.value()
             )
-            self.view.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
-            self.view.band_editor.show()
-        self.view.band_editor.show()
+            self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
+            self.band_editor.show()
+        self.band_editor.show()
 
 
     def disable_band_segmentation(self):
@@ -220,7 +221,7 @@ class PreprocessingController:
             self.view.minbroadBox.setValue(0.5)
             self.view.maxbroadBox.setValue(nyquist)
 
-            if not self.view.main_window.stackedWidget.widget(1).selected_files: # widget(1) is the file selection widget
+            if not self.view.main_window.stackedWidget.widget(1).controller.selected_files: # widget(1) is the file selection widget
                 reset_all_controls(self)
 
             # Default values in a dict

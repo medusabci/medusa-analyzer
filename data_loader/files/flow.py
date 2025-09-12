@@ -3,7 +3,7 @@ def get_files_config(controller):
     Function that creates a dictionary with preprocessing configurations.
     """
     config = {
-        "selected_files": controller.view.selected_files if controller.view.selected_files else None,
+        "selected_files": controller.selected_files if controller.selected_files else None,
         "selected_biosignal": controller.view.biosignalBox.currentText().split(" ")[
             1] if controller.view.biosignalBox.currentText() else None
     }

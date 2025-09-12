@@ -18,12 +18,6 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
 
         # Define variables
         self.main_window = main_window
-        self.files = self.main_window.selected_files
-        self.validating_window = False
-        self.conditions = []
-        self.events = []
-        self.events_condition = []
-
 
         ### SEGMENTATION HEADER ###
 

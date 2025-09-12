@@ -35,8 +35,6 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
         ### ELEMENT CONFIGURATION ###
 
         # Data loading
-        self.selected_files = []  # Store the selected files
-        self.main_window.selected_files = self.selected_files
         self.set_button_stylesheet(self.convertButton)
         self.set_button_stylesheet(self.explorerButton)
         self.convertProgressBar.setValue(0)

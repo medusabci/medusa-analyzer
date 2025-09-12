@@ -52,10 +52,6 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
 
         # Define variables
         self.main_window = main_window
-        self.validated_bandpass = False
-        self.validating_notch = False
-        self.selected_bands = []
-        self.band_editor = None
 
         # Filter plots setup
         self.notchCanvas = MplCanvas(self.notchPlotWidget)

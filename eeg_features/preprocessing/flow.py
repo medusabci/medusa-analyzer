@@ -60,7 +60,6 @@ def get_preprocessing_config(controller):
             ))
             else controller.view.selected_bands_by_type.get("segmentation", [])
         ),
-        "selected_files": controller.view.selected_files if controller.view.selected_files else None,
         "apply_preprocessing": True if controller.view.preprocessingButton.isChecked() else None,
 
         "notch": controller.view.notchCBox.isChecked() if controller.view.notchCBox else None,
@@ -93,7 +92,8 @@ def on_next_click(view):
     idx = view.main_window.stackedWidget.currentIndex()
     segmentation = view.main_window.stackedWidget.widget(idx + 1)
     # Initialize the segmentation widget
-    segmentation.controller.load_marks_from_file(view.main_window.selected_files[0])
+    files_controller_widget = view.main_window.stackedWidget.widget(idx - 1).controller
+    segmentation.controller.load_marks_from_file(files_controller_widget.selected_files[0])
 
     return True
 

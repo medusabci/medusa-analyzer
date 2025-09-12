@@ -47,9 +47,6 @@ class FilesController:
         # Update text
         self.view.selectLabel.setText(f"{count} selected files")
 
-        # Sync with main_window
-        self.view.main_window.selected_files = self.selected_files.copy()
-
         if count > 0:
             # Enable the next button
             self.view.main_window.nextButton.setDisabled(False)
