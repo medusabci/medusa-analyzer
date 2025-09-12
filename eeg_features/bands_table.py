@@ -72,67 +72,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.setup_table()
 
 
-    # Drag and drop logic via eventFilter
-    def eventFilter(self, source, event):
-        """
-        Event filter function to handle drag and drop in the table.
-        """
-        if source is self.bandsTable:
-            if event.type() == QtCore.QEvent.MouseButtonPress and event.button() == Qt.LeftButton: # If left button pressed
-                self.drag_start_pos = event.pos()
-            elif event.type() == QtCore.QEvent.MouseMove and (event.buttons() & Qt.LeftButton): # If mouse is moving with left button pressed
-                if self.drag_start_pos is None: # If for some reason the start position is None, we cannot continue
-                    return False
-                distance = (event.pos() - self.drag_start_pos).manhattanLength() # Distance moved
-                if distance < QtWidgets.QApplication.startDragDistance(): # If the distance is too small, we cannot continue
-                    return False
-                # Create a drag object and start the drag operation
-                drag = QtGui.QDrag(self.bandsTable)
-                mime_data = QtCore.QMimeData()
-                mime_data.setData("application/x-qabstractitemmodeldatalist", b"")
-                drag.setMimeData(mime_data)
-                drag.exec_(Qt.MoveAction)
-                return True
-            elif event.type() == QtCore.QEvent.Drop: # If a drop event occurs
-                source_row = self.bandsTable.currentRow()
-                dest_index = self.bandsTable.indexAt(event.pos())
-                dest_row = dest_index.row()
-                if source_row == -1 or dest_row == -1 or source_row == dest_row: # -1 means no valid row
-                    event.ignore() # Required as we want to reject the drop
-                    return True
-                # Move the row
-                self._move_row(source_row, dest_row)
-                event.accept() # Accept the handling of the event
-                return True
-        return super().eventFilter(source, event) # Required by bureaucracy of Qt
-    # Helper function to move rows
-    def _move_row(self, source_row, dest_row):
-
-        # Keep the data of the original row
-        row_data = []
-        for col in range(self.bandsTable.columnCount()):
-            widget = self.bandsTable.cellWidget(source_row, col)
-            if widget: # For the trash buttons
-                row_data.append(("widget", widget))
-            else: # For the texts
-                item = self.bandsTable.item(source_row, col)
-                cloned_item = QtWidgets.QTableWidgetItem(item) if item else None
-                row_data.append(("item", cloned_item))
-        row_data = row_data.copy()
-
-        # Delete the old row and insert a new row in the destination
-        self.bandsTable.removeRow(source_row)
-        self.bandsTable.insertRow(dest_row)
-
-        for col, (kind, content) in enumerate(row_data):
-
-            if kind == "widget": # Add the elements to the new row, for the trash buttons...
-                new_button = QtWidgets.QPushButton()
-                new_button.setIcon(content.icon())
-                new_button.setFixedSize(content.size())
-                self.bandsTable.setCellWidget(dest_row, col, new_button)
-            elif kind == "item": # And for the texts
-                self.bandsTable.setItem(dest_row, col, QtWidgets.QTableWidgetItem(content))
 
 
     def setup_table(self):
