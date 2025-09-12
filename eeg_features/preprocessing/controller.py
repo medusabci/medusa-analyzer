@@ -117,7 +117,7 @@ class PreprocessingController:
             self.view.maxfreqbpBox.setValue(self.view.defaults["maxfreqbp"])
             self.view.orderbpBox.setValue(self.view.defaults["orderbp"])
             self.view.winbpBox.setCurrentIndex(9) # Hamming
-            self.view.maxbroadBox.setValue(self.view.main_window.sampling_frequency/2)
+            self.view.maxbroadBox.setValue(self.view.main_window.biosignal_info['fs']/2)
 
 
     def validate_filter_bounds(self, filter_type):

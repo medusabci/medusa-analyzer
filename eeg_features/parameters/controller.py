@@ -8,6 +8,9 @@ class ParametersController:
         self.view = ui
         self.view.controller = self
 
+        self.selected_bands_by_type = {"rp": []}
+        self.rp_band_editor = None
+
         # Relative power
         self.view.rpCBox.toggled.connect(self.on_rpCBox_toggled)
         self.view.rpButton.clicked.connect(lambda: self.on_bandTableButton_clicked("rp"))
@@ -44,7 +47,7 @@ class ParametersController:
         """
         visible = self.view.rpCBox.isChecked()
 
-        if not self.view.main_window.preproc_config['band_segmentation']:
+        if not self.view.main_window.controller.preproc_config['band_segmentation']:
             self.view.rpButton.setVisible(visible)
             self.view.rpselectedbandsLabel.setVisible(visible)
             self.view.rpselectedbandsauxLabel.setVisible(visible)
@@ -61,15 +64,15 @@ class ParametersController:
 
         if not visible:
             self.view.rpLabel.setText("None")
-            self.view.rp_band_editor = None
-            self.view.selected_bands_by_type["rp"] = []
+            self.rp_band_editor = None
+            self.selected_bands_by_type["rp"] = []
         else:
             broadband = {
                 "name": "broadband",
                 "min": self.view.main_window.preproc_config["broadband_min"],
                 "max": self.view.main_window.preproc_config["broadband_max"],
             }
-            self.view.selected_bands_by_type["rp"] = [broadband]
+            self.selected_bands_by_type["rp"] = [broadband]
             self.view.rpLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
 
     def on_rpCBox_reset(self): # TODO: conectar con la tabla?
@@ -155,7 +158,7 @@ class ParametersController:
             self.band_table_editors = {}
 
         if band_type not in self.band_table_editors or self.band_table_editors[band_type] is None:
-            previous_bands = self.view.selected_bands_by_type.get(band_type, [])
+            previous_bands = self.selected_bands_by_type.get(band_type, [])
             editor = BandTableWidget(
                 parameters_widget=self,
                 band_type=band_type,
@@ -180,14 +183,14 @@ class ParametersController:
         }
 
         filtered_bands = [b for b in bands if b["name"] != "broadband"]
-        self.view.selected_bands_by_type[band_type] = [broadband] + filtered_bands
+        self.selected_bands_by_type[band_type] = [broadband] + filtered_bands
 
         label = getattr(self, f"{band_type}Label", None)
         if label:
             txt = ", ".join(
                 [f"{b['name']} ({b['min']}–{b['max']} Hz)" if b[
                                                                   'name'] != "broadband" else f"broadband ({b['min']}–{b['max']} Hz)"
-                 for b in self.view.selected_bands_by_type[band_type]]
+                 for b in self.selected_bands_by_type[band_type]]
             )
             label.setText(txt)
 
@@ -207,7 +210,7 @@ class ParametersController:
             "psd_overlap_pct": self.view.overlappsdBox.value() if self.view.psdCBox.isChecked() else None,
             'psd_window': self.view.psdcomboBox.currentText() if self.view.psdCBox.isChecked() else None,
             "relative_power": True if self.view.rpCBox.isChecked() else None,
-            "selected_rp_bands": self.view.selected_bands_by_type["rp"] if self.view.rpCBox.isChecked() else None,
+            "selected_rp_bands": self.selected_bands_by_type["rp"] if self.view.rpCBox.isChecked() else None,
             "absolute_power": True if self.view.apCBox.isChecked() else None,
             "median_frequency": True if self.view.mfCBox.isChecked() else None,
             "spectral_entropy": True if self.view.seCBox.isChecked() else None,
