@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>437</width>
-    <height>368</height>
+    <height>372</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -30,7 +30,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="minbroaddbandLabel">
+      <widget class="QLabel" name="minbroadbandLabel">
        <property name="text">
         <string>1</string>
        </property>
