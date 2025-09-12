@@ -8,8 +8,7 @@ ui_bands_table = loadUiType("eeg_features/bands_table.ui")[0]
 
 # THIS CODE ENABLE THE DRAG AND DROP OF BANDS IN THE TABLE
 class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
-    def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None,
-                 min_broad=0.5, max_broad=69.0):
+    def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None):
         super().__init__((parameters_widget or preprocessing_widget).view)
         self.setupUi(self)
         self.setFixedSize(440, 380)
@@ -19,26 +18,30 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.preprocessing_widget = preprocessing_widget
         self.band_type = band_type
         self.previous_bands = previous_bands or []
-        self.default_min = min_broad
-        self.default_max = max_broad
-        self.accepted_bands = []
+        self.min_broad = 3 # preprocessing_widget.min_broad
+        self.max_broad = 330 #preprocessing_widget.max_broad
+        self.correct_bands = []
+
+        # Set the broadband label values
+        self.minbroadbandLabel.setText(f"{self.min_broad:.1f}")
+        self.maxbroadbandLabel.setText(f"{self.max_broad:.1f}")
 
         ## ADD THE DRAG AND DROP FUNCTIONALITY TO THE TABLE
-        # Store the original table
-        original_table = self.bandsTable
-        parent_widget = original_table.parent()
+        # # Store the original table
+        # original_table = self.bandsTable
+        # parent_widget = original_table.parent()
 
-        # Create a new table
-        self.bandsTable = QtWidgets.QTableWidget(self)
-        self.bandsTable.setObjectName("bandsTable")
-
-        # Replace the original table with the new one
-        layout = parent_widget.layout()
-        if layout:
-            index = layout.indexOf(original_table)
-            layout.removeWidget(original_table)
-            original_table.deleteLater()
-            layout.insertWidget(index, self.bandsTable)
+        # # Create a new table
+        # self.bandsTable = QtWidgets.QTableWidget(self)
+        # self.bandsTable.setObjectName("bandsTable")
+        #
+        # # Replace the original table with the new one
+        # layout = parent_widget.layout()
+        # if layout:
+        #     index = layout.indexOf(original_table)
+        #     layout.removeWidget(original_table)
+        #     original_table.deleteLater()
+        #     layout.insertWidget(index, self.bandsTable)
 
         # Add the drag and drop functionality
         self.drag_start_pos = None
@@ -53,8 +56,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         ### ELEMENT CONFIGURATION ###
 
         # Configure the bands
-        self.min_broad = min_broad
-        self.max_broad = max_broad
         self.default_bands = [
             {"name": "delta", "min": 1, "max": 4},
             {"name": "theta", "min": 4, "max": 8},
@@ -65,7 +66,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
 
         self.addButton.clicked.connect(lambda: self.add_band()) # Add a new band with default values
         self.resetButton.clicked.connect(self.on_reset_click)
-        self.acceptButton.clicked.connect(self._accept_and_close)
+        self.acceptButton.clicked.connect(self.on_accept_click)
 
         # Set initial state
         self.setup_table()
@@ -117,6 +118,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
                 item = self.bandsTable.item(source_row, col)
                 cloned_item = QtWidgets.QTableWidgetItem(item) if item else None
                 row_data.append(("item", cloned_item))
+        row_data = row_data.copy()
 
         # Delete the old row and insert a new row in the destination
         self.bandsTable.removeRow(source_row)
@@ -149,11 +151,11 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             item = self.bandsTable.horizontalHeaderItem(i)
             item.setFont(font)
 
-        # Drag and drop functionality
-        self.bandsTable.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
-        self.bandsTable.setDragDropOverwriteMode(False)
-        self.bandsTable.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
-        self.bandsTable.setDefaultDropAction(Qt.MoveAction)
+        # # Drag and drop functionality
+        # self.bandsTable.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
+        # self.bandsTable.setDragDropOverwriteMode(False)
+        # self.bandsTable.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
+        # self.bandsTable.setDefaultDropAction(Qt.MoveAction)
 
         # Clear all the table contents
         self.bandsTable.clearContents()
@@ -253,135 +255,88 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         Handle the close event to discard all the non-accepted changes.
         """
         if event.spontaneous():
-            if self.accepted_bands:
+            if self.correct_bands:
                 self.bandsTable.clearContents()
                 self.bandsTable.setRowCount(0)
-                for band in self.accepted_bands:
+                for band in self.correct_bands:
                     self.add_band(band["name"], band["min"], band["max"])
             else:
                 self.setup_table()
             event.accept()
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def _accept_and_close(self):
-        self.accepted_bands = []
+    def on_accept_click(self):
+        """
+        Validate the table entries and accept the changes if all entries are valid.
+        """
+        # Create variables to track errors
+        self.correct_bands = []
         empty_name_rows = []
-        zero_max_rows = []
-        zero_min_rows = []
         invalid_value_rows = []
-        negative_value_rows = []
+        negative_zero_value_rows = []
         invalid_interval_rows = []
         out_of_range_rows = []
 
+        # For each row in the table...
         for row in range(self.bandsTable.rowCount()):
-            checkbox_container = self.bandsTable.cellWidget(row, 0)
-            if not checkbox_container:
-                continue
-            checkbox = checkbox_container.findChild(QtWidgets.QCheckBox)
-            if not checkbox or not checkbox.isChecked():
-                continue
 
-            name_item = self.bandsTable.item(row, 1)
-            min_item = self.bandsTable.item(row, 2)
-            max_item = self.bandsTable.item(row, 3)
+            # Get name, and range
+            name_item = self.bandsTable.item(row, 0)
+            min_item = self.bandsTable.item(row, 1)
+            max_item = self.bandsTable.item(row, 2)
 
+            # Remove spaces and convert to text
             name = name_item.text().strip() if name_item else ""
-            min_text = min_item.text().strip() if min_item else ""
-            max_text = max_item.text().strip() if max_item else ""
+            min_freq_text = min_item.text().strip() if min_item else ""
+            max_freq_text = max_item.text().strip() if max_item else ""
 
-            if not name or not min_text or not max_text:
-                empty_name_rows.append(row + 1)
+            # If any of the fields is empty, mark the row as erroneous
+            if not name or not min_freq_text or not max_freq_text:
+                empty_name_rows.append(row)
                 continue
 
+            # Try to convert the frequency values to float, if not possible, mark the row as erroneous
             try:
-                min_val = float(min_text)
-                max_val = float(max_text)
+                min_val = float(min_freq_text)
+                max_val = float(max_freq_text)
             except ValueError:
-                invalid_value_rows.append(row + 1)
+                invalid_value_rows.append(row)
                 continue
 
-            if min_val < 0 or max_val < 0: # negative frequencies
-                negative_value_rows.append(row + 1)
-
-            if max_val >= 0 and max_val < 0.2: # max_values below its low limit
-                zero_max_rows.append(row + 1)
-
-            if min_val >= 0 and min_val < 0.1: # min_values below its low limit
-                zero_min_rows.append(row + 1)
-
+            # If negative values in the frequency range, mark the row as erroneous
+            if min_val < 0 or max_val <= 0:
+                negative_zero_value_rows.append(row)
+            # If min_freq > max_freq, mark the row as erroneous
             if min_val >= max_val: # max_value is lower than min_value
-                invalid_interval_rows.append(row + 1)
-
+                invalid_interval_rows.append(row)
+            # If the frequency range is not within the broadband, mark the row as erroneous
             if min_val < self.min_broad or max_val > self.max_broad:
                 out_of_range_rows.append(row + 1)
 
+            # If the row is correct, add it to the correct_bands list
             if (row + 1 not in empty_name_rows and
-                    row + 1 not in zero_max_rows and
-                    row + 1 not in zero_min_rows and
                     row + 1 not in invalid_value_rows and
-                    row + 1 not in negative_value_rows and
+                    row + 1 not in negative_zero_value_rows and
                     row + 1 not in invalid_interval_rows and
                     row + 1 not in out_of_range_rows):
-
-                self.accepted_bands.append({
+                self.correct_bands.append({
                     "name": name,
                     "min": min_val,
                     "max": max_val
                 })
 
-        if (empty_name_rows or zero_max_rows or zero_min_rows or invalid_value_rows or
-                negative_value_rows or invalid_interval_rows or out_of_range_rows):
+        # If there are any errors, show a message (one for each error) box and do not accept the changes
+        if (empty_name_rows or invalid_value_rows or negative_zero_value_rows or
+                invalid_interval_rows or out_of_range_rows):
 
             message = "Some entries in the table contain invalid data. Please review the following rows before continuing:\n\n"
 
             if empty_name_rows:
                 message += f"• Row(s) {', '.join(map(str, empty_name_rows))}: missing name, minimum, or maximum frequency.\n"
-            if zero_max_rows:
-                message += f"• Row(s) {', '.join(map(str, zero_max_rows))}: maximum frequency must be greater than 0.2.\n"
-            if zero_min_rows:
-                message += f"• Row(s) {', '.join(map(str, zero_min_rows))}: minimum frequency must be greater than 0.1.\n"
             if invalid_value_rows:
                 message += f"• Row(s) {', '.join(map(str, invalid_value_rows))}: frequency values must be numeric.\n"
-            if negative_value_rows:
-                message += f"• Row(s) {', '.join(map(str, negative_value_rows))}: negative frequency values are not allowed.\n"
+            if negative_zero_value_rows:
+                message += f"• Row(s) {', '.join(map(str, negative_zero_value_rows))}: negative or zero frequency values are not allowed.\n"
             if invalid_interval_rows:
                 message += f"• Row(s) {', '.join(map(str, invalid_interval_rows))}: minimum frequency must be less than the maximum frequency.\n"
             if out_of_range_rows:
@@ -391,11 +346,11 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             QtWidgets.QMessageBox.warning(self, "Invalid Table Entries", message)
             return
 
-        if self.band_type:
-            if self.parameters_widget:
-                self.parameters_widget.update_band_label(self.band_type, self.accepted_bands)
-            elif self.preprocessing_widget:
-                self.preprocessing_widget.update_band_label(self.band_type, self.accepted_bands)
+
+        if self.band_type == 'segmentation':
+            self.parameters_widget.update_band_label(self.band_type, self.correct_bands)
+        elif self.band_type == 'rp':
+            self.preprocessing_widget.update_band_label(self.band_type, self.correct_bands)
         self.close()
 
 

@@ -18,7 +18,6 @@ ui_preprocessing = loadUiType('eeg_features/preprocessing/ui.ui')[0]
 
 class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
     shown = QtCore.Signal()
-    band_config_changed = QtCore.Signal()
 
     def __init__(self, main_window):
         super().__init__()
