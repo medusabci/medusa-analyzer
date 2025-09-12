@@ -39,7 +39,7 @@ class PreprocessingController:
 
         # Band segmentation
         self.view.bandCBox.toggled.connect(self.on_band_filtering_toggle)
-        self.view.bandButton.clicked.connect(lambda: self.open_band_editor("segmentation"))
+        self.view.bandButton.clicked.connect(self.open_band_editor)
         # self.selected_bands = []
         self.band_editor = None
 
@@ -159,10 +159,9 @@ class PreprocessingController:
             widget.setVisible(checked)
         self.view.bandLabel.setText("None")
         self.band_editor = None
-        self.view.band_config_changed.emit()
 
 
-    def open_band_editor(self, band_type):
+    def open_band_editor(self):
         """
         Opens the band editor
         """
@@ -170,9 +169,7 @@ class PreprocessingController:
         if self.band_editor is None:
             self.band_editor = BandTableWidget(
                 preprocessing_widget=self,
-                band_type=band_type,
-                min_broad=self.view.minbroadBox.value(),
-                max_broad=self.view.maxbroadBox.value()
+                band_type='segmentation'
             )
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.band_editor.show()
@@ -199,8 +196,6 @@ class PreprocessingController:
             self.view.bandLabel.setText(", ".join(names))
         else:
             self.view.bandLabel.setText("None")
-
-        self.view.band_config_changed.emit()
 
 
     def on_show_event(self):
