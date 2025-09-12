@@ -274,7 +274,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             QtWidgets.QMessageBox.warning(self, "Invalid Table Entries", message)
             return
 
-
         if self.band_type == 'segmentation':
             self.parameters_widget.update_band_label(self.band_type, self.correct_bands)
         elif self.band_type == 'rp':
@@ -300,8 +299,8 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
                     if self._showing_forbidden:
                         QtWidgets.QApplication.restoreOverrideCursor()
                         self._showing_forbidden = False
-            elif et in (QtCore.QEvent.DragLeave, QtCore.QEvent.DragEnd):
-                if self._showing_forbidden:
-                    QtWidgets.QApplication.restoreOverrideCursor()
-                    self._showing_forbidden = False
+            # elif et in (QtCore.QEvent.DragLeave, QtCore.QEvent.DragEnd):
+            #     if self._showing_forbidden:
+            #         QtWidgets.QApplication.restoreOverrideCursor()
+            #         self._showing_forbidden = False
         return super().eventFilter(source, event)
