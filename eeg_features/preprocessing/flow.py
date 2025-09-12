@@ -47,7 +47,7 @@ def get_preprocessing_config(controller):
     Function that creates a dictionary with preprocessing configurations.
     """
     config = {
-        "fs": controller.main_window.sampling_frequency,
+        "fs": controller.view.main_window.biosignal_info['fs'],
         "band_segmentation": True if controller.view.bandCBox.isChecked() else None,
         "broadband_min": controller.view.minbroadBox.value(),
         "broadband_max": controller.view.maxbroadBox.value(),
@@ -94,6 +94,8 @@ def on_next_click(view):
     # Initialize the segmentation widget
     files_controller_widget = view.main_window.stackedWidget.widget(idx - 1).controller
     segmentation.controller.load_marks_from_file(files_controller_widget.selected_files[0])
+    # Save config
+    view.main_window.controller.preproc_config = get_preprocessing_config(view.controller)
 
     return True
 

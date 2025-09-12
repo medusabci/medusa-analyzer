@@ -18,9 +18,6 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
 
         # Define variables
         self.main_window = main_window
-        self.last_params = None
-        self.selected_bands_by_type = {"rp": []}
-        self.rp_band_editor = None
 
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
