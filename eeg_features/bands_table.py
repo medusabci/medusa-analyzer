@@ -26,23 +26,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.minbroadbandLabel.setText(f"{self.min_broad:.1f}")
         self.maxbroadbandLabel.setText(f"{self.max_broad:.1f}")
 
-        ## ADD THE DRAG AND DROP FUNCTIONALITY TO THE TABLE
-        # # Store the original table
-        # original_table = self.bandsTable
-        # parent_widget = original_table.parent()
-
-        # # Create a new table
-        # self.bandsTable = QtWidgets.QTableWidget(self)
-        # self.bandsTable.setObjectName("bandsTable")
-        #
-        # # Replace the original table with the new one
-        # layout = parent_widget.layout()
-        # if layout:
-        #     index = layout.indexOf(original_table)
-        #     layout.removeWidget(original_table)
-        #     original_table.deleteLater()
-        #     layout.insertWidget(index, self.bandsTable)
-
         # Add the drag and drop functionality
         self.drag_start_pos = None
         self.bandsTable.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
@@ -52,6 +35,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setDefaultDropAction(Qt.MoveAction)
         self.bandsTable.setDropIndicatorShown(True)
         self.bandsTable.installEventFilter(self)
+
 
         ### ELEMENT CONFIGURATION ###
 
@@ -70,8 +54,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
 
         # Set initial state
         self.setup_table()
-
-
 
 
     def setup_table(self):
@@ -291,5 +273,4 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         elif self.band_type == 'rp':
             self.preprocessing_widget.update_band_label(self.band_type, self.correct_bands)
         self.close()
-
 
