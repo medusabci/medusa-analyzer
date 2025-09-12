@@ -21,6 +21,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.min_broad = 3 # preprocessing_widget.min_broad
         self.max_broad = 330 #preprocessing_widget.max_broad
         self.correct_bands = []
+        self._showing_forbidden = False
 
         # Set the broadband label values
         self.minbroadbandLabel.setText(f"{self.min_broad:.1f}")
@@ -34,7 +35,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setDragDropOverwriteMode(False)
         self.bandsTable.setDefaultDropAction(Qt.MoveAction)
         self.bandsTable.setDropIndicatorShown(True)
-        self.bandsTable.installEventFilter(self)
+        self.bandsTable.installEventFilter(self)  # already set; used now to block overwrite drops
 
 
         ### ELEMENT CONFIGURATION ###
@@ -109,6 +110,12 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         max_item = QtWidgets.QTableWidgetItem(f"{float(max_freq):.1f}" if max_freq is not None else "")
         max_item.setTextAlignment(Qt.AlignCenter)
         self.bandsTable.setItem(row, 2, max_item)
+
+        # Remove ability to drop ON these items (only between rows)
+        for col in (0, 1, 2):
+            itm = self.bandsTable.item(row, col)
+            if itm:
+                itm.setFlags(itm.flags() & ~Qt.ItemFlag.ItemIsDropEnabled)
 
         # Trash button
         remove_button = QtWidgets.QPushButton()
@@ -274,3 +281,27 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             self.preprocessing_widget.update_band_label(self.band_type, self.correct_bands)
         self.close()
 
+    def eventFilter(self, source, event):
+        if source is self.bandsTable:
+            et = event.type()
+            if et in (QtCore.QEvent.DragMove, QtCore.QEvent.Drop):
+                if self.bandsTable.dropIndicatorPosition() == QtWidgets.QAbstractItemView.OnItem:
+                    # Block overwrite
+                    event.ignore()
+                    if not self._showing_forbidden and et == QtCore.QEvent.DragMove:
+                        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ForbiddenCursor)
+                        self._showing_forbidden = True
+                    if et == QtCore.QEvent.Drop:
+                        if self._showing_forbidden:
+                            QtWidgets.QApplication.restoreOverrideCursor()
+                            self._showing_forbidden = False
+                    return True
+                else:
+                    if self._showing_forbidden:
+                        QtWidgets.QApplication.restoreOverrideCursor()
+                        self._showing_forbidden = False
+            elif et in (QtCore.QEvent.DragLeave, QtCore.QEvent.DragEnd):
+                if self._showing_forbidden:
+                    QtWidgets.QApplication.restoreOverrideCursor()
+                    self._showing_forbidden = False
+        return super().eventFilter(source, event)
