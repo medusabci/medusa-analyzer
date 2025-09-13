@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QFrame
-from data_loader.files.controller import FilesController
 from main_window.flow import on_next_click, on_back_click
 import numpy as np
 
@@ -50,7 +49,7 @@ class MainWindowController:
             # Update the label content
             self.view.progressLabel.setVisible(True)
             self.view.progressLabel.setText(f"Step {idx} of {self.view.total_steps}: "
-                                            f"{self.view.experiment['pipeline'][0]['step']}")
+                                            f"{self.view.stackedWidget.widget(0).controller.experiment['pipeline'][0]['step']}")
             # Paint the progress bar
             colors = self.interpolate_colors_hex((106, 13, 173), (235, 64, 122), self.view.total_steps) # Get the color palette for the progress bar
             for n_step in range(self.view.total_steps):

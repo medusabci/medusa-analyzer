@@ -2,8 +2,6 @@ from PySide6 import QtWidgets, QtGui
 from PySide6.QtUiTools import loadUiType
 from data_loader.experiments.ui import ExperimentWidget
 from data_loader.experiments.controller import ExperimentsController
-from data_loader.files.ui import FilesWidget
-from data_loader.files.controller import FilesController
 from PySide6.QtGui import QPalette
 
 # Load UI class

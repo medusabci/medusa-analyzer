@@ -11,10 +11,10 @@ def on_next_click(view):
     # Read the corresponding config file
     with open(experiment_id + "/config.json", "r") as f:
         experiment_data = json.load(f)
-        view.main_window.experiment = experiment_data
+        view.controller.experiment = experiment_data
 
     # Load the widgets, instantiate their controllers and add them to the stackedWidget
-    for idx,widget_info in enumerate(view.main_window.experiment['pipeline']):
+    for idx,widget_info in enumerate(view.controller.experiment['pipeline']):
         # Take the path
         widget_path = widget_info['path'].replace('/','.') # use dots instead of slashes
 
@@ -36,7 +36,7 @@ def on_next_click(view):
         view.main_window.stackedWidget.insertWidget(idx+1, widget)
 
     # Update total steps and progress bar in the main window
-    view.main_window.total_steps = len(view.main_window.experiment['pipeline'])
+    view.main_window.total_steps = len(view.controller.experiment['pipeline'])
     view.main_window.controller.set_progressbar()
     # Deactivate Next button
     view.main_window.nextButton.setDisabled(True)
