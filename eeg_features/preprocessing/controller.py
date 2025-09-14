@@ -119,35 +119,44 @@ class PreprocessingController:
             self.view.winbpBox.setCurrentIndex(9) # Hamming
             self.view.maxbroadBox.setValue(self.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs']/2)
 
+    def validate_filter_bounds(self, filter_type):
+        """Validate filter bounds and compatibility between broadband, bandpass, and notch filters."""
+        # Get values and defaults
+        if filter_type == "bandpass":
+            min_val, max_val = self.view.minfreqbpBox.value(), self.view.maxfreqbpBox.value()
+            dmin, dmax = "minfreqbp", "maxfreqbp"
+        else:  # notch
+            min_val, max_val = self.view.minfreqnotchBox.value(), self.view.maxfreqnotchBox.value()
+            dmin, dmax = "minfreqnotch", "maxfreqnotch"
 
-    def validate_filter_bounds(self, filter_type): # TODO: Añadir validaciones con broadband
-        """
-        Function that validates the filter bounds (Low freq < high freq)
-        """
-        if filter_type == 'bandpass':
-            min_val = self.view.minfreqbpBox.value()
-            max_val = self.view.maxfreqbpBox.value()
-        else:
-            min_val = self.view.minfreqnotchBox.value()
-            max_val = self.view.maxfreqnotchBox.value()
-
+        # 1. Own bounds check
         if max_val <= min_val:
-            QtWidgets.QMessageBox.warning(
-                self.view,
-                f"Invalid values for {filter_type} filter.",
-                f"For {filter_type} filtering, <b>max</b> frequency {max_val} must be greater than <b>min</b> {min_val}."
-            )
-
-            if filter_type == 'bandpass':
-                self.view.minfreqbpBox.setValue(self.view.defaults["minfreqbp"])
-                self.view.maxfreqbpBox.setValue(self.view.defaults["maxfreqbp"])
-            else:
-                self.view.minfreqnotchBox.setValue(self.view.defaults["minfreqnotch"])
-                self.view.maxfreqnotchBox.setValue(self.view.defaults["maxfreqnotch"])
-
+            QtWidgets.QMessageBox.warning(self.view, f"Invalid {filter_type}",
+                                          f"Max {max_val} must be greater than Min {min_val}.")
+            getattr(self.view, f"{dmin}Box").setValue(self.view.defaults[dmin])
+            getattr(self.view, f"{dmax}Box").setValue(self.view.defaults[dmax])
             return False
-        else:
-            return True
+
+        # 2. Notch inside bandpass. If not, adjust notch values to a sensible window inside the bandpass
+        if self.view.bpCBox.isChecked() and self.view.notchCBox.isChecked():
+            if not (self.view.minfreqbpBox.value() <= self.view.minfreqnotchBox.value() <= self.view.maxfreqbpBox.value()
+                and self.view.minfreqbpBox.value() <= self.view.maxfreqnotchBox.value() <= self.view.maxfreqbpBox.value()):
+                bp_min, bp_max = self.view.minfreqbpBox.value(), self.view.maxfreqbpBox.value()
+                bp_w = bp_max - bp_min
+                default_w = self.view.defaults["maxfreqnotch"] - self.view.defaults["minfreqnotch"]
+                # choose notch width: prefer default_w, but limit to a fraction of bandpass and a sensible minimum
+                notch_w = min(default_w, max(0.5, bp_w * 0.25))
+                if notch_w >= bp_w: notch_w = max(0.5, bp_w * 0.5)
+                # center the notch near the default center but clamp it inside bandpass margins
+                default_center = (self.view.defaults["minfreqnotch"] + self.view.defaults["maxfreqnotch"]) / 2
+                center = min(max(default_center, bp_min + notch_w / 2), bp_max - notch_w / 2)
+                new_min, new_max = center - notch_w / 2, center + notch_w / 2
+                self.view.minfreqnotchBox.setValue(new_min);
+                self.view.maxfreqnotchBox.setValue(new_max)
+                QtWidgets.QMessageBox.warning(self.view, "Notch adjusted",
+                                              f"Notch was outside bandpass — adjusted to {new_min:.2f}–{new_max:.2f} Hz.")
+                return True
+        return True
 
 
     def on_band_filtering_toggle(self, checked):

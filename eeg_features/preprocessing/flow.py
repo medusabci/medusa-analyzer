@@ -47,7 +47,7 @@ def get_preprocessing_config(controller):
     Function that creates a dictionary with preprocessing configurations.
     """
     config = {
-        "fs": controller.view.main_window.biosignal_info['fs'],
+        "fs": controller.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs'],
         "band_segmentation": True if controller.view.bandCBox.isChecked() else None,
         "broadband_min": controller.view.minbroadBox.value(),
         "broadband_max": controller.view.maxbroadBox.value(),
@@ -83,6 +83,16 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked. It initializes the segmentation widget with the information of
     the events and conditions of the selected file
     """
+
+    if view.preprocessingButton.isChecked() and not (
+            view.carCBox.isChecked() or view.bpCBox.isChecked() or view.notchCBox.isChecked()):
+        QtWidgets.QMessageBox.critical(
+            view,
+            "Invalid configuration",
+            "You must select at least one filtering option (CAR, Bandpass, or Notch) when preprocessing is enabled. "
+            "Alternatively, disable \"Preprocess data\" to proceed without filtering."
+        )
+        return False
     # If band segmentation is selected, ensure at least one band is chosen
     if view.bandCBox.isChecked() and view.bandLabel.text() == 'None':
         QtWidgets.QMessageBox.critical(view, "Error", "Please, select at least one frequency band for segmentation, or uncheck \"Band filtering\" selection.")
@@ -94,7 +104,7 @@ def on_next_click(view):
     # Initialize the segmentation widget
     files_controller_widget = view.main_window.stackedWidget.widget(idx - 1).controller
     segmentation.controller.load_marks_from_file(files_controller_widget.selected_files[0])
-    # Save config
+    # Save config TODO: ver si lo guardamos en la main window o como lo gestionamos
     view.main_window.controller.preproc_config = get_preprocessing_config(view.controller)
 
     return True

@@ -18,8 +18,8 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.preprocessing_widget = preprocessing_widget
         self.band_type = band_type
         self.previous_bands = previous_bands or []
-        self.min_broad = 3 # preprocessing_widget.min_broad
-        self.max_broad = 330 #preprocessing_widget.max_broad
+        self.min_broad = preprocessing_widget.view.minbroadBox.value()
+        self.max_broad = preprocessing_widget.view.maxbroadBox.value()
         self.correct_bands = []
         self._showing_forbidden = False
 
@@ -275,9 +275,9 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             return
 
         if self.band_type == 'segmentation':
-            self.parameters_widget.update_band_label(self.band_type, self.correct_bands)
-        elif self.band_type == 'rp':
             self.preprocessing_widget.update_band_label(self.band_type, self.correct_bands)
+        elif self.band_type == 'rp':
+            self.parameters_widget.update_band_label(self.band_type, self.correct_bands)
         self.close()
 
     def eventFilter(self, source, event):
