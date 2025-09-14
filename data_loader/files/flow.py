@@ -17,6 +17,6 @@ def on_next_click(view):
     # Get the selected biosignal
     biosignal_txt = view.biosignalBox.currentText()
     biosignal = biosignal_txt.split(" ")[1]
-    view.main_window.biosignal_info = view.controller.biosignals[biosignal]
+    view.controller.biosignal_info = view.controller.biosignals[biosignal]
 
     return True

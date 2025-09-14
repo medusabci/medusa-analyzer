@@ -117,10 +117,10 @@ class PreprocessingController:
             self.view.maxfreqbpBox.setValue(self.view.defaults["maxfreqbp"])
             self.view.orderbpBox.setValue(self.view.defaults["orderbp"])
             self.view.winbpBox.setCurrentIndex(9) # Hamming
-            self.view.maxbroadBox.setValue(self.view.main_window.biosignal_info['fs']/2)
+            self.view.maxbroadBox.setValue(self.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs']/2)
 
 
-    def validate_filter_bounds(self, filter_type):
+    def validate_filter_bounds(self, filter_type): # TODO: Añadir validaciones con broadband
         """
         Function that validates the filter bounds (Low freq < high freq)
         """
@@ -153,7 +153,7 @@ class PreprocessingController:
     def on_band_filtering_toggle(self, checked):
         """
         Function to display the data related to frequency bands when the corresponding checkbox is checked to
-        indicate that band segmentation should be performed. If the checkbox is unchecked, the data is hidden.
+        indicate that band filtering should be performed. If the checkbox is unchecked, the data is hidden.
         """
         for widget in [self.view.selectedbandsLabel, self.view.selectedbandsauxLabel, self.view.bandLabel, self.view.bandButton]:
             widget.setVisible(checked)
@@ -201,7 +201,8 @@ class PreprocessingController:
     def on_show_event(self):
         if not self.first_show:
             self.first_show = True
-            fs = self.view.main_window.biosignal_info['fs']
+            files_widget_controller = self.view.main_window.stackedWidget.widget(1).controller # widget(1) is the file selection widget
+            fs = files_widget_controller.biosignal_info['fs']
             nyquist = fs / 2
             # Limit max values of the spinboxes to fs/2
             spinboxes = [
@@ -216,15 +217,8 @@ class PreprocessingController:
             self.view.minbroadBox.setValue(0.5)
             self.view.maxbroadBox.setValue(nyquist)
 
-            if not self.view.main_window.stackedWidget.widget(1).controller.selected_files: # widget(1) is the file selection widget
+            if not files_widget_controller.selected_files:
                 reset_all_controls(self)
-
-            # Default values in a dict
-            self.defaults = {
-                "minbroadBox": self.view.minbroadBox.value(),
-                "maxbroadBox": self.view.maxbroadBox.value()
-            }
-
 
     def update_filter_plot(self, filter_type):
         """
@@ -249,7 +243,7 @@ class PreprocessingController:
         if not self.validate_filter_bounds(filter_type):
             return
 
-        fs = self.view.main_window.biosignal_info['fs']
+        fs = self.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs'] # widget(1) is the file selection widget
         b = firwin(
             numtaps,
             [low, high],
