@@ -28,22 +28,33 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
+        layout.setSpacing(10)
         self.topContentWidget.setLayout(layout)
+
         self.description_label = QtWidgets.QLabel()
         self.description_label.setTextFormat(QtCore.Qt.RichText)
         self.description_label.setWordWrap(True)
+        self.description_label.setAlignment(QtCore.Qt.AlignCenter)
+
         self.description_label.setText("""
-            <p style="font-size: 11pt; font-family: Arial;">
-            Please select the preprocessing parameters for your signals. If unsure, default values are provided for common use cases.
-            If you don't want to apply any preprocessing step, push the next button. 
-            </p>
+            <div style="text-align:center; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
+                    Configure the <b>preprocessing parameters</b> for your biomedical signals. 
+                    Default values are provided for typical use cases to help you get started quickly.
+                </p>
+
+                <p style="font-size: 11pt; color:#666; margin:0 40px;">
+                    If you prefer to <b style="color:#007acc;">skip preprocessing</b>, simply click the <b>Next</b> button.
+                </p>
+            </div>
         """)
+
         # Remove background
         palette = QtGui.QPalette()
-        palette.setColor(QtGui.QPalette.Base,
-                         palette.color(QtGui.QPalette.Window))
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window))
         self.topContentWidget.setPalette(palette)
+        self.topContentWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
+
         layout.addWidget(self.description_label)
 
 

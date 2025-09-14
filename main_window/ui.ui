@@ -24,11 +24,14 @@
   </property>
   <property name="font">
    <font>
-    <pointsize>10</pointsize>
+    <family>Segoe UI,Roboto,sans-serif</family>
    </font>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">

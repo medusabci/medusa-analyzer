@@ -38,6 +38,32 @@
    </item>
    <item>
     <widget class="QToolBox" name="toolBox">
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QToolBox::tab {
+    background: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+    color: white;        
+    font-weight: bold; 
+    padding: 5px 10px;   
+    border: 1px solid #444;
+    border-radius: 3px;
+}
+
+/* Color de texto dentro de la pestaña activa */
+QToolBox::tab:selected {
+    color: white;
+}
+</string>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -46,8 +72,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>826</width>
-        <height>707</height>
+        <width>690</width>
+        <height>714</height>
        </rect>
       </property>
       <attribute name="label">
@@ -56,6 +82,26 @@
       <layout class="QVBoxLayout" name="verticalLayout_7">
        <item>
         <widget class="QGroupBox" name="basic_statistical_metrics">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
+         </property>
          <property name="title">
           <string>Basic statistical metrics</string>
          </property>
@@ -215,6 +261,26 @@
        </item>
        <item>
         <widget class="QGroupBox" name="spectral_metrics">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
+         </property>
          <property name="title">
           <string>Spectral metrics</string>
          </property>
@@ -568,6 +634,26 @@
        </item>
        <item>
         <widget class="QGroupBox" name="nonlinear_metrics">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
+         </property>
          <property name="title">
           <string>Nonlinear metrics</string>
          </property>
@@ -916,6 +1002,26 @@
       <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
         <widget class="QGroupBox" name="Amplitude">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
+         </property>
          <property name="title">
           <string>Amplitude</string>
          </property>
@@ -1019,6 +1125,26 @@
        </item>
        <item>
         <widget class="QGroupBox" name="Phase">
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
+         </property>
          <property name="title">
           <string>Phase</string>
          </property>

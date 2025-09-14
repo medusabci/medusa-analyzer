@@ -39,8 +39,25 @@
     <widget class="QGroupBox" name="Datapreprocessing">
      <property name="font">
       <font>
-       <pointsize>10</pointsize>
+       <pointsize>16</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
       </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox#Datapreprocessing::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}
+
+</string>
      </property>
      <property name="title">
       <string>Preprocessing</string>
@@ -175,6 +192,11 @@
         <layout class="QHBoxLayout" name="horizontalLayout_8">
          <item>
           <widget class="QGroupBox" name="cargroupBox">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
            <property name="title">
             <string>Common average reference</string>
            </property>
@@ -238,6 +260,11 @@
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
             <widget class="QGroupBox" name="notchgroupBox">
+             <property name="font">
+              <font>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
              <property name="title">
               <string>Notch filtering</string>
              </property>
@@ -494,6 +521,11 @@
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
             <widget class="QGroupBox" name="bpgroupBox">
+             <property name="font">
+              <font>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
              <property name="title">
               <string>Bandpass filtering</string>
              </property>
@@ -766,6 +798,26 @@
        <width>0</width>
        <height>100</height>
       </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
      </property>
      <property name="title">
       <string>Band Filtering</string>

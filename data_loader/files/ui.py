@@ -14,22 +14,35 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
         ### DATA LOADER HEADER ###
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
+        layout.setSpacing(10)
         self.topContentWidget.setLayout(layout)
+
         self.description_label = QtWidgets.QLabel()
         self.description_label.setTextFormat(QtCore.Qt.RichText)
         self.description_label.setWordWrap(True)
+        self.description_label.setAlignment(QtCore.Qt.AlignCenter)
+
         self.description_label.setText("""
-            <p style="font-size: 11pt; font-family: Arial;">
-            Please, select at least one <span style="color:#007acc; font-weight:bold;">rec</span> file. If not, you can
-            use de MEDUSA Converter tool. 
-            </p>
+            <div style="text-align:center; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
+                    This module allows you to <b>import biomedical recordings</b> 
+                    that will be processed in the following steps.
+                </p>
+
+                <p style="font-size: 11pt; color:#666; margin:0 40px;">
+                    Please select at least one <span style="color:#007acc; font-weight:bold;">.rec</span> file. 
+                    If you don’t have compatible recordings yet, 
+                    use the <b style="color:#ec407a;">MEDUSA Converter</b> tool 
+                    to transform your data into the supported format.
+                </p>
+            </div>
         """)
         # Remove background
         palette = QtGui.QPalette()
-        palette.setColor(QtGui.QPalette.Base,
-                         palette.color(QtGui.QPalette.Window))  # For this element, Base color will be Window color
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window))
         self.topContentWidget.setPalette(palette)
+        self.topContentWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
+
         layout.addWidget(self.description_label)
 
         ### ELEMENT CONFIGURATION ###

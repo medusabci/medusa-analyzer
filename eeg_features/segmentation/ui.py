@@ -24,22 +24,34 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
         # Define the header (description) of the widget
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
+        layout.setSpacing(10)
         self.topContentWidget.setLayout(layout)
+
         self.segmentation_label = QtWidgets.QLabel()
         self.segmentation_label.setTextFormat(QtCore.Qt.RichText)
         self.segmentation_label.setWordWrap(True)
+        self.segmentation_label.setAlignment(QtCore.Qt.AlignCenter)
+
         self.segmentation_label.setText("""
-            <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
-                <p>
-                    Proceeding to the <b>Segmentation Module</b>, you can define how the signals should be split 
-                    into analyzable segments. Choose between the following segmentation strategies:
+            <div style="text-align:center; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
+                    This is the <b>Segmentation Module</b>. Here you can define how your signals will be divided 
+                    into smaller, analyzable segments for processing.
+                </p>
+
+                <p style="font-size: 11pt; color:#666; margin:0 40px;">
+                    Select the segmentation strategy that best fits your analysis needs. 
+                    Options include time-based slicing and event-triggered segmentation. 
+                </p>
             </div>
         """)
+
         # Remove background
         palette = QtGui.QPalette()
-        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
+        palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window))
         self.topContentWidget.setPalette(palette)
+        self.topContentWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
+
         layout.addWidget(self.segmentation_label)
 
 

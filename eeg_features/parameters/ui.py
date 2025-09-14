@@ -35,16 +35,17 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
             }
         """)
         self.logtextBrowser.setText("""
-            <div style="font-size: 11pt; font-family: Arial; line-height: 1;">
-                <p>
-                    This is the <b>Signal Parameters Module</b> of <i>MEDUSA Analyzer</i>. In this section, you can 
-                    configure a wide range of <b>features and metrics</b> to extract from your EEG or biosignal 
-                    recordings, including statistical descriptors, spectral features, non-lineal parameters and 
-                    connectivity metrics.
+            <div style="text-align:center; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
+                    Procceding to the <b>Signal Parameters Module</b> of <i>MEDUSA Analyzer</i>. 
+                    Here you can configure a wide range of <b>features and metrics</b> to extract from your EEG 
+                    recordings, including statistical descriptors, spectral features, nonlinear parameters, 
+                    and connectivity metrics.
                 </p>
-                <p>
-                    Use the checkboxes to enable the metrics of interest. Some metrics require specific 
-                    band selections or additional parameters, which can be adjusted after activation.
+
+                <p style="font-size: 11pt; color:#666; margin:0 40px;">
+                    Use the checkboxes to select the metrics you want to analyze. Some metrics may require specific 
+                    band selections or additional parameters, which can be adjusted after enabling them.
                 </p>
             </div>
         """)
@@ -52,6 +53,7 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
         palette = QtGui.QPalette()
         palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
         self.topContentWidget.setPalette(palette)
+        self.topContentWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
         layout.addWidget(self.logtextBrowser)
 
         # --- ELEMENT SETUP ---
