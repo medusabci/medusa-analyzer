@@ -34,7 +34,8 @@ class SegmentationController:
 
     def on_segmentation_toggle(self):
         """
-        Handle toggling to 'condition' or 'event' segmentation mode.
+        Triggered when the segmentation mode is toggled between 'condition' and 'event'.
+        Updates the visibility of related widgets and resets defaults.
         """
         # Condition
         if self.view.conditionRButton.isChecked():
@@ -128,10 +129,10 @@ class SegmentationController:
         """
         # Update the maximum number of samples based on the segmentation mode
         if self.view.conditionRButton.isChecked():
-            max_samples = (self.view.trialBox.value()/1000) * self.view.main_window.sampling_frequency
+            max_samples = (self.view.trialBox.value()/1000) * self.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs']
         else:
             max_samples = -self.view.winBox_1.value() + self.view.winBox_2.value()
-            max_samples = (max_samples/1000) * self.view.main_window.sampling_frequency
+            max_samples = (max_samples/1000) * self.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs']
 
         self.view.thressampBox.setMaximum(int(max_samples))
 
@@ -243,60 +244,3 @@ class SegmentationController:
         # Show in the labels
         self.view.conditionLabel.setText(f"Conditions: {cond_text}")
         self.view.eventLabel.setText(f"Events: {evt_text}")
-
-
-    def reset_segmentation_state(self):
-        """
-        Reset the segmentation UI and state to default:
-            - Check the condition radio button
-            - Clear condition and event lists.
-            - Reset labels and parameters.
-            - Hide parameter widgets.
-            - Reset thresholding and resampling controls.
-            - Disable 'Next' button.
-        """
-
-        # Check the condition radio button and DC normalization by default
-        self.view.conditionRButton.setChecked(True)
-        self.view.dcRButton.setChecked(True)
-
-        # Clear condition and event lists
-        empty_model = QStringListModel()
-        self.view.conditionList.setModel(empty_model)
-        self.view.eventList.setModel(empty_model)
-        # Reset labels and UI elements
-        self.view.conditionLabel.setText("Conditions: None")
-        self.view.eventLabel.setText("Events: None")
-        self._event_element_visibility(False)
-        self._reset_segmentation_params()
-
-        # Disable checkboxes
-        for checkbox in [self.view.normCBox, self.view.thresCBox, self.view.resampleCBox, self.view.averageCBox]:
-            checkbox.setChecked(False)
-
-        # Hide normalization, thresholding and resampling elements
-        elements = [
-            self.view.zscoreRButton, self.view.dcRButton,
-            self.view.threskBox, self.view.threschanBox, self.view.thressampBox,
-            self.view.threskLabel, self.view.threskLabelaux, self.view.threschanLabel, self.view.thressampLabel,
-            self.view.threshelpButton,
-            self.view.resamplefsBox, self.view.newfsLabel
-        ]
-        for w in elements:
-            w.setVisible(False)
-
-        # Show descriptive labels
-        elements = [
-            self.view.thresLabel, self.view.normLabel, self.view.resampleLabel
-        ]
-        for w in elements:
-            w.setVisible(True)
-
-        # Reset spinboxes values to default
-        self.view.threskBox.setValue(self.defaults["threshold"])
-        self.view.threschanBox.setValue(self.defaults["threschannels"])
-        self.view.thressampBox.setValue(self.defaults["thressamples"])
-        self.view.resamplefsBox.setValue(self.defaults["resamplefs"])
-
-        # Update the next button state
-        self.update_next_button_state()

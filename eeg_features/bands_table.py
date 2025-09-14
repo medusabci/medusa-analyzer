@@ -53,6 +53,36 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.resetButton.clicked.connect(self.on_reset_click)
         self.acceptButton.clicked.connect(self.on_accept_click)
 
+        self.bandsTable.setAlternatingRowColors(True)
+        self.bandsTable.setStyleSheet("""
+            QTableWidget {
+                gridline-color: #bdc3c7;
+                background-color: #f9f9f9;
+                alternate-background-color: #ecf0f1;
+                selection-background-color: #2980b9;
+                selection-color: white;
+                border-radius: 8px;
+            }
+            QTableWidget::item {
+                padding: 6px;
+            }
+        """)
+
+        header = self.bandsTable.horizontalHeader()
+        header.setStyleSheet("""
+            QHeaderView::section {
+                background-color: #34495e;
+                color: white;
+                font-weight: bold;
+                border: none;
+                padding: 8px;
+            }
+        """)
+        header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
+
+        self.bandsTable.verticalHeader().setVisible(False)
+        self.bandsTable.verticalHeader().setDefaultSectionSize(36)
+
         # Set initial state
         self.setup_table()
 

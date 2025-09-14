@@ -1,7 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from PySide6.QtUiTools import loadUiType
 from eeg_features.bands_table import BandTableWidget
-import ast
 
 class ParametersController:
     def __init__(self, ui):
@@ -66,18 +64,6 @@ class ParametersController:
             self.view.rpLabel.setText("None")
             self.rp_band_editor = None
             self.selected_bands_by_type["rp"] = []
-        else:
-            broadband = {
-                "name": "broadband",
-                "min": self.view.main_window.preproc_config["broadband_min"],
-                "max": self.view.main_window.preproc_config["broadband_max"],
-            }
-            self.selected_bands_by_type["rp"] = [broadband]
-            self.view.rpLabel.setText(f"broadband ({broadband['min']}–{broadband['max']} Hz)")
-
-    def on_rpCBox_reset(self): # TODO: conectar con la tabla?
-        """Resets Relative Power config by unchecking the box."""
-        self.view.rpCBox.setChecked(False)
 
     def on_ctmCBox_toggled(self):
         """
@@ -154,85 +140,27 @@ class ParametersController:
         Triggered when the 'Edit bands' button is clicked.
         Opens the band table dialog for relative power band selection.
         """
-        if not hasattr(self, "band_table_editors"):
-            self.band_table_editors = {}
-
-        if band_type not in self.band_table_editors or self.band_table_editors[band_type] is None:
-            previous_bands = self.selected_bands_by_type.get(band_type, [])
-            editor = BandTableWidget(
+        # If it is not initialized, do it
+        if self.rp_band_editor is None:
+            idx = self.view.main_window.stackedWidget.currentIndex()
+            self.rp_band_editor = BandTableWidget(
+                preprocessing_widget= self.view.main_window.stackedWidget.widget(idx-2).controller,
                 parameters_widget=self,
-                band_type=band_type,
-                previous_bands=previous_bands,
-                min_broad=self.view.main_window.min_b,
-                max_broad=self.view.main_window.max_b
+                band_type='rp'
             )
-            editor.setModal(True)
-            editor.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-            editor.destroyed.connect(lambda: self._on_band_table_closed(band_type))
-            self.band_table_editors[band_type] = editor
-            editor.show()
+            self.rp_band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
+            self.rp_band_editor.show()
+        self.rp_band_editor.show()
 
-    def update_band_label(self, band_type, bands):
+    def update_band_label(self, filtering_target, bands):
         """
-        Updates the band label when the selection of bands changes.
+        Updates the labels with the names of the selected bands
         """
-        broadband = {
-            "name": "broadband",
-            "min": self.view.main_window.preproc_config["broadband_min"],
-            "max": self.view.main_window.preproc_config["broadband_max"],
-        }
+        self.view.selected_bands_by_type = getattr(self, "selected_bands_by_type", {})
+        self.view.selected_bands_by_type[filtering_target] = bands
 
-        filtered_bands = [b for b in bands if b["name"] != "broadband"]
-        self.selected_bands_by_type[band_type] = [broadband] + filtered_bands
-
-        label = getattr(self, f"{band_type}Label", None)
-        if label:
-            txt = ", ".join(
-                [f"{b['name']} ({b['min']}–{b['max']} Hz)" if b[
-                                                                  'name'] != "broadband" else f"broadband ({b['min']}–{b['max']} Hz)"
-                 for b in self.selected_bands_by_type[band_type]]
-            )
-            label.setText(txt)
-
-    def get_parameters_config(self):
-        """
-       Collects the current configuration of parameters from the UI.
-       """
-        # Configuration dict
-        config = {
-            "mean": True if self.view.meanCBox.isChecked() else None,
-            "median": True if self.view.medianCBox.isChecked() else None,
-            "variance": True if self.view.varianceCBox.isChecked() else None,
-            "kurtosis": True if self.view.kurtosisCBox.isChecked() else None,
-            "skewness": True if self.view.skewnessCBox.isChecked() else None,
-            "psd": True if self.view.psdCBox.isChecked() else None,
-            "psd_segment_pct": self.view.segmentpsdBox.value() if self.view.psdCBox.isChecked() else None,
-            "psd_overlap_pct": self.view.overlappsdBox.value() if self.view.psdCBox.isChecked() else None,
-            'psd_window': self.view.psdcomboBox.currentText() if self.view.psdCBox.isChecked() else None,
-            "relative_power": True if self.view.rpCBox.isChecked() else None,
-            "selected_rp_bands": self.selected_bands_by_type["rp"] if self.view.rpCBox.isChecked() else None,
-            "absolute_power": True if self.view.apCBox.isChecked() else None,
-            "median_frequency": True if self.view.mfCBox.isChecked() else None,
-            "spectral_entropy": True if self.view.seCBox.isChecked() else None,
-            "ctm": True if self.view.ctmCBox.isChecked() else None,
-            "ctm_r": self.view.ctmrBox.value() if self.view.ctmCBox.isChecked() else None,
-            "sample_entropy": True if self.view.sampenCBox.isChecked() else None,
-            "sample_entropy_r": self.view.sampenrBox.value() if self.view.sampenCBox.isChecked() else None,
-            "sample_entropy_m": self.view.sampenmBox.value() if self.view.sampenCBox.isChecked() else None,
-            "multiscale_sample_entropy": True if self.view.msampenCBox.isChecked() else None,
-            "multiscale_sample_entropy_r": self.view.msampenrBox.value() if self.view.msampenCBox.isChecked() else None,
-            "multiscale_sample_entropy_m": self.view.msampenmBox.value() if self.view.msampenCBox.isChecked() else None,
-            "multiscale_sample_entropy_scale": self.view.msampenscaleBox.value() if self.view.msampenCBox.isChecked() else None,
-            "lzc": True if self.view.lzcCBox.isChecked() else None,
-            "multiscale_lzc": True if self.view.mlzcCBox.isChecked() else None,
-            "multiscale_lzc_scales": ast.literal_eval(self.view.mlzcEdit.text()) if self.view.mlzcCBox.isChecked()
-                                                                               and self.view.mlzcEdit.text().strip() else None,
-            "iac": True if self.view.iacCBox.isChecked() else None,
-            "ort_iac": True if self.view.iacortButton.isChecked() and self.view.iacCBox.isChecked() else None,
-            "aec": True if self.view.aecCBox.isChecked() else None,
-            "ort_aec": True if self.view.aecortButton.isChecked() and self.view.aecCBox.isChecked() else None,
-            "pli": True if self.view.pliCBox.isChecked() else None,
-            "plv": True if self.view.plvCBox.isChecked() else None,
-            "wpli": True if self.view.wpliCBox.isChecked() else None
-        }
-        return config
+        if bands:
+            names = [f"{b['name']} ({b['min']}–{b['max']} Hz)" for b in bands]
+            self.view.rpLabel.setText(", ".join(names))
+        else:
+            self.view.rpLabel.setText("None")

@@ -174,6 +174,7 @@ class PreprocessingController:
         """
         Opens the band editor
         """
+        idx = self.view.main_window.stackedWidget.currentIndex()
         # If it is not initialized, do it
         if self.band_editor is None:
             self.band_editor = BandTableWidget(
@@ -183,6 +184,7 @@ class PreprocessingController:
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.band_editor.show()
         self.band_editor.show()
+        self.view.main_window.stackedWidget.widget(idx+2).rpCBox.setChecked(False)
 
 
     def disable_band_segmentation(self):
