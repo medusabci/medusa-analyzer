@@ -177,4 +177,4 @@ class ParametersController:
         for widget in [self.view.iacortLabel, self.view.iacortButton]:
             widget.setVisible(visible)
         # Default values
-        visible = self.view.iacCBox.isChecked()
+        self.view.iacortButton.setChecked(visible)

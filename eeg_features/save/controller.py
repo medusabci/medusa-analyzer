@@ -3,7 +3,7 @@ import json
 from PySide6 import QtWidgets
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication
-from eeg_features.core_process import run_pipeline
+from eeg_features.run_pipeline import run_pipeline
 
 
 class SaveController:
@@ -17,7 +17,6 @@ class SaveController:
         self.pipeline_completed = False
 
         self.view.selectfolderButton.clicked.connect(self.on_selectFolder_clicked)
-        self.view.runButton.clicked.connect(self.on_run_clicked)
 
 
     def on_selectFolder_clicked(self, *args, **kwargs):
@@ -35,7 +34,7 @@ class SaveController:
                 QtWidgets.QMessageBox.warning(self.view, "Error", "The selected folder is not empty. Please select an empty folder.")
             # Else, save the folder path and update the label
             else:
-                self.selected_folder = folder
+                self.view.selected_folder = folder
                 self.view.selectfolderLabel.setText(folder)
                 break
 
@@ -47,12 +46,12 @@ class SaveController:
         """
 
         # Path to save the JSON file
-        self.json_path = os.path.join(self.selected_folder, "settings.json")
+        self.json_path = os.path.join(self.view.selected_folder, "settings.json")
 
         # Save the settings in a JSON file with error handling
         try:
             self._log_message(f"Saving JSON in: {self.json_path}")
-            os.makedirs(self.selected_folder, exist_ok=True)  # Create the folder if it does not exist
+            os.makedirs(self.view.selected_folder, exist_ok=True)  # Create the folder if it does not exist
             with open(self.json_path, "w") as f:
                 json.dump(settings_dic, f, indent=4)
         except Exception as e:

@@ -50,11 +50,7 @@ def run_pipeline(self, settings_dic, total_tasks):
             np.abs(query_times - left) < np.abs(query_times - right), left, right)
         return closest
 
-    def get_condition_indices(data, condition_key):
-        """
-        Return indices of epochs matching a given condition label.
-        """
-        return np.where(np.array(data.marks.conditions_labels) == condition_key)[0]
+
 
     def get_event_indices_in_range(data, event_key, start_time, end_time):
         """
@@ -91,6 +87,38 @@ def run_pipeline(self, settings_dic, total_tasks):
             signal = medusa.FIRFilter(cfg['notch_order'], [cfg['notch_min'], cfg['notch_max']],
                                       'bandstop', window=cfg['notch_win']).fit_transform(signal, fs)
         return medusa.car(signal) if cfg.get('car') else signal
+
+        # Thresholding to reject noisy epochs
+        if epoched is not None and thresholding:
+            _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
+                epoched,
+                np.nanmean(current_signal, axis=0),
+                np.std(current_signal, axis=0),
+                k=thres_k,
+                n_samp=thres_samples,
+                n_cha=thres_channels
+            )
+
+    def apply_thresholding(current_signal, settings):
+
+        if settings['segmentation']['segmentation_type'] == 'condition':
+            segment_by_condition(data, current_signal, settings, '', None,
+                                 band=band_name if band_seg else None)
+        elif settings['segmentation']['segmentation_type'] == 'event':
+            segment_by_event(data, current_signal, settings, '', None, fs,
+                             band=band_name if band_seg else None)
+
+
+        # Thresholding to reject noisy epochs
+        if epoched is not None and settings['segmentation']["thresholding"]:
+            _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
+                epoched,
+                np.nanmean(current_signal, axis=0),
+                np.std(current_signal, axis=0),
+                k=settings['segmentation']['thres_k'],
+                n_samp=settings['segmentation']["thres_samples"],
+                n_cha=settings['segmentation']["thres_channels"]
+            )
 
     def band_filtering(signal, bp_min, bp_max, fs, cfg):
         """
@@ -129,12 +157,10 @@ def run_pipeline(self, settings_dic, total_tasks):
         norm_type = settings['segmentation']['norm_type'] if norm else None
         t_window = [0, int(settings['segmentation']['trial_length'])]
         selected_conditions = settings['segmentation']['selected_conditions']
-        thresholding = settings['segmentation']["thresholding"]
         resample = settings['segmentation']['resample']
         resample_fs = settings['segmentation']['resample_fs']
-        thres_k = settings['segmentation']['thres_k']
-        thres_samples = settings['segmentation']["thres_samples"]
-        thres_channels = settings['segmentation']["thres_channels"]
+
+
 
         def save_and_compute(epoched, cond_name):
             """
@@ -161,27 +187,17 @@ def run_pipeline(self, settings_dic, total_tasks):
                 # Segment into epochs for each condition
                 segments = []
                 for i in range(0, len(idx), 2):
-                    start = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
-                    end = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
+                    start = find_nearest_index(current_times, data.marks.conditions_times[idx[i]])
+                    end = find_nearest_index(current_times, data.marks.conditions_times[idx[i + 1]])
                     segment = current_signal[start:end]
                     epochs = medusa.get_epochs(segment, trial_len, stride=trial_stride, norm=norm_type)
                     if epochs is not None:
                         segments.append(epochs)
                 epoched = np.concatenate(segments, axis=0) if segments else None
 
-            # Thresholding to reject noisy epochs
-            if epoched is not None and thresholding:
-                _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
-                    epoched,
-                    np.nanmean(current_signal, axis=0),
-                    np.std(current_signal, axis=0),
-                    k=thres_k,
-                    n_samp=thres_samples,
-                    n_cha=thres_channels
-                )
-
             # Resampling
             if epoched is not None and resample:
+
                 epoched = medusa.resample_epochs(epoched, t_window, resample_fs)
 
             save_and_compute(epoched, cond)
@@ -227,8 +243,8 @@ def run_pipeline(self, settings_dic, total_tasks):
                 if cond == 'no-condition':
                     evt_key = data.marks.app_settings['events'][evt]['label']
                     onsets = np.array(data.marks.events_times)[np.array(data.marks.events_labels) == evt_key]
-                    onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
-                    epoched = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
+                    onsets_idx = find_nearest_index_array(current_times, onsets)
+                    epoched = medusa.get_epochs_of_events(current_times, current_signal, onsets_idx, fs, window,
                                                           baseline_window, norm=norm_type)
                 else:
                     cond_key = data.marks.app_settings['conditions'][cond]['label']
@@ -241,31 +257,20 @@ def run_pipeline(self, settings_dic, total_tasks):
 
                     segments = []
                     for i in range(0, len(idx), 2):
-                        start_idx = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i]])
-                        end_idx = find_nearest_index(data.eeg.times, data.marks.conditions_times[idx[i + 1]])
-                        start_time, end_time = data.eeg.times[start_idx], data.eeg.times[end_idx]
+                        start_idx = find_nearest_index(current_times, data.marks.conditions_times[idx[i]])
+                        end_idx = find_nearest_index(current_times, data.marks.conditions_times[idx[i + 1]])
+                        start_time, end_time = current_times[start_idx], current_times[end_idx]
 
                         evt_idx = get_event_indices_in_range(data, evt_key, start_time, end_time)
                         onsets = np.array(data.marks.events_times)[evt_idx]
-                        onsets_idx = find_nearest_index_array(data.eeg.times, onsets)
+                        onsets_idx = find_nearest_index_array(current_times, onsets)
 
-                        epochs = medusa.get_epochs_of_events(data.eeg.times, current_signal, onsets_idx, fs, window,
+                        epochs = medusa.get_epochs_of_events(current_times, current_signal, onsets_idx, fs, window,
                                                              baseline_window, norm=norm_type)
                         if epochs is not None:
                             segments.append(epochs)
 
                     epoched = np.concatenate(segments, axis=0) if segments else None
-
-                # Thresholding to reject noisy epochs
-                if epoched is not None and thresholding:
-                    _, epoched, _ = medusa.artifact_removal.reject_noisy_epochs(
-                        epoched,
-                        np.nanmean(current_signal, axis=0),
-                        np.std(current_signal, axis=0),
-                        k=thres_k,
-                        n_samp=thres_samples,
-                        n_cha=thres_channels
-                    )
 
                 # Resampling
                 if epoched is not None and resample:
@@ -333,9 +338,11 @@ def run_pipeline(self, settings_dic, total_tasks):
             # Label the current band (e.g., "alpha", "beta") or default to "broadband"
             band_label = band if band is not None else "broadband"
             # Store PSD values: average across trials if averaging is enabled
-            params[f'psd_{band_label}'] = np.nanmean(psd_band, axis=0) if avg else psd_band
-            params[f'psd_freq_{band_label}'] = fxx_band
-
+            try:
+                params[f'psd_{band_label}'] = np.nanmean(psd_band, axis=0) if avg else psd_band
+                params[f'psd_freq_{band_label}'] = fxx_band
+            except Exception as e:
+                print(e)
         # --- PSD for broadband (used for relative power) ---
         if settings['parameters'].get('relative_power', False):
             # Define broadband frequency range
@@ -505,6 +512,7 @@ def run_pipeline(self, settings_dic, total_tasks):
             data = medusa.components.Recording.load(file)
             name_signal = settings_dic['files']['selected_biosignal']  # ej: "eeg"
             current_signal = getattr(data, name_signal).signal
+            current_times = getattr(data, name_signal).times
             fs = getattr(data, name_signal).fs
 
             # Ensure consistent sampling frequency
@@ -523,6 +531,38 @@ def run_pipeline(self, settings_dic, total_tasks):
             total_steps = total_files * len(bands)
 
             # ------------------------------
+            # Apply preprocessing if enabled
+            # ------------------------------
+            processed_signal = current_signal.copy()
+
+            if settings_dic['preprocessing'].get('apply_preprocessing'):
+                processed_signal = apply_preprocessing(processed_signal, fs, {**settings_dic['preprocessing']})
+
+            if settings_dic['segmentation'].get('thresholding'):
+                processed_signal = apply_thresholding(processed_signal, fs, {**settings_dic['segmentation']})
+
+
+
+
+                obj = getattr(data, name_signal)
+                setattr(obj, "signal", processed_signal)
+                save_outputs(deepcopy(data), base_name, '', 'prep')
+
+
+
+
+
+
+            else:  # If no preprocessing, apply only the band segmentation (if apply)
+                if band_seg:
+                    processed_signal = band_filtering(current_signal.copy(), bp_min, bp_max, fs, cfg)
+                    # data.eeg.signal = processed_signal
+                    obj = getattr(data, name_signal)
+                    setattr(obj, "signal", processed_signal)
+                else:
+                    processed_signal = current_signal
+
+            # ------------------------------
             # Process each frequency band
             # ------------------------------
             for j, band in enumerate(bands):
@@ -537,6 +577,9 @@ def run_pipeline(self, settings_dic, total_tasks):
                 # ------------------------------
                 # Apply preprocessing if enabled
                 # ------------------------------
+
+
+
                 if settings_dic['preprocessing'].get('apply_preprocessing'):
                     if band_seg:
                         cfg.update({'bp_min': bp_min, 'bp_max': bp_max})
@@ -545,13 +588,16 @@ def run_pipeline(self, settings_dic, total_tasks):
                         signal_to_process = current_signal
 
                     processed_signal = apply_preprocessing(signal_to_process, fs, cfg)
-                    data.eeg.signal = processed_signal
+                    obj = getattr(data, name_signal)
+                    setattr(obj, "signal", processed_signal)
                     save_outputs(deepcopy(data), base_name, band_name, 'prep')
 
                 else:  # If no preprocessing, apply only the band segmentation (if apply)
                     if band_seg:
                         processed_signal = band_filtering(current_signal.copy(), bp_min, bp_max, fs, cfg)
-                        data.eeg.signal = processed_signal
+                        # data.eeg.signal = processed_signal
+                        obj = getattr(data, name_signal)
+                        setattr(obj, "signal", processed_signal)
                     else:
                         processed_signal = current_signal
 

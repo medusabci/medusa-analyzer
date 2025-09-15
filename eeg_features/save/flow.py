@@ -31,7 +31,7 @@ def on_next_click(view):
     if not view.controller.pipeline_completed:
 
         # If no folder is selected, show a warning and return
-        if not view.controller.selected_folder:
+        if not view.selected_folder:
             QtWidgets.QMessageBox.warning(view, "Error", "Please, select one folder to save the data.")
             return
 
@@ -52,10 +52,10 @@ def on_next_click(view):
 
         # Get configuration data, with error handling
         try:
-            files = view.main_window.files_widget.get_files_config()
-            preprocessing = view.main_window.preproc_widget.get_preprocessing_config()
-            segmentation = view.main_window.segmentation_widget.get_segmentation_config()
-            parameters = view.main_window.parameters_widget.get_parameters_config()
+            files = view.main_window.controller.files_config
+            preprocessing = view.main_window.controller.preproc_config
+            segmentation = view.main_window.controller.segmentation_config
+            parameters = view.main_window.controller.parameters_config
         except AttributeError as e:
             QtWidgets.QMessageBox.critical(view, "Error",
                                            f"Unable to obtain the data from the main window: {e}")
@@ -73,14 +73,15 @@ def on_next_click(view):
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
         # Run the pipeline
-        success = view.controller.run_pipeline(view.controller, view.controller.settings_dic, total_tasks)
+        success = run_pipeline(view.controller, view.controller.settings_dic, total_tasks)
 
         # If success change the button text to "Close"
         if success:
             view.main_window.nextButton.setText('Close')
 
         # Set the pipeline as completed, to avoid computing it again and closing the app
-        view.controller.pipeline_completed = True
+        # view.controller.pipeline_completed = True
+        view.main_window.backButton.setEnabled(False)
 
         return False # Prevent closing the app immediately
 

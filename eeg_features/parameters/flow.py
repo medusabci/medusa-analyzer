@@ -61,6 +61,5 @@ def on_next_click(view):
         return False
     # Save config
     view.main_window.controller.parameters_config = get_parameters_config(view.controller)
-    print(get_parameters_config)
     return True
 

@@ -110,7 +110,6 @@ def on_next_click(view):
 
 
 
-
     # Get the next widget (that will be the segmentation widget)
     idx = view.main_window.stackedWidget.currentIndex()
     segmentation = view.main_window.stackedWidget.widget(idx + 1)
@@ -123,7 +122,7 @@ def on_next_click(view):
     # If band segmentation is selected, move the band selection to the RP
     if view.bandCBox.isChecked():
         text = view.bandLabel.text()
-        view.main_window.stackedWidget.widget(idx + 2).controller.view.rpLabel.setText('Using bands from band segmentation step' + text)
+        view.main_window.stackedWidget.widget(idx + 2).controller.view.rpLabel.setText('Using bands from band segmentation step - ' + text)
 
     return True
 

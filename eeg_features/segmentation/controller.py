@@ -176,6 +176,12 @@ class SegmentationController:
         for w in [self.view.newfsLabel, self.view.resamplefsBox]:
             w.setVisible(checked)
 
+        # Set the label informing about the fs limitation
+        preprocessing = self.view.main_window.stackedWidget.widget(2)
+        max_broadband = preprocessing.maxbroadBox.value()
+        self.view.resampleLabelNyquist.setText(r'Minimum fs: ' + str(max_broadband * 2) + ' Hz - Nyquist Theorem')
+        self.view.resamplefsBox.setMinimum(max_broadband * 2)
+
         # Reset default values
         if not checked:
             self.view.resamplefsBox.setValue(self.view.defaults["resamplefs"])
