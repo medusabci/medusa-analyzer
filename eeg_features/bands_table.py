@@ -21,7 +21,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.min_broad = preprocessing_widget.view.minbroadBox.value()
         self.max_broad = preprocessing_widget.view.maxbroadBox.value()
         self.correct_bands = []
-        self._showing_forbidden = False
 
         # Set the broadband label values
         self.minbroadbandLabel.setText(f"{self.min_broad:.1f}")
@@ -35,7 +34,21 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setDragDropOverwriteMode(False)
         self.bandsTable.setDefaultDropAction(Qt.MoveAction)
         self.bandsTable.setDropIndicatorShown(True)
-        self.bandsTable.installEventFilter(self)  # already set; used now to block overwrite drops
+
+        # Store the original dropEvent method
+        original_drop = self.bandsTable.dropEvent
+        def safe_drop_event(event):
+            # Get the drop row
+            pos = event.pos()
+            row = self.bandsTable.rowAt(pos.y())
+            # If it is below the last row, ignore the event
+            if row == -1:
+                event.ignore()
+                return
+            # Otherwise, call the original dropEvent method
+            original_drop(event)
+        # Set the new dropEvent method as the table's dropEvent
+        self.bandsTable.dropEvent = safe_drop_event
 
 
         ### ELEMENT CONFIGURATION ###
@@ -60,12 +73,11 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
                 gridline-color: #bdc3c7;
                 background-color: #f9f9f9;
                 alternate-background-color: #ecf0f1;
-                selection-background-color: #2980b9;
-                selection-color: white;
                 border-radius: 8px;
             }
             QTableWidget::item {
                 padding: 6px;
+                selection-background-color: transparent;
             }
         """)
         # Set a different style for the header
@@ -292,30 +304,3 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             self.parameters_widget.update_band_label(self.band_type, self.correct_bands)
         self.close()
 
-
-    def eventFilter(self, source, event):
-        # Only care about events in the table
-        if source is self.bandsTable:
-            et = event.type() # Store event
-            # Only care about drag move and drop events
-            if et in (QtCore.QEvent.DragMove, QtCore.QEvent.Drop):
-                # If the drop is on an item...
-                if self.bandsTable.dropIndicatorPosition() == QtWidgets.QAbstractItemView.OnItem:
-                    # ignore the event to avoid overwriting items
-                    event.ignore()
-                    # Set the forbidden cursor if not already set
-                    if not self._showing_forbidden and et == QtCore.QEvent.DragMove:
-                        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ForbiddenCursor)
-                        self._showing_forbidden = True
-                    # If the event is a drop and the cursor is forbidden, restore the cursor
-                    if et == QtCore.QEvent.Drop:
-                        if self._showing_forbidden:
-                            QtWidgets.QApplication.restoreOverrideCursor()
-                            self._showing_forbidden = False
-                    return True
-                else:
-                    # If the event is in the intersection area and the cursor is forbidden, restore the cursor
-                    if self._showing_forbidden:
-                        QtWidgets.QApplication.restoreOverrideCursor()
-                        self._showing_forbidden = False
-        return super().eventFilter(source, event)
