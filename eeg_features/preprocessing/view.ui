@@ -851,7 +851,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>- Filter signal into frequency bands to compute band-specific parameter</string>
+           <string>- Filter signal into frequency bands to compute band-specific parameter - Filter parameters will be taken from the band-pass filtering</string>
           </property>
          </widget>
         </item>

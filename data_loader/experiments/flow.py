@@ -19,7 +19,7 @@ def on_next_click(view):
         widget_path = widget_info['path'].replace('/','.') # use dots instead of slashes
 
         # Import the view
-        ui_module = importlib.import_module(f"{widget_path}.ui")
+        ui_module = importlib.import_module(f"{widget_path}.view")
         # Import the controller
         ctrl_module = importlib.import_module(f"{widget_path}.controller")
 
