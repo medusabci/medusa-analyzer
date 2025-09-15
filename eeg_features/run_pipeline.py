@@ -458,7 +458,7 @@ def run_pipeline(self, settings_dic, total_tasks):
             makedirs(output_dir, exist_ok=True)
             output_path = join(output_dir, f"{base_name}_preprocessing_{suffix}.mat")
             data.save_to_mat(output_path)
-            self.log_message(f"Preprocessed saved in: {output_path}")
+            self._log_message(f"Preprocessed saved in: {output_path}")
 
         # ------------------------------
         # Save segmented signals
@@ -468,7 +468,7 @@ def run_pipeline(self, settings_dic, total_tasks):
             makedirs(output_dir, exist_ok=True)
             output_path = join(output_dir, f"{base_name}_{suffix}.mat")
             savemat(output_path, {'epochs': data})
-            self.log_message(f"Segmentation saved in: {output_path}")
+            self._log_message(f"Segmentation saved in: {output_path}")
 
         # ------------------------------
         # Save computed parameters
@@ -476,10 +476,10 @@ def run_pipeline(self, settings_dic, total_tasks):
         if self.view.paramsignalsCBox.isChecked() and key == 'param':
             output_dir = join(self.view.selected_folder, "Signal_parameters")
             makedirs(output_dir, exist_ok=True)
-            self.log_message(f"Parameters: folder ready in {output_dir}")
+            self._log_message(f"Parameters: folder ready in {output_dir}")
             output_path = join(output_dir, f"{base_name}_{suffix}.mat")
             savemat(output_path, {'parameters': data})
-            self.log_message(f"Parameters saved in: {output_path}")
+            self._log_message(f"Parameters saved in: {output_path}")
 
     # ------------------------------
     # Main pipeline execution
@@ -494,7 +494,7 @@ def run_pipeline(self, settings_dic, total_tasks):
             # ------------------------------
             # Logging and GUI updates
             # ------------------------------
-            self.log_message(f"Processing file: {file}")
+            self._log_message(f"Processing file: {file}")
             self.view.progressLabel.setText(f"Processing: {basename(file)}")
             QtWidgets.QApplication.processEvents()
 
@@ -574,5 +574,5 @@ def run_pipeline(self, settings_dic, total_tasks):
         # ------------------------------
         except Exception as e:
             error_found = True
-            self.log_message(f"Error preprocessing {file}: {e}", style='error')
+            self._log_message(f"Error preprocessing {file}: {e}", style='error')
     return not error_found
