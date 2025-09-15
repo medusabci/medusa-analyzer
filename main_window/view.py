@@ -21,7 +21,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
         font = QtGui.QFont("Arial", 36, QtGui.QFont.Weight.Bold)
         painter.setFont(font)
 
-        text = "MEDUSA© Analyzer"
+        text = "MEDUSA Analyzer"
         fm = QtGui.QFontMetrics(font)
         text_width = fm.horizontalAdvance(text)
 

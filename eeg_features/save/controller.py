@@ -54,7 +54,7 @@ class SaveController:
             self._log_message(f"Saving JSON in: {self.json_path}")
             os.makedirs(self.selected_folder, exist_ok=True)  # Create the folder if it does not exist
             with open(self.json_path, "w") as f:
-                json.dump(self.settings_dic, f, indent=4)
+                json.dump(settings_dic, f, indent=4)
         except Exception as e:
             self._log_message(f"ERROR SAVING JSON: {e}")
             QtWidgets.QMessageBox.critical(self.view, "Error", f"Could not save the JSON file: {str(e)}")

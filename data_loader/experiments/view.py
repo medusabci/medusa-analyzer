@@ -20,6 +20,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.description_label.setTextFormat(QtCore.Qt.RichText)
         self.description_label.setWordWrap(True)
         self.description_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.description_label.setOpenExternalLinks(True)
 
         self.description_label.setText("""
             <div style="text-align:center; font-family:'Segoe UI', Arial;">
@@ -29,7 +30,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
 
                 <p style="font-size: 11pt; color:#777; margin:0 40px;">
                     For more information, see the 
-                    <a href="https://editorialcirculorojo.com/feliz-dia-lleno-de-colores/" 
+                    <a href="https://docs.medusabci.com/platform/v2024/getstarted.php" 
                        style="color:#007acc; font-weight:bold; text-decoration:none;">
                        manual of use
                     </a>.
