@@ -18,5 +18,6 @@ def on_next_click(view):
     biosignal_txt = view.biosignalBox.currentText()
     biosignal = biosignal_txt.split(" ")[1]
     view.controller.biosignal_info = view.controller.biosignals[biosignal]
+    view.main_window.files_config = get_files_config(view.controller)
 
     return True

@@ -32,11 +32,12 @@ class SaveController:
                     print(f"[ERROR] {func.__name__}: {str(e)}")
         return wrapper
 
-    def save_settings_to_json(self, preprocessing, segmentation, parameters):
+    def save_settings_to_json(self, files, preprocessing, segmentation, parameters):
         """
         Prepares and saves the configuration parameters into a JSON file.
         """
         self.settings_dic = {
+            "files"
             "preprocessing": preprocessing,
             "segmentation": segmentation,
             "parameters": parameters
