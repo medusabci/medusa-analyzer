@@ -12,10 +12,8 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
 
     def __init__(self, main_window):
         super().__init__()
-
         # Setup UI
         self.setupUi(self)
-
         # Define variables
         self.main_window = main_window
 

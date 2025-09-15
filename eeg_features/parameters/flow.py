@@ -47,7 +47,7 @@ def on_next_click(view):
     """
     Handles the event when the "Next" button is clicked. It initializes the save widget,
     """
-    # Save config TODO: ver si lo guardamos en la main window o como lo gestionamos
+    # Save config
     view.main_window.controller.preproc_config = get_parameters_config
     return True
 

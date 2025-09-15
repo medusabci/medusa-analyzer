@@ -191,6 +191,7 @@ class PreprocessingController:
         self.view.selected_bands_by_type = getattr(self, "selected_bands_by_type", {})
         self.view.selected_bands_by_type[filtering_target] = bands
 
+        # Edit the label with the names and ranges of the selected bands, or "None" if no band is selected
         if bands:
             names = [f"{b['name']} ({b['min']}–{b['max']} Hz)" for b in bands]
             self.view.bandLabel.setText(", ".join(names))

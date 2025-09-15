@@ -403,7 +403,7 @@ def run_pipeline(self, settings_dic, total_tasks):
             makedirs(output_dir, exist_ok=True)
             output_path = join(output_dir, f"{base_name}_preprocessing_{suffix}.mat")
             data.save_to_mat(output_path)
-            self.log_message(f"Preprocessed saved in: {output_path}")
+            self._log_message(f"Preprocessed saved in: {output_path}")
 
         # Stores the segmented signals
         if self.segsignalsCBox.isChecked() and key == 'seg':
@@ -411,16 +411,16 @@ def run_pipeline(self, settings_dic, total_tasks):
             makedirs(output_dir, exist_ok=True)
             output_path = join(output_dir, f"{base_name}_{suffix}.mat")
             savemat(output_path, {'epochs': data})
-            self.log_message(f"Segmentation saved in: {output_path}")
+            self._log_message(f"Segmentation saved in: {output_path}")
 
         # Stores the parameters
         if self.paramsignalsCBox.isChecked() and key == 'param':
             output_dir = join(self.selected_folder, "Signal_parameters")
             makedirs(output_dir, exist_ok=True)
-            self.log_message(f"Parameters: folder ready in {output_dir}")
+            self._log_message(f"Parameters: folder ready in {output_dir}")
             output_path = join(output_dir, f"{base_name}_{suffix}.mat")
             savemat(output_path, {'parameters': data})
-            self.log_message(f"Parameters saved in: {output_path}")
+            self._log_message(f"Parameters saved in: {output_path}")
 
     # Here is where run_pipeline begins
 
@@ -432,7 +432,7 @@ def run_pipeline(self, settings_dic, total_tasks):
     for i, file in enumerate(selected_files):
         try:
             # Logging: preprocessing
-            self.log_message(f"Processing file: {file}")
+            self._log_message(f"Processing file: {file}")
             self.progressLabel.setText(f"Processing: {basename(file)}")
             QtWidgets.QApplication.processEvents()
             # Variable definition
@@ -491,5 +491,5 @@ def run_pipeline(self, settings_dic, total_tasks):
         # Exception handling
         except Exception as e:
             error_found = True
-            self.log_message(f"Error preprocessing {file}: {e}", style='error')
+            self._log_message(f"Error preprocessing {file}: {e}", style='error')
     return not error_found

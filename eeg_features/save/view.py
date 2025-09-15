@@ -51,7 +51,3 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         self.selected_folder = None
         for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
             w.setChecked(True)
-
-
-        # --- ELEMENT SETUP ---
-

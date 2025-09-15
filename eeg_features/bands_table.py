@@ -36,20 +36,9 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setDropIndicatorShown(True)
 
         # Store the original dropEvent method
-        original_drop = self.bandsTable.dropEvent
-        def safe_drop_event(event):
-            # Get the drop row
-            pos = event.pos()
-            row = self.bandsTable.rowAt(pos.y())
-            # If it is below the last row, ignore the event
-            if row == -1:
-                event.ignore()
-                return
-            # Otherwise, call the original dropEvent method
-            original_drop(event)
-        # Set the new dropEvent method as the table's dropEvent
-        self.bandsTable.dropEvent = safe_drop_event
-
+        self._original_drop_event = self.bandsTable.dropEvent
+        # Replace the dropEvent method with a safe version
+        self.bandsTable.dropEvent = self.safe_drop_event
 
         ### ELEMENT CONFIGURATION ###
 
@@ -98,6 +87,19 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
 
         # Set initial state
         self.setup_table()
+
+    def safe_drop_event(self, event):
+        """
+        Safe drop event to avoid dropping outside the table rows
+        """
+        # Get the row where the drop is attempted
+        row = self.bandsTable.rowAt(event.pos().y())
+        # If the row is -1 (outside the table), ignore the event
+        if row == -1:
+            event.ignore()
+            return
+        # Otherwise, call the original drop event method
+        self._original_drop_event(event)
 
 
     def setup_table(self):
