@@ -2,7 +2,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 
 # Load UI class
-ui_experiments = loadUiType('data_loader/experiments/ui.ui')[0]
+ui_experiments = loadUiType('data_loader/experiments/view.ui')[0]
 
 class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
     def __init__(self, main_window):

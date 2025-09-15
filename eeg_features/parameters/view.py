@@ -2,7 +2,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 
 # Load UI class
-ui_parameters_widget = loadUiType('eeg_features/parameters/ui.ui')[0]
+ui_parameters_widget = loadUiType('eeg_features/parameters/view.ui')[0]
 
 class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
     """

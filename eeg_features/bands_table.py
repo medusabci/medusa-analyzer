@@ -49,10 +49,11 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             {"name": "gamma", "min": 30, "max": 70},
         ]
 
-        self.addButton.clicked.connect(lambda: self.add_band()) # Add a new band with default values
+        self.addButton.clicked.connect(self.add_band)
         self.resetButton.clicked.connect(self.on_reset_click)
         self.acceptButton.clicked.connect(self.on_accept_click)
 
+        # Set the table style, with alteranting row colors (light gray - white - light gray - white...)
         self.bandsTable.setAlternatingRowColors(True)
         self.bandsTable.setStyleSheet("""
             QTableWidget {
@@ -67,7 +68,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
                 padding: 6px;
             }
         """)
-
+        # Set a different style for the header
         header = self.bandsTable.horizontalHeader()
         header.setStyleSheet("""
             QHeaderView::section {
@@ -79,7 +80,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             }
         """)
         header.setSectionResizeMode(QtWidgets.QHeaderView.Stretch)
-
+        # Disable the vertical header (as we don't have)
         self.bandsTable.verticalHeader().setVisible(False)
         self.bandsTable.verticalHeader().setDefaultSectionSize(36)
 
@@ -102,12 +103,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         for i in range(4):
             item = self.bandsTable.horizontalHeaderItem(i)
             item.setFont(font)
-
-        # # Drag and drop functionality
-        # self.bandsTable.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
-        # self.bandsTable.setDragDropOverwriteMode(False)
-        # self.bandsTable.setSelectionBehavior(QtWidgets.QTableWidget.SelectRows)
-        # self.bandsTable.setDefaultDropAction(Qt.MoveAction)
 
         # Clear all the table contents
         self.bandsTable.clearContents()
@@ -194,19 +189,6 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         if response == QtWidgets.QMessageBox.StandardButton.Yes:
             # Set table to default state
             self.setup_table()
-
-
-    # Helper function that returns the broadband values
-    def _get_broadband_range(self):
-
-        return float(self.minbroadbandLabel.text()), float(self.maxbroadbandLabel.text())
-
-
-    # Helper function to update the broadband values
-    def _set_broadband_range(self, min_broad, max_broad):
-
-        self.minbroadbandLabel.setText(f"{min_broad:.1f}")
-        self.maxbroadbandLabel.setText(f"{max_broad:.1f}")
 
     def closeEvent(self, event):
         """
@@ -310,27 +292,30 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
             self.parameters_widget.update_band_label(self.band_type, self.correct_bands)
         self.close()
 
+
     def eventFilter(self, source, event):
+        # Only care about events in the table
         if source is self.bandsTable:
-            et = event.type()
+            et = event.type() # Store event
+            # Only care about drag move and drop events
             if et in (QtCore.QEvent.DragMove, QtCore.QEvent.Drop):
+                # If the drop is on an item...
                 if self.bandsTable.dropIndicatorPosition() == QtWidgets.QAbstractItemView.OnItem:
-                    # Block overwrite
+                    # ignore the event to avoid overwriting items
                     event.ignore()
+                    # Set the forbidden cursor if not already set
                     if not self._showing_forbidden and et == QtCore.QEvent.DragMove:
                         QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ForbiddenCursor)
                         self._showing_forbidden = True
+                    # If the event is a drop and the cursor is forbidden, restore the cursor
                     if et == QtCore.QEvent.Drop:
                         if self._showing_forbidden:
                             QtWidgets.QApplication.restoreOverrideCursor()
                             self._showing_forbidden = False
                     return True
                 else:
+                    # If the event is in the intersection area and the cursor is forbidden, restore the cursor
                     if self._showing_forbidden:
                         QtWidgets.QApplication.restoreOverrideCursor()
                         self._showing_forbidden = False
-            # elif et in (QtCore.QEvent.DragLeave, QtCore.QEvent.DragEnd):
-            #     if self._showing_forbidden:
-            #         QtWidgets.QApplication.restoreOverrideCursor()
-            #         self._showing_forbidden = False
         return super().eventFilter(source, event)

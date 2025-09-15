@@ -83,7 +83,7 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked. It initializes the segmentation widget with the information of
     the events and conditions of the selected file
     """
-
+    # If preprocessing is enabled, ensure at least one preprocessing option is selected
     if view.preprocessingButton.isChecked() and not (
             view.carCBox.isChecked() or view.bpCBox.isChecked() or view.notchCBox.isChecked()):
         QtWidgets.QMessageBox.critical(
@@ -93,10 +93,23 @@ def on_next_click(view):
             "Alternatively, disable \"Preprocess data\" to proceed without filtering."
         )
         return False
+
     # If band segmentation is selected, ensure at least one band is chosen
     if view.bandCBox.isChecked() and view.bandLabel.text() == 'None':
         QtWidgets.QMessageBox.critical(view, "Error", "Please, select at least one frequency band for segmentation, or uncheck \"Band filtering\" selection.")
         return False
+
+    # Notch inside bandpass
+    if view.bpCBox.isChecked() and view.notchCBox.isChecked():
+        if not (view.minfreqbpBox.value() <= view.minfreqnotchBox.value() <= view.maxfreqbpBox.value()
+            and view.minfreqbpBox.value() <= view.maxfreqnotchBox.value() <= view.maxfreqbpBox.value()):
+
+            QtWidgets.QMessageBox.warning(view, "Invalid notch",
+                                          f"Notch is outside bandpass range. Please adjust or disable it before proceeding.")
+            return False
+
+
+
 
     # Get the next widget (that will be the segmentation widget)
     idx = view.main_window.stackedWidget.currentIndex()
@@ -104,8 +117,13 @@ def on_next_click(view):
     # Initialize the segmentation widget
     files_controller_widget = view.main_window.stackedWidget.widget(idx - 1).controller
     segmentation.controller.load_marks_from_file(files_controller_widget.selected_files[0])
-    # Save config TODO: ver si lo guardamos en la main window o como lo gestionamos
+    # Save config
     view.main_window.controller.preproc_config = get_preprocessing_config(view.controller)
+
+    # If band segmentation is selected, move the band selection to the RP
+    if view.bandCBox.isChecked():
+        text = view.bandLabel.text()
+        view.main_window.stackedWidget.widget(idx + 2).controller.view.rpLabel.setText('Using bands from band segmentation step' + text)
 
     return True
 

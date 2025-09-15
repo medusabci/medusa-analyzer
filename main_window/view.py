@@ -1,11 +1,11 @@
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtUiTools import loadUiType
-from data_loader.experiments.ui import ExperimentWidget
+from data_loader.experiments.view import ExperimentWidget
 from data_loader.experiments.controller import ExperimentsController
 from PySide6.QtGui import QPalette
 
 # Load UI class
-ui_main_window = loadUiType('main_window/ui.ui')[0]
+ui_main_window = loadUiType('main_window/view.ui')[0]
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """

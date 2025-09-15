@@ -3,7 +3,7 @@ from PySide6.QtUiTools import loadUiType
 
 
 # Load UI class
-ui_save_widget = loadUiType("eeg_features/save/ui.ui")[0]
+ui_save_widget = loadUiType("eeg_features/save/view.ui")[0]
 
 class SaveWidget(QtWidgets.QWidget, ui_save_widget):
     """

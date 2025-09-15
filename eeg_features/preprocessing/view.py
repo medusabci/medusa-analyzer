@@ -14,7 +14,7 @@ class MplCanvas(FigureCanvas):
         self.setParent(parent)
 
 # Load UI class
-ui_preprocessing = loadUiType('eeg_features/preprocessing/ui.ui')[0]
+ui_preprocessing = loadUiType('eeg_features/preprocessing/view.ui')[0]
 
 class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
     shown = QtCore.Signal()

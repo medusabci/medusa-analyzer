@@ -15,6 +15,7 @@ class PreprocessingController:
         # Broadband
         self.view.minbroadBox.valueChanged.connect(self.disable_band_segmentation)
         self.view.maxbroadBox.valueChanged.connect(self.disable_band_segmentation)
+        self.view.broadbandButton.clicked.connect(self.broadband_info)
         # Notch
         self.view.notchCBox.toggled.connect(self.on_notch_toggle)
         self.view.notchCBox.toggled.connect(lambda: self.update_filter_plot('notch'))
@@ -46,6 +47,13 @@ class PreprocessingController:
         # Set initial state
         self.view.shown.connect(self.on_show_event)
         reset_all_controls(self)
+
+
+    def broadband_info(self):
+
+        QtWidgets.QMessageBox.information(self.view, "Broadband info",
+                                      f"We need to know the frequency range of your data in case it has been previously filtered."
+                                      f" Otherwise, it will automatically be updated based on the preprocessing selections you made.")
 
 
     def on_preprocessing_toggle(self, checked):
@@ -137,25 +145,6 @@ class PreprocessingController:
             getattr(self.view, f"{dmax}Box").setValue(self.view.defaults[dmax])
             return False
 
-        # 2. Notch inside bandpass. If not, adjust notch values to a sensible window inside the bandpass
-        if self.view.bpCBox.isChecked() and self.view.notchCBox.isChecked():
-            if not (self.view.minfreqbpBox.value() <= self.view.minfreqnotchBox.value() <= self.view.maxfreqbpBox.value()
-                and self.view.minfreqbpBox.value() <= self.view.maxfreqnotchBox.value() <= self.view.maxfreqbpBox.value()):
-                bp_min, bp_max = self.view.minfreqbpBox.value(), self.view.maxfreqbpBox.value()
-                bp_w = bp_max - bp_min
-                default_w = self.view.defaults["maxfreqnotch"] - self.view.defaults["minfreqnotch"]
-                # choose notch width: prefer default_w, but limit to a fraction of bandpass and a sensible minimum
-                notch_w = min(default_w, max(0.5, bp_w * 0.25))
-                if notch_w >= bp_w: notch_w = max(0.5, bp_w * 0.5)
-                # center the notch near the default center but clamp it inside bandpass margins
-                default_center = (self.view.defaults["minfreqnotch"] + self.view.defaults["maxfreqnotch"]) / 2
-                center = min(max(default_center, bp_min + notch_w / 2), bp_max - notch_w / 2)
-                new_min, new_max = center - notch_w / 2, center + notch_w / 2
-                self.view.minfreqnotchBox.setValue(new_min);
-                self.view.maxfreqnotchBox.setValue(new_max)
-                QtWidgets.QMessageBox.warning(self.view, "Notch adjusted",
-                                              f"Notch was outside bandpass — adjusted to {new_min:.2f}–{new_max:.2f} Hz.")
-                return True
         return True
 
 

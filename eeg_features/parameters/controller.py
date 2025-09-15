@@ -45,11 +45,12 @@ class ParametersController:
         """
         visible = self.view.rpCBox.isChecked()
 
+        self.view.rpselectedbandsLabel.setVisible(visible)
+        self.view.rpselectedbandsauxLabel.setVisible(visible)
+        self.view.rpLabel.setVisible(visible)
+
         if not self.view.main_window.controller.preproc_config['band_segmentation']:
             self.view.rpButton.setVisible(visible)
-            self.view.rpselectedbandsLabel.setVisible(visible)
-            self.view.rpselectedbandsauxLabel.setVisible(visible)
-            self.view.rpLabel.setVisible(visible)
             if visible:
                 QtWidgets.QMessageBox.warning(
                     self.view,

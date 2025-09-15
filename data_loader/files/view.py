@@ -2,7 +2,7 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 
 # Load UI class
-ui_files = loadUiType('data_loader/files/ui.ui')[0]
+ui_files = loadUiType('data_loader/files/view.ui')[0]
 
 class FilesWidget(QtWidgets.QWidget, ui_files):
     def __init__(self, main_window):
