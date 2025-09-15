@@ -1,4 +1,5 @@
 import ast
+from PySide6 import QtWidgets
 
 def get_parameters_config(controller):
     """
@@ -47,7 +48,19 @@ def on_next_click(view):
     """
     Handles the event when the "Next" button is clicked. It initializes the save widget,
     """
+    preprocessing_widget = view.main_window.stackedWidget.widget(2)
+    rp_bands = view.controller.selected_bands_by_type.get('rp', [])
+    if view.rpCBox.isChecked() and not preprocessing_widget.bandCBox.isChecked() and not rp_bands:
+        QtWidgets.QMessageBox.critical(
+            view,
+            "Invalid configuration",
+            "To compute the Relative Power, you must select at least one frequency band. "
+            "Please click the 'Edit bands' to choose one or more bands "
+            "before enabling the calculation of relative power."
+        )
+        return False
     # Save config
-    view.main_window.controller.preproc_config = get_parameters_config
+    view.main_window.controller.parameters_config = get_parameters_config(view.controller)
+    print(get_parameters_config)
     return True
 
