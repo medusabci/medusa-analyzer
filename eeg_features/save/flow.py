@@ -1,4 +1,4 @@
-from eeg_features.run_pipeline import run_pipeline
+from run_pipeline_new import run_pipeline
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
@@ -19,6 +19,9 @@ def handle_exceptions(func):
             else:
                 print(f"[ERROR] {func.__name__}: {str(e)}")
 
+            # To vaoid closing the app
+            return False
+
     return wrapper
 
 
@@ -33,7 +36,7 @@ def on_next_click(view):
         # If no folder is selected, show a warning and return
         if not view.selected_folder:
             QtWidgets.QMessageBox.warning(view, "Error", "Please, select one folder to save the data.")
-            return
+            return False
 
         # Visibility of progress bars
         view.progressLabel.show()

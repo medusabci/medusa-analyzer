@@ -61,5 +61,11 @@ def on_next_click(view):
         return False
     # Save config
     view.main_window.controller.parameters_config = get_parameters_config(view.controller)
+
+    # If no preprocessing is selected, disable the option to save preprocessed signals
+    if not preprocessing_widget.preprocessingButton.isChecked():
+        save_widget = view.main_window.stackedWidget.widget(5)
+        save_widget.prepsignalsCBox.setVisible(False)
+
     return True
 
