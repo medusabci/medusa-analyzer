@@ -621,4 +621,5 @@ def run_pipeline(self, settings_dic, total_tasks):
         except Exception as e:
             error_found = True
             self._log_message(f"Error preprocessing {file}: {e}", style='error')
+
     return not error_found
