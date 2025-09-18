@@ -3,7 +3,7 @@ import json
 from PySide6 import QtWidgets
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import QApplication
-from eeg_features.run_pipeline import run_pipeline
+from eeg_features.run_pipeline_old import run_pipeline
 
 
 class SaveController:
