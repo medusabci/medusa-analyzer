@@ -53,6 +53,16 @@ def on_next_click(view):
         ])
         total_tasks = max(total_tasks, 1)  # To avoid division by 0
 
+        # If we are band segmenting, include the broadband as a new band, as we need it for the RP
+        if view.main_window.controller.preproc_config['band_segmentation']:
+            bands = view.main_window.controller.preproc_config['selected_bands']
+            bands.insert(0,{
+                "name": "broadband",
+                "min": view.main_window.controller.preproc_config['broadband_min'],
+                "max": view.main_window.controller.preproc_config['broadband_max']
+            })
+            view.main_window.controller.preproc_config['selected_bands'] = bands
+
         # Get configuration data, with error handling
         try:
             files = view.main_window.controller.files_config

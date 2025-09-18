@@ -15,6 +15,8 @@ from pyparsing import originalTextFor
 from scipy.stats import kurtosis, skew
 from scipy.io import savemat
 
+import matplotlib.pyplot as plt
+
 def run_pipeline(controller, settings_dic, total_tasks):
     """
     Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
@@ -85,6 +87,8 @@ def run_pipeline(controller, settings_dic, total_tasks):
                         if epochs_tmp is not None:
                             epochs.append(epochs_tmp)
                             del epochs_tmp
+
+                    # Stack the epochs of the events for this condition
                     if epochs:
                         epochs = np.vstack(epochs)
 
@@ -95,7 +99,6 @@ def run_pipeline(controller, settings_dic, total_tasks):
                         style='warning')
                     continue
 
-                # If no epochs were found for this condition, skip it
                 # Get the indices of rejected epochs
                 _, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
                     epochs, np.nanmean(original_signal, axis=0), np.std(original_signal, axis=0),
@@ -115,6 +118,7 @@ def run_pipeline(controller, settings_dic, total_tasks):
 
         # For each band...
         for j, band in enumerate(bands):
+            # Band info
             band_name = band['name']
             bp_min, bp_max = band['min'], band['max']
 
@@ -122,7 +126,7 @@ def run_pipeline(controller, settings_dic, total_tasks):
             if bp_max == settings_dic['preprocessing']['fs'] / 2:
                 bp_max -= 1e-6
 
-            # If the band is not broadband, apply band filtering (the broadband do not require filtering)
+            # If the band is not broadband, apply band filtering (the broadband does not require filtering)
             if band_name != 'broadband':
                 processed_signal = band_filtering(processed_signal, bp_min, bp_max, fs, settings_dic['preprocessing'])
 
@@ -160,6 +164,7 @@ def run_pipeline(controller, settings_dic, total_tasks):
                             evt_key = signal_marks.app_settings['events'][evt]['label']
                             idx_events.append(np.full((epochs_tmp.shape[0], 1), evt_key))
                             del epochs_tmp
+                    # Stack the epochs for all the events (and their corresponding event labels)
                     if epochs:
                         epochs = np.vstack(epochs)
                         idx_events = np.vstack(idx_events)
@@ -179,17 +184,20 @@ def run_pipeline(controller, settings_dic, total_tasks):
                             f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",
                             style='warning')
                         continue
+
+                    # Remove the rejected epochs from the epochs array
                     epochs = np.delete(epochs, idx_threshold[cond], axis=0)
                     # Also remove the discarded epochs from idx_events if segmentation type is 'event'
                     if settings_dic['segmentation']['segmentation_type'] == 'event':
                         idx_events = np.delete(idx_events, idx_threshold[cond], axis=0)
 
-                # Sixth step: Apply resampling if enabled
+                ## Sixth step: Apply resampling if enabled
                 if epochs is not None and settings_dic['segmentation']['resample']:
                     resample_fs = settings_dic['segmentation']['resample_fs']
-                    window = [0, (epochs.shape[1] / fs) * 1000]  # in ms
+                    window = [0, (epochs.shape[1] / fs) * 1000]  # Window in ms
                     epochs = medusa.resample_epochs(epochs, window, resample_fs)
 
+                # Save the segmented signals (if required), separately for each condition (and event, if selected)
                 if settings_dic['segmentation']['segmentation_type'] == 'condition':
                     save_outputs(controller, deepcopy(epochs), f"{base_name}_segmentation_{cond}", band_name, 'seg', settings_dic)
                 elif settings_dic['segmentation']['segmentation_type'] == 'event':
@@ -203,6 +211,28 @@ def run_pipeline(controller, settings_dic, total_tasks):
                                 event_name = key
                                 break
                         save_outputs(controller, deepcopy(current_epochs), f"{base_name}_segmentation_{cond}_{event_name}", band_name, 'seg', settings_dic)
+
+                ## Seventh step: Parameter computation
+                if settings_dic['segmentation']['segmentation_type'] == 'condition':
+                    params = compute_parameters(epochs, fs, band_name, settings_dic)
+                    save_outputs(controller, deepcopy(params), f"{base_name}_parameters_{cond}",
+                                 band_name, 'param', settings_dic)
+                elif settings_dic['segmentation']['segmentation_type'] == 'event':
+                    for evt in np.unique(idx_events):
+                        # Get the epochs corresponding to the current event
+                        current_epochs = epochs[(idx_events.ravel() == evt),:,:]
+                        current_params = compute_parameters(current_epochs, fs, band_name, settings_dic)
+                        # Get the event name from its label
+                        event_name = None
+                        for key, info in signal_marks.app_settings['events'].items():
+                            if info['label'] == evt:
+                                event_name = key
+                                break
+                        save_outputs(controller, deepcopy(current_params), f"{base_name}_parameters_{cond}_{event_name}", band_name, 'param', settings_dic)
+
+
+
+
 
 
 
@@ -346,7 +376,6 @@ def get_epochs_from_condition(signal, condition, marks, times, fs, cfg, event=No
     # Set the dimensions of the epoched data
     epoched = np.concatenate(segments, axis=0) if segments else None
     return epoched
-
 def _find_nearest_index(reference_times, query_times):
     """
     Find the index (or indices) in reference_times closest to query_times.
@@ -443,6 +472,7 @@ def apply_preprocessing(signal, fs, cfg):
 
 
 ##################### BAND FILTERING
+
 def band_filtering(signal, bp_min, bp_max, fs, cfg):
     """
     Apply band segmentation with a FIR bandpass filter. Used when preprocessing is disabled but band-specific
@@ -453,3 +483,163 @@ def band_filtering(signal, bp_min, bp_max, fs, cfg):
     bp_filter = medusa.FIRFilter(order, [bp_min, bp_max], 'bandpass', window=win)
     signal = bp_filter.fit_transform(signal, fs)
     return signal
+
+##################### BAND FILTERING
+
+def compute_parameters(epochs, fs, band_name, cfg):
+    # Initialize dict that will contain all the computed parameters
+    params = {}
+
+
+    ## BASIC STATISTICAL PARAMETERS
+    stat_funcs = {
+        'mean': np.mean,
+        'variance': np.var,
+        'median': np.median,
+        'kurtosis': kurtosis,
+        'skewness': skew
+    }
+    # Account if only one (2D array) or multiple epoch are present (3D array)
+    axis = 0 if epochs.ndim == 2 else 1
+    # For each parameter...
+    for name, func in stat_funcs.items():
+        # If selected...
+        if cfg['parameters'][name]:
+            # Compute it
+            val = func(epochs, axis=axis)
+            # Average across epochs if required and if multiple epochs are present
+            val = np.mean(val, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val
+            # Store in the params dict
+            params[f"{name}"] = val
+
+
+    ## POWER SPECTRAL DENSITY (PSD)
+    # PSD would be computed if explicitly selected
+    explicit_psd = cfg['parameters']['psd']
+    # Or if any parameter that depends on it is selected
+    params_require_psd = any([cfg['parameters'][spec_param]
+        for spec_param in ['absolute_power', 'median_frequency', 'spectral_entropy','relative_power']])
+    require_psd = explicit_psd or params_require_psd
+
+    if require_psd:
+        # If PSD is explicitly enabled...
+        if explicit_psd:
+            # Use user-defined parameters for segmenting and windowing
+            segment_psd = cfg['parameters']['psd_segment_pct']
+            overlap_psd = cfg['parameters']['psd_overlap_pct']
+            window_psd = cfg['parameters']['psd_window']
+
+            # Compute PSD using specified segment and window settings
+            fxx, psd = medusa.transforms.power_spectral_density(epochs, fs, segment_psd, overlap_psd,
+                                                                          window_psd)
+            # plt.plot(fxx, psd)
+        else:
+            # Compute PSD with default settings
+            fxx, psd = medusa.transforms.power_spectral_density(epochs, fs)
+            # plt.plot(fxx, psd)
+
+        # Store PSD values: average across trials if averaging is enabled
+        try:
+            params[f'psd_{band_name}'] = np.nanmean(psd, axis=0) \
+                if cfg['segmentation']['average'] and epochs.ndim == 3 else psd
+            params[f'psd_freqs_{band_name}'] = fxx
+        except Exception as e:
+            print(e)
+
+    ## SPECTRAL METRICS - RELATIVE POWER
+    # Only compute the RP in the broadband, and if explicitly selected
+    if band_name == 'broadband' and cfg['parameters']['relative_power']:
+        val = []
+
+        # The bands will be different if band segmentation is enabled or not
+        if cfg['preprocessing']['band_segmentation']:
+            selected_bands = cfg['preprocessing']['selected_bands']
+        else:
+            selected_bands = cfg['parameters']['selected_rp_bands']
+
+        # Define broadband range, as the minimum of the mins and the maximum of the maxs of the selected bands
+        min_val = min(band["min"] for band in selected_bands if band["name"] != 'broadband')
+        max_val = max(band["max"] for band in selected_bands if band["name"] != 'broadband')
+
+        # Normalize the PSD in the broadband
+        # norm_psd = medusa.transforms.normalize_psd(psd, [min_val, max_val], fxx, norm='rel')
+        # plt.plot(fxx, norm_psd)
+        # Loop through each selected band
+        for band in selected_bands:
+            if band["name"] != 'broadband':
+                # Define band parameters
+                band_range = [band["min"], band["max"]]
+                # Compute the metric
+                val_band = medusa.signal_metrics.band_power.band_power(psd, fs, band_range, 'relative', [min_val, max_val])
+                # Average across epochs if required and if multiple epochs are present
+                val_band = np.nanmean(val_band, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val_band
+                val.append({"band": band["name"], "value": val_band})
+
+        params[f"relative_power"] = val
+
+    ## SPECTRAL METRICS - OTHERS
+    spectral_funcs = {
+        "absolute_power": medusa.signal_metrics.band_power.band_power,
+        "median_frequency": medusa.signal_metrics.median_frequency.median_frequency,
+        "spectral_entropy": medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy,
+    }
+
+    # For each parameter...
+    for name, func in spectral_funcs.items():
+        # If selected...
+        if cfg['parameters'][name]:
+            # Get the current band range
+            current_band = next(b for b in selected_bands if b["name"] == band_name)
+            band_range = [current_band['min'], current_band['max']]
+            # Compute the metric
+            val = func(psd, fs, band_range)
+            # Average across epochs if required and if multiple epochs are present
+            val = np.nanmean(val, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val
+            # Store in the params dict
+            params[f"{name}"] = val
+
+
+    ## NONLINEAR METRICS
+    nonlinear_funcs = {
+        'ctm': lambda: medusa.signal_metrics.central_tendency.central_tendency_measure(epochs,
+            cfg['parameters']['ctm_r']),
+        'sample_entropy': lambda: medusa.signal_metrics.sample_entropy.sample_entropy(epochs,
+            cfg['parameters']['sample_entropy_m'], cfg['parameters']['sample_entropy_r']),
+        'multiscale_sample_entropy': lambda: medusa.signal_metrics.multiscale_entropy.multiscale_entropy(
+            epochs, cfg['parameters']['multiscale_sample_entropy_scale'],cfg['parameters']['multiscale_sample_entropy_m'],
+            cfg['parameters']['multiscale_sample_entropy_r']),
+        'lzc': lambda: medusa.signal_metrics.lempelziv_complexity.lempelziv_complexity(epochs),
+        'multiscale_lzc': lambda: medusa.signal_metrics.multiscale_lempelziv_complexity.multiscale_lempelziv_complexity(
+            epochs,cfg['parameters']['multiscale_lzc_scales'])}
+
+    # For each parameter...
+    for name, func in nonlinear_funcs.items():
+        # If selected...
+        if cfg['parameters'][name]:
+            # Compute it
+            val = func()
+            # Average across epochs if required and if multiple epochs are present
+            val = np.nanmean(val, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val
+            params[f"{name}"] = val
+
+
+    ## CONNECTIVITY METRICS
+    connectivity_funcs = {
+        'iac': lambda: medusa.connectivity_metrics.iac(epochs, cfg['parameters']['ort_iac']),
+        'aec': lambda: medusa.connectivity_metrics.aec(epochs, cfg['parameters']['ort_aec']),
+        'plv': lambda: medusa.connectivity_metrics.plv(epochs),
+        'pli': lambda: medusa.connectivity_metrics.pli(epochs),
+        'wpli': lambda: medusa.connectivity_metrics.wpli(epochs),
+    }
+
+    # For each parameter...
+    for name, func in nonlinear_funcs.items():
+        # If selected...
+        if cfg['parameters'][name]:
+            # Compute it
+            val = func()
+            # Average across epochs if required and if multiple epochs are present
+            val = np.nanmean(val, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val
+            params[f"{name}"] = val
+
+    return params
