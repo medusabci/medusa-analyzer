@@ -2,7 +2,7 @@
   "name": "RCG Feature Extraction",
   "experiment_path": "ecg_params",
   "biosignals": ["ECG"],
-  "biosignal_information": ["fs", "n_chan"],
+  "biosignal_information": ["fs", "n_chan","chan_name"],
   "pipeline":
   [
     {

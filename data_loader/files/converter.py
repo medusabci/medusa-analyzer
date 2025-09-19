@@ -111,10 +111,7 @@ CONVERTERS = {
     },
     ".mat": {
         "converter": _convert_mat_file
-    },
-    ".rec.bson": {
-        "converter": _convert_rcp_file
-    },
+    }
 }
 
 
@@ -181,7 +178,6 @@ def conversor_to_rec(files, progress_bar=None, log_browser=None):
             except Exception as e:
                 _log_message(log_browser,
                     f"❌ <b>{filename}</b> → <span style='color:red;'>Error:</span> {str(e)}")
-                return valid_files
         else:
             # Unsupported format
             skipped_count += 1

@@ -1,5 +1,8 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
+from PySide6.QtWidgets import QHBoxLayout, QCheckBox, QLabel, QComboBox
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt
 
 
 # Load UI class
@@ -7,7 +10,7 @@ ui_save_widget = loadUiType("ecg_features/leads/view.ui")[0]
 
 class LeadsWidget(QtWidgets.QWidget, ui_save_widget):
     """
-    Main widget element.
+    Main widget element. Shows a list of channels and allows the user to select which ones to save and to which lead they correspond.
     """
     def __init__(self, main_window):
         super().__init__()
@@ -42,4 +45,70 @@ class LeadsWidget(QtWidgets.QWidget, ui_save_widget):
         layout.addWidget(self.save_label)
 
         ### ELEMENT CONFIGURATION ###
-        # Set initial state
+        pixmap = QPixmap("media/ECG_Leads.png")
+        self.imageLabel.setScaledContents(False)  # importante: False para no deformar
+        pixmap_scaled = pixmap.scaled(
+            self.imageLabel.size(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation
+        )
+        self.imageLabel.setPixmap(pixmap)
+        self.imageLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.add_leads_rows()
+
+
+    def add_leads_rows(self):
+        """
+        Function that adds a row with a checkbox, a label and a combobox for each lead in the biosignal info.
+        """
+        # Get the leads from the biosignal info
+        files = self.main_window.stackedWidget.widget(1)
+        leads = files.controller.biosignal_info['chan_name']
+
+        # Clear existing layout if any
+        self._clear_layout(self.LeadsSelection.layout())
+
+        for i in range(len(leads)):
+            row_layout = QHBoxLayout()  # Horizontal layout for each row
+
+            # Checkbox
+            checkbox = QCheckBox()
+            checkbox.setObjectName(f"chan{i}CBox")
+
+            # ComboBox
+            combo = QComboBox()
+            combo.setObjectName(f"chan{i}Combo")
+            combo.addItems(["I", "II", "III", "aVR", "aVL", "aVF", "V1", "V2", "V3", "V4", "V5", "V6"])
+
+            # Create the layout, including the checkbox and the label
+            row_layout.addWidget(checkbox)
+            row_layout.addWidget(QLabel(f"Channel {leads[i]}"))
+            row_layout.addWidget(QLabel(f" - Lead: "))
+            row_layout.addWidget(combo)
+            row_layout.addStretch() # Horizontal spacer to push items to the left
+
+            # Add the roe to the GroupBox layout
+            self.LeadsSelection.layout().addLayout(row_layout)
+
+    def _clear_layout(self, layout):
+        """
+        Recursively clear all widgets and sub-layouts inside a given layout.
+        This is useful when you want to dynamically rebuild a layout without leftover widgets.
+        """
+        if layout is not None:
+            # While there are items in the layout
+            while layout.count():
+                # Remove the first item from the layout
+                item = layout.takeAt(0)
+                # Check if the item is a widget
+                widget = item.widget()
+                if item.widget():
+                    # Safely delete the widget (to avoid problems)
+                    widget.deleteLater()
+                # If the item is a sub-layout
+                elif item.layout():
+                    # Recursively clear the sub-layout
+                    self._clear_layout(item.layout())

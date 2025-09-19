@@ -15,7 +15,6 @@ class FilesController:
         self.view.browseButton.clicked.connect(self.on_select_files_click)
         self.view.viewfilesButton.clicked.connect(self.on_view_files_click)
         self.view.convertButton.clicked.connect(self.on_converter_click)
-        self.view.biosignalBox.currentIndexChanged.connect(self.on_biosignal_changed)
 
 
     def on_select_files_click(self):
@@ -77,7 +76,7 @@ class FilesController:
                 # Get the number of channels (if required), considering ChannelSet as object or dict
                 if 'chan_name' in experiment_widget.experiment['biosignal_information']:
                     try:
-                        self.biosignals[key]['chan_name'] = len(getattr(recording, key).channel_set.l_cha)
+                        self.biosignals[key]['chan_name'] = getattr(recording, key).channel_set.l_cha
                     except:
                         self.biosignals[key]['chan_name'] = getattr(recording, key).channel_set['l_cha']
                 # Add the biosignal to the biosignal combobox
@@ -96,11 +95,6 @@ class FilesController:
 
             # Set the default biosignal to the first one
             self.view.biosignalBox.setCurrentIndex(0)
-            # Get its fs and number of channels and store them in Files Widget
-            default_biosignal = self.view.biosignalBox.currentText()
-            default_biosignal = default_biosignal.split(" ")[1]
-            self.view.sampling_frequency = getattr(recording, default_biosignal).fs
-            self.view.n_chan = len(getattr(recording, default_biosignal).channel_set.l_cha)
 
         else: # No files selected, deactivate the next button and clear the biosignal combobox
             self.view.main_window.nextButton.setDisabled(True)
@@ -180,17 +174,5 @@ class FilesController:
         finally:
             self.view.convertProgressBar.setVisible(False)
             self.view.convertLogTextBrowser.setVisible(False)
-
-
-    def on_biosignal_changed(self):
-        """
-        Function that updates the sampling frequency and number of channels when the biosignal type is changed.
-        """
-        selected_biosignal = self.view.biosignalBox.currentText()
-        if not selected_biosignal:
-            return
-        selected_biosignal = selected_biosignal.split(" ")[1]
-        self.view.sampling_frequency = self.biosignals[selected_biosignal]['fs']
-        self.view.n_chan = self.biosignals[selected_biosignal]['n_chan']
 
 
