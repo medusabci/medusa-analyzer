@@ -143,12 +143,12 @@ def _create_empty_marks():
     return marks
 
 
-def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_paths=True):
+def conversor_to_rec(files, progress_bar=None, log_browser=None):
     """
         Convert different types files to .rec format
     """
     total = len(files)
-    converted_paths = []
+    valid_files = []
     skipped_count = 0
 
     # For each file...
@@ -168,7 +168,7 @@ def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_path
 
                 # Convert file using appropriate converter
                 new_file = converter_info["converter"](file)
-                converted_paths.append(new_file)
+                valid_files.append(new_file)
 
                 # Success logging
                 output_filename = filename.replace(
@@ -181,6 +181,7 @@ def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_path
             except Exception as e:
                 _log_message(log_browser,
                     f"❌ <b>{filename}</b> → <span style='color:red;'>Error:</span> {str(e)}")
+                return valid_files
         else:
             # Unsupported format
             skipped_count += 1
@@ -192,10 +193,9 @@ def conversor_to_rec(files, progress_bar=None, log_browser=None, return_rec_path
 
     # Summary logging
     if log_browser:
-        summary = f"<hr><b>Summary:</b><br>✅ Converted: {len(converted_paths)} file(s)"
+        summary = f"<hr><b>Summary:</b><br>✅ Converted: {len(valid_files)} file(s)"
         if skipped_count > 0:
             summary += f"<br>⚠️ Skipped (unsupported): {skipped_count} file(s)"
         _log_message(log_browser, summary)
 
-    if return_rec_paths:
-        return converted_paths
+    return valid_files

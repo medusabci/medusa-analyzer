@@ -159,16 +159,14 @@ class FilesController:
         QtWidgets.QApplication.processEvents()
 
         try:
-            conversor_to_rec(valid_files, self.view.convertProgressBar, self.view.convertLogTextBrowser)
+            successfully_converted_files = conversor_to_rec(valid_files, self.view.convertProgressBar, self.view.convertLogTextBrowser)
             QtWidgets.QMessageBox.information(
                 self.view,
                 "Conversion Complete",
-                f"Successfully converted {len(valid_files)} file(s)."
+                f"Successfully converted {len(successfully_converted_files)} file(s)."
             )
-
-            extension = file.split(".")[-1]
-            rec_files = [f.replace("." + extension, ".rec.bson") for f in valid_files]
-            for f in rec_files:
+            # Add the successfully converted files to the selected files, avoiding duplicates
+            for f in successfully_converted_files:
                 if f not in self.selected_files:
                     self.selected_files.append(f)
             self.on_file_selection_changed()
