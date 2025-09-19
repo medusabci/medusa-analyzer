@@ -74,6 +74,12 @@ class FilesController:
                     except:
                         self.biosignals[key]['n_chan'] = getattr(recording, key).channel_set['n_cha']
 
+                # Get the number of channels (if required), considering ChannelSet as object or dict
+                if 'chan_name' in experiment_widget.experiment['biosignal_information']:
+                    try:
+                        self.biosignals[key]['chan_name'] = len(getattr(recording, key).channel_set.l_cha)
+                    except:
+                        self.biosignals[key]['chan_name'] = getattr(recording, key).channel_set['l_cha']
                 # Add the biosignal to the biosignal combobox
                 self.view.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
 
