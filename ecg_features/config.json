@@ -16,24 +16,6 @@
       "path": "ecg_features/leads",
       "widget": "LeadsWidget",
       "controller": "LeadsController"
-    },
-    {
-      "step": "Preprocessing",
-      "path": "ecg_features/preprocessing",
-      "widget": "PreprocessingWidget",
-      "controller": "PreprocessingController"
-    },
-    {
-      "step": "Parameters",
-      "path": "ecg_features/parameters",
-      "widget": "ParametersWidget",
-      "controller": "ParametersController"
-    },
-    {
-      "step": "Save",
-      "path": "ecg_features/save",
-      "widget": "SaveWidget",
-      "controller": "SaveController"
     }
   ]
 }

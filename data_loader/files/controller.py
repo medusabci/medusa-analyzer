@@ -83,6 +83,17 @@ class FilesController:
                 # Add the biosignal to the biosignal combobox
                 self.view.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
 
+            if self.view.biosignalBox.count() == 0:
+                QtWidgets.QMessageBox.warning(
+                    self.view,
+                    "No Valid Biosignals",
+                    "The selected file does not contain any biosignal valid for the current experiment.\n"
+                    "Please, select another file or convert it to a supported format."
+                )
+                self.selected_files = []
+                self.on_file_selection_changed()
+                return
+
             # Set the default biosignal to the first one
             self.view.biosignalBox.setCurrentIndex(0)
             # Get its fs and number of channels and store them in Files Widget

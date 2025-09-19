@@ -111,7 +111,10 @@ CONVERTERS = {
     },
     ".mat": {
         "converter": _convert_mat_file
-    }
+    },
+    ".rec.bson": {
+        "converter": _convert_rcp_file
+    },
 }
 
 
