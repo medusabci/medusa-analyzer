@@ -39,12 +39,12 @@
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">QGroupBox#Datapreprocessing::title {
+      <string notr="true">QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left; 
     padding: 5px;                 
     letter-spacing: 1px;
-
+    
     color: qlineargradient(
         spread:pad, x1:0, y1:0, x2:1, y2:0,
         stop:0 #6a0dad, stop:1 #ec407a

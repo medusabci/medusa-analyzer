@@ -119,6 +119,7 @@ def on_next_click(view):
     # Save config
     view.main_window.controller.preproc_config = get_preprocessing_config(view.controller)
 
+    # TODO : REVISAR ESTO PORQUE SALTA SIEMPRE EL WARNING
     # Check if at least 2 oscillations of the lowest frequency band are present in the trials
     # Get the trial length depending on the segmentation type
     if segmentation.conditionRButton.isChecked():

@@ -4,10 +4,12 @@ import scipy.io as sio
 from medusa.meeg.meeg import *
 from medusa.components import Recording, CustomExperimentData
 from medusa.bci import erp_spellers
-
+from medusa import ecg
 # README: To include a new converter, just create a function that takes a file path as input (e.g.
 # _convert_newformat_file(filepath)) and returns the new filepath, and include it in the CONVERTERS dictionary with the
 # corresponding file extension.
+
+# TODO : GESTIONAR DIFERENTES BIOSIGNALS
 
 
 def _convert_rcp_file(file):
@@ -29,7 +31,7 @@ def _convert_rcp_file(file):
         else data.erpspellerdata.onsets
     marks.app_settings = {
         'events': {'target': {'label': 0}, 'non_target': {'label': 1}},
-        'conditions': {'full': {'label': 0}}
+        'conditions': {'no-condition': {'label': 0}}
     }
     marks.conditions_labels = []
     marks.conditions_times = np.empty((0, 2))
@@ -103,6 +105,22 @@ def _convert_mat_file(file):
     recording.save(new_file)
     return new_file
 
+def _convert_rec_file(file, log_browser=None):
+    """
+    Normalize REC file: ensure it always contains an 'marks' entry.
+    """
+    # Load the recording
+    data = Recording.load(file)
+
+    # Check if 'marks' attribute exists
+    if not hasattr(data, "marks") or data.marks is None:
+        marks = _create_empty_marks()
+        data.add_experiment_data(marks, key="marks")
+        data.save(file)  # Overwrite the same file
+
+    # Return the normalized file path
+    return file
+
 
 # Converter registry
 CONVERTERS = {
@@ -111,6 +129,9 @@ CONVERTERS = {
     },
     ".mat": {
         "converter": _convert_mat_file
+    },
+    ".rec.bson": {
+        "converter": _convert_rec_file
     }
 }
 
@@ -140,56 +161,96 @@ def _create_empty_marks():
     return marks
 
 
+def _run_converter(converter, file, log_browser=None):
+    """
+    Try to run converter(file, log_browser). If the converter doesn't accept
+    the extra arg, fallback to converter(file).
+    Return the converter result (path) or None if it fails.
+    """
+    try:
+        return converter(file, log_browser)
+    except TypeError:
+        return converter(file)
+
+
 def conversor_to_rec(files, progress_bar=None, log_browser=None):
     """
-        Convert different types files to .rec format
+    Convert different file types to .rec.bson format.
+    - If a file is .rec.bson and already contains data.marks -> skip.
+    - If a file is .rec.bson and lacks data.marks -> run the normalizer converter.
+    - For other supported extensions -> run their converters.
     """
-    total = len(files)
     valid_files = []
+    converted_count = 0
+    accepted_count = 0
     skipped_count = 0
+    total = len(files)
 
-    # For each file...
     for i, file in enumerate(files):
         filename = os.path.basename(file)
 
-        # Find matching converter
-        converter_info = None
-        for extension, info in CONVERTERS.items():
-            if file.endswith(extension):
-                converter_info = info
-                break
+        # find the registered converter extension (first match)
+        matched_ext = next((ext for ext in CONVERTERS.keys() if file.endswith(ext)), None)
 
-        if converter_info:
-            try:
-                _log_message(log_browser, f"⚙️ <b>{filename}</b> → Starting conversion...")
-
-                # Convert file using appropriate converter
-                new_file = converter_info["converter"](file)
-                valid_files.append(new_file)
-
-                # Success logging
-                output_filename = filename.replace(
-                    next(ext for ext in CONVERTERS.keys() if file.endswith(ext)),
-                    ".rec.bson"
-                )
-                _log_message(log_browser,
-                    f"✅ <b>{output_filename}</b> → <span style='color:green;'>Conversion successful</span>")
-
-            except Exception as e:
-                _log_message(log_browser,
-                    f"❌ <b>{filename}</b> → <span style='color:red;'>Error:</span> {str(e)}")
-        else:
-            # Unsupported format
+        if matched_ext is None:
+            # unsupported file type
             skipped_count += 1
-            _log_message(log_browser,
-                f"⚠️ <b>{filename}</b> → <span style='color:orange;'>Unsupported file type.</span><br>"
-                f"This format is not yet available for conversion and will be ignored.")
+            _log_message(
+                log_browser,
+                f"⚠️ <b>{filename}</b> → <span style='color:orange;'>Unsupported file type.</span>"
+            )
+            _update_progress(progress_bar, i, total)
+            continue
+
+        converter = CONVERTERS[matched_ext]["converter"]
+
+        # Special-case for already-REC files: check if they need normalization
+        if matched_ext == ".rec.bson":
+            try:
+                data = Recording.load(file)
+            except Exception as e:
+                _log_message(log_browser, f"❌ <b>{filename}</b> → Error loading .rec.bson: {e}")
+                _update_progress(progress_bar, i, total)
+                continue
+
+            # If data.marks exists (and is not None) we skip conversion
+            if hasattr(data, "marks") and data.marks is not None:
+                _log_message(log_browser, f"ℹ️ <b>{filename}</b> → Already contains 'marks', skipping.")
+                valid_files.append(file)
+                accepted_count += 1
+                _update_progress(progress_bar, i, total)
+                continue
+
+            # otherwise fall through to normalization via converter
+            _log_message(log_browser, f"⚙️ <b>{filename}</b> → Missing 'marks', normalizing...")
+
+        else:
+            _log_message(log_browser, f"⚙️ <b>{filename}</b> → Starting conversion...")
+
+        # Run the converter
+        try:
+            new_file = _run_converter(converter, file, log_browser)
+            if not new_file:
+                _log_message(log_browser, f"❌ <b>{filename}</b> → Converter returned no file path.")
+                _update_progress(progress_bar, i, total)
+                continue
+
+            valid_files.append(new_file)
+            converted_count += 1
+            _log_message(
+                log_browser,
+                f"✅ <b>{os.path.basename(new_file)}</b> → <span style='color:green;'>Conversion successful</span>"
+            )
+        except Exception as e:
+            _log_message(log_browser, f"❌ <b>{filename}</b> → <span style='color:red;'>Error:</span> {e}")
 
         _update_progress(progress_bar, i, total)
 
     # Summary logging
     if log_browser:
-        summary = f"<hr><b>Summary:</b><br>✅ Converted: {len(valid_files)} file(s)"
+        summary = "<hr><b>Summary:</b><br>"
+        summary += f"🟢 Converted: {converted_count} file(s)<br>"
+        summary += f"🔵 Accepted (already correct): {accepted_count} file(s)"
         if skipped_count > 0:
             summary += f"<br>⚠️ Skipped (unsupported): {skipped_count} file(s)"
         _log_message(log_browser, summary)

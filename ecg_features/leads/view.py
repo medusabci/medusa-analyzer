@@ -6,9 +6,9 @@ from PySide6.QtCore import Qt
 
 
 # Load UI class
-ui_save_widget = loadUiType("ecg_features/leads/view.ui")[0]
+ui_leads_widget = loadUiType("ecg_features/leads/view.ui")[0]
 
-class LeadsWidget(QtWidgets.QWidget, ui_save_widget):
+class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
     """
     Main widget element. Shows a list of channels and allows the user to select which ones to save and to which lead they correspond.
     """
@@ -18,22 +18,24 @@ class LeadsWidget(QtWidgets.QWidget, ui_save_widget):
         self.main_window = main_window
 
 
-        ### SAVE HEADER ###
+        ### LEADS HEADER ###
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(2)
         self.topContentWidget.setLayout(layout)
-        self.save_label = QtWidgets.QLabel()
-        self.save_label.setTextFormat(QtCore.Qt.RichText)
-        self.save_label.setWordWrap(True)
-        self.save_label.setText("""
+        self.label = QtWidgets.QLabel()
+        self.label.setTextFormat(QtCore.Qt.RichText)
+        self.label.setWordWrap(True)
+        self.label.setText("""
             <div style="text-align:center; font-family:'Segoe UI', Arial;">
                 <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
-                    BEA TIENES QUE HACER ESTO
+                    Select the <b style="color:#007acc;">ECG channels</b> from your loaded signals 
+                    and assign them to their corresponding <b style="color:#ec407a;">standard leads</b>.
                 </p>
 
                 <p style="font-size: 11pt; color:#666; margin:0 40px;">
-                    ESTO TAMBIÉN 
+                    This step ensures that each channel is correctly mapped before continuing with 
+                    preprocessing and parameter extraction.
                 </p>
             </div>
         """)
@@ -42,7 +44,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_save_widget):
         palette.setColor(QtGui.QPalette.Base, palette.color(QtGui.QPalette.Window)) # For this element, Base color will be Window color
         self.topContentWidget.setPalette(palette)
         self.topContentWidget.setFrameShape(QtWidgets.QFrame.NoFrame)
-        layout.addWidget(self.save_label)
+        layout.addWidget(self.label)
 
         ### ELEMENT CONFIGURATION ###
         pixmap = QPixmap("media/ECG_Leads.png")

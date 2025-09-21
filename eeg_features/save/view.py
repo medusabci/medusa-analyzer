@@ -27,12 +27,16 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         self.save_label.setText("""
             <div style="text-align:center; font-family:'Segoe UI', Arial;">
                 <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
-                    Select an <b>empty folder</b> where the processed data will be saved.
+                    Select an <b style="color:#007acc;">empty folder</b> 
+                    where the processed data will be saved.
                 </p>
 
                 <p style="font-size: 11pt; color:#666; margin:0 40px;">
-                    You can choose which types of data from previous stages of the workflow to export. 
-                    All selected data will be saved in the <b>.mat</b> format, ready for further analysis or review.
+                    You can choose which types of data from previous 
+                    stages of the workflow to export. 
+                    All selected data will be saved in the 
+                    <b style="color:#ec407a;">.mat format</b>, 
+                    ready for further analysis or review.
                 </p>
             </div>
         """)

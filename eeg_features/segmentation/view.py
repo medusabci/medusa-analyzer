@@ -35,13 +35,16 @@ class SegmentationWidget(QtWidgets.QWidget, ui_segmentation_widget):
         self.segmentation_label.setText("""
             <div style="text-align:center; font-family:'Segoe UI', Arial;">
                 <p style="font-size: 12pt; color:#444; margin:0 40px 10px 40px;">
-                    This is the <b>Segmentation Module</b>. Here you can define how your signals will be divided 
-                    into smaller, analyzable segments for processing.
+                    This is the <b style="color:#007acc;">Segmentation Module</b>. 
+                    Here you can define how your signals will be divided into 
+                    smaller segments for processing.
                 </p>
 
                 <p style="font-size: 11pt; color:#666; margin:0 40px;">
-                    Select the segmentation strategy that best fits your analysis needs. 
-                    Options include time-based slicing and event-triggered segmentation. 
+                    Select the <b style="color:#00796b;">segmentation strategy</b> that best fits your 
+                    analysis needs. 
+                    Options include <span style="color:#007acc; font-weight:bold;">time-based slicing</span> 
+                    and <span style="color:#ec407a; font-weight:bold;">event-triggered segmentation</span>.
                 </p>
             </div>
         """)
