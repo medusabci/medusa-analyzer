@@ -55,5 +55,37 @@ def on_next_click(view):
         QtWidgets.QMessageBox.warning(view,"Condition Selection Required", "Please select at least one condition before proceeding.")
         return False
 
+    # Check if at least 2 oscillations of the lowest frequency band are present in the trials
+    # Get the trial length depending on the segmentation type
+    if view.conditionRButton.isChecked():
+        trl_len = view.trialBox.value()
+    else:
+        trl_len = abs(view.winBox_1.value()) + abs(view.winBox_2.value())
+    trl_len = trl_len/1000  # To seconds
+    # Get the lowest frequency based on whether band segmentation is selected or not
+    idx = view.main_window.stackedWidget.currentIndex()
+    preprocessing = view.main_window.stackedWidget.widget(idx-1)
+    if not preprocessing.bandCBox.isChecked():
+        min_freq = preprocessing.minbroadBox.value()
+    else:
+        selected_bands = preprocessing.selected_bands_by_type.get("segmentation", [])
+        min_freq = min(band["min"] for band in selected_bands if band["name"] != 'broadband')
+    # Throw a warning if there are not enough oscillations
+    if (1/min_freq) > trl_len:
+        msg = QtWidgets.QMessageBox(view)
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
+        msg.setWindowTitle("Problematic band configuration")
+        msg.setText(
+            "Your trial configuration does not allow even a single oscillation of the "
+            "lowest frequency. Consider increasing the trial duration or excluding the slower "
+            "frequencies. Do you want to proceed anyway?"
+        )
+        msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        msg.setDefaultButton(QtWidgets.QMessageBox.No)
+
+        reply = msg.exec()
+        if reply == QtWidgets.QMessageBox.No:
+            return False
+
     view.main_window.controller.segmentation_config = get_segmentation_config(view.controller)
     return True

@@ -119,27 +119,6 @@ def on_next_click(view):
     # Save config
     view.main_window.controller.preproc_config = get_preprocessing_config(view.controller)
 
-    # TODO : REVISAR ESTO PORQUE SALTA SIEMPRE EL WARNING
-    # Check if at least 2 oscillations of the lowest frequency band are present in the trials
-    # Get the trial length depending on the segmentation type
-    if segmentation.conditionRButton.isChecked():
-        trl_len = segmentation.trialBox.value()
-    else:
-        trl_len = abs(segmentation.winBox_1.value()) + abs(segmentation.winBox_2.value())
-    trl_len = trl_len/1000  # To seconds
-    # Get the lowest frequency based on whether band segmentation is selected or not
-    if not view.bandCBox.isChecked():
-        min_freq = view.minbroadBox.value()
-    else:
-        selected_bands = view.selected_bands_by_type.get("segmentation", [])
-        min_freq = min(band["min"] for band in selected_bands if band["name"] != 'broadband')
-    # Throw a warning if there are not enough oscillations
-    if (1/min_freq) > trl_len:
-        QtWidgets.QMessageBox.warning(view, "Problematic band configuration",
-                                      f"Your trial configuration does not allow even a single oscillation of the "
-                                      f"lowest frequency. Consider increasing the trial duration or excluding the slower"
-                                      f" frequencies.")
-
     # If band segmentation is selected, move the band selection to the RP
     if view.bandCBox.isChecked():
         text = view.bandLabel.text()

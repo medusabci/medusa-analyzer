@@ -1,6 +1,5 @@
 from PySide6 import QtWidgets
 
-
 def on_next_click(controller):
     """
     Controls the next (and finish) button behaviour
@@ -50,6 +49,14 @@ def on_back_click(controller):
         reply = msg.exec()
         if reply == QtWidgets.QMessageBox.No:
             return
+
+        # If going back to the first widget, remove all the progress bar frames, get the layout
+        layout = controller.view.widget.layout()
+        # Loop through all the frames in the layout and remove them
+        for frame in controller.view.widget.findChildren(QtWidgets.QFrame):
+            if frame.objectName().startswith("frame_"):  # Only consider the frames we created (that were named "frame_{n_step}")
+                layout.removeWidget(frame)  # Remove the frame from the layout
+                frame.deleteLater() # Delete the frame safely
 
     # Update the buttons, the progressbar, and the stacked widget
     controller.update_progressbar(idx)
