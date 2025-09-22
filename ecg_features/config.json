@@ -16,6 +16,12 @@
       "path": "ecg_features/leads",
       "widget": "LeadsWidget",
       "controller": "LeadsController"
+    },
+    {
+      "step": "Preprocessing",
+      "path": "ecg_features/preprocessing",
+      "widget": "PreprocessingWidget",
+      "controller": "PreprocessingController"
     }
   ]
 }
