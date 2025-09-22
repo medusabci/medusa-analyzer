@@ -77,13 +77,15 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
 
         # Initial state preprocessin
         self.preprocessingButton.setChecked(True)
+        self.normCBox.setChecked(True)
+        self.baselineCBox.setChecked(True)
+        self.bpCBox.setChecked(True)
 
         # Initial state HRV
         self.hrvCBox.setChecked(True)
         for widget in [self. minrrLabel, self.maxrrLabel, self.minrrBox, self.maxrrBox, self.rrmethodLabel, self.rrmethodBox,
                        self.newfsLabel, self.resamplefsBox]:
             widget.setVisible(False)
-        # self.maxbroadLabel.setText(main_window.stackedWidget.widget(1).controller.biosignal_info['fs']/2) # TODO: conectar con ShowEvent
 
         # Default values in a dict
         self.defaults = {
@@ -97,6 +99,9 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
             "resamplefs": self.resamplefsBox.value(),
         }
 
-    # def showEvent(self, event):
-    #     super().showEvent(event)
-    #     self.shown.emit()
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.shown.emit()
+        if hasattr(self, "controller"):
+            self.controller.update_filter_plot("baseline")
+            self.controller.update_filter_plot("bandpass")
