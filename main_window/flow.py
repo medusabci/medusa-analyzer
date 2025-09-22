@@ -13,7 +13,7 @@ def on_next_click(controller):
     flow_module = __import__(widget_module + '.flow', fromlist=['on_next_click'])
     next_validation = flow_module.on_next_click(current_widget)
     if next_validation is False:
-        return
+        return False
 
     idx += 1 # Now is the index of the next widget
 

@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtWidgets import QHBoxLayout, QCheckBox, QLabel, QComboBox
+from PySide6.QtWidgets import QHBoxLayout, QCheckBox, QLabel, QComboBox, QWidget
 from PySide6.QtGui import QPixmap
 from PySide6.QtCore import Qt
 
@@ -48,12 +48,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
 
         ### ELEMENT CONFIGURATION ###
         pixmap = QPixmap("media/ECG_Leads.png")
-        self.imageLabel.setScaledContents(False)  # importante: False para no deformar
-        pixmap_scaled = pixmap.scaled(
-            self.imageLabel.size(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        )
+        self.imageLabel.setScaledContents(False)  # False to avoid distortion
         self.imageLabel.setPixmap(pixmap)
         self.imageLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -74,7 +69,8 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
         self._clear_layout(self.LeadsSelection.layout())
 
         for i in range(len(leads)):
-            row_layout = QHBoxLayout()  # Horizontal layout for each row
+            row_widget = QWidget()
+            row_layout = QHBoxLayout(row_widget)  # Horizontal layout for each row
 
             # Checkbox
             checkbox = QCheckBox()
@@ -93,7 +89,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
             row_layout.addStretch() # Horizontal spacer to push items to the left
 
             # Add the roe to the GroupBox layout
-            self.LeadsSelection.layout().addLayout(row_layout)
+            self.LeadsSelection.layout().addWidget(row_widget)
 
     def _clear_layout(self, layout):
         """
