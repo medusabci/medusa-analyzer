@@ -88,6 +88,15 @@ def on_next_click(view):
         )
         return False
 
+    # If not HRV, ensure that the corresponding parameters are disabled
+    current_idx = view.main_window.stackedWidget.currentIndex()
+    next_widget = view.main_window.stackedWidget.widget(current_idx + 1)
+    if not view.hrvCBox.isChecked():
+        next_widget.toolBox.widget(0).setDisabled(True) # widget (0) is the HRV page
+    else:
+        next_widget.toolBox.widget(0).setDisabled(False)
+
+
     # Save config
     view.main_window.controller.preproc_config = get_preprocessing_config(view.controller)
 

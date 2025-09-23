@@ -11,7 +11,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
     def __init__(self, parameters_widget=None, previous_bands=None):
         super().__init__(parameters_widget.view)
         self.setupUi(self)
-        self.setFixedSize(440, 250)
+        self.setFixedSize(440, 300)
 
         # Initialize general parameters
         self.parameters_widget = parameters_widget
@@ -105,12 +105,12 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setItem(row, 0, name_item)
 
         # Min freq
-        min_item = QtWidgets.QTableWidgetItem(f"{float(min_freq):.1f}" if min_freq is not None else "")
+        min_item = QtWidgets.QTableWidgetItem(f"{float(min_freq):.3f}" if min_freq is not None else "")
         min_item.setTextAlignment(Qt.AlignCenter)
         self.bandsTable.setItem(row, 1, min_item)
 
         # Max freq
-        max_item = QtWidgets.QTableWidgetItem(f"{float(max_freq):.1f}" if max_freq is not None else "")
+        max_item = QtWidgets.QTableWidgetItem(f"{float(max_freq):.3f}" if max_freq is not None else "")
         max_item.setTextAlignment(Qt.AlignCenter)
         self.bandsTable.setItem(row, 2, max_item)
 

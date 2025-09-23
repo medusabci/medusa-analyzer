@@ -507,20 +507,6 @@ QToolBox::tab:selected {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="apselectedbandsLabel">
-              <property name="text">
-               <string>Selected bands:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="apLabel">
-              <property name="text">
-               <string>None</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <spacer name="horizontalSpacer_6">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -554,20 +540,6 @@ QToolBox::tab:selected {
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="mfselectedbandsLabel">
-              <property name="text">
-               <string>Selected bands:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="mfLabel">
-              <property name="text">
-               <string>None</string>
-              </property>
-             </widget>
-            </item>
-            <item>
              <spacer name="horizontalSpacer_5">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -597,20 +569,6 @@ QToolBox::tab:selected {
               </property>
               <property name="text">
                <string>Spectral entropy</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="seselectedbandsLabel">
-              <property name="text">
-               <string>Selected bands:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="seLabel">
-              <property name="text">
-               <string>None</string>
               </property>
              </widget>
             </item>
@@ -992,8 +950,8 @@ QToolBox::tab:selected {
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>690</width>
-        <height>728</height>
+        <width>239</width>
+        <height>334</height>
        </rect>
       </property>
       <attribute name="label">

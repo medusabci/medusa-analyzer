@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtGui, QtCore
+from PySide6 import QtWidgets
 from eeg_features.bands_table import BandTableWidget
 
 class ParametersController:
