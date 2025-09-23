@@ -152,73 +152,74 @@ class PreprocessingController:
         This function shows or hides the hrv controls depending on whether the user chooses to apply them
         or not.
         """
-        rr_elements = [self.view.minrrLabel, self.view.minrrBox,
-                       self.view.maxrrLabel, self.view.maxrrBox,
-                       self.view.rrmethodLabel, self.view.rrmethodBox]
-        resample_elements = [self.view.newfsLabel, self.view.resamplefsBox,
-                             self.view.resampleLabelNyquist]
-
         if not checked:
-            # Hide everything
-            for w in [self.view.hrvinterpolLabel, self.view.hrvinterpolBox,
-                      self.view.rrcorrectionCBox, self.view.rrcorrectionLabel,
-                      self.view.resampleCBox, self.view.resampleLabel,
-                      *rr_elements, *resample_elements]:
-                w.setVisible(False)
+            # Hide everything when HRV disabled
+            elements = [
+                self.view.hrvinterpolLabel, self.view.hrvinterpolBox,
+                self.view.rrcorrectionLabel, self.view.rrcorrectionCBox,
+                self.view.resampleLabel, self.view.resampleCBox,
+            ]
+            for elm in elements:
+                elm.setVisible(False)
 
-            # Reset and uncheck
-            self.view.rrcorrectionCBox.setChecked(False)
-            self.view.resampleCBox.setChecked(False)
-            self.view.minrrBox.setValue(self.view.defaults["minrrtime"])
-            self.view.maxrrBox.setValue(self.view.defaults["maxrrtime"])
-            self.view.rrmethodBox.setCurrentIndex(2)
-            self.view.resamplefsBox.setValue(self.view.defaults["resamplefs"])
+            # Force-hide parameter groups
+            self.on_rrcorrection_toggle(False)
+            self.on_resample_toggle(False)
             return
 
-        # Show only base HRV controls
-        for w in [self.view.hrvinterpolLabel, self.view.hrvinterpolBox,
-                  self.view.rrcorrectionCBox, self.view.rrcorrectionLabel,
-                  self.view.resampleCBox, self.view.resampleLabel]:
-            w.setVisible(True)
+            # If HRV enabled: show interpolation and the checkboxes (unchecked)
+        self.view.hrvinterpolLabel.setVisible(True)
+        self.view.hrvinterpolBox.setVisible(True)
+
+        # Show RR correction label + checkbox
+        self.view.rrcorrectionLabel.setVisible(True)
+        self.view.rrcorrectionCBox.setVisible(True)
         self.view.rrcorrectionCBox.setChecked(False)
+
+        # Show Resample label + checkbox
+        self.view.resampleLabel.setVisible(True)
+        self.view.resampleCBox.setVisible(True)
         self.view.resampleCBox.setChecked(False)
 
     def on_rrcorrection_toggle(self, checked):
         """
         Show or hide correction controls based on the checkbox state. Resets resample frequency spinbox when disabled.
         """
-        self.view.rrcorrectionLabel.setVisible(not checked)
-        rr_elements = [self.view.minrrLabel, self.view.minrrBox,
-                       self.view.maxrrLabel, self.view.maxrrBox,
-                       self.view.rrmethodLabel, self.view.rrmethodBox]
+        rr_elements = [
+            self.view.minrrLabel, self.view.minrrBox,
+            self.view.maxrrLabel, self.view.maxrrBox,
+            self.view.rrmethodLabel, self.view.rrmethodBox,
+        ]
 
         for w in rr_elements:
             w.setVisible(checked)
 
-        # Reset default values
+        # Toggle label depending on HRV
+        self.view.rrcorrectionLabel.setVisible(self.view.hrvCBox.isChecked() and not checked)
+
         if not checked:
+            # Reset defaults
             self.view.minrrBox.setValue(self.view.defaults["minrrtime"])
             self.view.maxrrBox.setValue(self.view.defaults["maxrrtime"])
-            self.view.rrmethodBox.setCurrentIndex(2) # Interpolate
+            self.view.rrmethodBox.setCurrentIndex(2)  # Interpolate
 
 
     def on_resample_toggle(self, checked):
         """
         Show or hide resampling controls based on the checkbox state. Resets resample frequency spinbox when disabled.
         """
-        # Show/hide elements
-        self.view.resampleLabel.setVisible(not checked)
-        resample_elements = [self.view.newfsLabel, self.view.resamplefsBox,
-                             self.view.resampleLabelNyquist]
+        resample_elements = [self.view.newfsLabel, self.view.resamplefsBox, self.view.resampleLabelNyquist]
+
         for w in resample_elements:
             w.setVisible(checked)
 
-        # Set the label informing about the fs limitation
+        # Toggle label depending on HRV
+        self.view.resampleLabel.setVisible(self.view.hrvCBox.isChecked() and not checked)
+
         if checked:
             self.view.resampleLabelNyquist.setText("Recommended fs: 4 Hz")
-
-        # Reset default values
         else:
+            # Reset defaults
             self.view.resamplefsBox.setValue(self.view.defaults["resamplefs"])
 
     def on_show_event(self):
