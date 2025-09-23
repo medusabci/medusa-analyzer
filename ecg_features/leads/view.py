@@ -75,6 +75,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
             # Checkbox
             checkbox = QCheckBox()
             checkbox.setObjectName(f"chan{i}CBox")
+            checkbox.setText(f"Channel {leads[i]}")
 
             # ComboBox
             combo = QComboBox()
@@ -83,7 +84,6 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
 
             # Create the layout, including the checkbox and the label
             row_layout.addWidget(checkbox)
-            row_layout.addWidget(QLabel(f"Channel {leads[i]}"))
             row_layout.addWidget(QLabel(f" - Lead: "))
             row_layout.addWidget(combo)
             row_layout.addStretch() # Horizontal spacer to push items to the left

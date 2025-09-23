@@ -20,8 +20,8 @@ def on_next_click(view):
         if checkbox.isChecked():
             # The label with the channel name is the second widget in the same row
             row_widget = checkbox.parentWidget().layout() # Get the parent
-            channel_label = row_widget.itemAt(1).widget().text().replace("Channel ", "")  # Get the label
-            channel_lead = row_widget.itemAt(3).widget().currentText()  # Get the text of the combo box
+            channel_label = checkbox.text().replace("Channel ", "")  # Get the label
+            channel_lead = row_widget.itemAt(2).widget().currentText()  # Get the text of the combo box
             selected_leads[channel_label] = channel_lead
     view.controller.selected_leads = selected_leads
 

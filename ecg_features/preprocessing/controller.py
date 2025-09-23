@@ -307,5 +307,5 @@ class PreprocessingController:
         canvas.ax.set_xlim([0, fs / 2])
         canvas.ax.grid(False)
         canvas.ax.tick_params(labelsize=8, colors="#000000")
-        canvas.fig.tight_layout()
+        # canvas.fig.tight_layout()
         canvas.draw()

@@ -22,6 +22,12 @@
       "path": "ecg_features/preprocessing",
       "widget": "PreprocessingWidget",
       "controller": "PreprocessingController"
+    },
+    {
+      "step": "Parameters",
+      "path": "ecg_features/parameters",
+      "widget": "ParametersWidget",
+      "controller": "ParametersController"
     }
   ]
 }
