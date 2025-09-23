@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1136</width>
-    <height>632</height>
+    <height>873</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0,0">
    <property name="spacing">
     <number>6</number>
    </property>
@@ -996,27 +996,31 @@
            <item>
             <widget class="QLabel" name="resampleLabel">
              <property name="text">
-              <string>- Adjust epochs sampling rate</string>
+              <string>- Adjust the RR interval frequency</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QLabel" name="newfsLabel">
              <property name="text">
-              <string>Target sampling frequency</string>
+              <string>Target  frequency</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QSpinBox" name="resamplefsBox">
+            <widget class="QDoubleSpinBox" name="resamplefsBox">
              <property name="minimum">
-              <number>1</number>
-             </property>
-             <property name="maximum">
-              <number>9999</number>
+              <double>0.100000000000000</double>
              </property>
              <property name="value">
-              <number>150</number>
+              <double>4.000000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="resampleLabelNyquist">
+             <property name="text">
+              <string/>
              </property>
             </widget>
            </item>
@@ -1040,6 +1044,19 @@
       </item>
      </layout>
     </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer_3">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

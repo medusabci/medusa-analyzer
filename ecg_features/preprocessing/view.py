@@ -81,10 +81,11 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         self.baselineCBox.setChecked(True)
         self.bpCBox.setChecked(True)
 
+
         # Initial state HRV
         self.hrvCBox.setChecked(True)
         for widget in [self. minrrLabel, self.maxrrLabel, self.minrrBox, self.maxrrBox, self.rrmethodLabel, self.rrmethodBox,
-                       self.newfsLabel, self.resamplefsBox]:
+                       self.newfsLabel, self.resamplefsBox, self.resampleLabelNyquist]:
             widget.setVisible(False)
 
         # Default values in a dict

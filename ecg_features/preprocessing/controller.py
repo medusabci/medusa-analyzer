@@ -9,9 +9,10 @@ class PreprocessingController:
         self.view.controller = self
         self.first_show = False
 
-        # # Data preprocessing
+        # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)
-        # # Baseline
+
+        # Baseline
         self.view.baselineCBox.toggled.connect(self.on_baseline_toggle)
         self.view.baselineCBox.toggled.connect(lambda: self.update_filter_plot('baseline'))
         self.view.drawbaselineButton.clicked.connect(lambda: self.update_filter_plot('baseline'))
@@ -21,7 +22,7 @@ class PreprocessingController:
         self.view.cutoffbaselineBox.valueChanged.connect(
             lambda: self.view.minbroadLabel.setText(str(self.view.cutoffbaselineBox.value())))
 
-        # # Bandpass
+        # Bandpass
         self.view.bpCBox.toggled.connect(self.on_bandpass_toggle)
         self.view.bpCBox.toggled.connect(lambda: self.update_filter_plot('bandpass'))
         self.view.drawbpButton.clicked.connect(lambda: self.update_filter_plot('bandpass'))
@@ -32,8 +33,12 @@ class PreprocessingController:
         self.view.minfreqbpBox.valueChanged.connect(lambda: self.view.minbroadLabel.setText(str(self.view.minfreqbpBox.value())))
         self.view.maxfreqbpBox.valueChanged.connect(lambda: self.view.maxbroadLabel.setText(str(self.view.maxfreqbpBox.value())))
 
+        # HRV
+        self.view.hrvCBox.toggled.connect(self.on_hrv_toggle)
+        self.view.rrcorrectionCBox.toggled.connect(self.on_rrcorrection_toggle)
+        self.view.resampleCBox.toggled.connect(self.on_resample_toggle)
 
-        # # Set initial state
+        # Set initial state
         self.view.shown.connect(self.on_show_event)
 
     def on_preprocessing_toggle(self, checked):
@@ -130,6 +135,91 @@ class PreprocessingController:
                 self.view.cutoffbaselineBox.setValue(self.view.defaults["cutoffbaseline"])
                 return False
         return True
+
+    def validate_interval_bounds(self):
+        """Validate interval bounds and compatibility. """
+        # Get values and defaults
+        min_val, max_val = self.view.minrrBox.value(), self.view.maxrrBox.value()
+        if max_val <= min_val:
+            QtWidgets.QMessageBox.warning(self.view, f"Invalid RR interval correction",
+                                          f"Max {max_val} must be greater than Min {min_val}.")
+            getattr(self.view, f"minrrBox").setValue(self.view.defaults["minrrtime"])
+            getattr(self.view, f"maxrrBox").setValue(self.view.defaults["maxrrtime"])
+            return False
+
+    def on_hrv_toggle(self, checked):
+        """
+        This function shows or hides the hrv controls depending on whether the user chooses to apply them
+        or not.
+        """
+        rr_elements = [self.view.minrrLabel, self.view.minrrBox,
+                       self.view.maxrrLabel, self.view.maxrrBox,
+                       self.view.rrmethodLabel, self.view.rrmethodBox]
+        resample_elements = [self.view.newfsLabel, self.view.resamplefsBox,
+                             self.view.resampleLabelNyquist]
+
+        if not checked:
+            # Hide everything
+            for w in [self.view.hrvinterpolLabel, self.view.hrvinterpolBox,
+                      self.view.rrcorrectionCBox, self.view.rrcorrectionLabel,
+                      self.view.resampleCBox, self.view.resampleLabel,
+                      *rr_elements, *resample_elements]:
+                w.setVisible(False)
+
+            # Reset and uncheck
+            self.view.rrcorrectionCBox.setChecked(False)
+            self.view.resampleCBox.setChecked(False)
+            self.view.minrrBox.setValue(self.view.defaults["minrrtime"])
+            self.view.maxrrBox.setValue(self.view.defaults["maxrrtime"])
+            self.view.rrmethodBox.setCurrentIndex(2)
+            self.view.resamplefsBox.setValue(self.view.defaults["resamplefs"])
+            return
+
+        # Show only base HRV controls
+        for w in [self.view.hrvinterpolLabel, self.view.hrvinterpolBox,
+                  self.view.rrcorrectionCBox, self.view.rrcorrectionLabel,
+                  self.view.resampleCBox, self.view.resampleLabel]:
+            w.setVisible(True)
+        self.view.rrcorrectionCBox.setChecked(False)
+        self.view.resampleCBox.setChecked(False)
+
+    def on_rrcorrection_toggle(self, checked):
+        """
+        Show or hide correction controls based on the checkbox state. Resets resample frequency spinbox when disabled.
+        """
+        self.view.rrcorrectionLabel.setVisible(not checked)
+        rr_elements = [self.view.minrrLabel, self.view.minrrBox,
+                       self.view.maxrrLabel, self.view.maxrrBox,
+                       self.view.rrmethodLabel, self.view.rrmethodBox]
+
+        for w in rr_elements:
+            w.setVisible(checked)
+
+        # Reset default values
+        if not checked:
+            self.view.minrrBox.setValue(self.view.defaults["minrrtime"])
+            self.view.maxrrBox.setValue(self.view.defaults["maxrrtime"])
+            self.view.rrmethodBox.setCurrentIndex(2) # Interpolate
+
+
+    def on_resample_toggle(self, checked):
+        """
+        Show or hide resampling controls based on the checkbox state. Resets resample frequency spinbox when disabled.
+        """
+        # Show/hide elements
+        self.view.resampleLabel.setVisible(not checked)
+        resample_elements = [self.view.newfsLabel, self.view.resamplefsBox,
+                             self.view.resampleLabelNyquist]
+        for w in resample_elements:
+            w.setVisible(checked)
+
+        # Set the label informing about the fs limitation
+        if checked:
+            self.view.resampleLabelNyquist.setText("Recommended fs: 4 Hz")
+
+        # Reset default values
+        else:
+            self.view.resamplefsBox.setValue(self.view.defaults["resamplefs"])
 
     def on_show_event(self):
         if not self.first_show:
