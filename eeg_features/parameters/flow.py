@@ -59,6 +59,19 @@ def on_next_click(view):
             "before enabling the calculation of relative power."
         )
         return False
+
+    # If PSD is not selected and any of the spectral parameters is selected, show warning
+    if not view.psdCBox.isChecked() and (view.rpCBox.isChecked() or view.apCBox.isChecked() or view.mfCBox.isChecked()
+                            or view.seCBox.isChecked()):
+        QtWidgets.QMessageBox.warning(view,
+        "Warning with PSD configuration",
+                                      "You have selected at least one spectral parameter, but the Power Spectral "
+                                      "Density (PSD) computation is not enabled. Default parameters (PSD length % of the"
+                                      " trial: XXXX, overlap %: YYYY, and window: ZZZZZ) will be used for the PSD "
+                                      "calculation. Please ensure that these parameters are appropriate for your "
+                                      "analysis."
+        )
+
     # Save config
     view.main_window.controller.parameters_config = get_parameters_config(view.controller)
 

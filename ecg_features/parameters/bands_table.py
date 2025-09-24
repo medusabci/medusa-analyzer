@@ -11,7 +11,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
     def __init__(self, parameters_widget=None, previous_bands=None):
         super().__init__(parameters_widget.view)
         self.setupUi(self)
-        self.setFixedSize(440, 300)
+        self.setFixedSize(440, 320)
 
         # Initialize general parameters
         self.parameters_widget = parameters_widget
@@ -21,13 +21,17 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
 
         # Configure the bands
         self.default_bands = [
+            {'name': 'Broadband', 'min': 0.0033, 'max': 0.4},
             {"name": "Very Low", "min": 0.0033, "max": 0.04},
             {"name": "Low", "min": 0.04, "max": 0.15},
             {"name": "High", "min": 0.15, "max": 0.4}
         ]
 
+        # Button connections
         self.resetButton.clicked.connect(self.on_reset_click)
         self.acceptButton.clicked.connect(self.on_accept_click)
+
+        self.bandsTable.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         # Set the table style, with alteranting row colors (light gray - white - light gray - white...)
         self.bandsTable.setAlternatingRowColors(True)
@@ -138,7 +142,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         for row in range(self.bandsTable.rowCount()):
             if self.bandsTable.cellWidget(row, 3).findChild(QtWidgets.QPushButton) == button:
                 name_item = self.bandsTable.item(row, 0)
-                self.selected_bands = [b for b in self.selected_bands if b.get("name") != name_item]
+                self.selected_bands = [b for b in self.selected_bands if b.get("name") != name_item.text()]
                 self.bandsTable.removeRow(row)
                 break
 

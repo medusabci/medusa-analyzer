@@ -9,6 +9,8 @@ from PySide6.QtCore import Qt
 ui_leads_widget = loadUiType("ecg_features/leads/view.ui")[0]
 
 class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
+    shown = QtCore.Signal()
+
     """
     Main widget element. Shows a list of channels and allows the user to select which ones to save and to which lead they correspond.
     """
@@ -48,13 +50,33 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
 
         ### ELEMENT CONFIGURATION ###
         pixmap = QPixmap("media/ECG_Leads.png")
+        scaled_pixmap = pixmap.scaled(
+            int(pixmap.width() * 0.75),
+            int(pixmap.height() * 0.75),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
         self.imageLabel.setScaledContents(False)  # False to avoid distortion
-        self.imageLabel.setPixmap(pixmap)
+        self.imageLabel.setPixmap(scaled_pixmap)
         self.imageLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        # Multiselection for conditions List
+        self.conditionList.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        # Set explanatory text
+        self.explanationLabel.setWordWrap(True)
+        self.explanationLabel.setText("""
+            <div style="text-align:left; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 11pt; color:#666">
+                    Select the experimental conditions for ECG processing. Each selected condition will be analyzed 
+                    separately. If no condition is selected, the entire recording will be processed without distinction
+                    between conditions.
+                </p>
+            </div>
+        """)
 
     def showEvent(self, event):
         super().showEvent(event)
         self.add_leads_rows()
+        self.shown.emit()
 
 
     def add_leads_rows(self):
@@ -76,6 +98,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
             checkbox = QCheckBox()
             checkbox.setObjectName(f"chan{i}CBox")
             checkbox.setText(f"Channel {leads[i]}")
+            checkbox.setChecked(True)
 
             # ComboBox
             combo = QComboBox()

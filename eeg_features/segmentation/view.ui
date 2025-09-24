@@ -328,7 +328,11 @@
             </widget>
            </item>
            <item>
-            <widget class="QListView" name="conditionList"/>
+            <widget class="QListView" name="conditionList">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QLabel" name="conditionLabel">
@@ -369,7 +373,11 @@
             </widget>
            </item>
            <item>
-            <widget class="QListView" name="eventList"/>
+            <widget class="QListView" name="eventList">
+             <property name="editTriggers">
+              <set>QAbstractItemView::NoEditTriggers</set>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QLabel" name="eventLabel">

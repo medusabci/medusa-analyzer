@@ -15,12 +15,13 @@ def get_parameters_config(controller):
         "tring_interp": True if controller.view.tinnCBox.isChecked() else None,
         "pnn50": True if controller.view.pnn50CBox.isChecked() else None,
         "pnn20": True if controller.view.pnn20CBox.isChecked() else None,
-        "selected_bands": controller.selected_bands_by_type if controller.selected_bands_by_type else None,
         "psd": True if controller.view.psdCBox.isChecked() else None,
         "psd_segment_pct": controller.view.segmentpsdBox.value() if controller.view.psdCBox.isChecked() else None,
         "psd_overlap_pct": controller.view.overlappsdBox.value() if controller.view.psdCBox.isChecked() else None,
         'psd_window': controller.view.psdcomboBox.currentText() if controller.view.psdCBox.isChecked() else None,
         "sympathovagal_balance": True if controller.view.svbCBox.isChecked() else None,
+        "selected_bands": controller.selected_bands if controller.selected_bands else None,
+        "power": True if controller.view.powerCBox.isChecked() else None,
         "kurtosis": True if controller.view.kurtCBox.isChecked() else None,
         "skewness": True if controller.view.skewnessCBox.isChecked() else None,
         "median_frequency": True if controller.view.mfCBox.isChecked() else None,
@@ -44,16 +45,27 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked. It initializes the save widget,
     """
 
-    # TODO: VALIDACIONES PARA MÉTRICAS CONCRETAS
-    if not view.controller.selected_bands_by_type and (view.psdCBox.isChecked() or view.svbCBox.isChecked()
-    or view.kurtCBox.isChecked() or view.skewnessCBox.isChecked() or view.mfCBox.isChecked() or view.seCBox.isChecked()):
+    # If not selected bands and spectral parameters are selected, show error
+    if not view.controller.selected_bands and (view.powerCBox.isChecked() or view.kurtCBox.isChecked() or
+           view.skewnessCBox.isChecked() or view.mfCBox.isChecked() or view.seCBox.isChecked()):
         QtWidgets.QMessageBox.critical(view,
         "Invalid configuration",
         "To compute spectral parameters of HRV, you must select at least one frequency band. "
-        "Please click the 'Edit bands' to choose one or more bands "
-        "before enabling the calculation of relative power."
+        "Please click the 'Edit bands' to choose one or more bands."
         )
         return False
+
+    # If PSD is not selected and any of the spectral parameters is selected, show warning
+    if not view.psdCBox.isChecked() and (view.svbCBox.isChecked() or view.powerCBox.isChecked() or view.kurtCBox.isChecked()
+                            or view.skewnessCBox.isChecked() or view.mfCBox.isChecked() or view.seCBox.isChecked()):
+        QtWidgets.QMessageBox.warning(view,
+        "Warning with PSD configuration",
+                                      "You have selected at least one spectral parameter, but the Power Spectral "
+                                      "Density (PSD) computation is not enabled. Default parameters (PSD length % of the"
+                                      " trial: 80, overlap %: 50, and window: boxcar) will be used for the PSD "
+                                      "calculation. Please ensure that these parameters are appropriate for your "
+                                      "analysis."
+        )
 
     # Save config
     view.main_window.controller.parameters_config = get_parameters_config(view.controller)

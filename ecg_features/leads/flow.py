@@ -4,8 +4,14 @@ def get_leads_config(controller):
     """
     Function that creates a dictionary with leads configurations.
     """
+
+    selected_conditions = [
+        index.data() for index in controller.view.conditionList.selectionModel().selectedIndexes()
+    ] if controller.view.conditionList.selectionModel() else []
+
     config = {
-        "selected_leads": controller.selected_leads
+        "selected_leads": controller.selected_leads,
+        "selected_conditions": selected_conditions
     }
     return config
 
@@ -28,6 +34,15 @@ def on_next_click(view):
     if not selected_leads:
         QtWidgets.QMessageBox.warning(view, "Invalid channel selection",
                                       f"You have to select at least one channel to proceed.")
+        return False
+
+    # Get the list of selected leads
+    leads = list(selected_leads.values())
+    # Check for duplicates
+    duplicates = [lead for lead in leads if leads.count(lead) > 1]
+    if duplicates:
+        QtWidgets.QMessageBox.warning(view, "Invalid lead selection",
+                                      f"You have selected the same lead for more than one channel.")
         return False
 
     # Save config

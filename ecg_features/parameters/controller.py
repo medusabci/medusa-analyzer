@@ -7,7 +7,7 @@ class ParametersController:
         self.view.controller = self
 
         # Variables
-        self.selected_bands_by_type = {}
+        self.selected_bands = {}
         self.band_editor = None
 
         # Relative power
@@ -39,7 +39,7 @@ class ParametersController:
         """
         Updates the labels with the names of the selected bands
         """
-        self.selected_bands_by_type = bands
+        self.selected_bands = bands
 
         # Edit the label with the names and ranges of the selected bands, or "None" if no band is selected
         if bands:
