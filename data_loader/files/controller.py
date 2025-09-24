@@ -3,6 +3,7 @@ from data_loader.files.converter import conversor_to_rec
 from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
 from data_loader.files.converter import CONVERTERS
+from plots.filtering.view import FilteringPlotWidget
 import os
 
 
@@ -15,7 +16,14 @@ class FilesController:
         self.view.browseButton.clicked.connect(self.on_select_files_click)
         self.view.viewfilesButton.clicked.connect(self.on_view_files_click)
         self.view.convertButton.clicked.connect(self.on_converter_click)
+        self.view.filteringPlotButton.clicked.connect(self.on_filtering_plot_click)
 
+        self.filtering_window = None
+
+    def on_filtering_plot_click(self):
+        if self.filtering_window is None:  # si no existe, la creo
+            self.filtering_window = FilteringPlotWidget(self.view.main_window)
+        self.filtering_window.show()
 
     def on_select_files_click(self):
         """

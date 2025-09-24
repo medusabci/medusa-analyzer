@@ -135,6 +135,8 @@ def run_pipeline(controller, settings_dic, total_tasks):
                 biosignal = getattr(data_preprocessed, name_signal)
                 # Modify it with the preprocessed signal. It will also be modified in the data_preprocessed object
                 setattr(biosignal, "signal", processed_signal)
+                # Save de original signal
+                setattr(biosignal, "original_signal", original_signal)
 
                 # Deepcopy the data to avoid modifying the original data object
                 save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, 'prep', settings_dic)
