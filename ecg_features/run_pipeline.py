@@ -12,12 +12,12 @@ from os import makedirs
 from copy import deepcopy
 
 from pyparsing import originalTextFor
-from scipy.stats import kurtosis, skew
+from scipy.stats import kurtosis, skew, zscore
 from scipy.io import savemat
 
 import matplotlib.pyplot as plt
 
-def run_pipeline(controller, settings_dic, total_tasks):
+def run_pipeline(controller, settings_dic):
     """
     Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
     computation for all selected files based on the provided configuration.
@@ -45,6 +45,7 @@ def run_pipeline(controller, settings_dic, total_tasks):
             name_signal = settings_dic['files']['selected_biosignal']  # ej: "eeg"
             original_signal = getattr(data, name_signal).signal
             signal_times = getattr(data, name_signal).times
+            channel_set = getattr(data, name_signal).channel_set
             signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
             fs = getattr(data, name_signal).fs
 
@@ -52,10 +53,21 @@ def run_pipeline(controller, settings_dic, total_tasks):
             if fs != settings_dic['preprocessing']['fs']:
                 raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
 
-            ## First step: Preprocessing
+            ## First step: Select channels
+            chan_idx = []
+            for chan_name in settings_dic['leads']['selected_channels']:
+                idx_tmp = channel_set.l_cha.index(chan_name)
+                chan_idx.append(idx_tmp)
             processed_signal = deepcopy(original_signal)
+            processed_signal = processed_signal[:, chan_idx]
+
+            ## Second step: Preprocessing ECG
             if settings_dic['preprocessing']['apply_preprocessing']:
-                processed_signal = apply_preprocessing(processed_signal, fs, settings_dic['preprocessing'])
+                processed_signal = apply_preprocessing_ecg(processed_signal, fs, settings_dic['preprocessing'])
+
+            ## Third step: HRV computation
+            if settings_dic['preprocessing']['hrv']:
+                processed_signal =a
 
             ## Second step: Get indices of the thresholding
             if settings_dic['segmentation']["thresholding"]:
@@ -134,6 +146,8 @@ def run_pipeline(controller, settings_dic, total_tasks):
                 biosignal = getattr(data_preprocessed, name_signal)
                 # Modify it with the preprocessed signal. It will also be modified in the data_preprocessed object
                 setattr(biosignal, "signal", processed_signal)
+                # Save de original signal
+                setattr(biosignal, "original_signal", original_signal)
 
                 # Deepcopy the data to avoid modifying the original data object
                 save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, 'prep', settings_dic)
@@ -247,6 +261,175 @@ def run_pipeline(controller, settings_dic, total_tasks):
 
 #################### HELPER FUNCTIONS
 
+def include_no_conditions_in_marks(marks, times):
+    # Create a copy of marks
+    new_marks = deepcopy(marks)
+
+    # The label for no-condition will be the max label + 1
+    if marks.conditions_labels:
+        new_label = np.max(marks.conditions_labels) + 1
+    else:
+        new_label = 0
+    # Include the no-condition condition in the app_settings
+    new_marks.app_settings['conditions']['no-condition'] = {'desc-name': 'No Condition',
+                                                             'label': new_label,
+                                                             'shortcut': 'NA'}
+
+    # Get the conditions times and labels from the original marks
+    conditions_times = np.array(marks.conditions_times).reshape(-1, 2)
+    conditions_labels = np.array(marks.conditions_labels).reshape(-1, 2)[:,0]
+
+    # Convert the times to indices of the 'times' array
+    ranges = []
+    # For each condition
+    for (start_t, end_t), label in zip(conditions_times, conditions_labels):
+        # Get the closest indices in 'times' for the initial and final timestamps
+        start_idx = np.searchsorted(times, start_t)
+        end_idx = np.searchsorted(times, end_t)
+        # Append them in the ranges variable
+        ranges.append((start_idx, end_idx, label))
+
+    if ranges:
+        # Add intervals where there is no label with "new_label" (i.e., fill the no-condition gaps)
+        final_ranges = []
+        prev_end = 0
+        # For each range in ranges
+        for start, end, label in ranges:
+            # Check if there is a gap between the previous end and the current start
+            if prev_end < start:
+                # If so, append a new range with label "new_label"
+                final_ranges.append((prev_end, start, new_label))
+            # Append the current range (the range of the already existing condition)
+            final_ranges.append((start, end, label))
+            # The current end becomes the previous end for the next iteration
+            prev_end = end
+    else:
+        # If there are no ranges (no conditions), the entire signal is no-condition
+        final_ranges = [(0, len(times), new_label)]
+        prev_end = len(times)
+
+    # If there is a gap between the last end and the end of the signal, also append it as a "new_label" (i.e.,
+    # no-condition) range
+    if prev_end < len(times):
+        final_ranges.append((prev_end, len(times), new_label))
+
+    # Create the new conditions_times and conditions_labels arrays
+    new_conditions_times = []
+    new_conditions_labels = []
+    # For each range in final_ranges
+    for start_idx, end_idx, label in final_ranges:
+        # Append the start and end times. The end_idx is actually the beginning of the next range, so we use end_idx - 1
+        # to get the actual end time of the current range
+        new_conditions_times.append([times[start_idx], times[end_idx - 1]])
+        # Append the label twice (start and end)
+        new_conditions_labels.append(label)
+        new_conditions_labels.append(label)
+    # Convert to numpy arrays
+    new_conditions_times = np.array(new_conditions_times).flatten() # Flatten the array
+    new_conditions_labels = np.array(new_conditions_labels)
+
+    # Include the new conditions times and labels in the new marks
+    new_marks.conditions_times = new_conditions_times
+    new_marks.conditions_labels = new_conditions_labels
+
+    return new_marks
+
+
+def get_epochs_from_condition(signal, condition, marks, times, fs, cfg, event=None):
+    """
+    Extract epochs from the signal based on specified condition names
+    """
+    # Fs
+    fs_seg = fs / 1000
+    # Trial length
+    trial_len = int(cfg['trial_length']) * fs_seg if cfg['trial_length'] else None
+    # Trial stride
+    trial_stride_val = cfg['trial_stride']
+    trial_stride = (trial_stride_val / 100 * trial_len) if trial_stride_val else None
+    # Event window
+    w_start, w_end = cfg['window_start'], cfg['window_end']
+    window = [w_start, w_end]
+    # Event baseline
+    baseline_window = [cfg['baseline_start'],
+                       cfg['baseline_end']] if cfg['norm'] else None
+    # Normalization
+    norm_type = cfg['norm_type'] if cfg['norm'] else None
+
+    # Get the label (numerical value) associated with the condition name
+    cond_key = marks.app_settings['conditions'][condition]['label']
+    if event:
+        evt_key = marks.app_settings['events'][event]['label']
+    # Find indices of epochs matching the condition label
+    idx = np.where(np.array(marks.conditions_labels) == cond_key)[0]
+    # Skip if odd number of indices (requires pairs of start/end)
+    if len(idx) % 2 != 0:
+        return False
+
+    # Segment into epochs
+    segments = []
+    # For each pair of start/end indices
+    for i in range(0, len(idx), 2):
+        # Start and end sample indices of the conditions
+        start = _find_nearest_index(times, marks.conditions_times[idx[i]])
+        end = _find_nearest_index(times, marks.conditions_times[idx[i + 1]])
+        if event:
+            # Get start and end times
+            start_time, end_time = times[start], times[end]
+            # Get the event indices within the condition time range
+            evt_idx = _get_event_indices_in_range(marks, evt_key, start_time, end_time)
+            if evt_idx.size == 0:
+                return None
+            # Get the times of the events within the condition time range
+            onsets = np.array(marks.events_times)[evt_idx]
+            # Get epochs from these events
+            epochs = medusa.get_epochs_of_events(times, signal, onsets, fs, window, baseline_window, norm=norm_type)
+        else:
+            # Extract segment
+            segment = signal[start:end]
+            # Get epochs from the segment
+            epochs = medusa.get_epochs(segment, trial_len, stride=trial_stride, norm=norm_type)
+
+        # Append if epochs were created
+        if epochs is not None:
+            segments.append(epochs)
+
+    # Set the dimensions of the epoched data
+    epoched = np.concatenate(segments, axis=0) if segments else None
+    return epoched
+def _find_nearest_index(reference_times, query_times):
+    """
+    Find the index (or indices) in reference_times closest to query_times.
+    """
+    # References times is the times vector
+    reference_times = np.asarray(reference_times)
+    # Query times is the markers of the events/conditions
+    query_times = np.atleast_1d(query_times)  # Ensure we always work with an array (i.e., convert scalars to 1D array)
+
+    # Find indices where query_times would be inserted into reference_times to keep order
+    indices = np.searchsorted(reference_times, query_times)
+
+    # In the next step we will index using "indices" and "indices - 1". This means that we now have to avoid indices
+    # being 0 or len(reference_times), as this would lead to out-of-bounds indexing in the next step. We will clip the
+    # indices so that all of their values are between 1 and len(reference_times) - 1, ensuring that both "indices" and
+    # "indices - 1" are within valid range (i.e., not 0 and not len(reference_times))
+    indices = np.clip(indices, 1, len(reference_times) - 1)
+
+    # Get the left and right neighbors of each query time
+    left = reference_times[indices - 1]
+    right = reference_times[indices]
+
+    # Choose the closest neighbor (right or left)
+    choose_left = np.abs(query_times - left) < np.abs(query_times - right) # Choose left if it's closer than right
+    # nearest_indices will contain indices - 1 if left is closer, or indices if right is closer
+    nearest_indices = np.where(choose_left, indices - 1, indices)
+
+    # If the input was a single value, return a single index. This if covers two ways of providing a single value: as a
+    # scalar and as a one-element array
+    if np.isscalar(query_times) or query_times.shape == (1,):
+        return nearest_indices[0]
+
+    # If the input was an array, return an array of indices
+    return nearest_indices
 
 
 def save_outputs(controller, data, base_name, suffix, key, settings_dic):
@@ -281,21 +464,22 @@ def save_outputs(controller, data, base_name, suffix, key, settings_dic):
 
 #################### PREPROCESSING
 
-def apply_preprocessing(signal, fs, cfg):
+def apply_preprocessing_ecg(signal, fs, cfg):
     """
     Apply bandpass, notch filtering, and Common Average Reference (CAR).
     """
+
+    # Baseline correction
+    if cfg['baseline']:
+        signal = medusa.FIRFilter(cfg['baseline_order'], cfg['baseline_cutoff'], 'highpass',
+                                  window=cfg['baseline_win']).fit_transform(signal, fs)
     # Bandpass filter
-    if cfg.get('bandpass'):
+    if cfg['bandpass']:
         signal = medusa.FIRFilter(cfg['bp_order'], [cfg['bp_min'], cfg['bp_max']], 'bandpass',
                                   window=cfg['bp_win']).fit_transform(signal, fs)
-    # Notch filter
-    if cfg.get('notch'):
-        signal = medusa.FIRFilter(cfg['notch_order'], [cfg['notch_min'], cfg['notch_max']],
-                                  'bandstop', window=cfg['notch_win']).fit_transform(signal, fs)
 
-    # CAR and return
-    return medusa.car(signal) if cfg.get('car') else signal
+    # Zscore and return
+    return zscore(signal, axis=0) if cfg['norm'] else signal
 
 
 ##################### BAND FILTERING

@@ -196,7 +196,7 @@
 }</string>
      </property>
      <property name="title">
-      <string>Plots and grafics</string>
+      <string>Plots and graphics</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
