@@ -46,6 +46,6 @@ def on_next_click(view):
         return False
 
     # Save config
-    view.main_window.controller.preproc_config = get_leads_config(view.controller)
+    view.main_window.controller.leads_config = get_leads_config(view.controller)
 
     return True

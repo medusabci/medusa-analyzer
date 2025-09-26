@@ -61,48 +61,28 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
 
         layout.addWidget(self.description_label)
 
-
         ### ELEMENT CONFIGURATION ###
 
         # Define variables
         self.main_window = main_window
 
-        # Filter plots setup
-        self.baselineCanvas = MplCanvas(self.baselinePlotWidget)
-        baselineLayout = QtWidgets.QVBoxLayout(self.baselinePlotWidget)
-        baselineLayout.addWidget(self.baselineCanvas)
-        self.bandpassCanvas = MplCanvas(self.bandpassPlotWidget)
-        bpLayout = QtWidgets.QVBoxLayout(self.bandpassPlotWidget)
-        bpLayout.addWidget(self.bandpassCanvas)
-
         # Initial state preprocessin
-        self.preprocessingButton.setChecked(True)
-        self.normCBox.setChecked(True)
-        self.baselineCBox.setChecked(True)
-        self.bpCBox.setChecked(True)
+        self.cleanCBox.setChecked(False)
+        self.zscoreCBox.setChecked(False)
+        self.hrvCBox.setChecked(False)
+        self.resampleCBox.setChecked(False)
 
-
-        # Initial state HRV
-        self.hrvCBox.setChecked(True)
-        for widget in [self. minrrLabel, self.maxrrLabel, self.minrrBox, self.maxrrBox, self.rrmethodLabel, self.rrmethodBox,
-                       self.newfsLabel, self.resamplefsBox, self.resampleLabelNyquist]:
+        # Initial state
+        for widget in [self.cleanLabel, self.cleanBox, self.cleanButton,
+            self.hrvprocessLabel, self.hrvprocessBox, self.hrvprocessButton,
+            self.resampleCBox, self.resampleLabel, self.resampleLabelAux, self.resampleLabelNyquist, self.resampleBox]:
             widget.setVisible(False)
 
         # Default values in a dict
         self.defaults = {
-            "cutoffbaseline": self.cutoffbaselineBox.value(),
-            "orderbaseline": self.orderbaselineBox.value(),
-            "minfreqbp": self.minfreqbpBox.value(),
-            "maxfreqbp": self.maxfreqbpBox.value(),
-            "orderbp": self.orderbpBox.value(),
-            "minrrtime": self.minrrBox.value(),
-            "maxrrtime": self.maxrrBox.value(),
-            "resamplefs": self.resamplefsBox.value(),
+            "resamplefs": self.resampleBox.value()
         }
 
     def showEvent(self, event):
         super().showEvent(event)
         self.shown.emit()
-        if hasattr(self, "controller"):
-            self.controller.update_filter_plot("baseline")
-            self.controller.update_filter_plot("bandpass")

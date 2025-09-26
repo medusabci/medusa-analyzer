@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1266</width>
+    <width>1069</width>
     <height>1134</height>
    </rect>
   </property>
@@ -24,26 +24,11 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1246</width>
+        <width>1049</width>
         <height>1114</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QFrame" name="topContentWidget">
-         <property name="styleSheet">
-          <string notr="true">QFrame {
-	border: none;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::StyledPanel</enum>
-         </property>
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-        </widget>
-       </item>
        <item row="1" column="0">
         <widget class="QGroupBox" name="Datapreprocessing">
          <property name="font">
@@ -69,54 +54,79 @@
 </string>
          </property>
          <property name="title">
-          <string>Preprocessing</string>
+          <string>ECG Preprocessing</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
+         <layout class="QVBoxLayout" name="verticalLayout">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_7">
+           <layout class="QHBoxLayout" name="preprocessing_clean">
             <item>
-             <widget class="QLabel" name="broadbandLabel">
+             <widget class="QCheckBox" name="cleanCBox">
               <property name="font">
                <font>
-                <weight>50</weight>
-                <bold>false</bold>
+                <weight>75</weight>
+                <bold>true</bold>
                </font>
               </property>
               <property name="text">
-               <string>Data frequency range</string>
+               <string>Clean ECG</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="minbroadLabel">
+             <widget class="QLabel" name="cleanLabel">
               <property name="text">
-               <string>0</string>
+               <string>Cleaning method</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="broadbandauxLabel">
+             <widget class="QComboBox" name="cleanBox">
+              <item>
+               <property name="text">
+                <string>neurokit</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>biosppy</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>pantompkins1985</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>hamilton2002</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>elgendi2010</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>engzeemod2012</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>vg</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="cleanButton">
               <property name="text">
-               <string>-</string>
+               <string>Help</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="maxbroadLabel">
-              <property name="text">
-               <string>fs</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="hzbroadbandLabel">
-              <property name="text">
-               <string>Hz</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_49">
+             <spacer name="horizontalSpacer_2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -131,16 +141,9 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="preprocessing_selection">
+           <layout class="QHBoxLayout" name="preprocessing_zscore">
             <item>
-             <widget class="QCheckBox" name="preprocessingButton">
-              <property name="text">
-               <string/>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="preprocessingLabel">
+             <widget class="QCheckBox" name="zscoreCBox">
               <property name="font">
                <font>
                 <weight>75</weight>
@@ -148,7 +151,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Preprocess data</string>
+               <string>Zscore ECG</string>
               </property>
              </widget>
             </item>
@@ -164,592 +167,6 @@
                </size>
               </property>
              </spacer>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QWidget" name="widget_5" native="true">
-            <layout class="QVBoxLayout" name="verticalLayout_11">
-             <item>
-              <widget class="QGroupBox" name="normgroupBox_2">
-               <property name="font">
-                <font>
-                 <pointsize>9</pointsize>
-                </font>
-               </property>
-               <property name="title">
-                <string>Normalization</string>
-               </property>
-               <layout class="QVBoxLayout" name="verticalLayout_10">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_11">
-                  <item>
-                   <widget class="QCheckBox" name="normCBox">
-                    <property name="font">
-                     <font>
-                      <weight>75</weight>
-                      <bold>true</bold>
-                     </font>
-                    </property>
-                    <property name="text">
-                     <string>Z-score</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QLabel" name="normLabel">
-                    <property name="text">
-                     <string>- Normalize amplitudes</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_11">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-               </layout>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0">
-            <property name="sizeConstraint">
-             <enum>QLayout::SetFixedSize</enum>
-            </property>
-            <item>
-             <widget class="QWidget" name="widget_3" native="true">
-              <layout class="QVBoxLayout" name="verticalLayout_9">
-               <item>
-                <widget class="QGroupBox" name="baselinegroupBox">
-                 <property name="font">
-                  <font>
-                   <pointsize>9</pointsize>
-                  </font>
-                 </property>
-                 <property name="title">
-                  <string>Baseline correction</string>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_6">
-                  <item>
-                   <layout class="QHBoxLayout" name="CAR_filtering">
-                    <item>
-                     <widget class="QCheckBox" name="baselineCBox">
-                      <property name="font">
-                       <font>
-                        <weight>75</weight>
-                        <bold>true</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>Baseline correction</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="baselineLabel">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>- Remove baseline drift appliying a high-pass filter</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_4">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </item>
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_9">
-                    <item>
-                     <widget class="QLabel" name="cutoffbaselineLabel">
-                      <property name="text">
-                       <string>Cutoff freq. </string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="cutoffbaselineBox">
-                      <property name="minimum">
-                       <double>0.100000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>999.990000000000009</double>
-                      </property>
-                      <property name="value">
-                       <double>0.500000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="orderbaselineLabel">
-                      <property name="text">
-                       <string>Order</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="orderbaselineBox">
-                      <property name="minimum">
-                       <number>1</number>
-                      </property>
-                      <property name="maximum">
-                       <number>9999</number>
-                      </property>
-                      <property name="value">
-                       <number>1000</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="winbaselineLabel">
-                      <property name="text">
-                       <string>Win</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="winbaselineBox">
-                      <property name="currentIndex">
-                       <number>9</number>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>barthann</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>bartlett</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>backman</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>blackmanharris</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>bohman</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>boxcar</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>cosine</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>exponential</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>flattop</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>hamming</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>hann</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>lanczos</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>nuttall</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>parzen</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>taylor</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>triang</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>tukey</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_8">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="drawbaselineButton">
-                    <property name="text">
-                     <string>Update graph</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QWidget" name="baselinePlotWidget" native="true"/>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <spacer name="verticalSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
-             <widget class="QWidget" name="widget_4" native="true"/>
-            </item>
-            <item>
-             <widget class="QWidget" name="widget" native="true">
-              <layout class="QVBoxLayout" name="verticalLayout_5">
-               <item>
-                <widget class="QGroupBox" name="bpgroupBox">
-                 <property name="font">
-                  <font>
-                   <pointsize>9</pointsize>
-                  </font>
-                 </property>
-                 <property name="title">
-                  <string>Bandpass filtering</string>
-                 </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_7">
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_5">
-                    <item>
-                     <widget class="QCheckBox" name="bpCBox">
-                      <property name="font">
-                       <font>
-                        <weight>75</weight>
-                        <bold>true</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>Bandpass</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="bpLabel">
-                      <property name="font">
-                       <font>
-                        <weight>50</weight>
-                        <bold>false</bold>
-                       </font>
-                      </property>
-                      <property name="text">
-                       <string>– Focus on frequency ranges of interest</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_2">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </item>
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_6">
-                    <item>
-                     <widget class="QLabel" name="bpminfreqLabel">
-                      <property name="text">
-                       <string>Min. freq.</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="minfreqbpBox">
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="minimum">
-                       <double>0.100000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>999.990000000000009</double>
-                      </property>
-                      <property name="singleStep">
-                       <double>0.100000000000000</double>
-                      </property>
-                      <property name="value">
-                       <double>0.500000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="bpmaxfreqLabel">
-                      <property name="text">
-                       <string>Max. freq.</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QDoubleSpinBox" name="maxfreqbpBox">
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="minimum">
-                       <double>0.200000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>9999.989999999999782</double>
-                      </property>
-                      <property name="value">
-                       <double>30.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="orderbpLabel">
-                      <property name="text">
-                       <string>Order</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QSpinBox" name="orderbpBox">
-                      <property name="styleSheet">
-                       <string notr="true"/>
-                      </property>
-                      <property name="minimum">
-                       <number>1</number>
-                      </property>
-                      <property name="maximum">
-                       <number>9999</number>
-                      </property>
-                      <property name="singleStep">
-                       <number>10</number>
-                      </property>
-                      <property name="value">
-                       <number>1000</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="winbpLabel">
-                      <property name="text">
-                       <string>Win</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="winbpBox">
-                      <property name="currentIndex">
-                       <number>9</number>
-                      </property>
-                      <item>
-                       <property name="text">
-                        <string>barthann</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>bartlett</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>backman</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>blackmanharris</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>bohman</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>boxcar</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>cosine</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>exponential</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>flattop</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>hamming</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>hann</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>lanczos</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>nuttall</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>parzen</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>taylor</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>triang</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>tukey</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item>
-                     <spacer name="horizontalSpacer_9">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                   </layout>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="drawbpButton">
-                    <property name="text">
-                     <string>Update graph</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QWidget" name="bandpassPlotWidget" native="true"/>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-               <item>
-                <spacer name="verticalSpacer_2">
-                 <property name="orientation">
-                  <enum>Qt::Vertical</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>20</width>
-                   <height>40</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </widget>
             </item>
            </layout>
           </item>
@@ -791,9 +208,9 @@
 }</string>
          </property>
          <property name="title">
-          <string>Heart rate variability</string>
+          <string>HRV Preprocessing</string>
          </property>
-         <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,0,0">
+         <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,0">
           <property name="sizeConstraint">
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
@@ -808,14 +225,57 @@
                </font>
               </property>
               <property name="text">
-               <string>HRV</string>
+               <string>Compute HRV</string>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QLabel" name="hrvLabel">
               <property name="text">
-               <string>- Enable heart rate variability analysis</string>
+               <string>-  Enable heart rate variability analysis</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="hrvprocessLabel">
+              <property name="text">
+               <string>Processing method</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="hrvprocessBox">
+              <item>
+               <property name="text">
+                <string>neurokit</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>pantompkins1985</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>hamilton2002</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>elgendi2010</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>engzeemod2012</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="hrvprocessButton">
+              <property name="text">
+               <string>Help</string>
               </property>
              </widget>
             </item>
@@ -835,30 +295,59 @@
            </layout>
           </item>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <property name="leftMargin">
+             <number>10</number>
+            </property>
             <item>
-             <widget class="QLabel" name="hrvinterpolLabel">
+             <widget class="QCheckBox" name="resampleCBox">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
               <property name="text">
-               <string>Interpolation method</string>
+               <string>Resample</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QComboBox" name="hrvinterpolBox">
-              <item>
-               <property name="text">
-                <string>linear</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>cubic</string>
-               </property>
-              </item>
+             <widget class="QLabel" name="resampleLabel">
+              <property name="text">
+               <string>- Adjust the HRV sampling frequency</string>
+              </property>
              </widget>
             </item>
             <item>
-             <spacer name="horizontalSpacer_10">
+             <widget class="QLabel" name="resampleLabelAux">
+              <property name="text">
+               <string>Target  frequency</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="resampleBox">
+              <property name="minimum">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>20.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>4.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="resampleLabelNyquist">
+              <property name="text">
+               <string>Recommended fs: 4 Hz</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_5">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
@@ -872,195 +361,22 @@
             </item>
            </layout>
           </item>
-          <item>
-           <widget class="QWidget" name="widget_2" native="true">
-            <layout class="QVBoxLayout" name="verticalLayout_4">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_10">
-               <item>
-                <widget class="QCheckBox" name="rrcorrectionCBox">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>RR Interval correction</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="rrcorrectionLabel">
-                 <property name="text">
-                  <string>- Correct irregular RR intervals</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="minrrLabel">
-                 <property name="text">
-                  <string>min RR (ms)</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="minrrBox">
-                 <property name="minimum">
-                  <number>1</number>
-                 </property>
-                 <property name="maximum">
-                  <number>9999</number>
-                 </property>
-                 <property name="value">
-                  <number>300</number>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="maxrrLabel">
-                 <property name="text">
-                  <string>max RR (ms)</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QSpinBox" name="maxrrBox">
-                 <property name="minimum">
-                  <number>1</number>
-                 </property>
-                 <property name="maximum">
-                  <number>9999</number>
-                 </property>
-                 <property name="value">
-                  <number>2000</number>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="rrmethodLabel">
-                 <property name="text">
-                  <string>Correction method</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QComboBox" name="rrmethodBox">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>4</width>
-                   <height>0</height>
-                  </size>
-                 </property>
-                 <property name="currentIndex">
-                  <number>2</number>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>remove</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>replace</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>interpolate</string>
-                  </property>
-                 </item>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_6">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_4">
-               <item>
-                <widget class="QCheckBox" name="resampleCBox">
-                 <property name="font">
-                  <font>
-                   <weight>75</weight>
-                   <bold>true</bold>
-                  </font>
-                 </property>
-                 <property name="text">
-                  <string>Resample</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="resampleLabel">
-                 <property name="text">
-                  <string>- Adjust the RR interval frequency</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="newfsLabel">
-                 <property name="text">
-                  <string>Target  frequency</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="resamplefsBox">
-                 <property name="minimum">
-                  <double>0.100000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>20.000000000000000</double>
-                 </property>
-                 <property name="value">
-                  <double>4.000000000000000</double>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QLabel" name="resampleLabelNyquist">
-                 <property name="text">
-                  <string/>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_5">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </item>
-            </layout>
-           </widget>
-          </item>
          </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QFrame" name="topContentWidget">
+         <property name="styleSheet">
+          <string notr="true">QFrame {
+	border: none;
+}</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
         </widget>
        </item>
        <item row="3" column="0">

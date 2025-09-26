@@ -1,4 +1,4 @@
-# from ecg_features.run_pipeline import run_pipeline
+from ecg_features.run_pipeline import run_pipeline
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
@@ -48,26 +48,15 @@ def on_next_click(view):
         total_tasks = sum([
             view.settingsCBox.isChecked(),
             view.prepsignalsCBox.isChecked(),
-            view.segsignalsCBox.isChecked(),
             view.paramsignalsCBox.isChecked()
         ])
         total_tasks = max(total_tasks, 1)  # To avoid division by 0
 
-        # If we are band segmenting, include the broadband as a new band, as we need it for the RP
-        if view.main_window.controller.preproc_config['band_segmentation']:
-            bands = view.main_window.controller.preproc_config['selected_bands']
-            bands.insert(0,{
-                "name": "broadband",
-                "min": view.main_window.controller.preproc_config['broadband_min'],
-                "max": view.main_window.controller.preproc_config['broadband_max']
-            })
-            view.main_window.controller.preproc_config['selected_bands'] = bands
-
         # Get configuration data, with error handling
         try:
             files = view.main_window.controller.files_config
+            leads = view.main_window.controller.leads_config
             preprocessing = view.main_window.controller.preproc_config
-            segmentation = view.main_window.controller.segmentation_config
             parameters = view.main_window.controller.parameters_config
         except AttributeError as e:
             QtWidgets.QMessageBox.critical(view, "Error",
@@ -77,8 +66,8 @@ def on_next_click(view):
         # Create a settings dictionary grouping all configurations
         view.controller.settings_dic = {
             "files": files,
+            "leads": leads,
             "preprocessing": preprocessing,
-            "segmentation": segmentation,
             "parameters": parameters
         }
         # Save the settings dict
@@ -86,11 +75,11 @@ def on_next_click(view):
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
         # Run the pipeline
-        # success = run_pipeline(view.controller, view.controller.settings_dic, total_tasks)
+        success = run_pipeline(view.controller, view.controller.settings_dic, total_tasks)
 
         # If success change the button text to "Close"
-        # if success:
-        #     view.main_window.nextButton.setText('Close')
+        if success:
+            view.main_window.nextButton.setText('Close')
 
         # Set the pipeline as completed, to avoid computing it again and closing the app
         # view.controller.pipeline_completed = True

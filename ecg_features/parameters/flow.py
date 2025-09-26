@@ -8,10 +8,9 @@ def get_parameters_config(controller):
     config = {
         "averege": True if controller.view.avnnCBox.isChecked() else None,
         "std_nn": True if controller.view.sdnnCBox.isChecked() else None,
-        "avg_sucessive_diff": True if controller.view.avsdCBox.isChecked() else None,
         "rms_sucessive_diff": True if controller.view.rmssdCBox.isChecked() else None,
         "std_sucessive_diff": True if controller.view.sdsdCBox.isChecked() else None,
-        "variation_coef": True if controller.view.cvCBox.isChecked() else None,
+        "variation_coef": True if controller.view.vcCBox.isChecked() else None,
         "tring_interp": True if controller.view.tinnCBox.isChecked() else None,
         "pnn50": True if controller.view.pnn50CBox.isChecked() else None,
         "pnn20": True if controller.view.pnn20CBox.isChecked() else None,
