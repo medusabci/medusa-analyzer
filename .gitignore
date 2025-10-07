@@ -210,3 +210,19 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+/.idea/copilot.data.migration.ask.xml
+/.idea/copilot.data.migration.ask2agent.xml
+/results/Signal_parameters/R3.rec_parameters_eyes-closed_blink_broadband.mat
+/results/Signal_parameters/R3.rec_parameters_eyes-closed_movement_broadband.mat
+/results/Signal_parameters/R3.rec_parameters_eyes-open_movement_broadband.mat
+/results/Segmented_signals/R3.rec_segmentation_eyes-closed_blink_broadband.mat
+/results/Segmented_signals/R3.rec_segmentation_eyes-closed_blink_delta.mat
+/results/Segmented_signals/R3.rec_segmentation_eyes-closed_movement_broadband.mat
+/results/Segmented_signals/R3.rec_segmentation_eyes-closed_movement_delta.mat
+/results/Segmented_signals/R3.rec_segmentation_eyes-open_movement_broadband.mat
+/aaaa/Preprocessed_signals/R7.rec_preprocessing_ecg_all_AUX_1.mat
+/aaaa/Preprocessed_signals/R7.rec_preprocessing_hrv_all_AUX_1.mat
+/aaaa/Preprocessed_signals/R7.rec_preprocessing_original.mat
+/aaaa/settings.json
+/results/settings.json
+/ecg_features/preprocessing/view - Copy.ui

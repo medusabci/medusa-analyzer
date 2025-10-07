@@ -1,6 +1,32 @@
-from PySide6.QtWidgets import QFrame
+from PySide6.QtWidgets import QFrame, QLabel
+from PySide6 import QtCore, QtGui
 from main_window.flow import on_next_click, on_back_click
 import numpy as np
+
+class LoadingSpinner(QLabel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # Floating window with no borders
+        self.setWindowFlags(
+            QtCore.Qt.Dialog |
+            QtCore.Qt.FramelessWindowHint |
+            QtCore.Qt.WindowStaysOnTopHint |
+            QtCore.Qt.Tool )
+
+        # Transparent background
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        # Align center
+        self.setAlignment(QtCore.Qt.AlignCenter)
+
+        # Window size and style
+        self.setFixedSize(120, 120)
+        self.setStyleSheet("background-color: rgba(255, 255, 255, 180); border-radius: 10px;")
+
+        # Load the GIF and start the animation
+        self.movie = QtGui.QMovie("media/loading.gif")
+        self.setMovie(self.movie)
+        self.movie.start()
 
 
 class MainWindowController:
@@ -9,8 +35,12 @@ class MainWindowController:
         self.view.controller = self
 
         # Buttons connections
-        self.view.nextButton.clicked.connect(lambda: on_next_click(self))
+        self.view.nextButton.clicked.connect(self.on_next_click_loading)
         self.view.backButton.clicked.connect(lambda: on_back_click(self))
+
+        # Spinner for loading
+        self.spinner = LoadingSpinner()
+        self.spinner.hide()
 
     def set_progressbar(self):
         """
@@ -74,3 +104,8 @@ class MainWindowController:
             rgb = ((c1 + (c2 - c1) * i / (n - 1)).astype(int))
             colors_hex.append("#{0:02x}{1:02x}{2:02x}".format(*rgb))
         return colors_hex
+
+    def on_next_click_loading(self):
+        self.spinner.show()
+        on_next_click(self)
+        self.spinner.hide()
