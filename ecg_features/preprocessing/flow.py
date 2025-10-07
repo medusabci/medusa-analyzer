@@ -64,6 +64,24 @@ def on_next_click(view):
     the events and conditions of the selected file
     """
 
+    # If HRV is checked but Clean is not -> warn the user
+    if view.hrvCBox.isChecked() and not view.cleanCBox.isChecked():
+        msg_box = QtWidgets.QMessageBox()
+        msg_box.setIcon(QtWidgets.QMessageBox.Warning)
+        msg_box.setWindowTitle("Warning: Uncleaned Signal")
+        msg_box.setText(
+            "You have selected HRV analysis without enabling signal cleaning.\n\n"
+            "Peak detection may fail or produce incorrect results if the ECG signal is not cleaned.\n\n"
+            "Do you want to continue anyway?"
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+        msg_box.setDefaultButton(QtWidgets.QMessageBox.No)
+        response = msg_box.exec()
+
+        # If user chooses "No", cancel navigation
+        if response == QtWidgets.QMessageBox.No:
+            return False
+
     # If not HRV, ensure that the corresponding parameters are disabled
     current_idx = view.main_window.stackedWidget.currentIndex()
     parameters = view.main_window.stackedWidget.widget(current_idx + 1)

@@ -27,9 +27,15 @@ def run_pipeline(controller, settings_dic, total_tasks):
     # Get the selected files and associated variables
     selected_files = settings_dic['files'].get('selected_files', [])
     total_files = len(selected_files)
+    selected_channels = settings_dic['leads']['selected_leads']
+    selected_conditions = settings_dic['leads'].get('selected_conditions', []) or ['all']
+
     error_found = False
 
     view = controller.view
+
+    total_steps = total_files * len(selected_channels) * len(selected_conditions)
+    current_step = 0
 
     # Loop through each selected file
     for i, file in enumerate(selected_files):
@@ -58,7 +64,6 @@ def run_pipeline(controller, settings_dic, total_tasks):
                 raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
 
             ## First step: Select channels
-            chan_idx = []
             for chan_name in settings_dic['leads']['selected_leads']:
                 idx_chan = channel_set['l_cha'].index(chan_name)
 
@@ -103,8 +108,12 @@ def run_pipeline(controller, settings_dic, total_tasks):
 
                         ## Fifth step: Save outputs
                         params = compute_parameters_hrv(peaks, hrv_signal, fs, settings_dic['parameters'])
-
-
+                        save_outputs(controller, deepcopy(params), base_name, f'hrv_params_{cond}_{chan_name}', 'param',
+                                     settings_dic)
+                    current_step += 1
+                    global_progress = int((current_step / total_steps) * 100)
+                    controller.view.progressBar.setValue(global_progress)
+                    QtWidgets.QApplication.processEvents()
 
         # Exception handling
         except Exception as e:
@@ -112,35 +121,6 @@ def run_pipeline(controller, settings_dic, total_tasks):
             controller._log_message(f"Error preprocessing {file}: {e}", style='error')
 
     return error_found
-
-
-
-
-
-
-        #                 elif settings_dic['segmentation']['segmentation_type'] == 'event':
-        #                     for evt in np.unique(idx_events):
-        #                         # Get the epochs corresponding to the current event
-        #                         current_epochs = epochs[(idx_events.ravel() == evt),:,:]
-        #                         current_params = compute_parameters(current_epochs, fs, band, settings_dic)
-        #                         # Get the event name from its label
-        #                         event_name = None
-        #                         for key, info in signal_marks.app_settings['events'].items():
-        #                             if info['label'] == evt:
-        #                                 event_name = key
-        #                                 break
-        #                         save_outputs(controller, deepcopy(current_params), f"{base_name}_parameters_{cond}_{event_name}", band_name, 'param', settings_dic)
-        #
-        #                         # Update the progress bar and labels
-        #                         global_progress = int(((i * len(bands) + j + 1) / total_steps) * 100)
-        #                         controller.view.progressBar.setValue(global_progress)
-        #
-        #     # Exception handling
-        #     except Exception as e:
-        #         error_found = True
-        #         controller._log_message(f"Error preprocessing {file}: {e}", style='error')
-        #
-        # return error_found
 
 #################### HELPER FUNCTIONS
 
@@ -360,46 +340,59 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, cfg):
 
     # For each parameter...
     for name, name_nk in time_funcs.items():
-        # If selected...
-        if cfg[name]:
-            # Store in the params dict
-            params[f"{name}"] = params_nk['HRV_' + name_nk][0]
+        try:
+            # If selected...
+            if cfg[name]:
+                # Store in the params dict
+                params[f"{name}"] = params_nk['HRV_' + name_nk][0]
+        except Exception:
+            params[f"{name}"] = np.nan
 
 
     # SPECTRAL METRICS
+
+    # Compute PSD
+    try:
+        psd = signal_psd(peaks['ECG_R_Peaks'].to_numpy(), sampling_rate=fs, max_frequency=0.55, window_type="hann", order=16)
+    except Exception:
+        psd = None
+
     spectral_funcs = {
-        'psd': signal_psd(peaks['ECG_R_Peaks'].to_numpy(), sampling_rate=fs,  max_frequency=0.55, window_type="hann", order=16),
+        'psd': psd,
         'sympathovagal_balance': params_nk['HRV_LFHF'][0],
     }
     # For each parameter...
     for name, name_nk in spectral_funcs.items():
         # If selected...
         if cfg[name]:
-            # Store in the params dict
-            params[f"{name}"] = name_nk
+            try:
+                # Store in the params dict
+                params[f"{name}"] = name_nk
+            except Exception:
+                params[f"{name}"] = np.nan
 
     spectral_funcs_bands = {
         'power': '',
-        "median_frequency": medusa.signal_metrics.median_frequency.median_frequency,
-        "spectral_entropy": medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy,
-        'kurtosis': kurtosis,
-        'skewness': skew
+        'median_frequency': lambda band: medusa.signal_metrics.median_frequency.median_frequency(psd['Power'].to_numpy()[np.newaxis, ..., np.newaxis], fs, [band['min'], band['max']]),
+        'spectral_entropy': lambda band: medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd['Power'].to_numpy()[np.newaxis, ..., np.newaxis], fs, [band['min'], band['max']]),
+        'kurtosis': lambda _: float(kurtosis(peaks, axis=0)),
+        'skewness': lambda _: float(skew(peaks, axis=0)),
     }
     if cfg['selected_bands'] is not None:
         for band in cfg['selected_bands']:
-            if band['name'] == 'Broadband':
-                band['name'] = 'TP'
+            band_name = 'TP' if band['name'] == 'Broadband' else band['name']
             # For each parameter...
-            for name, name_nk in spectral_funcs.items():
+            for name, func in spectral_funcs_bands.items():
                 # If selected...
                 if cfg[name]:
-                    if name == 'power':
-                        params[f"{name}_{band['name']}"] = params_nk['HRV_' + band['name']][0]
-                    else:
-                        # Store in the params dict
-                        params[f"{name}_{band['name']}"] = name_nk
-
-
+                    try:
+                        if name == 'power':
+                            params[f"{name}_{band_name}"] = params_nk[f'HRV_{band_name}'][0]
+                        else:
+                            # Store in the params dict
+                            params[f"{name}_{band_name}"] = func(band)
+                    except Exception:
+                        params[f"{name}_{band_name}"] = np.nan
 
     # NONLINEAR METRICS
     nonlinear_funcs = {
@@ -415,13 +408,22 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, cfg):
     for name, name_nk_func in nonlinear_funcs.items():
         # If selected...
         if cfg[name]:
-            if name == 'ctm':
-                params[f"{name}"] = name_nk_func()
-            elif len(name_nk_func) > 1:
-                for subname in name_nk_func:
-                    params[f"{subname}"] = params_nk['HRV_' + subname][0]
-            else:
-                # Store in the params dict
-                params[f"{name}"] = params_nk['HRV_' + name_nk_func[0]][0]
+            try:
+                if name == 'ctm':
+                    params[f"{name}"] = name_nk_func()
+                elif len(name_nk_func) > 1:
+                    for subname in name_nk_func:
+                        params[f"{subname}"] = params_nk['HRV_' + subname][0]
+                else:
+                    # Store in the params dict
+                    params[f"{name}"] = params_nk['HRV_' + name_nk_func[0]][0]
+            except Exception:
+                if name == 'ctm':
+                    params[name] = np.nan
+                elif len(name_nk_func) > 1:
+                    for subname in name_nk_func:
+                        params[subname] = np.nan
+                else:
+                    params[name] = np.nan
 
     return params

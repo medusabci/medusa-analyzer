@@ -14,7 +14,6 @@ class ParametersController:
         self.view.bandButton.clicked.connect(lambda: self.on_bandTable_clicked())
 
         # Element setup
-        self.view.psdCBox.toggled.connect(self.on_psd_toggled)
         self.view.sampenCBox.toggled.connect(self.on_sampen_toggled)
         self.view.ctmCBox.toggled.connect(self.on_ctm_toggled)
         self.view.dfaCBox.toggled.connect(self.on_dfa_toggled)
@@ -47,21 +46,6 @@ class ParametersController:
             self.view.bandLabel.setText(", ".join(names))
         else:
             self.view.bandLabel.setText("None")
-
-
-    def on_psd_toggled(self):
-        """
-        Manages the visibility of the PSD config parameters.
-        """
-        # Visibility of the elements
-        visible = self.view.psdCBox.isChecked()
-        for widget in [self.view.segmentpsdLabel, self.view.segmentpsdBox, self.view.overlappsdLabel, self.view.overlappsdBox,
-                       self.view.psdcomboBox, self.view.windowpsdLabel]:
-            widget.setVisible(visible)
-        # Default values
-        self.view.segmentpsdBox.setValue(self.view.defaults["psdsegment"])
-        self.view.overlappsdBox.setValue(self.view.defaults["psdoverlap"])
-        self.view.psdcomboBox.setCurrentIndex(6) # Default window
 
 
     def on_sampen_toggled(self):

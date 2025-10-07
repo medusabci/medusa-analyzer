@@ -55,14 +55,11 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
 
         # --- ELEMENT SETUP ---
         for widget in [self.ctmrLabel, self.ctmrBox, self.sampenmLabel, self.sampenmBox, self.sampenrLabel, self.sampenrBox,
-                    self.windowpsdLabel, self.psdcomboBox, self.overlappsdBox, self.segmentpsdBox, self.segmentpsdLabel,
-                       self.overlappsdLabel, self.dfanBox, self.dfanLabel, self.dfabLabel, self.dfabBox]:
+                     self.dfanBox, self.dfanLabel, self.dfabLabel, self.dfabBox]:
             widget.setVisible(False)
 
         # DEFAULT VALUES
         self.defaults = {
-            "psdsegment": self.segmentpsdBox.value(),
-            "psdoverlap": self.overlappsdBox.value(),
             "ctmradius": self.ctmrBox.value(),
             "sampm": self.sampenmBox.value(),
             "sampradius": self.sampenrBox.value(),
