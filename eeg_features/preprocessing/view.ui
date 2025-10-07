@@ -16,7 +16,7 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0,0">
    <property name="spacing">
     <number>6</number>
    </property>
@@ -32,6 +32,19 @@
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="loadButton">
+     <property name="maximumSize">
+      <size>
+       <width>80</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>Load config</string>
      </property>
     </widget>
    </item>

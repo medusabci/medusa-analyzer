@@ -43,6 +43,9 @@ class SaveController:
         Prepares and saves the configuration parameters into a JSON file.
         """
 
+        # Add experiment type to the settings dictionary
+        settings_dic['experiment_type'] = self.view.main_window.selected_experiment
+
         # Path to save the JSON file
         self.json_path = os.path.join(self.view.selected_folder, "settings.json")
 

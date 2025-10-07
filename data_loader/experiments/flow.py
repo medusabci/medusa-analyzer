@@ -40,5 +40,6 @@ def on_next_click(view):
     view.main_window.controller.set_progressbar()
     # Deactivate Next button
     view.main_window.nextButton.setDisabled(True)
+    view.main_window.selected_experiment = experiment_id
 
     return True

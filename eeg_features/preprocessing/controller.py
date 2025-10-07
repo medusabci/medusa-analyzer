@@ -1,14 +1,18 @@
 import numpy as np
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtCore
 from scipy.signal import firwin, freqz
 from eeg_features.bands_table import BandTableWidget
 from eeg_features.preprocessing.flow import reset_all_controls
+import json
 
 class PreprocessingController:
     def __init__(self, ui):
         self.view = ui
         self.view.controller = self
         self.first_show = False
+
+        # Load config
+        self.view.loadButton.clicked.connect(self.load_config)
 
         # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)
@@ -267,7 +271,76 @@ class PreprocessingController:
         # canvas.fig.tight_layout()
         canvas.draw()
 
+    def load_config(self):
+        file, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self.view, "Select config file", "", "Config file (settings.json)"
+        )
 
+        if not file:
+            return
+
+        with open(file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if data['experiment_type'] != 'eeg_features':
+            QtWidgets.QMessageBox.warning(self.view, "Error", "The selected file is not a valid configuration file for this experiment.")
+            return
+
+        # PREPROCESSING
+        prep_cfg = data["preprocessing"]
+        self.view.bandCBox.setChecked(prep_cfg['band_segmentation'] if prep_cfg['band_segmentation'] is not None else False)
+        self.view.minbroadBox.setValue(prep_cfg['broadband_min'])
+        self.view.maxbroadBox.setValue(prep_cfg['broadband_max'])
+        self.update_band_label('segmentation', prep_cfg["selected_bands"])
+        self.view.preprocessingButton.setChecked(prep_cfg["apply_preprocessing"] if prep_cfg['apply_preprocessing'] is not None else False)
+        self.view.notchCBox.setChecked(prep_cfg['notch'] if prep_cfg['notch'] is not None else False)
+        self.view.minfreqnotchBox.setValue(prep_cfg['notch_min'] if prep_cfg['notch_min'] is not None else self.view.defaults["minfreqnotch"])
+        self.view.maxfreqnotchBox.setValue(prep_cfg['notch_max'] if prep_cfg['notch_max'] is not None else self.view.defaults["minfreqnotch"])
+        self.view.orderNotchBox.setValue(prep_cfg['notch_order'] if prep_cfg['notch_order'] is not None else self.view.defaults["ordernotch"])
+        self.view.winnotchBox.setCurrentText(prep_cfg['notch_win'])
+        self.view.bpCBox.setChecked(prep_cfg['bandpass'] if prep_cfg['bandpass'] is not None else False)
+        self.view.minfreqbpBox.setValue(prep_cfg['bp_min'] if prep_cfg['bp_min'] is not None else self.view.defaults["minfreqbp"])
+        self.view.maxfreqbpBox.setValue(prep_cfg['bp_max'] if prep_cfg['bp_max'] is not None else self.view.defaults["maxfreqbp"])
+        self.view.orderbpBox.setValue(prep_cfg['bp_order'] if prep_cfg['bp_order'] is not None else self.view.defaults["orderbp"])
+        self.view.winbpBox.setCurrentText(prep_cfg['bp_win'])
+        self.view.carCBox.setChecked(prep_cfg['car'] if prep_cfg['car'] is not None else False)
+
+        # SEGMENTATION
+        segm_cfg = data["segmentation"]
+        segm_widget = self.view.main_window.stackedWidget.widget(3)  # widget(3) is the segmentation widget
+        segm_widget.conditionRButton.setChecked(segm_cfg['segmentation_type'] == 'condition')
+        segm_widget.eventRButton.setChecked(segm_cfg['segmentation_type'] == 'event')
+        self._select_elements_in_list(segm_cfg['selected_conditions'], segm_widget.conditionList)
+
+        # "selected_conditions": selected_conditions,
+        # "selected_events": selected_events if controller.view.eventRButton.isChecked() else None,
+
+        segm_widget.trialBox.setValue(segm_cfg['trial_length'] if segm_cfg['trial_length'] is not None else segm_widget.defaults['triallength'])
+
+        # "trial_length": controller.view.trialBox.value() if controller.view.conditionRButton.isChecked() else None,
+        # "trial_stride": controller.view.trialstrideBox.value() if controller.view.conditionRButton.isChecked() else None,
+        # "window_start": controller.view.winBox_1.value() if controller.view.eventRButton.isChecked() else None,
+        # "window_end": controller.view.winBox_2.value() if controller.view.eventRButton.isChecked() else None,
+        # 'norm': controller.view.normCBox.isChecked() if controller.view.normCBox else None,
+        # "norm_type": "z" if controller.view.normCBox.isChecked() and controller.view.zscoreRButton.isChecked() else
+        # "dc" if controller.view.normCBox.isChecked() and controller.view.dcRButton.isChecked() else None,
+        # "baseline_start": controller.view.baselineCBox_1.value() if controller.view.eventRButton.isChecked() and controller.view.normCBox.isChecked() else None,
+        # "baseline_end": controller.view.baselineCBox_2.value() if controller.view.eventRButton.isChecked() and controller.view.normCBox.isChecked() else None,
+        # 'average': controller.view.averageCBox.isChecked() if controller.view.averageCBox else None,
+        #
+        # "thresholding": controller.view.thresCBox.isChecked() if controller.view.thresCBox else None,
+        # "thres_k": controller.view.threskBox.value() if controller.view.thresCBox.isChecked() else None,
+        # "thres_samples": controller.view.thressampBox.value() if controller.view.thresCBox.isChecked() else None,
+        # "thres_channels": controller.view.threschanBox.value() if controller.view.thresCBox.isChecked() else None,
+        #
+        # "resample": controller.view.resampleCBox.isChecked() if controller.view.resampleCBox else None,
+        # "resample_fs": controller.view.resamplefsBox.value() if controller.view.resampleCBox.isChecked() else None,
+    def _select_elements_in_list(string_list, list_widget):
+        for i in range(list_widget.rowCount()):
+            index = list_widget.index(i)
+            text = list_widget.data(index)
+            if text in string_list:
+                list_widget.selectionModel().select(index, QtCore.QItemSelectionModel.Select)
 
 
 
