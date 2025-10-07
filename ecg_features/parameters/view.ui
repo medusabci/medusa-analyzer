@@ -461,7 +461,7 @@ QToolBox::tab:selected {
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Relative Power&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
-               <string>Sepectral Entropy</string>
+               <string>Spectral Entropy</string>
               </property>
              </widget>
             </item>

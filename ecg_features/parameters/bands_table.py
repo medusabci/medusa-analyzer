@@ -4,14 +4,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 # Load UI class
-ui_bands_table = loadUiType("eeg_features/bands_table.ui")[0]
+ui_bands_table = loadUiType("ecg_features/parameters/bands_table.ui")[0]
 
 # THIS CODE ENABLE THE DRAG AND DROP OF BANDS IN THE TABLE
 class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
     def __init__(self, parameters_widget=None, previous_bands=None):
         super().__init__(parameters_widget.view)
         self.setupUi(self)
-        self.setFixedSize(440, 320)
+        self.setFixedSize(440, 400)
 
         # Initialize general parameters
         self.parameters_widget = parameters_widget
@@ -19,13 +19,15 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
 
         ### ELEMENT CONFIGURATION ###
 
-        # Configure the bands
         self.default_bands = [
-            {'name': 'Broadband', 'min': 0.0033, 'max': 0.4},
-            {"name": "Very Low", "min": 0.0033, "max": 0.04},
-            {"name": "Low", "min": 0.04, "max": 0.15},
-            {"name": "High", "min": 0.15, "max": 0.4}
+            {'name': 'Broadband', 'min': 0.0, 'max': 0.5},
+            {"name": "ULF", "min": 0.0, "max": 0.0033},
+            {"name": "VLF", "min": 0.0033, "max": 0.04},
+            {"name": "LF", "min": 0.04, "max": 0.15},
+            {"name": "HF", "min": 0.15, "max": 0.4},
+            {"name": "VHF", "min": 0.4, "max": 0.5}
         ]
+        # Configure the bands
 
         # Button connections
         self.resetButton.clicked.connect(self.on_reset_click)
@@ -62,6 +64,16 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         # Disable the vertical header (as we don't have)
         self.bandsTable.verticalHeader().setVisible(False)
         self.bandsTable.verticalHeader().setDefaultSectionSize(36)
+
+        self.explanationLabel.setWordWrap(True)
+        self.explanationLabel.setText("""
+            <div style="text-align:left; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 8pt; color:#666"><i>
+                    Very long signals are required for computing ULF. If the signal do not match the criteria, no 
+                    parameters will be computed in this band, and the broadband will start in the lower limit of VLF.
+                </i></p>
+            </div>
+        """)
 
         # Set initial state
         self.setup_table()

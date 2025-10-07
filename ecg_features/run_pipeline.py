@@ -2,7 +2,7 @@ from PySide6 import QtCore, QtGui, QtWidgets
 import medusa
 import medusa.artifact_removal
 import medusa.transforms
-from medusa.signal_metrics import central_tendency
+from medusa.signal_metrics import central_tendency, median_frequency, shannon_spectral_entropy
 
 import numpy as np
 from os.path import basename, join, splitext
@@ -10,6 +10,7 @@ from os import makedirs
 from copy import deepcopy
 import neurokit2.ecg as nkecg
 from neurokit2 import signal_rate, hrv
+from neurokit2.signal import signal_psd
 
 from pyparsing import originalTextFor
 from scipy.stats import kurtosis, skew, zscore
@@ -117,128 +118,6 @@ def run_pipeline(controller, settings_dic, total_tasks):
 
 
 
-
-
-
-
-
-
-
-
-
-        #
-        #
-        #         ## Third step: Band segmentation
-        #         # Store the bands if band segmentation is enabled, otherwise use broadband
-        #         bands = settings_dic['preprocessing']['selected_bands'] if (
-        #             settings_dic['preprocessing']['band_segmentation']) else [
-        #             {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'],
-        #              'max': settings_dic['preprocessing']['broadband_max']}]
-        #         total_steps = total_files * len(bands)
-        #
-        #         # For each band...
-        #         for j, band in enumerate(bands):
-        #             # Band info
-        #             band_name = band['name']
-        #             bp_min, bp_max = band['min'], band['max']
-        #
-        #             # Workaround to allow filtering in the Nyquist frequency
-        #             if bp_max == settings_dic['preprocessing']['fs'] / 2:
-        #                 bp_max -= 1e-6
-        #
-        #             # If the band is not broadband, apply band filtering (the broadband does not require filtering)
-        #             if band_name != 'broadband':
-        #                 processed_signal = band_filtering(processed_signal, bp_min, bp_max, fs, settings_dic['preprocessing'])
-        #
-        #             # Create a copy of the data to store the preprocessed signal (to be saved if required)
-        #             data_preprocessed = deepcopy(data)
-        #             # Get the current signal (e.g., eeg) from the data
-        #             biosignal = getattr(data_preprocessed, name_signal)
-        #             # Modify it with the preprocessed signal. It will also be modified in the data_preprocessed object
-        #             setattr(biosignal, "signal", processed_signal)
-        #             # Save de original signal
-        #             setattr(biosignal, "original_signal", original_signal)
-        #
-        #             # Deepcopy the data to avoid modifying the original data object
-        #             save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, 'prep', settings_dic)
-        #
-        #             ## Fourth step: Segmentation
-        #             # For each condition selected...
-        #             for cond in settings_dic['segmentation']['selected_conditions']:
-        #
-        #                 # If segmentation type is 'condition'
-        #                 if settings_dic['segmentation']['segmentation_type'] == 'condition':
-        #                     # Get epochs for the current condition
-        #                     epochs = get_epochs_from_condition(
-        #                         processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
-        #
-        #                 elif settings_dic['segmentation']['segmentation_type'] == 'event':
-        #                     # Get all the selected events for this condition
-        #                     epochs = []
-        #                     idx_events = []
-        #                     for evt in settings_dic['segmentation']['selected_events']:
-        #                         epochs_tmp = get_epochs_from_condition(
-        #                             processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
-        #                             event=evt)
-        #                         if epochs_tmp is not None:
-        #                             epochs.append(epochs_tmp)
-        #                             # Store the event label for each epoch
-        #                             evt_key = signal_marks.app_settings['events'][evt]['label']
-        #                             idx_events.append(np.full((epochs_tmp.shape[0], 1), evt_key))
-        #                             del epochs_tmp
-        #                     # Stack the epochs for all the events (and their corresponding event labels)
-        #                     if epochs:
-        #                         epochs = np.vstack(epochs)
-        #                         idx_events = np.vstack(idx_events)
-        #
-        #                 # If no epochs were found for this condition, skip it
-        #                 if len(epochs) == 0:
-        #                     controller._log_message(
-        #                         f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
-        #                         style='warning')
-        #                     continue
-        #
-        #                 ## Fifth step: Apply thresholding rejection if enabled
-        #                 if settings_dic['segmentation']["thresholding"]:
-        #                     # If all the epochs are rejected, skip this condition
-        #                     if all(idx_threshold[cond]):
-        #                         controller._log_message(
-        #                             f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",
-        #                             style='warning')
-        #                         continue
-        #
-        #                     # Remove the rejected epochs from the epochs array
-        #                     epochs = np.delete(epochs, idx_threshold[cond], axis=0)
-        #                     # Also remove the discarded epochs from idx_events if segmentation type is 'event'
-        #                     if settings_dic['segmentation']['segmentation_type'] == 'event':
-        #                         idx_events = np.delete(idx_events, idx_threshold[cond], axis=0)
-        #
-        #                 ## Sixth step: Apply resampling if enabled
-        #                 if epochs is not None and settings_dic['segmentation']['resample']:
-        #                     resample_fs = settings_dic['segmentation']['resample_fs']
-        #                     window = [0, (epochs.shape[1] / fs) * 1000]  # Window in ms
-        #                     epochs = medusa.resample_epochs(epochs, window, resample_fs)
-        #
-        #                 # Save the segmented signals (if required), separately for each condition (and event, if selected)
-        #                 if settings_dic['segmentation']['segmentation_type'] == 'condition':
-        #                     save_outputs(controller, deepcopy(epochs), f"{base_name}_segmentation_{cond}", band_name, 'seg', settings_dic)
-        #                 elif settings_dic['segmentation']['segmentation_type'] == 'event':
-        #                     for evt in np.unique(idx_events):
-        #                         # Get the epochs corresponding to the current event
-        #                         current_epochs = epochs[(idx_events.ravel() == evt),:,:]
-        #                         # Get the event name from its label
-        #                         event_name = None
-        #                         for key, info in signal_marks.app_settings['events'].items():
-        #                             if info['label'] == evt:
-        #                                 event_name = key
-        #                                 break
-        #                         save_outputs(controller, deepcopy(current_epochs), f"{base_name}_segmentation_{cond}_{event_name}", band_name, 'seg', settings_dic)
-        #
-        #                 ## Seventh step: Parameter computation
-        #                 if settings_dic['segmentation']['segmentation_type'] == 'condition':
-        #                     params = compute_parameters(epochs, fs, band, settings_dic)
-        #                     save_outputs(controller, deepcopy(params), f"{base_name}_parameters_{cond}",
-        #                                  band_name, 'param', settings_dic)
         #                 elif settings_dic['segmentation']['segmentation_type'] == 'event':
         #                     for evt in np.unique(idx_events):
         #                         # Get the epochs corresponding to the current event
@@ -262,12 +141,6 @@ def run_pipeline(controller, settings_dic, total_tasks):
         #         controller._log_message(f"Error preprocessing {file}: {e}", style='error')
         #
         # return error_found
-
-
-
-
-
-
 
 #################### HELPER FUNCTIONS
 
@@ -495,7 +368,38 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, cfg):
 
     # SPECTRAL METRICS
     spectral_funcs = {
+        'psd': signal_psd(peaks['ECG_R_Peaks'].to_numpy(), sampling_rate=fs,  max_frequency=0.55, window_type="hann", order=16),
+        'sympathovagal_balance': params_nk['HRV_LFHF'][0],
     }
+    # For each parameter...
+    for name, name_nk in spectral_funcs.items():
+        # If selected...
+        if cfg[name]:
+            # Store in the params dict
+            params[f"{name}"] = name_nk
+
+    spectral_funcs_bands = {
+        'power': '',
+        "median_frequency": medusa.signal_metrics.median_frequency.median_frequency,
+        "spectral_entropy": medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy,
+        'kurtosis': kurtosis,
+        'skewness': skew
+    }
+    if cfg['selected_bands'] is not None:
+        for band in cfg['selected_bands']:
+            if band['name'] == 'Broadband':
+                band['name'] = 'TP'
+            # For each parameter...
+            for name, name_nk in spectral_funcs.items():
+                # If selected...
+                if cfg[name]:
+                    if name == 'power':
+                        params[f"{name}_{band['name']}"] = params_nk['HRV_' + band['name']][0]
+                    else:
+                        # Store in the params dict
+                        params[f"{name}_{band['name']}"] = name_nk
+
+
 
     # NONLINEAR METRICS
     nonlinear_funcs = {
