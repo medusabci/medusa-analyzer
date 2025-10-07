@@ -53,7 +53,8 @@ def get_preprocessing_config(controller):
 
         "hrv": True if controller.view.hrvCBox.isChecked() else None,
         "processing_method": controller.view.hrvprocessBox.currentText() if controller.view.hrvCBox.isChecked() else None,
-        "resample_fs": controller.view.resampleBox.value(),
+        "correct_artifacts": True if (controller.view.artifactsCBox.isChecked() and controller.view.hrvCBox.isChecked()) else False,
+        "resample_fs": controller.view.resampleBox.value() if controller.view.hrvCBox.isChecked() else None,
     }
     return config
 

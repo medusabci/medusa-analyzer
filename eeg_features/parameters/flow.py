@@ -75,10 +75,23 @@ def on_next_click(view):
     # Save config
     view.main_window.controller.parameters_config = get_parameters_config(view.controller)
 
+    save_widget = view.main_window.stackedWidget.widget(5)
+
     # If no preprocessing is selected, disable the option to save preprocessed signals
     if not preprocessing_widget.preprocessingButton.isChecked():
-        save_widget = view.main_window.stackedWidget.widget(5)
         save_widget.prepsignalsCBox.setVisible(False)
+
+        # If nor parameter is selected, disabled the 'save parameters' option
+        param_cboxes = [
+            view.meanCBox, view.medianCBox, view.varianceCBox, view.kurtosisCBox, view.skewnessCBox,
+            view.psdCBox, view.rpCBox, view.apCBox, view.mfCBox, view.seCBox,
+            view.ctmCBox, view.sampenCBox, view.msampenCBox, view.lzcCBox, view.mlzcCBox,
+            view.iacCBox, view.aecCBox, view.pliCBox, view.plvCBox, view.wpliCBox
+        ]
+        if any(box.isChecked() for box in param_cboxes):
+            save_widget.paramsignalsCBox.setVisible(True)
+        else:
+            save_widget.paramsignalsCBox.setVisible(False)
 
     return True
 

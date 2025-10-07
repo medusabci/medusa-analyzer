@@ -94,7 +94,9 @@ def run_pipeline(controller, settings_dic, total_tasks):
                     save_outputs(controller, deepcopy(segment), base_name, f'ecg_{cond}_{chan_name}', 'prep', settings_dic)
                     ## Fourth step: HRV computation
                     if settings_dic['preprocessing']['hrv']:
-                        peaks, _ = nkecg.ecg_peaks(segment, sampling_rate=fs, correct_artifacts=True)
+                        method = settings_dic['preprocessing']['processing_method']
+                        correction = settings_dic['preprocessing']['correct_artifacts']
+                        peaks, _ = nkecg.ecg_peaks(segment, sampling_rate=fs, method=method, correct_artifacts=correction)
                         pulse_rate = signal_rate(peaks, sampling_rate=fs)
                         hrv_signal = np.divide(60,pulse_rate) * 1000 # In ms
 
@@ -329,6 +331,7 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, cfg):
 
     # TIME METRICS
     time_funcs = {
+        'pulse_rate': '',
         'averege': 'MeanNN',
         'std_nn': 'SDNN',
         'rms_sucessive_diff': 'RMSSD',
@@ -344,7 +347,10 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, cfg):
             # If selected...
             if cfg[name]:
                 # Store in the params dict
-                params[f"{name}"] = params_nk['HRV_' + name_nk][0]
+                if name == 'pulse_rate':
+                    params[f"{name}"] = signal_rate(peaks, sampling_rate=fs)
+                else:
+                    params[f"{name}"] = params_nk['HRV_' + name_nk][0]
         except Exception:
             params[f"{name}"] = np.nan
 

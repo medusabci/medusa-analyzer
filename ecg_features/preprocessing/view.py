@@ -74,7 +74,7 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         # Initial state
         for widget in [self.cleanLabel, self.cleanBox, self.cleanButton,
             self.hrvprocessLabel, self.hrvprocessBox, self.hrvprocessButton,
-            self.resampleLabel, self.resampleLabelAux, self.resampleLabelNyquist, self.resampleBox]:
+            self.resampleLabel, self.resampleLabelAux, self.resampleLabelNyquist, self.resampleBox, self.artifactsCBox]:
             widget.setVisible(False)
 
         # Default values in a dict

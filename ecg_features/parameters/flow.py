@@ -6,6 +6,7 @@ def get_parameters_config(controller):
    """
     # Configuration dict
     config = {
+        "pulse_rate": True if controller.view.pulserateCBox.isChecked() else None,
         "averege": True if controller.view.avnnCBox.isChecked() else None,
         "std_nn": True if controller.view.sdnnCBox.isChecked() else None,
         "rms_sucessive_diff": True if controller.view.rmssdCBox.isChecked() else None,
@@ -62,6 +63,22 @@ def on_next_click(view):
                                       "calculation. Please ensure that these parameters are appropriate for your "
                                       "analysis."
         )
+    # If nor parameter is selected, disabled the 'save parameters' option
+    param_cboxes = [
+        view.pulserateCBox, view.avnnCBox, view.sdnnCBox,
+        view.rmssdCBox, view.sdsdCBox, view.vcCBox,
+        view.tinnCBox, view.pnn50CBox, view.pnn20CBox,
+        view.psdCBox, view.svbCBox, view.powerCBox,
+        view.kurtCBox, view.skewnessCBox, view.mfCBox,
+        view.seCBox, view.ctmCBox, view.sampenCBox,
+        view.shaeCBox, view.lzcCBox, view.dfaCBox,
+        view.poincareCBox
+    ]
+    save_widget = view.main_window.stackedWidget.widget(5)
+    if any(box.isChecked() for box in param_cboxes):
+        save_widget.paramsignalsCBox.setVisible(True)
+    else:
+        save_widget.paramsignalsCBox.setVisible(False)
 
     # Save config
     view.main_window.controller.parameters_config = get_parameters_config(view.controller)
