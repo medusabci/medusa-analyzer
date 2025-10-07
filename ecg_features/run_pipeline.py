@@ -99,15 +99,15 @@ def run_pipeline(controller, settings_dic, total_tasks):
                         hrv_signal = np.divide(60,pulse_rate) * 1000 # In ms
 
                         ## Fifth step: Resample HRV
-                        if settings_dic['preprocessing']['resample']:
-                            t_hrv = np.cumsum(hrv_signal)
-                            t_uniform = np.arange(0, t_hrv[-1], 1/settings_dic['preprocessing']['resample_fs'])
-                            hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
+                        fs_hrv = settings_dic['preprocessing']['resample_fs']
+                        t_hrv = np.cumsum(hrv_signal)
+                        t_uniform = np.arange(0, t_hrv[-1], 1/fs_hrv)
+                        hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
                         save_outputs(controller, deepcopy(hrv_signal), base_name, f'hrv_{cond}_{chan_name}', 'prep',
                                      settings_dic)
 
                         ## Fifth step: Save outputs
-                        params = compute_parameters_hrv(peaks, hrv_signal, fs, settings_dic['parameters'])
+                        params = compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, settings_dic['parameters'])
                         save_outputs(controller, deepcopy(params), base_name, f'hrv_params_{cond}_{chan_name}', 'param',
                                      settings_dic)
                     current_step += 1
@@ -319,7 +319,7 @@ def band_filtering(signal, bp_min, bp_max, fs, cfg):
 
 ##################### BAND FILTERING
 
-def compute_parameters_hrv(peaks, hrv_signal, fs, cfg):
+def compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, cfg):
 
     # Initialize dict that will contain all the computed parameters
     params = {}
@@ -353,7 +353,7 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, cfg):
 
     # Compute PSD
     try:
-        psd = signal_psd(peaks['ECG_R_Peaks'].to_numpy(), sampling_rate=fs, max_frequency=0.55, window_type="hann", order=16)
+        psd = signal_psd(peaks['ECG_R_Peaks'].to_numpy(), sampling_rate=fs_hrv, max_frequency=0.55, window_type="hann", order=16)
     except Exception:
         psd = None
 
@@ -373,8 +373,8 @@ def compute_parameters_hrv(peaks, hrv_signal, fs, cfg):
 
     spectral_funcs_bands = {
         'power': '',
-        'median_frequency': lambda band: medusa.signal_metrics.median_frequency.median_frequency(psd['Power'].to_numpy()[np.newaxis, ..., np.newaxis], fs, [band['min'], band['max']]),
-        'spectral_entropy': lambda band: medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd['Power'].to_numpy()[np.newaxis, ..., np.newaxis], fs, [band['min'], band['max']]),
+        'median_frequency': lambda band: medusa.signal_metrics.median_frequency.median_frequency(psd['Power'].to_numpy()[np.newaxis, ..., np.newaxis], fs_hrv, [band['min'], band['max']]),
+        'spectral_entropy': lambda band: medusa.signal_metrics.shannon_spectral_entropy.shannon_spectral_entropy(psd['Power'].to_numpy()[np.newaxis, ..., np.newaxis], fs_hrv, [band['min'], band['max']]),
         'kurtosis': lambda _: float(kurtosis(peaks, axis=0)),
         'skewness': lambda _: float(skew(peaks, axis=0)),
     }

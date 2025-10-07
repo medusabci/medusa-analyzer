@@ -70,12 +70,11 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
         self.cleanCBox.setChecked(False)
         self.zscoreCBox.setChecked(False)
         self.hrvCBox.setChecked(False)
-        self.resampleCBox.setChecked(False)
 
         # Initial state
         for widget in [self.cleanLabel, self.cleanBox, self.cleanButton,
             self.hrvprocessLabel, self.hrvprocessBox, self.hrvprocessButton,
-            self.resampleCBox, self.resampleLabel, self.resampleLabelAux, self.resampleLabelNyquist, self.resampleBox]:
+            self.resampleLabel, self.resampleLabelAux, self.resampleLabelNyquist, self.resampleBox]:
             widget.setVisible(False)
 
         # Default values in a dict

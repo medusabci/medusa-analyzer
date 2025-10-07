@@ -12,7 +12,6 @@ class PreprocessingController:
         # Connects
         self.view.cleanCBox.toggled.connect(self.on_clean_toggle)
         self.view.hrvCBox.toggled.connect(self.on_hrv_toggle)
-        self.view.resampleCBox.toggled.connect(self.on_resample_toggle)
 
     def on_clean_toggle(self, checked):
         """
@@ -34,20 +33,6 @@ class PreprocessingController:
         self.view.hrvLabel.setVisible(not checked)
 
         # Resample elements to toggle
-        for widget in [self.view.resampleCBox, self.view.resampleLabel]:
+        for widget in [self.view.resampleLabel, self.view.resampleBox, self.view.resampleLabelAux, self.view.resampleLabelNyquist]:
             widget.setVisible(checked)
-        self.view.resampleCBox.setChecked(False)
-
-    def on_resample_toggle(self, checked):
-        """
-        Show or hide resampling controls based on the checkbox state. Resets resample frequency spinbox when disabled.
-        """
-
-        for w in [self.view.resampleLabelAux, self.view.resampleBox, self.view.resampleLabelNyquist]:
-            w.setVisible(checked)
-        self.view.resampleLabel.setVisible(not checked)
-
-        if not checked:
-            # Reset defaults
-            self.view.resampleBox.setValue(self.view.defaults["resamplefs"])
 

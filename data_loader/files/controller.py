@@ -4,7 +4,7 @@ from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
 from data_loader.files.converter import CONVERTERS
 from plots.filtering.view import FilteringPlotWidget
-import os
+import os, json, importlib
 
 
 class FilesController:
@@ -19,6 +19,9 @@ class FilesController:
         self.view.filteringPlotButton.clicked.connect(self.on_filtering_plot_click)
 
         self.filtering_window = None
+
+        # Load config
+        self.view.loadButton.clicked.connect(self.load_config)
 
     def on_filtering_plot_click(self):
         if self.filtering_window is None:  # si no existe, la creo
@@ -184,3 +187,25 @@ class FilesController:
             self.view.convertLogTextBrowser.setVisible(False)
 
 
+    def load_config(self):
+        file, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self.view, "Select config file", "", "Config file (settings.json)"
+        )
+
+        if not file:
+            return
+
+        with open(file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        experiment_id = self.view.main_window.selected_experiment
+        if data['experiment_type'] != self.view.main_window.selected_experiment:
+            QtWidgets.QMessageBox.warning(self.view, "Error", "The selected file is not a valid configuration file for this experiment.")
+            return
+
+        module_name = f"{experiment_id}.load_config"
+        # Import the module
+        mod = importlib.import_module(module_name)
+        mod.load_config(self.view, data)
+
+        self.view.loadLabelAux.setText(f"Configuration loaded from {file}")
