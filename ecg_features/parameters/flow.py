@@ -7,7 +7,7 @@ def get_parameters_config(controller):
     # Configuration dict
     config = {
         "pulse_rate": True if controller.view.pulserateCBox.isChecked() else None,
-        "averege": True if controller.view.avnnCBox.isChecked() else None,
+        "average": True if controller.view.avnnCBox.isChecked() else None,
         "std_nn": True if controller.view.sdnnCBox.isChecked() else None,
         "rms_sucessive_diff": True if controller.view.rmssdCBox.isChecked() else None,
         "std_sucessive_diff": True if controller.view.sdsdCBox.isChecked() else None,

@@ -269,10 +269,12 @@ def run_pipeline(controller, settings_dic):
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
                     controller.view.progressBar.setValue(int(global_progress))
 
+            view.progressLabel.setText("Completed")
         # Exception handling
         except Exception as e:
             error_found = True
             controller._log_message(f"Error preprocessing {file}: {e}", style='error')
+            view.progressLabel.setText("Error")
 
     return error_found
 
