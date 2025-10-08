@@ -98,7 +98,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
             checkbox = QCheckBox()
             checkbox.setObjectName(f"chan{i}CBox")
             checkbox.setText(f"Channel {leads[i]}")
-            checkbox.setChecked(True)
+            # checkbox.setChecked(True)
 
             # ComboBox
             combo = QComboBox()

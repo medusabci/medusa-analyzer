@@ -1,3 +1,4 @@
+from PySide6 import QtWidgets
 def load_config(files_widget, data):
     """
     Loads configuration from a saved JSON-like dict for the ECG processing module.
@@ -9,19 +10,44 @@ def load_config(files_widget, data):
     files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
 
     # --- LEADS ---
-    lead_cfg = data["leads"]
-    leads_widget = files_widget.main_window.stackedWidget.widget(2)
-    # Set selected leads
-    if "selected_leads" in lead_cfg:
-        selected_leads = lead_cfg["selected_leads"]
-        for ch, alias in selected_leads.items():
-            if hasattr(leads_widget, "controller"):
-                leads_widget.controller.selected_leads = selected_leads
-        # Display lead name if there's only one
-        if len(selected_leads) == 1:
-            leads_widget.leadLabel.setText(list(selected_leads.values())[0])
-    # Set selected conditions if any
-    leads_widget.controller.selected_conditions = lead_cfg.get("selected_conditions", [])
+    # lead_cfg = data["leads"]
+    # leads_widget = files_widget.main_window.stackedWidget.widget(2)
+    # # Set selected leads
+    # selected_leads = lead_cfg.get("selected_leads", {})
+    # if hasattr(leads_widget, "controller"):
+    #     leads_widget.controller.selected_leads = selected_leads
+    #     leads_widget.controller.selected_conditions = lead_cfg.get("selected_conditions", [])
+    #
+    # layout = leads_widget.LeadsSelection.layout()
+    # if layout is None:
+    #     return
+    # for i in range(layout.count()):
+    #     row_widget = layout.itemAt(i).widget()
+    #     if not row_widget:
+    #         continue
+    #
+    #     checkbox = row_widget.findChild(QtWidgets.QCheckBox)
+    #     combo = row_widget.findChild(QtWidgets.QComboBox)
+    #
+    #     if not checkbox or not combo:
+    #         continue
+    #
+    #     channel_name = checkbox.text().replace("Channel ", "").strip()
+    #     if channel_name in selected_leads:
+    #         checkbox.setChecked(True)
+    #         desired_lead = selected_leads[channel_name]
+    #         index = combo.findText(desired_lead)
+    #         if index != -1:
+    #             combo.setCurrentIndex(index)
+    #     else:
+    #         checkbox.setChecked(False)
+    #
+    # if len(selected_leads) == 1:
+    #     leads_widget.leadLabel.setText(list(selected_leads.values())[0])
+    # elif len(selected_leads) > 1:
+    #     leads_widget.leadLabel.setText(", ".join(selected_leads.values()))
+    # else:
+    #     leads_widget.leadLabel.clear()
 
     # --- PREPROCESSING ---
     prep_cfg = data["preprocessing"]
