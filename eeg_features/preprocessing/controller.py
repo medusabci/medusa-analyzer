@@ -168,7 +168,8 @@ class PreprocessingController:
         if self.band_editor is None:
             self.band_editor = BandTableWidget(
                 preprocessing_widget=self,
-                band_type='segmentation'
+                band_type='segmentation',
+                loaded_bands= getattr(self.view, 'selected_bands_by_type', {}).get('segmentation')
             )
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.band_editor.show()

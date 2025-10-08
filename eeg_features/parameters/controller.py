@@ -68,7 +68,8 @@ class ParametersController:
             self.rp_band_editor = BandTableWidget(
                 preprocessing_widget= self.view.main_window.stackedWidget.widget(idx-2).controller,
                 parameters_widget=self,
-                band_type='rp'
+                band_type='rp',
+                loaded_bands= getattr(self.view, 'selected_bands_by_type', {}).get('rp')
             )
             self.rp_band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.rp_band_editor.show()

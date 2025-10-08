@@ -30,7 +30,7 @@ def load_config(files_widget, data):
     preproc_widget.winbpBox.setCurrentText(prep_cfg['bp_win'])
     preproc_widget.carCBox.setChecked(bool(prep_cfg['car']))
     preproc_widget.bandCBox.setChecked(bool(prep_cfg['band_segmentation']))
-    preproc_widget.controller.update_band_label('segmentation', prep_cfg["selected_bands"])
+    preproc_widget.controller.update_band_label('segmentation', prep_cfg["selected_bands"][1:]) # Exclude "broadband"
     # Store
     files_widget.main_window.controller.preproc_config = prep_cfg
 
@@ -120,6 +120,6 @@ def load_config(files_widget, data):
     params_widget.pliCBox.setChecked(bool(params_cfg['pli']))
     params_widget.plvCBox.setChecked(bool(params_cfg['plv']))
     params_widget.wpliCBox.setChecked(bool(params_cfg['wpli']))
-    params_widget.catchCBox.setChecked(bool(params_cfg['catch']))
+    # params_widget.catchCBox.setChecked(bool(params_cfg['catch']))
     # Store
     files_widget.main_window.controller.parameters_config = params_cfg

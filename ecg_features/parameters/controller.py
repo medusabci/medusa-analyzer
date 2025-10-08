@@ -27,6 +27,7 @@ class ParametersController:
             idx = self.view.main_window.stackedWidget.currentIndex()
             self.band_editor = BandTableWidget(
                 parameters_widget=self,
+                loaded_bands=self.selected_bands if hasattr(self, 'selected_bands') else None
             )
             self.band_editor.setModal(True)  # Disables the MainWindow without closing or breaking inheritance.
             self.band_editor.show()

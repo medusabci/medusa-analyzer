@@ -8,7 +8,7 @@ ui_bands_table = loadUiType("eeg_features/bands_table.ui")[0]
 
 # THIS CODE ENABLE THE DRAG AND DROP OF BANDS IN THE TABLE
 class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
-    def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None):
+    def __init__(self, parameters_widget=None, preprocessing_widget=None, band_type=None, previous_bands=None, loaded_bands=None):
         super().__init__((parameters_widget or preprocessing_widget).view)
         self.setupUi(self)
         self.setFixedSize(440, 380)
@@ -21,6 +21,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.min_broad = preprocessing_widget.view.minbroadBox.value()
         self.max_broad = preprocessing_widget.view.maxbroadBox.value()
         self.correct_bands = []
+        self.loaded_bands = loaded_bands
 
         # Set the broadband label values
         self.minbroadbandLabel.setText(f"{self.min_broad:.1f}")
@@ -123,8 +124,12 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setRowCount(0)
 
         # For each default band...
-        for band in self.default_bands:
-            self.add_band(band["name"], band["min"], band["max"])
+        if self.loaded_bands is not None:
+            for band in self.loaded_bands:
+                self.add_band(band["name"], band["min"], band["max"])
+        else:
+            for band in self.default_bands:
+                self.add_band(band["name"], band["min"], band["max"])
 
 
     def add_band(self, name="custom_band", min_freq=None, max_freq=None):
