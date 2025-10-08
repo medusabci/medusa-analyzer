@@ -13,9 +13,6 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         # Setup UI
         self.setupUi(self)
 
-        # Remove the "?" button
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-
         # Change the title
         self.setWindowTitle("List of Files")
 
@@ -54,18 +51,19 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         return updated_files
 
     def confirm_deletion(self):
-        # Create the confirmation dialog
-        confirmation_dialog = QtWidgets.QMessageBox(self)
-        confirmation_dialog.setWindowTitle("Confirm Deletion")
-        confirmation_dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-        confirmation_dialog.setText("Are you sure you want to delete these files?")
-        confirmation_dialog.setInformativeText("This action cannot be undone.")
-
-        # Add 'Yes' and 'No' buttons
-        confirmation_dialog.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
-        confirmation_dialog.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
-
-        # Show the dialog and get the user's response
-        response = confirmation_dialog.exec()
-
-        return response == QtWidgets.QMessageBox.StandardButton.Yes
+        return True
+        # # Create the confirmation dialog
+        # confirmation_dialog = QtWidgets.QMessageBox(self)
+        # confirmation_dialog.setWindowTitle("Confirm Deletion")
+        # confirmation_dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        # confirmation_dialog.setText("Are you sure you want to delete these files?")
+        # confirmation_dialog.setInformativeText("This action cannot be undone.")
+        #
+        # # Add 'Yes' and 'No' buttons
+        # confirmation_dialog.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        # confirmation_dialog.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
+        #
+        # # Show the dialog and get the user's response
+        # response = confirmation_dialog.exec()
+        #
+        # return response == QtWidgets.QMessageBox.StandardButton.Yes

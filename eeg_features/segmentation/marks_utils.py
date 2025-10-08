@@ -6,6 +6,9 @@ def extract_condition_events(files):
     """
     Extract conditions and events from a list of files.
     """
+
+
+
     conditions = []
     events = []
     events_condition = []

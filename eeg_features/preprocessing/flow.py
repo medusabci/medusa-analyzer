@@ -1,4 +1,5 @@
 from PySide6 import QtWidgets
+import time
 
 def reset_all_controls(controller):
     """
@@ -83,6 +84,7 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked. It initializes the segmentation widget with the information of
     the events and conditions of the selected file
     """
+
     # If preprocessing is enabled, ensure at least one preprocessing option is selected
     if view.preprocessingButton.isChecked() and not (
             view.carCBox.isChecked() or view.bpCBox.isChecked() or view.notchCBox.isChecked()):

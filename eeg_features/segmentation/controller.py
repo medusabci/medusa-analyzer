@@ -2,6 +2,7 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import QStringListModel
 from eeg_features.segmentation import marks_utils
 from scipy.stats import norm
+import time
 
 
 class SegmentationController:
@@ -212,7 +213,15 @@ class SegmentationController:
             - Handles and reports any errors encountered during file processing.
         """
         try:
+
+            # Loading screen
+            self.view.main_window.loading.show()
+            self.view.main_window.loading.set_progress(0, self.view.main_window)
+
             self.conditions, self.events, self.events_condition = marks_utils.extract_condition_events([file])
+
+            self.view.main_window.loading.set_progress(50, self.view.main_window)
+            time.sleep(0.5)
 
             # Set unique sorted conditions and events in models
             self.view.conditionList.setModel(QStringListModel(sorted(set(self.conditions))))
@@ -224,6 +233,11 @@ class SegmentationController:
 
             # Update next button state
             self.update_next_button_state()
+
+            self.view.main_window.loading.set_progress(100, self.view.main_window)
+            time.sleep(0.5)
+            self.view.main_window.loading.finish()
+
 
         except Exception as e:
             import traceback

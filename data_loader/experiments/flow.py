@@ -9,7 +9,7 @@ def on_next_click(view):
     """
     # Loading screen
     view.main_window.loading.show()
-    view.main_window.loading.set_progress(0)
+    view.main_window.loading.set_progress(0, view.main_window)
 
     # Get selected experiment
     checked_button = view.button_group.checkedButton()
@@ -45,7 +45,7 @@ def on_next_click(view):
         view.main_window.stackedWidget.insertWidget(idx + 1, widget)
 
         # Update loading progress
-        view.main_window.loading.set_progress(((idx + 1) / view.main_window.total_steps) * 100)
+        view.main_window.loading.set_progress(((idx + 1) / view.main_window.total_steps) * 100, view.main_window)
 
     # Finish loading
     view.main_window.loading.finish()

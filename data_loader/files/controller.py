@@ -4,7 +4,7 @@ from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
 from data_loader.files.converter import CONVERTERS
 from plots.filtering.view import FilteringPlotWidget
-import os, json, importlib
+import os, json, importlib, time
 
 
 class FilesController:
@@ -60,12 +60,22 @@ class FilesController:
         self.view.selectLabel.setText(f"{count} selected files")
 
         if count > 0:
+
+            # Loading screen
+            self.view.main_window.loading.show()
+            self.view.main_window.loading.set_progress(0, self.view.main_window)
+
             # Enable the next button
             self.view.main_window.nextButton.setDisabled(False)
 
             # Get information from the biosignals in the first file
             recording = components.Recording.load(self.selected_files[0])
             self.biosignals = recording.biosignals
+
+            # Update loading progress
+            self.view.main_window.loading.set_progress(50, self.view.main_window)
+            time.sleep(0.5)  # Simulate loading time for better UX
+
             # For each biosignal, get its sampling frequency and number of channels
             for key, value in recording.biosignals.items():
 
@@ -108,6 +118,13 @@ class FilesController:
 
             # Set the default biosignal to the first one
             self.view.biosignalBox.setCurrentIndex(0)
+
+            # Update loading progress
+            self.view.main_window.loading.set_progress(100, self.view.main_window)
+            time.sleep(0.5)  # Simulate loading time for better UX
+
+            # Finish loading
+            self.view.main_window.loading.finish()
 
         else: # No files selected, deactivate the next button and clear the biosignal combobox
             self.view.main_window.nextButton.setDisabled(True)

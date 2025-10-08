@@ -64,23 +64,31 @@ class LoadingDialog(QtWidgets.QDialog):
         outer_layout = QtWidgets.QVBoxLayout(self)
         outer_layout.addWidget(container)
 
-        # Centrar sobre el padre
+        # Center in the parent
+        self.set_window_position(parent)
+
+
+    def set_window_position(self, parent):
         if parent:
-            # Tamaño del diálogo
+            # Dialog size
             dialog_width, dialog_height = 300, 120
 
-            # Centro del parent en coordenadas globales
+            # Parent center in global coordinates
             parent_center = parent.mapToGlobal(parent.rect().center())
 
-            # Coordenadas superior izquierda del diálogo para centrar
+            # Upper left coordinates of the dialog to center it
             x = parent_center.x() - dialog_width // 2
             y = parent_center.y() - dialog_height // 2
 
             self.setGeometry(x, y, dialog_width, dialog_height)
 
-    def set_progress(self, step):
+
+    def set_progress(self, step, parent=None):
         self.progress_bar.setValue(step)
         QtWidgets.QApplication.processEvents()  # Refresh the UI
+
+        # Center in the parent
+        self.set_window_position(parent)
 
     def finish(self):
         QtWidgets.QApplication.processEvents()

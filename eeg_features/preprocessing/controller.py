@@ -192,7 +192,6 @@ class PreprocessingController:
     def on_show_event(self):
         if not self.first_show:
             self.first_show = True
-            print('Borrando loa controlllllsss')
             files_widget_controller = self.view.main_window.stackedWidget.widget(1).controller # widget(1) is the file selection widget
             fs = files_widget_controller.biosignal_info['fs']
             nyquist = fs / 2

@@ -1,5 +1,4 @@
-from PySide6.QtWidgets import QFrame, QLabel
-from PySide6 import QtCore, QtGui
+from PySide6.QtWidgets import QFrame
 from main_window.flow import on_next_click, on_back_click
 import numpy as np
 
