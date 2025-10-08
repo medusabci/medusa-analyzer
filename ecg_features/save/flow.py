@@ -79,12 +79,9 @@ def on_next_click(view):
 
         # If success change the button text to "Close"
         if not error_found:
-            print("Pipeline completed successfully.")
             view.main_window.nextButton.setText('Close')
             # Set the pipeline as completed, to avoid computing it again and closing the app
             view.controller.pipeline_completed = True
-        else:
-            print("Pipeline did not complete successfully.")
 
         # Set the pipeline as completed, to avoid computing it again and closing the app
         # view.controller.pipeline_completed = True

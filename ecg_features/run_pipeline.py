@@ -34,8 +34,10 @@ def run_pipeline(controller, settings_dic):
 
     view = controller.view
 
-    total_steps = total_files * len(selected_channels) * len(selected_conditions)
-    current_step = 0
+    # Config of the progress bar
+    steps_per_lead = 2 + 4
+    steps_per_file = 1 + steps_per_lead * len(settings_dic['leads']['selected_leads'])
+    total_steps = total_files * steps_per_file # Total steps for the progress bar
 
     # Loop through each selected file
     for i, file in enumerate(selected_files):
@@ -63,8 +65,12 @@ def run_pipeline(controller, settings_dic):
             if fs != settings_dic['preprocessing']['fs']:
                 raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
 
+            # Update the progress bar and labels
+            global_progress = (i*steps_per_file + 1) / total_steps * 100
+            controller.view.progressBar.setValue(int(global_progress))
+
             ## First step: Select channels
-            for chan_name in settings_dic['leads']['selected_leads']:
+            for j, chan_name in enumerate(settings_dic['leads']['selected_leads']):
                 idx_chan = channel_set['l_cha'].index(chan_name)
 
                 original_signal_chan = deepcopy(original_signal[:, idx_chan])
@@ -74,6 +80,10 @@ def run_pipeline(controller, settings_dic):
                 processed_signal = deepcopy(original_signal_chan)
                 if settings_dic['preprocessing']['clean'] or settings_dic['preprocessing']['zscore']:
                     processed_signal = clean_zscore_ecg(processed_signal, fs, settings_dic['preprocessing'])
+
+                # Update the progress bar and labels
+                global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 1) / total_steps * 100
+                controller.view.progressBar.setValue(int(global_progress))
 
                 ## Third step: Separate by condition
                 segments = []
@@ -85,6 +95,10 @@ def run_pipeline(controller, settings_dic):
                 else:
                     segments.append(deepcopy(processed_signal))
                     conditions.append('all')
+
+                # Update the progress bar and labels
+                global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 2) / total_steps * 100
+                controller.view.progressBar.setValue(int(global_progress))
 
                 # For each segment (condition)...
                 for segment_idx, segment in enumerate(segments):
@@ -112,15 +126,17 @@ def run_pipeline(controller, settings_dic):
                         params = compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, settings_dic['parameters'])
                         save_outputs(controller, deepcopy(params), base_name, f'hrv_params_{cond}_{chan_name}', 'param',
                                      settings_dic)
-                    current_step += 1
-                    global_progress = int((current_step / total_steps) * 100)
-                    controller.view.progressBar.setValue(global_progress)
-                    QtWidgets.QApplication.processEvents()
 
+                # Update the progress bar and labels
+                global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 6) / total_steps * 100
+                controller.view.progressBar.setValue(int(global_progress))
+
+            view.progressLabel.setText("Completed")
         # Exception handling
         except Exception as e:
             error_found = True
             controller._log_message(f"Error preprocessing {file}: {e}", style='error')
+            view.progressLabel.setText("Error")
 
     return error_found
 

@@ -52,12 +52,11 @@ def load_config(files_widget, data):
     # --- PREPROCESSING ---
     prep_cfg = data["preprocessing"]
     preproc_widget = files_widget.main_window.stackedWidget.widget(3)  # widget(3): preprocessing
-    controller = preproc_widget.controller
-    preproc_widget.cleanCBox.setChecked(prep_cfg.get("clean", False))
-    preproc_widget.zscoreCBox.setChecked(prep_cfg.get("zscore", False))
-    preproc_widget.hrvCBox.setChecked(prep_cfg.get("hrv", False))
-    preproc_widget.cleanBox.setCurrentText(prep_cfg.get("processing_method", "neurokit"))
-    preproc_widget.artifactsCBox.setChecked(prep_cfg.get("correct_artifacts", False))
+    preproc_widget.cleanCBox.setChecked(bool(prep_cfg["clean"]))
+    preproc_widget.zscoreCBox.setChecked(bool(prep_cfg["zscore"]))
+    preproc_widget.hrvCBox.setChecked(bool(prep_cfg["hrv"]))
+    preproc_widget.cleanBox.setCurrentText(prep_cfg["processing_method"])
+    preproc_widget.artifactsCBox.setChecked(bool(prep_cfg["correct_artifacts"]))
     if "resample_fs" in prep_cfg:
         preproc_widget.resampleBox.setValue(prep_cfg["resample_fs"])
     files_widget.main_window.controller.preproc_config = prep_cfg
@@ -65,7 +64,6 @@ def load_config(files_widget, data):
     # --- PARAMETERS ---
     params_cfg = data["parameters"]
     params_widget = files_widget.main_window.stackedWidget.widget(4)  # widget(4): parameters
-    params_controller = params_widget.controller
 
     # Set general analysis options
     params_widget.pulserateCBox.setChecked(bool(params_cfg["pulse_rate"]))
