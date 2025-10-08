@@ -1,6 +1,7 @@
 from PySide6 import QtWidgets
 from PySide6.QtCore import QStringListModel
 from eeg_features.segmentation import marks_utils
+import time
 
 class LeadsController:
     def __init__(self, ui):
@@ -57,7 +58,21 @@ class LeadsController:
     def on_show_event(self):
         if not self.first_show:
             self.first_show = True
+
+            # Loading screen
+            self.view.main_window.loading.show()
+            self.view.main_window.loading.set_progress(25, self.view.main_window)
+            time.sleep(0.3)  # Simulate loading time for better UX
+
             files_widget_controller = self.view.main_window.stackedWidget.widget(1).controller # widget(1) is the file selection widget
             selected_files = files_widget_controller.selected_files
-            self.load_marks_from_file(selected_files[0])
+            # Update loading progress
+            self.view.main_window.loading.set_progress(75, self.view.main_window)
 
+            self.load_marks_from_file(selected_files[0])
+            # Update loading progress
+            self.view.main_window.loading.set_progress(100, self.view.main_window)
+            time.sleep(0.5)  # Simulate loading time for better UX
+
+            # Finish loading
+            self.view.main_window.loading.finish()

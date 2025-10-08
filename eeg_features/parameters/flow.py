@@ -40,7 +40,9 @@ def get_parameters_config(controller):
         "ort_aec": True if controller.view.aecortButton.isChecked() and controller.view.aecCBox.isChecked() else None,
         "pli": True if controller.view.pliCBox.isChecked() else None,
         "plv": True if controller.view.plvCBox.isChecked() else None,
-        "wpli": True if controller.view.wpliCBox.isChecked() else None
+        "wpli": True if controller.view.wpliCBox.isChecked() else None,
+
+        "catch": True if controller.view.catchCBox.isChecked() else None
     }
     return config
 
@@ -86,7 +88,7 @@ def on_next_click(view):
             view.meanCBox, view.medianCBox, view.varianceCBox, view.kurtosisCBox, view.skewnessCBox,
             view.psdCBox, view.rpCBox, view.apCBox, view.mfCBox, view.seCBox,
             view.ctmCBox, view.sampenCBox, view.msampenCBox, view.lzcCBox, view.mlzcCBox,
-            view.iacCBox, view.aecCBox, view.pliCBox, view.plvCBox, view.wpliCBox
+            view.iacCBox, view.aecCBox, view.pliCBox, view.plvCBox, view.wpliCBox, view.catchCBox
         ]
         if any(box.isChecked() for box in param_cboxes):
             save_widget.paramsignalsCBox.setVisible(True)

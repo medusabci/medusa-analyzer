@@ -68,23 +68,23 @@ def load_config(files_widget, data):
     params_controller = params_widget.controller
 
     # Set general analysis options
-    params_widget.pulserateCBox.setChecked(bool(params_cfg.get("pulse_rate", False)))
-    params_widget.avnnCBox.setChecked(bool(params_cfg.get("average", False)))
-    params_widget.sdnnCBox.setChecked(bool(params_cfg.get("std_nn", False)))
-    params_widget.rmssdCBox.setChecked(bool(params_cfg.get("rms_sucessive_diff", False)))
-    params_widget.sdsdCBox.setChecked(bool(params_cfg.get("std_sucessive_diff", False)))
-    params_widget.vcCBox.setChecked(bool(params_cfg.get("variation_coef", False)))
-    params_widget.tinnCBox.setChecked(bool(params_cfg.get("tring_interp", False)))
-    params_widget.pnn20CBox.setChecked(bool(params_cfg.get("pnn20", False)))
-    params_widget.pnn50CBox.setChecked(bool(params_cfg.get("pnn50", False)))
-    params_widget.psdCBox.setChecked(bool(params_cfg.get("psd", False)))
-    params_widget.svbCBox.setChecked(bool(params_cfg.get("sympathovagal_balance", False)))
+    params_widget.pulserateCBox.setChecked(bool(params_cfg["pulse_rate"]))
+    params_widget.avnnCBox.setChecked(bool(params_cfg["average"]))
+    params_widget.sdnnCBox.setChecked(bool(params_cfg["std_nn"]))
+    params_widget.rmssdCBox.setChecked(bool(params_cfg["rms_sucessive_diff"]))
+    params_widget.sdsdCBox.setChecked(bool(params_cfg["std_sucessive_diff"]))
+    params_widget.vcCBox.setChecked(bool(params_cfg["variation_coef"]))
+    params_widget.tinnCBox.setChecked(bool(params_cfg["tring_interp"]))
+    params_widget.pnn20CBox.setChecked(bool(params_cfg["pnn20"]))
+    params_widget.pnn50CBox.setChecked(bool(params_cfg["pnn50"]))
+    params_widget.psdCBox.setChecked(bool(params_cfg["psd"]))
+    params_widget.svbCBox.setChecked(bool(params_cfg["sympathovagal_balance"]))
     params_widget.controller.update_band_label(params_cfg["selected_bands"])
-    params_widget.powerCBox.setChecked(bool(params_cfg.get("power", False)))
-    params_widget.kurtCBox.setChecked(bool(params_cfg.get("kurtosis", False)))
-    params_widget.skewnessCBox.setChecked(bool(params_cfg.get("skewness", False)))
-    params_widget.mfCBox.setChecked(bool(params_cfg.get("median_frequency", False)))
-    params_widget.seCBox.setChecked(bool(params_cfg.get("spectral_entropy", False)))
+    params_widget.powerCBox.setChecked(bool(params_cfg["power"]))
+    params_widget.kurtCBox.setChecked(bool(params_cfg["kurtosis"]))
+    params_widget.skewnessCBox.setChecked(bool(params_cfg["skewness"]))
+    params_widget.mfCBox.setChecked(bool(params_cfg["median_frequency"]))
+    params_widget.seCBox.setChecked(bool(params_cfg["spectral_entropy"]))
     params_widget.ctmCBox.setChecked(params_cfg['ctm'] if params_cfg['ctm'] is not None else False)
     params_widget.ctmrBox.setValue(
         params_cfg['ctm_r'] if params_cfg['ctm_r'] is not None else params_widget.defaults['ctmradius'])
@@ -96,8 +96,8 @@ def load_config(files_widget, data):
     params_widget.sampenmBox.setValue(
         params_cfg['sample_entropy_m'] if params_cfg['sample_entropy_m'] is not None else params_widget.defaults[
             'sampm'])
-    params_widget.shaeCBox.setChecked(bool(params_cfg.get("shannon_entropy", False)))
-    params_widget.lzcCBox.setChecked(bool(params_cfg.get("lzc", False)))
+    params_widget.shaeCBox.setChecked(bool(params_cfg["shannon_entropy"]))
+    params_widget.lzcCBox.setChecked(bool(params_cfg["lzc"]))
     params_widget.dfaCBox.setChecked(
         params_cfg['dfa'] if params_cfg['dfa'] is not None else False)
     params_widget.dfanBox.setValue(
@@ -106,6 +106,6 @@ def load_config(files_widget, data):
     params_widget.dfabBox.setValue(
         params_cfg['dfa_b'] if params_cfg['dfa_b'] is not None else params_widget.defaults[
             'dfab'])
-    params_widget.poincareCBox.setChecked(bool(params_cfg.get("poincare", False)))
+    params_widget.poincareCBox.setChecked(bool(params_cfg["poincare"]))
 
     files_widget.main_window.controller.parameters_config = params_cfg
