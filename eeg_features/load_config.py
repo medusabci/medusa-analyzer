@@ -30,7 +30,10 @@ def load_config(files_widget, data):
     preproc_widget.winbpBox.setCurrentText(prep_cfg['bp_win'])
     preproc_widget.carCBox.setChecked(bool(prep_cfg['car']))
     preproc_widget.bandCBox.setChecked(bool(prep_cfg['band_segmentation']))
-    preproc_widget.controller.update_band_label('segmentation', prep_cfg["selected_bands"][1:]) # Exclude "broadband"
+    bands_list = prep_cfg.get("selected_bands") or []
+    bands = bands_list[1:] if len(bands_list) > 1 else []  # Exclude 'broadband' if other bands are present
+    if bands:
+        preproc_widget.controller.update_band_label("segmentation", bands)
     # Store
     files_widget.main_window.controller.preproc_config = prep_cfg
 
@@ -84,8 +87,10 @@ def load_config(files_widget, data):
         params_cfg['psd_overlap_pct'] if params_cfg['psd_overlap_pct'] is not None else params_widget.defaults[
             'psdoverlap'])
     params_widget.psdcomboBox.setCurrentText(params_cfg['psd_window'])
+    params_widget.controller.loading_config = True
     params_widget.rpCBox.setChecked(bool(params_cfg['relative_power']))
     params_widget.controller.update_band_label('rp', params_cfg["selected_rp_bands"])
+    params_widget.controller.loading_config = False
     params_widget.apCBox.setChecked(bool(params_cfg['absolute_power']))
     params_widget.mfCBox.setChecked(bool(params_cfg['median_frequency']))
     params_widget.seCBox.setChecked(bool(params_cfg['spectral_entropy']))

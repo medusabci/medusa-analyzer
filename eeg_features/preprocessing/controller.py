@@ -11,7 +11,6 @@ class PreprocessingController:
         self.view.controller = self
         self.first_show = False
         self.loading_config = False # To avoid triggering events when loading a config
-        self.silent_update = False
 
         # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)

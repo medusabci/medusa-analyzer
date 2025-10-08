@@ -5,6 +5,7 @@ class ParametersController:
     def __init__(self, ui):
         self.view = ui
         self.view.controller = self
+        self.loading_config = False
 
         # Variables
         self.selected_bands_by_type = {"rp": []}
@@ -36,6 +37,9 @@ class ParametersController:
         self.view.rpLabel.setVisible(visible)
         self.view.rpselectedbandsLabel.setVisible(visible)
         self.view.rpselectedbandsauxLabel.setVisible(visible)
+
+        if self.loading_config:
+            return
 
         # If no band segmentation has been applied, show a warning when enabling RP and activate the button to select
         # the bands
