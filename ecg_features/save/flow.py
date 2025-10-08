@@ -75,11 +75,16 @@ def on_next_click(view):
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
         # Run the pipeline
-        success = run_pipeline(view.controller, view.controller.settings_dic, total_tasks)
+        error_found = run_pipeline(view.controller, view.controller.settings_dic)
 
         # If success change the button text to "Close"
-        if success:
+        if not error_found:
+            print("Pipeline completed successfully.")
             view.main_window.nextButton.setText('Close')
+            # Set the pipeline as completed, to avoid computing it again and closing the app
+            view.controller.pipeline_completed = True
+        else:
+            print("Pipeline did not complete successfully.")
 
         # Set the pipeline as completed, to avoid computing it again and closing the app
         # view.controller.pipeline_completed = True

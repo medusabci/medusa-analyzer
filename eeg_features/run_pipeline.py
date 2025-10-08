@@ -17,7 +17,7 @@ from scipy.io import savemat
 
 import matplotlib.pyplot as plt
 
-def run_pipeline(controller, settings_dic, total_tasks):
+def run_pipeline(controller, settings_dic):
     """
     Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
     computation for all selected files based on the provided configuration.
@@ -27,6 +27,19 @@ def run_pipeline(controller, settings_dic, total_tasks):
     selected_files = settings_dic['files'].get('selected_files', [])
     total_files = len(selected_files)
     error_found = False
+
+    # Store the bands if band segmentation is enabled, otherwise use broadband
+    bands = settings_dic['preprocessing']['selected_bands'] if (
+        settings_dic['preprocessing']['band_segmentation']) else [
+        {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'],
+         'max': settings_dic['preprocessing']['broadband_max']}]
+
+
+    # Config of the progress bar
+    steps_per_cond = 7
+    steps_per_band = 1 + steps_per_cond * len(settings_dic['segmentation']['selected_conditions'])
+    steps_per_file = 3 + steps_per_band * len(bands)
+    total_steps = total_files * steps_per_file # Total steps for the progress bar
 
     view = controller.view
 
@@ -38,7 +51,6 @@ def run_pipeline(controller, settings_dic, total_tasks):
             view.progressLabel.setText(f"Processing: {basename(file)}")
             QtWidgets.QApplication.processEvents()
 
-
             # Load data
             base_name = splitext(basename(file))[0]
             data = medusa.components.Recording.load(file)
@@ -49,6 +61,10 @@ def run_pipeline(controller, settings_dic, total_tasks):
             signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
             fs = getattr(data, name_signal).fs
 
+            # Update the progress bar and labels
+            global_progress = (i*steps_per_file + 1) / total_steps * 100
+            controller.view.progressBar.setValue(int(global_progress))
+
             # Ensure consistent sampling frequency
             if fs != settings_dic['preprocessing']['fs']:
                 raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
@@ -57,6 +73,10 @@ def run_pipeline(controller, settings_dic, total_tasks):
             processed_signal = deepcopy(original_signal)
             if settings_dic['preprocessing']['apply_preprocessing']:
                 processed_signal = apply_preprocessing(processed_signal, fs, settings_dic['preprocessing'])
+
+            # Update the progress bar and labels
+            global_progress = (i*steps_per_file + 2) / total_steps * 100
+            controller.view.progressBar.setValue(int(global_progress))
 
             ## Second step: Get indices of the thresholding
             if settings_dic['segmentation']["thresholding"]:
@@ -107,14 +127,11 @@ def run_pipeline(controller, settings_dic, total_tasks):
                     idx_threshold[cond] = idx_reject
                     del epochs  # Free memory
 
-            ## Third step: Band segmentation
-            # Store the bands if band segmentation is enabled, otherwise use broadband
-            bands = settings_dic['preprocessing']['selected_bands'] if (
-                settings_dic['preprocessing']['band_segmentation']) else [
-                {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'],
-                 'max': settings_dic['preprocessing']['broadband_max']}]
-            total_steps = total_files * len(bands)
+            # Update the progress bar and labels
+            global_progress = (i*steps_per_file + 3) / total_steps * 100
+            controller.view.progressBar.setValue(int(global_progress))
 
+            ## Third step: Band segmentation
             # For each band...
             for j, band in enumerate(bands):
                 # Band info
@@ -128,6 +145,10 @@ def run_pipeline(controller, settings_dic, total_tasks):
                 # If the band is not broadband, apply band filtering (the broadband does not require filtering)
                 if band_name != 'broadband':
                     processed_signal = band_filtering(processed_signal, bp_min, bp_max, fs, settings_dic['preprocessing'])
+
+                # Update the progress bar and labels
+                global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1) / total_steps * 100
+                controller.view.progressBar.setValue(int(global_progress))
 
                 # Create a copy of the data to store the preprocessed signal (to be saved if required)
                 data_preprocessed = deepcopy(data)
@@ -143,7 +164,7 @@ def run_pipeline(controller, settings_dic, total_tasks):
 
                 ## Fourth step: Segmentation
                 # For each condition selected...
-                for cond in settings_dic['segmentation']['selected_conditions']:
+                for k, cond in enumerate(settings_dic['segmentation']['selected_conditions']):
 
                     # If segmentation type is 'condition'
                     if settings_dic['segmentation']['segmentation_type'] == 'condition':
@@ -177,6 +198,11 @@ def run_pipeline(controller, settings_dic, total_tasks):
                             style='warning')
                         continue
 
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 1) / total_steps * 100
+                    controller.view.progressBar.setValue(int(global_progress))
+
+
                     ## Fifth step: Apply thresholding rejection if enabled
                     if settings_dic['segmentation']["thresholding"]:
                         # If all the epochs are rejected, skip this condition
@@ -192,11 +218,19 @@ def run_pipeline(controller, settings_dic, total_tasks):
                         if settings_dic['segmentation']['segmentation_type'] == 'event':
                             idx_events = np.delete(idx_events, idx_threshold[cond], axis=0)
 
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 2) / total_steps * 100
+                    controller.view.progressBar.setValue(int(global_progress))
+
                     ## Sixth step: Apply resampling if enabled
                     if epochs is not None and settings_dic['segmentation']['resample']:
                         resample_fs = settings_dic['segmentation']['resample_fs']
                         window = [0, (epochs.shape[1] / fs) * 1000]  # Window in ms
                         epochs = medusa.resample_epochs(epochs, window, resample_fs)
+
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 3) / total_steps * 100
+                    controller.view.progressBar.setValue(int(global_progress))
 
                     # Save the segmented signals (if required), separately for each condition (and event, if selected)
                     if settings_dic['segmentation']['segmentation_type'] == 'condition':
@@ -231,9 +265,9 @@ def run_pipeline(controller, settings_dic, total_tasks):
                                     break
                             save_outputs(controller, deepcopy(current_params), f"{base_name}_parameters_{cond}_{event_name}", band_name, 'param', settings_dic)
 
-                            # Update the progress bar and labels
-                            global_progress = int(((i * len(bands) + j + 1) / total_steps) * 100)
-                            controller.view.progressBar.setValue(global_progress)
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
+                    controller.view.progressBar.setValue(int(global_progress))
 
         # Exception handling
         except Exception as e:

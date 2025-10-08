@@ -18,7 +18,7 @@ from scipy.io import savemat
 
 import matplotlib.pyplot as plt
 
-def run_pipeline(controller, settings_dic, total_tasks):
+def run_pipeline(controller, settings_dic):
     """
     Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
     computation for all selected files based on the provided configuration.

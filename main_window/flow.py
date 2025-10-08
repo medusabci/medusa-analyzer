@@ -63,5 +63,5 @@ def on_back_click(controller):
     controller.view.stackedWidget.setCurrentIndex(idx)
     controller.view.backButton.setVisible(idx > 0)
     controller.view.nextButton.setDisabled(False)
-    controller.view.nextButton.setText("Run pipeline" if idx == controller.view.total_steps - 1 else "Next")
+    controller.view.nextButton.setText("Run pipeline" if idx == controller.view.total_steps else "Next")
 

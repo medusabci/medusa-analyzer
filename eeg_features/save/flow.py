@@ -44,15 +44,6 @@ def on_next_click(view):
         view.progressBar.setValue(0)
         view.error_occurred = False
 
-        # Get the total number of tasks to perform
-        total_tasks = sum([
-            view.settingsCBox.isChecked(),
-            view.prepsignalsCBox.isChecked(),
-            view.segsignalsCBox.isChecked(),
-            view.paramsignalsCBox.isChecked()
-        ])
-        total_tasks = max(total_tasks, 1)  # To avoid division by 0
-
         # If we are band segmenting, include the broadband as a new band, as we need it for the RP
         if view.main_window.controller.preproc_config['band_segmentation']:
             bands = view.main_window.controller.preproc_config['selected_bands']
@@ -86,15 +77,16 @@ def on_next_click(view):
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
         # Run the pipeline
-        success = run_pipeline(view.controller, view.controller.settings_dic, total_tasks)
+        error_found = run_pipeline(view.controller, view.controller.settings_dic)
 
         # If success change the button text to "Close"
-        if success:
+        if not error_found:
+            print("Pipeline completed successfully.")
             view.main_window.nextButton.setText('Close')
-
-        # Set the pipeline as completed, to avoid computing it again and closing the app
-        # view.controller.pipeline_completed = True
-        view.main_window.backButton.setEnabled(False)
+            # Set the pipeline as completed, to avoid computing it again and closing the app
+            view.controller.pipeline_completed = True
+        else:
+            print("Pipeline did not complete successfully.")
 
         return False # Prevent closing the app immediately
 
