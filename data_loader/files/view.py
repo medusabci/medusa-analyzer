@@ -55,6 +55,8 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
         self.convertLogTextBrowser.setVisible(False)
 
         self.explorerButton.setVisible(False)
+        self.loadButton.setEnabled(False)
+        self.loadLabel.setEnabled(False)
 
     def set_button_stylesheet(self, element):
         element.setStyleSheet("""

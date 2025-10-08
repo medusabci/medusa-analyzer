@@ -1,12 +1,16 @@
 def load_config(files_widget, data):
 
+    # BIOSIGNAL INFO
+    biosignal_txt = files_widget.biosignalBox.currentText()
+    biosignal = biosignal_txt.split(" ")[1]
+    files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
+
+
     # PREPROCESSING
     prep_cfg = data["preprocessing"]
     preproc_widget = files_widget.main_window.stackedWidget.widget(2)  # widget(2) is the preprocessing widget
-    preproc_widget.bandCBox.setChecked(prep_cfg['band_segmentation'] if prep_cfg['band_segmentation'] is not None else False)
     preproc_widget.minbroadBox.setValue(prep_cfg['broadband_min'])
     preproc_widget.maxbroadBox.setValue(prep_cfg['broadband_max'])
-    preproc_widget.controller.update_band_label('segmentation', prep_cfg["selected_bands"])
     preproc_widget.preprocessingButton.setChecked(
         prep_cfg["apply_preprocessing"] if prep_cfg['apply_preprocessing'] is not None else False)
     preproc_widget.notchCBox.setChecked(prep_cfg['notch'] if prep_cfg['notch'] is not None else False)
@@ -26,6 +30,10 @@ def load_config(files_widget, data):
         prep_cfg['bp_order'] if prep_cfg['bp_order'] is not None else preproc_widget.defaults["orderbp"])
     preproc_widget.winbpBox.setCurrentText(prep_cfg['bp_win'])
     preproc_widget.carCBox.setChecked(prep_cfg['car'] if prep_cfg['car'] is not None else False)
+    preproc_widget.bandCBox.setChecked(prep_cfg['band_segmentation'] if prep_cfg['band_segmentation'] is not None else False)
+    preproc_widget.controller.update_band_label('segmentation', prep_cfg["selected_bands"])
+    # Store
+    files_widget.main_window.controller.preproc_config = prep_cfg
 
     # SEGMENTATION
     segm_cfg = data["segmentation"]
@@ -58,6 +66,8 @@ def load_config(files_widget, data):
     segm_widget.resampleCBox.setChecked(segm_cfg['resample'] if segm_cfg['resample'] is not None else False)
     segm_widget.resamplefsBox.setValue(
         segm_cfg['resample_fs'] if segm_cfg['resample_fs'] is not None else segm_widget.defaults['resamplefs'])
+    # Store
+    files_widget.main_window.controller.segmentation_config = segm_cfg
 
     # PARAMETERS
     params_cfg = data["parameters"]
@@ -107,7 +117,7 @@ def load_config(files_widget, data):
     params_widget.lzcCBox.setChecked(params_cfg['lzc'] if params_cfg['lzc'] is not None else False)
     params_widget.mlzcCBox.setChecked(
         params_cfg['multiscale_lzc'] if params_cfg['multiscale_lzc'] is not None else False)
-    if params_cfg['multiscale_lzc_scales'] is not None and params_cfg['multiscale_lzc_scales'].strip():
+    if params_cfg['multiscale_lzc_scales'] is not None:
         params_widget.mlzcEdit.setText(str(params_cfg['multiscale_lzc_scales']))
     params_widget.iacCBox.setChecked(params_cfg['iac'] if params_cfg['iac'] is not None else False)
     params_widget.iacortButton.setChecked(params_cfg['ort_iac'] if params_cfg['ort_iac'] is not None else False)
@@ -116,3 +126,5 @@ def load_config(files_widget, data):
     params_widget.pliCBox.setChecked(params_cfg['pli'] if params_cfg['pli'] is not None else False)
     params_widget.plvCBox.setChecked(params_cfg['plv'] if params_cfg['plv'] is not None else False)
     params_widget.wpliCBox.setChecked(params_cfg['wpli'] if params_cfg['wpli'] is not None else False)
+    # Store
+    files_widget.main_window.controller.parameters_config = params_cfg

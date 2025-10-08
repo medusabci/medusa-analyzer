@@ -10,12 +10,12 @@ class PreprocessingController:
         self.view = ui
         self.view.controller = self
         self.first_show = False
+        self.loading_config = False # To avoid triggering events when loading a config
+        self.silent_update = False
 
         # Data preprocessing
         self.view.preprocessingButton.toggled.connect(self.on_preprocessing_toggle)
         # Broadband
-        self.view.minbroadBox.valueChanged.connect(self.disable_band_segmentation)
-        self.view.maxbroadBox.valueChanged.connect(self.disable_band_segmentation)
         self.view.broadbandButton.clicked.connect(self.broadband_info)
         # Notch
         self.view.notchCBox.toggled.connect(self.on_notch_toggle)
@@ -36,8 +36,6 @@ class PreprocessingController:
         self.view.maxfreqbpBox.editingFinished.connect(lambda: self.validate_filter_bounds("bandpass"))
         self.view.minfreqbpBox.valueChanged.connect(lambda: self.view.minbroadBox.setValue(self.view.minfreqbpBox.value()))
         self.view.maxfreqbpBox.valueChanged.connect(lambda: self.view.maxbroadBox.setValue(self.view.maxfreqbpBox.value()))
-        self.view.minfreqbpBox.valueChanged.connect(self.disable_band_segmentation)
-        self.view.maxfreqbpBox.valueChanged.connect(self.disable_band_segmentation)
 
         # Band segmentation
         self.view.bandCBox.toggled.connect(self.on_band_filtering_toggle)
@@ -55,7 +53,6 @@ class PreprocessingController:
         QtWidgets.QMessageBox.information(self.view, "Broadband info",
                                       f"We need to know the frequency range of your data in case it has been previously filtered."
                                       f" Otherwise, it will automatically be updated based on the preprocessing selections you made.")
-
 
     def on_preprocessing_toggle(self, checked):
         """
@@ -122,8 +119,10 @@ class PreprocessingController:
 
         # Reset default values
         if not checked:
+            self.silent_update = True
             self.view.minfreqbpBox.setValue(self.view.defaults["minfreqbp"])
             self.view.maxfreqbpBox.setValue(self.view.defaults["maxfreqbp"])
+            self.silent_update = False
             self.view.orderbpBox.setValue(self.view.defaults["orderbp"])
             self.view.winbpBox.setCurrentIndex(9) # Hamming
             self.view.maxbroadBox.setValue(self.view.main_window.stackedWidget.widget(1).controller.biosignal_info['fs']/2)
@@ -147,7 +146,6 @@ class PreprocessingController:
             return False
 
         return True
-
 
     def on_band_filtering_toggle(self, checked):
         """
@@ -176,15 +174,6 @@ class PreprocessingController:
             self.band_editor.show()
         self.band_editor.show()
 
-
-    def disable_band_segmentation(self):
-        """
-        Disables band segmentation if the broadband limits are modified so that there is no conflict.
-        """
-        if self.view.bandCBox.isChecked():
-            self.view.bandCBox.setChecked(False)
-
-
     def update_band_label(self, filtering_target, bands):
         """
         Updates the labels with the names of the selected bands
@@ -203,6 +192,7 @@ class PreprocessingController:
     def on_show_event(self):
         if not self.first_show:
             self.first_show = True
+            print('Borrando loa controlllllsss')
             files_widget_controller = self.view.main_window.stackedWidget.widget(1).controller # widget(1) is the file selection widget
             fs = files_widget_controller.biosignal_info['fs']
             nyquist = fs / 2
@@ -218,9 +208,6 @@ class PreprocessingController:
             # Set default values for broadband
             self.view.minbroadBox.setValue(0.5)
             self.view.maxbroadBox.setValue(nyquist)
-
-            if not files_widget_controller.selected_files:
-                reset_all_controls(self)
 
     def update_filter_plot(self, filter_type):
         """

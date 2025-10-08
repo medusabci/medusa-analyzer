@@ -45,6 +45,8 @@ class FilesController:
         # Include them in the salection and update the label accordingly
         self.selected_files.extend(files)
         self.on_file_selection_changed()
+        self.view.loadButton.setEnabled(True)
+        self.view.loadLabel.setEnabled(True)
 
 
     def on_file_selection_changed(self):
@@ -204,8 +206,15 @@ class FilesController:
             return
 
         module_name = f"{experiment_id}.load_config"
-        # Import the module
-        mod = importlib.import_module(module_name)
-        mod.load_config(self.view, data)
+        mod = importlib.import_module(module_name) # import de module
+
+        # Desactivate warnings in preprocessing controller while loading config
+        preprocessing_controller = self.view.main_window.stackedWidget.widget(2).controller # widget(2) is the preprocessing widget
+        preprocessing_controller.loading_config = True
+
+        try:
+            mod.load_config(self.view, data)
+        finally:
+            preprocessing_controller.loading_config = False # Re-activate warnings
 
         self.view.loadLabelAux.setText(f"Configuration loaded from {file}")

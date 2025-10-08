@@ -20,13 +20,13 @@ def reset_all_controls(controller):
         controller.view.carLabel, controller.view.carCBox,
         controller.view.notchPlotWidget, controller.view.bandpassPlotWidget,
         controller.view.bpgroupBox, controller.view.cargroupBox, controller.view.notchgroupBox,
-        controller.view.drawnotchButton, controller.view.drawbpButton,
+        controller.view.drawnotchButton, controller.view.drawbpButton
     ]
     for w in widgets_to_hide:
         w.setVisible(False)
 
     # Reset checkboxes
-    for box in (controller.view.notchCBox, controller.view.bpCBox, controller.view.carCBox, controller.view.preprocessingButton):
+    for box in (controller.view.notchCBox, controller.view.bpCBox, controller.view.bandCBox, controller.view.carCBox, controller.view.preprocessingButton):
         box.setChecked(False)
 
     # Reset spinboxes using defaults
@@ -108,7 +108,29 @@ def on_next_click(view):
                                           f"Notch is outside bandpass range. Please adjust or disable it before proceeding.")
             return False
 
+    # Validate that selected bands are within broadband limits
+    if view.bandCBox.isChecked() and hasattr(view, "selected_bands_by_type"):
+        selected_bands = view.selected_bands_by_type.get("segmentation", [])
+        if selected_bands:
+            min_broad = view.minbroadBox.value()
+            max_broad = view.maxbroadBox.value()
 
+            # Find bands that are outside the broadband limits
+            invalid_bands = [
+                f"{b['name']} ({b['min']}–{b['max']} Hz)"
+                for b in selected_bands
+                if b['min'] < min_broad or b['max'] > max_broad
+            ]
+
+            if invalid_bands:
+                msg = (
+                        "The following selected bands are outside the broadband range:\n\n" +
+                        "\n".join(invalid_bands) +
+                        f"\n\nBroadband limits: {min_broad}–{max_broad} Hz\n\n"
+                        "Please adjust the broadband limits or remove these bands before proceeding."
+                )
+                QtWidgets.QMessageBox.critical(view, "Band conflict detected", msg)
+                return False
 
     # Get the next widget (that will be the segmentation widget)
     idx = view.main_window.stackedWidget.currentIndex()
