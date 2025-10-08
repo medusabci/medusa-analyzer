@@ -59,7 +59,7 @@
       <item>
        <layout class="QHBoxLayout" name="leadLayout">
         <item>
-         <widget class="QLabel" name="broadbandLabel">
+         <widget class="QLabel" name="leadLabel">
           <property name="font">
            <font>
             <weight>50</weight>

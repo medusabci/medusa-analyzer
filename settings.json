@@ -1,111 +1,87 @@
 {
     "files": {
         "selected_files": [
-            "D:/MEDUSA/medusa-analyzer/Signals/R4.rec.bson"
+            "D:/Proyectos/medusa-analyzer/Signals/R7.rec.bson"
         ],
-        "selected_biosignal": "eeg",
-        "selected_class": "EEG"
+        "selected_biosignal": "ecg",
+        "selected_class": "ECG"
+    },
+    "leads": {
+        "selected_leads": {
+            "AUX_1": "I"
+        },
+        "selected_conditions": []
     },
     "preprocessing": {
-        "fs": 250.0,
-        "band_segmentation": true,
-        "broadband_min": 0.5,
-        "broadband_max": 125.0,
-        "selected_bands": [
-            {
-                "name": "delta",
-                "min": 1.0,
-                "max": 4.0
-            },
-            {
-                "name": "theta",
-                "min": 4.0,
-                "max": 8.0
-            },
-            {
-                "name": "alpha",
-                "min": 8.0,
-                "max": 13.0
-            },
-            {
-                "name": "beta",
-                "min": 13.0,
-                "max": 30.0
-            },
-            {
-                "name": "gamma",
-                "min": 30.0,
-                "max": 70.0
-            }
-        ],
-        "apply_preprocessing": null,
-        "notch": false,
-        "notch_min": null,
-        "notch_max": null,
-        "notch_order": null,
-        "notch_win": null,
-        "bandpass": false,
-        "bp_min": null,
-        "bp_max": null,
-        "bp_order": null,
-        "bp_win": null,
-        "car": false
-    },
-    "segmentation": {
-        "segmentation_type": "condition",
-        "selected_conditions": [
-            "eyes-open"
-        ],
-        "selected_events": null,
-        "trial_length": 1000,
-        "trial_stride": 0,
-        "window_start": null,
-        "window_end": null,
-        "norm": false,
-        "norm_type": null,
-        "baseline_start": null,
-        "baseline_end": null,
-        "average": false,
-        "thresholding": true,
-        "thres_k": 2.0,
-        "thres_samples": 2,
-        "thres_channels": 1,
-        "resample": false,
-        "resample_fs": null
+        "fs": 500.0,
+        "clean": true,
+        "clean_method": "neurokit",
+        "zscore": true,
+        "hrv": true,
+        "processing_method": "neurokit",
+        "correct_artifacts": true,
+        "resample_fs": 3.9
     },
     "parameters": {
-        "mean": null,
-        "median": null,
-        "variance": null,
+        "pulse_rate": true,
+        "averege": null,
+        "std_nn": null,
+        "rms_sucessive_diff": null,
+        "std_sucessive_diff": null,
+        "variation_coef": null,
+        "tring_interp": null,
+        "pnn50": null,
+        "pnn20": null,
+        "psd": true,
+        "sympathovagal_balance": true,
+        "selected_bands": [
+            {
+                "name": "Broadband",
+                "min": 0.0,
+                "max": 0.5
+            },
+            {
+                "name": "ULF",
+                "min": 0.0,
+                "max": 0.0033
+            },
+            {
+                "name": "VLF",
+                "min": 0.0033,
+                "max": 0.04
+            },
+            {
+                "name": "LF",
+                "min": 0.04,
+                "max": 0.15
+            },
+            {
+                "name": "HF",
+                "min": 0.15,
+                "max": 0.4
+            },
+            {
+                "name": "VHF",
+                "min": 0.4,
+                "max": 0.5
+            }
+        ],
+        "power": true,
         "kurtosis": null,
         "skewness": null,
-        "psd": true,
-        "psd_segment_pct": 80,
-        "psd_overlap_pct": 50,
-        "psd_window": "hamming",
-        "relative_power": null,
-        "selected_rp_bands": null,
-        "absolute_power": null,
         "median_frequency": null,
         "spectral_entropy": null,
-        "ctm": null,
-        "ctm_r": null,
+        "ctm": true,
+        "ctm_r": 0.05,
         "sample_entropy": null,
         "sample_entropy_r": null,
         "sample_entropy_m": null,
-        "multiscale_sample_entropy": null,
-        "multiscale_sample_entropy_r": null,
-        "multiscale_sample_entropy_m": null,
-        "multiscale_sample_entropy_scale": null,
+        "shannon_entropy": null,
         "lzc": null,
-        "multiscale_lzc": null,
-        "multiscale_lzc_scales": null,
-        "iac": null,
-        "ort_iac": null,
-        "aec": null,
-        "ort_aec": null,
-        "pli": null,
-        "plv": null,
-        "wpli": null
-    }
+        "dfa": null,
+        "dfa_n": null,
+        "dfa_b": null,
+        "poincare": null
+    },
+    "experiment_type": "ecg_features"
 }

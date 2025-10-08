@@ -36,8 +36,6 @@ class SaveController:
                 self.view.selectfolderLabel.setText(folder)
                 break
 
-
-
     def save_settings_to_json(self, settings_dic):
         """
         Prepares and saves the configuration parameters into a JSON file.
