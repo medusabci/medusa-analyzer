@@ -28,6 +28,8 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         self.deleteButton.clicked.connect(self.delete_selected)
         self.deleteallButton.clicked.connect(self.delete_all)
         self.acceptButton.clicked.connect(self.accept)
+        self.cancelButton.clicked.connect(self.reject)
+
 
     def delete_selected(self):
         """Remove selected files from the list."""

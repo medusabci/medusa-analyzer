@@ -7,6 +7,10 @@ def on_next_click(view):
     """
     Handles the event when the "Next" button is clicked. It loads the selected experiment configuration
     """
+    # Loading screen
+    view.main_window.loading.show()
+    view.main_window.loading.set_progress(0)
+
     # Get selected experiment
     checked_button = view.button_group.checkedButton()
     experiment_id = checked_button.property("experiment_id")
@@ -39,6 +43,12 @@ def on_next_click(view):
 
         # Optionally, add the widget to a stackedWidget
         view.main_window.stackedWidget.insertWidget(idx + 1, widget)
+
+        # Update loading progress
+        view.main_window.loading.set_progress(((idx + 1) / view.main_window.total_steps) * 100)
+
+    # Finish loading
+    view.main_window.loading.finish()
 
     # Store the experiment id
     view.main_window.selected_experiment = experiment_id

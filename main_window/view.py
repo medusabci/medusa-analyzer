@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtGui
+from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from data_loader.experiments.view import ExperimentWidget
 from data_loader.experiments.controller import ExperimentsController
@@ -6,6 +6,86 @@ from PySide6.QtGui import QPalette
 
 # Load UI class
 ui_main_window = loadUiType('main_window/view.ui')[0]
+
+class LoadingDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None, total_steps=5):
+        super().__init__(parent)
+
+        # Dialog box with no borders nor buttons, and always on top
+        self.setWindowFlags(
+            QtCore.Qt.Dialog |
+            QtCore.Qt.FramelessWindowHint |
+            QtCore.Qt.WindowStaysOnTopHint
+        )
+        # Blocks interaction with the parent window
+        self.setModal(True)
+        # Transparent background
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.total_steps = total_steps
+
+        # --- Style ---
+        container = QtWidgets.QFrame()
+        container.setStyleSheet("""
+            QFrame {
+                background-color: rgba(80, 80, 80, 220);
+                border-radius: 8px;
+            }
+            QLabel { 
+                color: white; 
+                font-size: 14px;
+                font-weight: bold;
+                background: transparent; 
+            }
+            QProgressBar {
+                border: 1px solid #888;
+                border-radius: 5px;
+                text-align: center;
+                height: 16px;
+            }
+            QProgressBar::chunk {
+                background-color: #b3b3b3;
+                border-radius: 5px;
+            }
+        """)
+        layout = QtWidgets.QVBoxLayout(container)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(0)
+
+        # Text and progress bar
+        self.label = QtWidgets.QLabel("Loading...", alignment=QtCore.Qt.AlignCenter)
+        self.progress_bar = QtWidgets.QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        # Layout
+        layout.addWidget(self.label)
+        layout.addWidget(self.progress_bar)
+        # Final widget
+        outer_layout = QtWidgets.QVBoxLayout(self)
+        outer_layout.addWidget(container)
+
+        # Centrar sobre el padre
+        if parent:
+            # Tamaño del diálogo
+            dialog_width, dialog_height = 300, 120
+
+            # Centro del parent en coordenadas globales
+            parent_center = parent.mapToGlobal(parent.rect().center())
+
+            # Coordenadas superior izquierda del diálogo para centrar
+            x = parent_center.x() - dialog_width // 2
+            y = parent_center.y() - dialog_height // 2
+
+            self.setGeometry(x, y, dialog_width, dialog_height)
+
+    def set_progress(self, step):
+        self.progress_bar.setValue(step)
+        QtWidgets.QApplication.processEvents()  # Refresh the UI
+
+    def finish(self):
+        QtWidgets.QApplication.processEvents()
+        self.accept()  # Close the dialog box
+
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -83,4 +163,14 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         self.experiments = ExperimentWidget(self)
         ExperimentsController(self.experiments) # This instantiates the controller and links it to the view
         self.stackedWidget.insertWidget(0, self.experiments)
+
+        ### ADD THE LOADING WINDOW (BUT DO NOT SHOW IT)
+
+        # Waits until the main window is shown to create the loading dialog, so it can be centered over the main window properly
+        QtCore.QTimer.singleShot(0, self.show_loading)
+
+    def show_loading(self):
+        # Create loading dialog
+        self.loading = LoadingDialog(self)
+
 
