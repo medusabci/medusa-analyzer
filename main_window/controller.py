@@ -3,6 +3,7 @@ from PySide6 import QtCore, QtGui
 from main_window.flow import on_next_click, on_back_click
 import numpy as np
 
+
 class LoadingSpinner(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -35,12 +36,13 @@ class MainWindowController:
         self.view.controller = self
 
         # Buttons connections
-        self.view.nextButton.clicked.connect(self.on_next_click_loading)
+        self.view.nextButton.clicked.connect(lambda: on_next_click(self))
         self.view.backButton.clicked.connect(lambda: on_back_click(self))
 
         # Spinner for loading
         self.spinner = LoadingSpinner()
         self.spinner.hide()
+
 
     def set_progressbar(self):
         """
@@ -104,8 +106,3 @@ class MainWindowController:
             rgb = ((c1 + (c2 - c1) * i / (n - 1)).astype(int))
             colors_hex.append("#{0:02x}{1:02x}{2:02x}".format(*rgb))
         return colors_hex
-
-    def on_next_click_loading(self):
-        self.spinner.show()
-        on_next_click(self)
-        self.spinner.hide()
