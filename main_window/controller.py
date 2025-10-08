@@ -4,32 +4,6 @@ from main_window.flow import on_next_click, on_back_click
 import numpy as np
 
 
-class LoadingSpinner(QLabel):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        # Floating window with no borders
-        self.setWindowFlags(
-            QtCore.Qt.Dialog |
-            QtCore.Qt.FramelessWindowHint |
-            QtCore.Qt.WindowStaysOnTopHint |
-            QtCore.Qt.Tool )
-
-        # Transparent background
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        # Align center
-        self.setAlignment(QtCore.Qt.AlignCenter)
-
-        # Window size and style
-        self.setFixedSize(120, 120)
-        self.setStyleSheet("background-color: rgba(255, 255, 255, 180); border-radius: 10px;")
-
-        # Load the GIF and start the animation
-        self.movie = QtGui.QMovie("media/loading.gif")
-        self.setMovie(self.movie)
-        self.movie.start()
-
-
 class MainWindowController:
     def __init__(self, ui):
         self.view = ui
@@ -38,10 +12,6 @@ class MainWindowController:
         # Buttons connections
         self.view.nextButton.clicked.connect(lambda: on_next_click(self))
         self.view.backButton.clicked.connect(lambda: on_back_click(self))
-
-        # Spinner for loading
-        self.spinner = LoadingSpinner()
-        self.spinner.hide()
 
 
     def set_progressbar(self):

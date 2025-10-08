@@ -3,46 +3,10 @@ from PySide6.QtCore import QRunnable, Slot, QThreadPool, QObject, Signal
 import time
 
 
-class Worker(QRunnable):
-    """Worker thread."""
-    def __init__(self, view, fn):
-        super().__init__()
-        self.view = view
-        self.fn = fn
-
-    @Slot()
-    def run(self):
-        """Your long-running job goes in this method."""
-        print("Thread start")
-        self.fn(self.view)
-        # time.sleep(5)
-        print("Thread complete")
-        self.view.main_window.controller.spinner.hide()
-        print("Spinner off")
-
-
-
 def on_next_click(view):
     """
     Handles the event when the "Next" button is clicked. It loads the selected experiment configuration
     """
-    view.main_window.controller.spinner.show()
-
-    threadpool = QThreadPool()
-    worker = Worker(view, _on_next_click_aux)
-    threadpool.start(worker)
-
-    # # Update total steps and progress bar in the main window
-    # view.main_window.nextButton.setDisabled(True)
-    # # Deactivate Next button
-    # view.main_window.controller.set_progressbar()
-
-
-
-    return False
-
-
-def _on_next_click_aux(view):
     # Get selected experiment
     checked_button = view.button_group.checkedButton()
     experiment_id = checked_button.property("experiment_id")
@@ -78,3 +42,9 @@ def _on_next_click_aux(view):
 
     # Store the experiment id
     view.main_window.selected_experiment = experiment_id
+    # Update total steps and progress bar in the main window
+    view.main_window.nextButton.setDisabled(True)
+    # Deactivate Next button
+    view.main_window.controller.set_progressbar()
+
+    return True
