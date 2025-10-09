@@ -44,6 +44,10 @@ Install the Medusa Kernel into your virtual environment. In the CMD window type:
 pip install /path/to/medusa-kernel
 ```
 Replace ```/path/to/medusa-kernel``` with the path to the folder you created in step 2. If you have followed our suggestions it should be e.g. ```C:/Users/Your_Useer/Documents/Medusa_Analyzer/Kernel```)
+After activating your virtual environment, install all dependencies with one command:
+```bash
+pip install -r requirements.txt
+```
 
 # How to run Medusa Analyzer
 
