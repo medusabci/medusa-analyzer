@@ -41,8 +41,6 @@ def get_parameters_config(controller):
         "pli": True if controller.view.pliCBox.isChecked() else None,
         "plv": True if controller.view.plvCBox.isChecked() else None,
         "wpli": True if controller.view.wpliCBox.isChecked() else None,
-
-        "catch": True if controller.view.catchCBox.isChecked() else None
     }
     return config
 

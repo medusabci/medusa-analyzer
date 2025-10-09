@@ -120,6 +120,5 @@ def load_config(files_widget, data):
     params_widget.pliCBox.setChecked(bool(params_cfg['pli']))
     params_widget.plvCBox.setChecked(bool(params_cfg['plv']))
     params_widget.wpliCBox.setChecked(bool(params_cfg['wpli']))
-    # params_widget.catchCBox.setChecked(bool(params_cfg['catch']))
     # Store
     files_widget.main_window.controller.parameters_config = params_cfg
