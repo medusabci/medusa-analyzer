@@ -183,6 +183,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
 
         if response == QtWidgets.QMessageBox.StandardButton.Yes:
             # Set table to default state
+            self.loaded_bands = None
             self.setup_table()
 
     def closeEvent(self, event):
