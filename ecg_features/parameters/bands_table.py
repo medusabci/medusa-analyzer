@@ -104,7 +104,7 @@ class BandTableWidget(QtWidgets.QDialog, ui_bands_table):
         self.bandsTable.setRowCount(0)
 
         # For each default band...
-        if self.loaded_bands is not None:
+        if self.loaded_bands:
             for band in self.loaded_bands:
                 self.add_band(band["name"], band["min"], band["max"])
         else:
