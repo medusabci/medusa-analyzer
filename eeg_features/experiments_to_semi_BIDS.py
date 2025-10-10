@@ -9,19 +9,22 @@ def convert_to_semi_bids(input_path, output_path):
     ├── sub-01/
     │   └── ses-01/
     │       └── eeg/
-    │           ├── task-eyes-artifacts/
-    │           │   ├── R1.rec.bson
-    │           ├── task-rest/
-    │           │   ├── R2.rec.bson
-    │           │   ├── R4.rec.bson
-    │           │   ├── R6.rec.bson
-    │           │   └── ...
-    │           └── task-videogame/
-    │               ├── level-01/
-    │               │   └── R3.rec.bson
-    │               ├── level-02/
-    │               │   └── R5.rec.bson
-    │               └── ...
+    │           ├── sub-01_task-artifacts.rec.bson
+    │           ├── sub-01_task-rest_run-01.rec.bson
+    │           ├── sub-01_task-rest_run-02.rec.bson
+    │           ├── sub-01_task-videogame_level-01.rec.bson
+    │           ├── sub-01_task-videogame_level-02.rec.bson
+    │           └── ...
+    │
+    ├── sub-02/
+    │   └── ses-01/
+    │       └── eeg/
+    │           ├── sub-02_task-artifacts.rec.bson
+    │           ├── sub-02_task-rest_run-01.rec.bson
+    │           ├── sub-02_task-videogame_level-01.rec.bson
+    │           └── ...
+    │
+    └── ...
         '''
     input_path = Path(input_path)
     output_path = Path(output_path)

@@ -11,11 +11,8 @@ from os.path import basename, join, splitext
 from os import makedirs
 from copy import deepcopy
 
-from pyparsing import originalTextFor
 from scipy.stats import kurtosis, skew
 from scipy.io import savemat
-
-import matplotlib.pyplot as plt
 
 def load_config(files_widget, data):
 

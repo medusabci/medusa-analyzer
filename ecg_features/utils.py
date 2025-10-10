@@ -12,7 +12,6 @@ import neurokit2.ecg as nkecg
 from neurokit2 import signal_rate, hrv
 from neurokit2.signal import signal_psd
 
-from pyparsing import originalTextFor
 from scipy.stats import kurtosis, skew, zscore
 from scipy.io import savemat
 

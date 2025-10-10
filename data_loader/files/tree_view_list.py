@@ -2,10 +2,14 @@ from PySide6 import QtWidgets, QtCore
 import os
 
 class ExperimentTreeDialog(QtWidgets.QDialog):
-    def __init__(self, rec_files, parent=None):
+    def __init__(self, rec_files, experiment_id=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Select recordings to load")
         self.resize(600, 400)
+        if experiment_id:
+            self.experiment_id = experiment_id.split("_")[0].lower()  # 'eeg_features' → 'eeg'
+        else:
+            self.experiment_id = None
 
         layout = QtWidgets.QVBoxLayout(self)
         self.tree = QtWidgets.QTreeWidget()
@@ -29,6 +33,11 @@ class ExperimentTreeDialog(QtWidgets.QDialog):
         root_items = {}
 
         for path in rec_files:
+            if self.experiment_id is not None:
+                parts_lower = [p.lower() for p in path.split(os.sep)]
+                if self.experiment_id.lower() not in parts_lower:
+                    continue
+
             parts = path.split(os.sep) # divide path into parts (for example: ["sub-01", "ses-01", "eeg", "task-rest", "R2.rec.bson"]
             current_parent = self.tree.invisibleRootItem()
 
@@ -36,6 +45,9 @@ class ExperimentTreeDialog(QtWidgets.QDialog):
             for i, part in enumerate(parts):
                 key = os.sep.join(parts[:i+1])
                 if key not in root_items: # if the item does not exist, create it
+                    if part.lower() in ["eeg", "ecg"]:
+                        if self.experiment_id and part.lower() != self.experiment_id.lower():
+                            break
                     item = QtWidgets.QTreeWidgetItem([part])
                     item.setFlags(item.flags() | QtCore.Qt.ItemIsUserCheckable)
                     # item.setCheckState(0, QtCore.Qt.Checked if i == len(parts)-1 else QtCore.Qt.PartiallyChecked)

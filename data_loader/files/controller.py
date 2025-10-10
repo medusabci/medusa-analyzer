@@ -263,7 +263,7 @@ class FilesController:
             return
 
         # Show the dialog to select files from the tree structure
-        dialog = ExperimentTreeDialog(rec_files, parent=self.view)
+        dialog = ExperimentTreeDialog(rec_files, experiment_id=self.view.main_window.selected_experiment, parent=self.view)
         if dialog.exec() == QtWidgets.QDialog.Accepted:
             selected = dialog.get_selected_files()
             self.selected_files = selected
