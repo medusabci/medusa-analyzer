@@ -1,5 +1,5 @@
 import medusa
-from eeg_features.run_pipeline import run_pipeline
+from eeg_features.utils import run_pipeline
 import json
 from medusa import ecg
 

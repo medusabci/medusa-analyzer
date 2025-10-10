@@ -1,4 +1,4 @@
-from ecg_features.run_pipeline import run_pipeline
+from ecg_features.utils import run_pipeline
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
