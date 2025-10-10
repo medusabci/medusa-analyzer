@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt
 import os
@@ -27,6 +27,14 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         self.acceptButton.clicked.connect(self.accept)
         self.cancelButton.clicked.connect(self.reject)
 
+        # Search line
+        self.searchEdit.setPlaceholderText("Find recordings...")
+        self.searchEdit.textChanged.connect(self.filter_items)
+        # Botón de lupa
+        self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+
+        self.all_items = files
+
 
     def delete_selected(self):
         """Remove selected files from the list."""
@@ -51,19 +59,29 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         return updated_files
 
     def confirm_deletion(self):
-        return True
-        # # Create the confirmation dialog
-        # confirmation_dialog = QtWidgets.QMessageBox(self)
-        # confirmation_dialog.setWindowTitle("Confirm Deletion")
-        # confirmation_dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
-        # confirmation_dialog.setText("Are you sure you want to delete these files?")
-        # confirmation_dialog.setInformativeText("This action cannot be undone.")
-        #
-        # # Add 'Yes' and 'No' buttons
-        # confirmation_dialog.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
-        # confirmation_dialog.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
-        #
-        # # Show the dialog and get the user's response
-        # response = confirmation_dialog.exec()
-        #
-        # return response == QtWidgets.QMessageBox.StandardButton.Yes
+        # Create the confirmation dialog
+        confirmation_dialog = QtWidgets.QMessageBox(self)
+        confirmation_dialog.setWindowTitle("Confirm Deletion")
+        confirmation_dialog.setIcon(QtWidgets.QMessageBox.Icon.Warning)
+        confirmation_dialog.setText("Are you sure you want to delete these files?")
+        confirmation_dialog.setInformativeText("This action cannot be undone.")
+
+        # Add 'Yes' and 'No' buttons
+        confirmation_dialog.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+        confirmation_dialog.setDefaultButton(QtWidgets.QMessageBox.StandardButton.No)
+
+        # Show the dialog and get the user's response
+        response = confirmation_dialog.exec()
+
+        return response == QtWidgets.QMessageBox.StandardButton.Yes
+
+    def filter_items(self, text):
+        """Filter the recordings in the list."""
+        self.filelistWidget.clear()
+        if not text:
+            self.filelistWidget.addItems(self.all_items)
+            return
+
+        text = text.lower()
+        filtered = [item for item in self.all_items if text in item.lower()]
+        self.filelistWidget.addItems(filtered)

@@ -31,6 +31,7 @@ class ExperimentTreeDialog(QtWidgets.QDialog):
         self.populate_tree(rec_files)
         self.tree.itemChanged.connect(self.on_item_changed)
 
+
     def populate_tree(self, rec_files):
         '''Populates the tree with the directory structure of the recordings.'''
         root_items = {}
@@ -205,8 +206,9 @@ class FilesController:
         """
         dialog = FilesListDialog(self.selected_files, self)
         if dialog.exec() == QtWidgets.QDialog.Accepted:
-            self.selected_files = dialog._update_preprocessing_widget()
-            self.on_file_selection_changed()
+            if self.selected_files != dialog._update_preprocessing_widget():
+                self.selected_files = dialog._update_preprocessing_widget()
+                self.on_file_selection_changed()
 
 
     def on_converter_click(self):

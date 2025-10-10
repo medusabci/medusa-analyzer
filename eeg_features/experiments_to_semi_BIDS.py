@@ -81,17 +81,18 @@ def process_recordings(source_dir, dest_root):
         r_number = int(match.group(1))
         task, level = determine_task_and_level(r_number)
 
-        if task == "rest":
-            dest_dir = eeg_dir / "task-rest"
-        elif task == "artifacts":
-            dest_dir = eeg_dir / "task-eyes-artifacts"
+        eeg_dir.mkdir(parents=True, exist_ok=True)
+
+        if task == "videogame":
+            new_name = f"{dest_root.name}_task-{task}_level-{level:02d}"
+        elif task == "rest":
+            new_name = f"{dest_root.name}_task-{task}_run-{level:02d}"
+
         else:
-            dest_dir = eeg_dir / "task-videogame" / f"level-{level:02d}"
+            new_name = f"{dest_root.name}_task-{task}"
 
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
-        dest_file = dest_dir / file.name
-        shutil.copy2(file, dest_file)
+        dest_file = eeg_dir / new_name
+        shutil.copy2(file, str(dest_file) + '.rec.bson')
         print(f"Copying: {file.name} → {dest_file.relative_to(dest_root)}")
 
 
@@ -99,12 +100,13 @@ def determine_task_and_level(r_number):
     if r_number == 1:
         return "artifacts", None
     if r_number % 2 == 0:
-        return "rest", None
+        level = (r_number) // 2  # R3->1, R5->2, ..., R17->8
+        return "rest", level
     else:
         level = (r_number - 1) // 2  # R3->1, R5->2, ..., R17->8
         return "videogame", level
 
 
-input_path = r"D:\BIE\Videogame"
-output_path = r"D:\BIE\Videogame BIDS"
+input_path = r"D:\JUEGO"
+output_path = r"D:\JUEGO_2"
 convert_to_semi_bids(input_path, output_path)
