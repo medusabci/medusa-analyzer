@@ -250,6 +250,10 @@ class FilesController:
         if not folder:
             return
 
+        # Enable config
+        self.view.loadButton.setEnabled(True)
+        self.view.loadLabel.setEnabled(True)
+
         # Search for .rec.bson files in the folder and its subfolders
         rec_files = []
         for root, _, files in os.walk(folder): # walk the directory tree

@@ -6,6 +6,8 @@ from medusa.signal_metrics import central_tendency, median_frequency, shannon_sp
 
 import numpy as np
 from os.path import basename, join, splitext
+from pathlib import Path
+import re
 from os import makedirs
 from copy import deepcopy
 import neurokit2.ecg as nkecg
@@ -14,6 +16,9 @@ from neurokit2.signal import signal_psd
 
 from scipy.stats import kurtosis, skew, zscore
 from scipy.io import savemat
+
+from eeg_features.experiments_to_semi_BIDS import output_path
+
 
 def run_pipeline(controller, settings_dic):
     """
@@ -24,8 +29,6 @@ def run_pipeline(controller, settings_dic):
     # Get the selected files and associated variables
     selected_files = settings_dic['files'].get('selected_files', [])
     total_files = len(selected_files)
-    selected_channels = settings_dic['leads']['selected_leads']
-    selected_conditions = settings_dic['leads'].get('selected_conditions', []) or ['all']
 
     error_found = False
 
@@ -56,8 +59,7 @@ def run_pipeline(controller, settings_dic):
             fs = getattr(data, name_signal).fs
 
             # Save original data
-            save_outputs(controller, deepcopy(data), base_name, f'original', 'prep',
-                         settings_dic)
+            save_outputs(controller, deepcopy(data), base_name, None, 'raw-signal', 'prep')
             # Ensure consistent sampling frequency
             if fs != settings_dic['preprocessing']['fs']:
                 raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
@@ -68,6 +70,7 @@ def run_pipeline(controller, settings_dic):
 
             ## First step: Select channels
             for j, chan_name in enumerate(settings_dic['leads']['selected_leads']):
+                lead_name = settings_dic['leads']['selected_leads'][chan_name]
                 idx_chan = channel_set['l_cha'].index(chan_name)
 
                 original_signal_chan = deepcopy(original_signal[:, idx_chan])
@@ -101,8 +104,7 @@ def run_pipeline(controller, settings_dic):
                 for segment_idx, segment in enumerate(segments):
 
                     cond = conditions[segment_idx]
-
-                    save_outputs(controller, deepcopy(segment), base_name, f'ecg_{cond}_{chan_name}', 'prep', settings_dic)
+                    save_outputs(controller, deepcopy(segment), base_name, lead_name, cond, 'prep')
                     ## Fourth step: HRV computation
                     if settings_dic['preprocessing']['hrv']:
                         method = settings_dic['preprocessing']['processing_method']
@@ -116,13 +118,12 @@ def run_pipeline(controller, settings_dic):
                         t_hrv = np.cumsum(hrv_signal)
                         t_uniform = np.arange(0, t_hrv[-1], 1/fs_hrv)
                         hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
-                        save_outputs(controller, deepcopy(hrv_signal), base_name, f'hrv_{cond}_{chan_name}', 'prep',
-                                     settings_dic)
+                        hrv_basename = str(Path(base_name).with_name(Path(base_name).stem + '_hrv' + Path(base_name).suffix))
+                        save_outputs(controller, deepcopy(hrv_signal), hrv_basename, lead_name, cond, 'prep')
 
                         ## Fifth step: Save outputs
                         params = compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, settings_dic['parameters'])
-                        save_outputs(controller, deepcopy(params), base_name, f'hrv_params_{cond}_{chan_name}', 'param',
-                                     settings_dic)
+                        save_outputs(controller, deepcopy(params), hrv_basename, lead_name, cond, 'param')
 
                 # Update the progress bar and labels
                 global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 6) / total_steps * 100
@@ -278,31 +279,119 @@ def _find_nearest_index(reference_times, query_times):
     # If the input was an array, return an array of indices
     return nearest_indices
 
+def save_outputs(controller, data, base_name, lead, cond, key):
+    """
+    Guarda los resultados del pipeline en estructura semi-BIDS dentro de /derivatives.
 
-def save_outputs(controller, data, base_name, suffix, key, settings_dic):
+    Estructura:
+    derivatives/
+        ├── preprocessed/
+        └── parameters/
     """
-    Saves outputs to disk according to user selections in the GUI.
-    """
-    # Save preprocessed signals
-    if controller.view.prepsignalsCBox.isChecked() and (settings_dic['preprocessing']['clean'] or settings_dic['preprocessing']['zscore']) and key == 'prep':
-        output_dir = join(controller.view.selected_folder, "Preprocessed_signals")
-        makedirs(output_dir, exist_ok=True)
-        output_path = join(output_dir, f"{base_name}_preprocessing_{suffix}.mat")
-        if suffix == 'original':
-            data.save_to_mat(output_path)
+    selected_folder = Path(controller.view.selected_folder)
+    derivatives_path = selected_folder / "derivatives"
+    derivatives_path.mkdir(exist_ok=True)
+
+    # Obtener info del sujeto y sesión desde el nombre del archivo base
+    subj_match = re.search(r"(sub-\d+)", base_name)
+    ses_match = re.search(r"(ses-\d+)", base_name)
+    subj_id = subj_match.group(1) if subj_match else "sub-unknown"
+    ses_id = ses_match.group(1) if ses_match else None
+    base_stem = Path(base_name).stem
+    # --- Saving preprocessed signals (.rec.bson) ---
+    if key == "prep" and controller.view.prepsignalsCBox.isChecked():
+        if ses_id:
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "ecg"
         else:
-            savemat(output_path, {suffix: data})
-        controller._log_message(f"Preprocessed saved in: {output_path}")
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / "ecg"
+        preproc_dir.mkdir(parents=True, exist_ok=True)
 
-    # Save computed parameters
-    if controller.view.paramsignalsCBox.isChecked() and key == 'param':
-        output_dir = join(controller.view.selected_folder, "Signal_parameters")
-        makedirs(output_dir, exist_ok=True)
-        controller._log_message(f"Parameters: folder ready in {output_dir}")
-        output_path = join(output_dir, f"{base_name}_{suffix}.mat")
-        savemat(output_path, {'parameters': data})
-        controller._log_message(f"Parameters saved in: {output_path}")
+        if lead is not None:
+            output_path = preproc_dir / f"{base_stem}_lead-{lead}_cond-{cond}.rec.bson"
+        else:
+            output_path = preproc_dir / f"{base_stem}_cond-{cond}.rec.bson"
+        if hasattr(data, "save"):
+            data.save(str(output_path))
+        elif hasattr(data, "save_to_bson"):
+            data.save_to_bson(str(output_path))
+        else:
+            try:
+                savemat(output_path, {'data': data})
+            except Exception:
+                raise RuntimeError('Error saving')
 
+        controller._log_message(f"✅ Preprocessed saved: {output_path}")
+
+    # --- Saving parameters (.mat) ---
+    if key == "param" and controller.view.paramsignalsCBox.isChecked():
+        if ses_id:
+            param_dir = derivatives_path / "parameters" / subj_id / ses_id / "ecg"
+        else:
+            param_dir = derivatives_path / "parameters" / subj_id / "ecg"
+        param_dir.mkdir(parents=True, exist_ok=True)
+
+        if not isinstance(data, dict):
+            outname = f"{subj_id}_param-unknown_lead-{lead}_cond-{cond}.mat"
+            outpath = param_dir / outname
+            savemat(outpath, {'parameters': data})
+            controller._log_message(f"⚠️ Parameters: saved fallback file {outpath}")
+            return
+
+        params_dict = dict(data)
+
+        # 1) PSDs: (psd_<band> + psd_freqs_<band>)
+        psd_bands = set()
+        for k in list(params_dict.keys()):
+            if k.startswith('psd_'):
+                psd_bands.add(k[4:])
+            if k.startswith('psd_freqs_'):
+                psd_bands.add(k[10:])
+
+        for b in psd_bands:
+            psd_key = f'psd_{b}'
+            freqs_key = f'psd_freqs_{b}'
+            psd_val = params_dict.pop(psd_key, None)
+            freqs_val = params_dict.pop(freqs_key, None)
+
+            metric_label = (f"psd-{b}")
+            outname = f"{base_stem}_param-{metric_label}_lead-{lead}_cond-{cond}.mat"
+            outpath = param_dir / outname
+
+            save_struct = {}
+            if psd_val is not None:
+                save_struct['psd'] = np.asarray(psd_val)
+            if freqs_val is not None:
+                save_struct['freqs'] = np.asarray(freqs_val)
+
+            savemat(outpath, {metric_label: save_struct})
+            controller._log_message(f"✅ Parameter saved: {outpath}")
+
+        # 2) Other parameters
+        for k, v in list(params_dict.items()):
+            metric_label = k.replace('_', '-')
+
+            outname = f"{base_stem}_param-{metric_label}_lead-{lead}_cond-{cond}.mat"
+            outpath = param_dir / outname
+
+            if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict) and 'band' in v[0]:
+                rp_struct = {}
+                for entry in v:
+                    bname = entry.get('band', 'unknown')
+                    rp_struct[bname] = np.asarray(entry.get('value'))
+                savemat(outpath, {metric_label: rp_struct})
+
+            elif isinstance(v, dict):
+                nested = {}
+                for kk, vv in v.items():
+                    nested[kk] = np.asarray(vv)
+                savemat(outpath, {metric_label: nested})
+            else:
+                try:
+                    savemat(outpath, {metric_label: np.asarray(v)})
+                except Exception:
+                    savemat(outpath, {'value': np.asarray(v)})
+
+            controller._log_message(f"✅ Parameter saved: {outpath}")
 
 #################### PREPROCESSING
 

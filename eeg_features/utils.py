@@ -13,6 +13,9 @@ from copy import deepcopy
 
 from scipy.stats import kurtosis, skew
 from scipy.io import savemat
+import re
+import json
+from pathlib import Path
 
 def load_config(files_widget, data):
 
@@ -287,7 +290,7 @@ def run_pipeline(controller, settings_dic):
                 setattr(biosignal, "original_signal", original_signal)
 
                 # Deepcopy the data to avoid modifying the original data object
-                save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, 'prep', settings_dic)
+                save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, None, None, 'prep')
 
                 ## Fourth step: Segmentation
                 # For each condition selected...
@@ -361,7 +364,7 @@ def run_pipeline(controller, settings_dic):
 
                     # Save the segmented signals (if required), separately for each condition (and event, if selected)
                     if settings_dic['segmentation']['segmentation_type'] == 'condition':
-                        save_outputs(controller, deepcopy(epochs), f"{base_name}_segmentation_{cond}", band_name, 'seg', settings_dic)
+                        save_outputs(controller, deepcopy(epochs), base_name, band_name, cond, None, 'seg')
                     elif settings_dic['segmentation']['segmentation_type'] == 'event':
                         for evt in np.unique(idx_events):
                             # Get the epochs corresponding to the current event
@@ -372,13 +375,11 @@ def run_pipeline(controller, settings_dic):
                                 if info['label'] == evt:
                                     event_name = key
                                     break
-                            save_outputs(controller, deepcopy(current_epochs), f"{base_name}_segmentation_{cond}_{event_name}", band_name, 'seg', settings_dic)
-
+                            save_outputs(controller, deepcopy(current_epochs), base_name, band_name, cond, event_name, 'seg')
                     ## Seventh step: Parameter computation
                     if settings_dic['segmentation']['segmentation_type'] == 'condition':
                         params = compute_parameters(epochs, fs, band, settings_dic)
-                        save_outputs(controller, deepcopy(params), f"{base_name}_parameters_{cond}",
-                                     band_name, 'param', settings_dic)
+                        save_outputs(controller, deepcopy(params), base_name, band_name, cond, None, 'param')
                     elif settings_dic['segmentation']['segmentation_type'] == 'event':
                         for evt in np.unique(idx_events):
                             # Get the epochs corresponding to the current event
@@ -390,8 +391,7 @@ def run_pipeline(controller, settings_dic):
                                 if info['label'] == evt:
                                     event_name = key
                                     break
-                            save_outputs(controller, deepcopy(current_params), f"{base_name}_parameters_{cond}_{event_name}", band_name, 'param', settings_dic)
-
+                            save_outputs(controller, deepcopy(current_params), base_name, band_name, cond, event_name, 'param')
                     # Update the progress bar and labels
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
                     controller.view.progressBar.setValue(int(global_progress))
@@ -588,35 +588,140 @@ def _get_event_indices_in_range(marks, event_key, start_time, end_time):
         (events_times <= end_time))[0]
 
 
-def save_outputs(controller, data, base_name, suffix, key, settings_dic):
+def save_outputs(controller, data, base_name, band_name, cond, event, key):
     """
-    Saves outputs to disk according to user selections in the GUI.
-    """
-    # Save preprocessed signals
-    if controller.view.prepsignalsCBox.isChecked() and settings_dic['preprocessing']['apply_preprocessing'] and key == 'prep':
-        output_dir = join(controller.view.selected_folder, "Preprocessed_signals")
-        makedirs(output_dir, exist_ok=True)
-        output_path = join(output_dir, f"{base_name}_preprocessing_{suffix}.mat")
-        data.save_to_mat(output_path)
-        controller._log_message(f"Preprocessed saved in: {output_path}")
+    Guarda los resultados del pipeline en estructura semi-BIDS dentro de /derivatives.
 
-    # Save segmented signals
-    if controller.view.segsignalsCBox.isChecked() and key == 'seg':
-        output_dir = join(controller.view.selected_folder, "Segmented_signals")
-        makedirs(output_dir, exist_ok=True)
-        output_path = join(output_dir, f"{base_name}_{suffix}.mat")
+    Estructura:
+    derivatives/
+        ├── preprocessed/
+        ├── segmented/
+        └── parameters/
+    """
+    selected_folder = Path(controller.view.selected_folder)
+    derivatives_path = selected_folder / "derivatives"
+    derivatives_path.mkdir(exist_ok=True)
+
+    # Obtener info del sujeto y sesión desde el nombre del archivo base
+    subj_match = re.search(r"(sub-\d+)", base_name)
+    ses_match = re.search(r"(ses-\d+)", base_name)
+    subj_id = subj_match.group(1) if subj_match else "sub-unknown"
+    ses_id = ses_match.group(1) if ses_match else None
+    base_stem = Path(base_name).stem
+    # --- Saving preprocessed signals (.rec.bson) ---
+    if key == "prep" and controller.view.prepsignalsCBox.isChecked():
+        if ses_id:
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "eeg"
+        else:
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / "eeg"
+        preproc_dir.mkdir(parents=True, exist_ok=True)
+
+        output_path = preproc_dir / f"{base_stem}_band-{band_name}.rec.bson"
+        if hasattr(data, "save"):
+            data.save(str(output_path))
+        elif hasattr(data, "save_to_bson"):
+            data.save_to_bson(str(output_path))
+        else:
+            raise RuntimeError('Error saving')
+
+        controller._log_message(f"✅ Preprocessed saved: {output_path}")
+
+    # --- Saving segmented signals (.mat) ---
+    if key == "seg" and controller.view.segsignalsCBox.isChecked():
+        if ses_id:
+            seg_dir = derivatives_path / "segmented" / subj_id / ses_id / "eeg"
+        else:
+            seg_dir = derivatives_path / "segmented" / subj_id / "eeg"
+        seg_dir.mkdir(parents=True, exist_ok=True)
+
+        if event is not None:
+            output_name = f"{base_stem}_band-{band_name}_cond-{cond}_event-{event}.mat"
+        else:
+            output_name = f"{base_stem}_band-{band_name}_cond-{cond}.mat"
+        output_path = seg_dir / output_name
+
         savemat(output_path, {'epochs': data})
-        controller._log_message(f"Segmentation saved in: {output_path}")
+        controller._log_message(f"✅ Segmented saved: {output_path}")
 
-    # Save computed parameters
-    if controller.view.paramsignalsCBox.isChecked() and key == 'param':
-        output_dir = join(controller.view.selected_folder, "Signal_parameters")
-        makedirs(output_dir, exist_ok=True)
-        controller._log_message(f"Parameters: folder ready in {output_dir}")
-        output_path = join(output_dir, f"{base_name}_{suffix}.mat")
-        savemat(output_path, {'parameters': data})
-        controller._log_message(f"Parameters saved in: {output_path}")
+    # --- Saving parameters (.mat) ---
+    if key == "param" and controller.view.paramsignalsCBox.isChecked():
+        if ses_id:
+            param_dir = derivatives_path / "parameters" / subj_id / ses_id / "eeg"
+        else:
+            param_dir = derivatives_path / "parameters" / subj_id / "eeg"
+        param_dir.mkdir(parents=True, exist_ok=True)
 
+        if not isinstance(data, dict):
+            if event is not None:
+                outname = f"{subj_id}_param-unknown_band-{band_name}_cond-{cond}_event-{event}.mat"
+            else:
+                outname = f"{subj_id}_param-unknown_band-{band_name}_cond-{cond}.mat"
+            outpath = param_dir / outname
+            savemat(outpath, {'parameters': data})
+            controller._log_message(f"⚠️ Parameters: saved fallback file {outpath}")
+            return
+
+        params_dict = dict(data)
+
+        # 1) PSDs: (psd_<band> + psd_freqs_<band>)
+        psd_bands = set()
+        for k in list(params_dict.keys()):
+            if k.startswith('psd_'):
+                psd_bands.add(k[4:])
+            if k.startswith('psd_freqs_'):
+                psd_bands.add(k[10:])
+
+        for b in psd_bands:
+            psd_key = f'psd_{b}'
+            freqs_key = f'psd_freqs_{b}'
+            psd_val = params_dict.pop(psd_key, None)
+            freqs_val = params_dict.pop(freqs_key, None)
+
+            metric_label = (f"psd-{b}")
+            if event is not None:
+                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}_event-{event}.mat"
+            else:
+                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}.mat"
+            outpath = param_dir / outname
+
+            save_struct = {}
+            if psd_val is not None:
+                save_struct['psd'] = np.asarray(psd_val)
+            if freqs_val is not None:
+                save_struct['freqs'] = np.asarray(freqs_val)
+
+            savemat(outpath, {metric_label: save_struct})
+            controller._log_message(f"✅ Parameter saved: {outpath}")
+
+        # 2) Other parameters
+        for k, v in list(params_dict.items()):
+            metric_label = k.replace('_', '-')
+
+            if event is not None:
+                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}_event-{event}.mat"
+            else:
+                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}.mat"
+            outpath = param_dir / outname
+
+            if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict) and 'band' in v[0]:
+                rp_struct = {}
+                for entry in v:
+                    bname = entry.get('band', 'unknown')
+                    rp_struct[bname] = np.asarray(entry.get('value'))
+                savemat(outpath, {metric_label: rp_struct})
+
+            elif isinstance(v, dict):
+                nested = {}
+                for kk, vv in v.items():
+                    nested[kk] = np.asarray(vv)
+                savemat(outpath, {metric_label: nested})
+            else:
+                try:
+                    savemat(outpath, {metric_label: np.asarray(v)})
+                except Exception:
+                    savemat(outpath, {'value': np.asarray(v)})
+
+            controller._log_message(f"✅ Parameter saved: {outpath}")
 
 #################### PREPROCESSING
 
@@ -703,9 +808,9 @@ def compute_parameters(epochs, fs, band, cfg):
 
         # Store PSD values: average across trials if averaging is enabled
         try:
-            params[f'psd_{band['name']}'] = np.nanmean(psd, axis=0) \
+            params[f'psd'] = np.nanmean(psd, axis=0) \
                 if cfg['segmentation']['average'] and epochs.ndim == 3 else psd
-            params[f'psd_freqs_{band['name']}'] = fxx
+            params[f'psd_freqs'] = fxx
         except Exception as e:
             print(e)
 
@@ -751,12 +856,14 @@ def compute_parameters(epochs, fs, band, cfg):
             # Get the current band range
             band_range = [band['min'], band['max']]
             # Compute the metric
-            val = func(psd, fs, band_range)
+            if name == 'absolute_power':
+                val = func(psd, fs, band_range, 'absolute')
+            else:
+                val = func(psd, fs, band_range)
             # Average across epochs if required and if multiple epochs are present
             val = np.nanmean(val, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val
             # Store in the params dict
             params[f"{name}"] = val
-
 
     ## NONLINEAR METRICS
     nonlinear_funcs = {
@@ -792,7 +899,7 @@ def compute_parameters(epochs, fs, band, cfg):
     }
 
     # For each parameter...
-    for name, func in nonlinear_funcs.items():
+    for name, func in connectivity_funcs.items():
         # If selected...
         if cfg['parameters'][name]:
             # Compute it

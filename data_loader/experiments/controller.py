@@ -1,5 +1,6 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import os
+from plots.plot_stats_init.controller import PlotStatsInitController
 
 
 class ExperimentsController:
@@ -19,6 +20,7 @@ class ExperimentsController:
         for frame in frames:
             # Assign the click event
             frame.mousePressEvent = lambda event,frame=frame : self._on_frame_click(frame, event)
+        self.view.plotstatsButton.clicked.connect(self.on_plotstats_button_click)
 
     def _on_frame_click(self, frame, event):
         # Simulate a click on its child radio button, if it exists
@@ -37,4 +39,16 @@ class ExperimentsController:
         pixmap = QtGui.QPixmap(icon_path)
         label.setPixmap(pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
         label.setFixedSize(100, 100)
+
+    def on_plotstats_button_click(self):
+        self.plot_stats_controller = PlotStatsInitController()
+
+        dialog = QtWidgets.QDialog(self.view.window())
+        dialog.setModal(True)  # block main window until the dialog is closed
+        dialog.setWindowTitle("Plot & Stats - Experiment Setup")
+
+        layout = QtWidgets.QVBoxLayout(dialog)
+        layout.addWidget(self.plot_stats_controller.view)
+        dialog.exec()
+
 

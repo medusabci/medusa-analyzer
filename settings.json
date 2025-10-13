@@ -1,87 +1,109 @@
 {
     "files": {
         "selected_files": [
-            "D:/Proyectos/medusa-analyzer/Signals/R7.rec.bson"
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-01.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-02.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-03.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-04.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-05.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-06.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-07.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\eeg\\sub-16_task-videogame_level-08.rec.bson"
         ],
-        "selected_biosignal": "ecg",
-        "selected_class": "ECG"
-    },
-    "leads": {
-        "selected_leads": {
-            "AUX_1": "I"
-        },
-        "selected_conditions": []
+        "selected_biosignal": "eeg",
+        "selected_class": "EEG"
     },
     "preprocessing": {
         "fs": 500.0,
-        "clean": true,
-        "clean_method": "neurokit",
-        "zscore": true,
-        "hrv": true,
-        "processing_method": "neurokit",
-        "correct_artifacts": true,
-        "resample_fs": 3.9
-    },
-    "parameters": {
-        "pulse_rate": true,
-        "averege": null,
-        "std_nn": null,
-        "rms_sucessive_diff": null,
-        "std_sucessive_diff": null,
-        "variation_coef": null,
-        "tring_interp": null,
-        "pnn50": null,
-        "pnn20": null,
-        "psd": true,
-        "sympathovagal_balance": true,
+        "band_segmentation": true,
+        "broadband_min": 0.5,
+        "broadband_max": 70.0,
         "selected_bands": [
             {
-                "name": "Broadband",
-                "min": 0.0,
-                "max": 0.5
+                "name": "broadband",
+                "min": 0.5,
+                "max": 70.0
             },
             {
-                "name": "ULF",
-                "min": 0.0,
-                "max": 0.0033
+                "name": "theta",
+                "min": 4.0,
+                "max": 8.0
             },
             {
-                "name": "VLF",
-                "min": 0.0033,
-                "max": 0.04
-            },
-            {
-                "name": "LF",
-                "min": 0.04,
-                "max": 0.15
-            },
-            {
-                "name": "HF",
-                "min": 0.15,
-                "max": 0.4
-            },
-            {
-                "name": "VHF",
-                "min": 0.4,
-                "max": 0.5
+                "name": "beta",
+                "min": 13.0,
+                "max": 30.0
             }
         ],
-        "power": true,
+        "apply_preprocessing": true,
+        "notch": true,
+        "notch_min": 49.0,
+        "notch_max": 51.0,
+        "notch_order": 1001,
+        "notch_win": "hamming",
+        "bandpass": true,
+        "bp_min": 1.0,
+        "bp_max": 70.0,
+        "bp_order": 1000,
+        "bp_win": "hamming",
+        "car": true
+    },
+    "segmentation": {
+        "segmentation_type": "condition",
+        "selected_conditions": [
+            "no-condition"
+        ],
+        "selected_events": null,
+        "trial_length": 5000,
+        "trial_stride": 0,
+        "window_start": null,
+        "window_end": null,
+        "norm": false,
+        "norm_type": null,
+        "baseline_start": null,
+        "baseline_end": null,
+        "average": true,
+        "thresholding": false,
+        "thres_k": null,
+        "thres_samples": null,
+        "thres_channels": null,
+        "resample": false,
+        "resample_fs": null
+    },
+    "parameters": {
+        "mean": null,
+        "median": null,
+        "variance": null,
         "kurtosis": null,
         "skewness": null,
-        "median_frequency": null,
+        "psd": true,
+        "psd_segment_pct": 80,
+        "psd_overlap_pct": 50,
+        "psd_window": "hamming",
+        "relative_power": true,
+        "selected_rp_bands": [],
+        "absolute_power": true,
+        "median_frequency": true,
         "spectral_entropy": null,
-        "ctm": true,
-        "ctm_r": 0.05,
+        "ctm": null,
+        "ctm_r": null,
         "sample_entropy": null,
         "sample_entropy_r": null,
         "sample_entropy_m": null,
-        "shannon_entropy": null,
+        "multiscale_sample_entropy": null,
+        "multiscale_sample_entropy_r": null,
+        "multiscale_sample_entropy_m": null,
+        "multiscale_sample_entropy_scale": null,
         "lzc": null,
-        "dfa": null,
-        "dfa_n": null,
-        "dfa_b": null,
-        "poincare": null
+        "multiscale_lzc": null,
+        "multiscale_lzc_scales": null,
+        "iac": null,
+        "ort_iac": null,
+        "aec": null,
+        "ort_aec": null,
+        "pli": null,
+        "plv": null,
+        "wpli": null
     },
-    "experiment_type": "ecg_features"
+    "experiment_type": "eeg_features"
 }

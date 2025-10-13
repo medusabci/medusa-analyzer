@@ -2,7 +2,7 @@ import re
 import shutil
 from pathlib import Path
 
-def convert_to_semi_bids(input_path, output_path):
+def convert_to_semi_bids(input_path, output_path, anat):
     '''
     output_path/
     │
@@ -56,16 +56,16 @@ def convert_to_semi_bids(input_path, output_path):
                 ses_id = ses_match.group(1).zfill(2)
                 ses_bids_path = subj_bids_path / f"ses-{ses_id}"
                 ses_bids_path.mkdir(exist_ok=True)
-                process_recordings(ses_dir, ses_bids_path)
+                process_recordings(ses_dir, ses_bids_path, anat)
         else:
-            process_recordings(subj_dir, subj_bids_path)
+            process_recordings(subj_dir, subj_bids_path, anat)
 
     print("✅ Conversion to format semi-BIDS completed.")
 
 
-def process_recordings(source_dir, dest_root):
-    eeg_dir = dest_root / "eeg"
-    eeg_dir.mkdir(parents=True, exist_ok=True)
+def process_recordings(source_dir, dest_root, anat):
+    anat_dir = dest_root / str(anat)
+    anat_dir.mkdir(parents=True, exist_ok=True)
 
     record_pattern = re.compile(r'R(\d+)', re.IGNORECASE)
 
@@ -84,7 +84,7 @@ def process_recordings(source_dir, dest_root):
         r_number = int(match.group(1))
         task, level = determine_task_and_level(r_number)
 
-        eeg_dir.mkdir(parents=True, exist_ok=True)
+        anat_dir.mkdir(parents=True, exist_ok=True)
 
         if task == "videogame":
             new_name = f"{dest_root.name}_task-{task}_level-{level:02d}"
@@ -94,7 +94,7 @@ def process_recordings(source_dir, dest_root):
         else:
             new_name = f"{dest_root.name}_task-{task}"
 
-        dest_file = eeg_dir / new_name
+        dest_file = anat_dir / new_name
         shutil.copy2(file, str(dest_file) + '.rec.bson')
         print(f"Copying: {file.name} → {dest_file.relative_to(dest_root)}")
 
@@ -110,6 +110,6 @@ def determine_task_and_level(r_number):
         return "videogame", level
 
 
-input_path = r"D:\JUEGO"
-output_path = r"D:\JUEGO_2"
-convert_to_semi_bids(input_path, output_path)
+input_path = r"C:\Users\beapa\PycharmProjects\medusa-analyzer\Signals\Test BIDS\Videogame"
+output_path = r"C:\Users\beapa\PycharmProjects\medusa-analyzer\Signals\Test BIDS\Videogame BIDS ECG"
+convert_to_semi_bids(input_path, output_path, 'ecg')

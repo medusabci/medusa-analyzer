@@ -352,6 +352,33 @@
      </property>
     </spacer>
    </item>
+   <item>
+    <widget class="QPushButton" name="plotstatsButton">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    border-radius: 18px;
+    background: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:1,
+        stop:0 #6a0dad,
+        stop:1 #ec407a
+    );
+    color: white;
+    border: none;
+    box-shadow: 0px 4px 20px rgba(106, 13, 173, 0.35);
+}</string>
+     </property>
+     <property name="text">
+      <string>PLOTS AND STATS</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
