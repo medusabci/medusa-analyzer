@@ -1,7 +1,7 @@
 from PySide6 import QtGui, QtCore, QtWidgets
 import os
-from plots.plot_stats_init.controller import PlotStatsInitController
-
+from plots_and_stats.view import MainModuleWindow
+from plots_and_stats.controller import MainModuleWindowController
 
 class ExperimentsController:
     def __init__(self, ui):
@@ -41,14 +41,21 @@ class ExperimentsController:
         label.setFixedSize(100, 100)
 
     def on_plotstats_button_click(self):
-        self.plot_stats_controller = PlotStatsInitController()
+        """
+        Open main window of 'Plot & Stats' module.
+        """
+
+        self.plot_stats_window = MainModuleWindow()
+        self.plot_stats_controller = MainModuleWindowController(self.plot_stats_window)
 
         dialog = QtWidgets.QDialog(self.view.window())
-        dialog.setModal(True)  # block main window until the dialog is closed
+        dialog.setModal(True)
         dialog.setWindowTitle("Plot & Stats - Experiment Setup")
+        dialog.setMinimumWidth(1200)
+        dialog.setMinimumHeight(800)
 
         layout = QtWidgets.QVBoxLayout(dialog)
-        layout.addWidget(self.plot_stats_controller.view)
+        layout.addWidget(self.plot_stats_window)
         dialog.exec()
 
 
