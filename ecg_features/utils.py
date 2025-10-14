@@ -295,7 +295,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
     # Obtener info del sujeto y sesión desde el nombre del archivo base
     subj_match = re.search(r"(sub-\d+)", base_name)
     ses_match = re.search(r"(ses-\d+)", base_name)
-    subj_id = subj_match.group(1) if subj_match else "sub-unknown"
+    subj_id = subj_match.group(1) if subj_match else "sub-" + base_name.split('.')[0]
     ses_id = ses_match.group(1) if ses_match else None
     base_stem = Path(base_name).stem
     # --- Saving preprocessed signals (.rec.bson) ---

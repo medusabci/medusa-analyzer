@@ -1,0 +1,118 @@
+{
+    "files": {
+        "selected_files": [
+            "D:/Proyectos/medusa-analyzer/Signals/R3.rec.bson"
+        ],
+        "selected_biosignal": "eeg",
+        "selected_class": "EEG"
+    },
+    "preprocessing": {
+        "fs": 250.0,
+        "band_segmentation": true,
+        "broadband_min": 0.5,
+        "broadband_max": 50.0,
+        "selected_bands": [
+            {
+                "name": "broadband",
+                "min": 0.5,
+                "max": 50.0
+            },
+            {
+                "name": "broadband",
+                "min": 0.5,
+                "max": 50.0
+            },
+            {
+                "name": "delta",
+                "min": 1.0,
+                "max": 4.0
+            },
+            {
+                "name": "theta",
+                "min": 4.0,
+                "max": 8.0
+            },
+            {
+                "name": "beta",
+                "min": 13.0,
+                "max": 30.0
+            }
+        ],
+        "apply_preprocessing": true,
+        "notch": false,
+        "notch_min": null,
+        "notch_max": null,
+        "notch_order": null,
+        "notch_win": null,
+        "bandpass": true,
+        "bp_min": 1.0,
+        "bp_max": 50.0,
+        "bp_order": 1020,
+        "bp_win": "boxcar",
+        "car": true
+    },
+    "segmentation": {
+        "segmentation_type": "condition",
+        "selected_conditions": [
+            "eyes-open"
+        ],
+        "selected_events": null,
+        "trial_length": 1200,
+        "trial_stride": 10,
+        "window_start": null,
+        "window_end": null,
+        "norm": true,
+        "norm_type": "z",
+        "baseline_start": null,
+        "baseline_end": null,
+        "average": true,
+        "thresholding": true,
+        "thres_k": 2.0,
+        "thres_samples": 3,
+        "thres_channels": 3,
+        "resample": true,
+        "resample_fs": 140
+    },
+    "parameters": {
+        "mean": true,
+        "median": true,
+        "variance": true,
+        "kurtosis": true,
+        "skewness": true,
+        "psd": null,
+        "psd_segment_pct": null,
+        "psd_overlap_pct": null,
+        "psd_window": null,
+        "relative_power": true,
+        "selected_rp_bands": [],
+        "absolute_power": null,
+        "median_frequency": true,
+        "spectral_entropy": null,
+        "ctm": true,
+        "ctm_r": 2.075,
+        "sample_entropy": true,
+        "sample_entropy_r": 1.1,
+        "sample_entropy_m": 1,
+        "multiscale_sample_entropy": true,
+        "multiscale_sample_entropy_r": 1.1,
+        "multiscale_sample_entropy_m": 2,
+        "multiscale_sample_entropy_scale": 6,
+        "lzc": true,
+        "multiscale_lzc": true,
+        "multiscale_lzc_scales": [
+            1,
+            3,
+            5,
+            7,
+            9
+        ],
+        "iac": null,
+        "ort_iac": null,
+        "aec": null,
+        "ort_aec": null,
+        "pli": null,
+        "plv": null,
+        "wpli": null
+    },
+    "experiment_type": "eeg_features"
+}
