@@ -7,8 +7,8 @@
       {
         "step": "Group Definition",
         "path": "plots_and_stats/group_definition",
-        "widget": "GroupDefinitionWidget",
-        "controller": "GroupDefinitionController"
+        "widget": "GroupsWidget",
+        "controller": "GroupsController"
       }
     ]
   },
@@ -21,8 +21,8 @@
       {
         "step": "Group definition",
         "path": "plots_and_stats/group_definition",
-        "widget": "GroupDefinitionWidget",
-        "controller": "GroupDefinitionController"
+        "widget": "GroupsWidget",
+        "controller": "GroupsController"
       }
     ]
   }

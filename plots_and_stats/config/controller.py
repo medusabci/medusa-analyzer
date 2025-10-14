@@ -10,7 +10,7 @@ class ConfigController(QtCore.QObject):
         self.view.controller = self
         self.experiment_path = None
         self.path_correct = False
-        self.main_window_controller = None
+        self.loaded_widgets = False
 
         # Buttons connects
         self.view.browseButton.clicked.connect(self.browse_folder)

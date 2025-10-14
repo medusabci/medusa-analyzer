@@ -11,6 +11,7 @@ class ExperimentsController:
         # Icons
         self._set_icon(self.view.eegIcon, "brain2.png", size=130)
         self._set_icon(self.view.ecgIcon, "heart.png", size=130)
+        self._set_icon(self.view.plotstatsIcon, "plot_stats.png")
 
         # Make all the QFrame clickable, selecting all the QFrame, discarding QFrame subclasses and those without
         # "QFrame" in their objectName
@@ -20,7 +21,8 @@ class ExperimentsController:
         for frame in frames:
             # Assign the click event
             frame.mousePressEvent = lambda event,frame=frame : self._on_frame_click(frame, event)
-        self.view.plotstatsButton.clicked.connect(self.on_plotstats_button_click)
+
+        self.view.plotstatsFrame.mousePressEvent = lambda event: self.on_plotstats_button_click()
 
     def _on_frame_click(self, frame, event):
         # Simulate a click on its child radio button, if it exists
@@ -30,15 +32,29 @@ class ExperimentsController:
         # Accept the event
         event.accept()
 
-    def _set_icon(self, label, filename, size):
+    def _set_icon(self, label, filename, size=None, scale_factor=0.12):
         """
         Helper to introduce icons in a QLabel
         """
         icon_path = os.path.join("media", filename)
         label.setAlignment(QtCore.Qt.AlignCenter)
         pixmap = QtGui.QPixmap(icon_path)
-        label.setPixmap(pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-        label.setFixedSize(100, 100)
+
+        if size is not None:
+            # For the small icons, set a fixed size
+            pixmap = pixmap.scaled(size, size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+            label.setFixedSize(size, size)
+        else:
+            # Set a scale factor for larger images
+            width = int(pixmap.width() * scale_factor)
+            pixmap = pixmap.scaledToWidth(width, QtCore.Qt.SmoothTransformation)
+
+            # Let the label expand to fit the window, maintaining aspect ratio
+            label.setFixedHeight(pixmap.height())
+            label.setPixmap(pixmap)
+            label.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+
+        label.setPixmap(pixmap)
 
     def on_plotstats_button_click(self):
         """

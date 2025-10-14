@@ -1,13 +1,11 @@
+from PySide6 import QtWidgets
 
-from PySide6 import QtWidgets, QtCore, QtGui
+def on_next_click(view):
 
-def validate_and_emit(self):
-    groups = {}
-    for i in range(self.widget.groupstable.rowCount()):
-        name = self.widget.groupstable.item(i, 0).text()
-        color = self.widget.groupstable.item(i, 1).text()
-        groups[name] = color
-    self.groups = groups
-    print("Groups defined:", self.groups)
+    # Check if any group name is empty
+    for group in view.main_module.controller.groups:
+        if not group.strip():
+            QtWidgets.QMessageBox.warning(view, "Warning", "Group names cannot be empty.")
+            return False
 
-# self.widget.next_button.clicked.connect(self.validate_and_emit)
+    return True
