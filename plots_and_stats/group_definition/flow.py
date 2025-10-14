@@ -1,15 +1,13 @@
-# group_definition/flow.py
-from .view import GroupDefinitionWidget
-from .controller import GroupDefinitionController
-from PyQt6 import QtWidgets
 
-class GroupDefinitionFlow:
-    def __init__(self, stack: QtWidgets.QStackedWidget):
-        self.stack = stack
-        self.widget = GroupDefinitionWidget()
-        self.controller = GroupDefinitionController(self.widget)
-        self.stack.addWidget(self.widget)
-        self.stack.setCurrentWidget(self.widget)
+from PySide6 import QtWidgets, QtCore, QtGui
 
-    def get_groups(self):
-        return self.controller.groups
+def validate_and_emit(self):
+    groups = {}
+    for i in range(self.widget.groupstable.rowCount()):
+        name = self.widget.groupstable.item(i, 0).text()
+        color = self.widget.groupstable.item(i, 1).text()
+        groups[name] = color
+    self.groups = groups
+    print("Groups defined:", self.groups)
+
+# self.widget.next_button.clicked.connect(self.validate_and_emit)

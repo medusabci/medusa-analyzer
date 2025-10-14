@@ -1,31 +1,32 @@
 # group_definition/view.py
-from PyQt6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtUiTools import loadUiType
 
-class GroupDefinitionWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setup_ui()
+# ui_plots_groups = loadUiType('plots_and_stats/group_definition/view.ui')[0]
+ui_plots_groups = loadUiType('view.ui')[0]
 
-    def setup_ui(self):
-        layout = QtWidgets.QVBoxLayout(self)
-        # Título y descripción
-        title = QtWidgets.QLabel("Define Experimental Groups")
-        title.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+class GroupsWidget(QtWidgets.QWidget, ui_plots_groups):
+    def __init__(self):
+        super().__init__()
+        self.setupUi(self)
+        # self.main_module = main_module
 
-        self.num_groups_spin = QtWidgets.QSpinBox()
-        self.num_groups_spin.setRange(1, 10)
-        self.generate_btn = QtWidgets.QPushButton("Generate Table")
-        layout.addWidget(self.num_groups_spin)
-        layout.addWidget(self.generate_btn)
+        self.setMinimumSize(0, 0)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
 
-        self.table = QtWidgets.QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Group Name", "Color"])
-        layout.addWidget(self.table)
+        self.groupstable.setRowCount(0)
+        self.groupstable.setColumnCount(2)
+        self.groupstable.setHorizontalHeaderLabels(["Group Name", "Color"])
 
-        self.back_button = QtWidgets.QPushButton("◀ Back")
-        self.next_button = QtWidgets.QPushButton("Next ▶")
-        btn_layout = QtWidgets.QHBoxLayout()
-        btn_layout.addWidget(self.back_button)
-        btn_layout.addWidget(self.next_button)
-        layout.addLayout(btn_layout)
+        self.groupstable.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.Interactive)
+        self.groupstable.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Interactive)
+        self.groupstable.horizontalHeader().setStretchLastSection(False)
+
+        def resizeColumns():
+            total_width = self.groupstable.viewport().width()
+            self.groupstable.setColumnWidth(0, int(total_width * 0.8))
+            self.groupstable.setColumnWidth(1, int(total_width * 0.2))
+
+        self.groupstable.resizeEvent = lambda event: (
+        resizeColumns(), QtWidgets.QTableWidget.resizeEvent(self.groupstable, event))
+        resizeColumns()
