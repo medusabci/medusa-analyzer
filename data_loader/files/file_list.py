@@ -30,6 +30,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         # Search line
         self.searchEdit.setPlaceholderText("Find recordings...")
         self.searchEdit.textChanged.connect(self.filter_items)
+        self.searchEdit.setClearButtonEnabled(True)
         # Botón de lupa
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
 

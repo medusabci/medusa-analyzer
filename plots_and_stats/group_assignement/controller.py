@@ -8,13 +8,16 @@ class AssignementController(QtCore.QObject):
         self.view.controller = self
 
         # If there are already groups defined in the controller, load them
-        self.view.tableAssignement.setRowCount(len(self.view.main_module.controller.all_files))
-        self.all_items = []
-        for idx_rec, recording in enumerate(self.view.main_module.controller.all_files):
+        if self.view.main_module.controller.config_config['selection']['analysis_mode'] == 'within':
+            self.all_items = self.view.main_module.controller.recordings
+        else:
+            self.all_items = self.view.main_module.controller.subjects
+
+        self.view.tableAssignement.setRowCount(len(self.all_items))
+        for idx_rec, recording in enumerate(self.all_items):
             # Recording name
-            name = Path(recording).stem
-            self.view.tableAssignement.setItem(idx_rec, 0, QtWidgets.QTableWidgetItem(str(name)))
-            self.all_items.append(name)
+            # name = Path(recording).stem
+            self.view.tableAssignement.setItem(idx_rec, 0, QtWidgets.QTableWidgetItem(str(recording)))
 
         # Button connect
         self.view.main_module.nextButton.setEnabled(False)
