@@ -9,6 +9,12 @@
         "path": "plots_and_stats/group_definition",
         "widget": "GroupsWidget",
         "controller": "GroupsController"
+      },
+      {
+        "step": "Group Assignement",
+        "path": "plots_and_stats/group_assignement",
+        "widget": "AssignementWidget",
+        "controller": "AssignementController"
       }
     ]
   },

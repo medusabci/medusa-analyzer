@@ -31,8 +31,6 @@ def on_next_click(view):
         view.main_module.loading.show()
         view.main_module.loading.set_progress(0, view.main_module)
 
-
-
         # Import the next module, based on the configuration
         # Read the JSON fil
         with open("plots_and_stats/plot_stats_config.json", "r", encoding="utf-8") as f:

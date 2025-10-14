@@ -1,6 +1,7 @@
 import os
 import json
 from PySide6 import QtWidgets, QtCore
+from pathlib import Path
 
 
 class ConfigController(QtCore.QObject):
@@ -66,6 +67,11 @@ class ConfigController(QtCore.QObject):
                         "experiment_info": {"experiment_type": exp_type, "signal_type": signal_type}
                     }
                     self.path_correct = True
+
+                    self.view.main_module.controller.all_files = [
+                        str(f) for f in Path(path).rglob('*')
+                            if f.is_file() and (f.suffix == '.mat' or f.name.endswith('.rec.bson'))]
+
                 # Otherwise, show an error message
                 except Exception as e:
                     result = {
