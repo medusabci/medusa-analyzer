@@ -1,0 +1,95 @@
+{
+    "files": {
+        "selected_files": [
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-01.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-02.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-03.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-04.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-05.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-06.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-07.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-16\\ecg\\sub-16_task-videogame_level-08.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-01.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-02.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-03.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-04.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-05.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-06.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-07.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-19\\ecg\\sub-19_task-videogame_level-08.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-01.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-02.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-03.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-04.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-05.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-06.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-07.rec.bson",
+            "C:/Users/beapa/PycharmProjects/medusa-analyzer/Signals/Test BIDS/Videogame BIDS\\sub-29\\ecg\\sub-29_task-videogame_level-08.rec.bson"
+        ],
+        "selected_biosignal": "ecg",
+        "selected_class": "ECG"
+    },
+    "leads": {
+        "selected_leads": {
+            "AUX_1": "II"
+        },
+        "selected_conditions": []
+    },
+    "preprocessing": {
+        "fs": 500.0,
+        "clean": true,
+        "clean_method": "neurokit",
+        "zscore": null,
+        "hrv": true,
+        "processing_method": "neurokit",
+        "correct_artifacts": true,
+        "resample_fs": 4.0
+    },
+    "parameters": {
+        "pulse_rate": true,
+        "average": null,
+        "std_nn": true,
+        "rms_sucessive_diff": null,
+        "std_sucessive_diff": true,
+        "variation_coef": null,
+        "tring_interp": true,
+        "pnn50": true,
+        "pnn20": null,
+        "psd": true,
+        "sympathovagal_balance": null,
+        "selected_bands": [
+            {
+                "name": "Broadband",
+                "min": 0.0,
+                "max": 0.5
+            },
+            {
+                "name": "HF",
+                "min": 0.15,
+                "max": 0.4
+            },
+            {
+                "name": "VHF",
+                "min": 0.4,
+                "max": 0.5
+            }
+        ],
+        "power": true,
+        "kurtosis": true,
+        "skewness": null,
+        "median_frequency": null,
+        "spectral_entropy": null,
+        "ctm": true,
+        "ctm_r": 0.05,
+        "sample_entropy": null,
+        "sample_entropy_r": null,
+        "sample_entropy_m": null,
+        "shannon_entropy": null,
+        "lzc": null,
+        "dfa": null,
+        "dfa_n": null,
+        "dfa_b": null,
+        "poincare": null
+    },
+    "experiment_type": "ecg_features"
+}
