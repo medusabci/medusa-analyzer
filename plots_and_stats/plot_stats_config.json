@@ -1,0 +1,41 @@
+{
+  "eeg_features": {
+    "preprocessed": {
+      "step": "Por ahora nada"
+    },
+    "parameters": [
+      {
+        "step": "Initial configuration",
+        "path": "plots_and_stats/initial_configuration",
+        "widget": "PlotStatsInitView",
+        "controller": "PlotStatsInitController"
+      },
+      {
+        "step": "Group definition",
+        "path": "plots_and_stats/group_definition",
+        "widget": "GroupDefinitionWidget",
+        "controller": "GroupDefinitionController"
+      }
+    ]
+  },
+
+  "ecg_features": {
+    "preprocessed": {
+      "step": "Por ahora nada"
+    },
+    "parameters": [
+      {
+        "step": "Initial configuration",
+        "path": "plots_and_stats/initial_configuration",
+        "widget": "PlotStatsInitView",
+        "controller": "PlotStatsInitController"
+      },
+      {
+        "step": "Group definition",
+        "path": "plots_and_stats/group_definition",
+        "widget": "GroupDefinitionWidget",
+        "controller": "GroupDefinitionController"
+      }
+    ]
+  }
+}

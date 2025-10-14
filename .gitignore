@@ -213,3 +213,6 @@ __marimo__/
 /.idea/copilot.data.migration.ask.xml
 /.idea/copilot.data.migration.ask2agent.xml
 /ecg_features/preprocessing/view - Copy.ui
+
+results/
+results_ecg/
