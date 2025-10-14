@@ -4,9 +4,10 @@ from PySide6.QtUiTools import loadUiType
 ui_plots_init = loadUiType('plots_and_stats/initial_configuration/view.ui')[0]
 
 class PlotStatsInitView(QtWidgets.QWidget, ui_plots_init):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, main_module):
+        super().__init__()
         self.setupUi(self)
+        self.main_module = main_module
 
         self.setMinimumSize(0, 0)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
