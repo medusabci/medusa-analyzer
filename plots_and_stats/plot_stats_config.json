@@ -5,13 +5,7 @@
     },
     "parameters": [
       {
-        "step": "Initial configuration",
-        "path": "plots_and_stats/initial_configuration",
-        "widget": "PlotStatsInitView",
-        "controller": "PlotStatsInitController"
-      },
-      {
-        "step": "Group definition",
+        "step": "Group Definition",
         "path": "plots_and_stats/group_definition",
         "widget": "GroupDefinitionWidget",
         "controller": "GroupDefinitionController"
@@ -24,12 +18,6 @@
       "step": "Por ahora nada"
     },
     "parameters": [
-      {
-        "step": "Initial configuration",
-        "path": "plots_and_stats/config",
-        "widget": "ConfigWidget",
-        "controller": "ConfigController"
-      },
       {
         "step": "Group definition",
         "path": "plots_and_stats/group_definition",

@@ -1,11 +1,13 @@
-from PySide6 import QtWidgets, QtGui
+from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from plots_and_stats.config.view import ConfigWidget
 from plots_and_stats.config.controller import ConfigController
 from PySide6.QtGui import QPalette
+from utils import LoadingDialog
 
 # Load UI class
 ui_plots_and_stats_window = loadUiType('plots_and_stats/view.ui')[0]
+
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -44,7 +46,6 @@ class MainModuleWindow(QtWidgets.QWidget, ui_plots_and_stats_window):
 
     def __init__(self):
         super().__init__()
-
         # Setup UI
         self.setupUi(self)
         # Set the icon
@@ -68,7 +69,6 @@ class MainModuleWindow(QtWidgets.QWidget, ui_plots_and_stats_window):
 
 
         ### ELEMENT CONFIGURATION ###
-        # Variables
         self.current_widget = 0
 
         # Navigation Buttons
@@ -77,10 +77,16 @@ class MainModuleWindow(QtWidgets.QWidget, ui_plots_and_stats_window):
 
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
 
-        # Base widget (Init setup)
-        self.init_setup = PlotStatsInitView(self)
-        self.init_controller = PlotStatsInitController(self.init_setup)
-        self.stackedWidget.insertWidget(0, self.init_setup)
+        # Base widget (Initial setup)
+        self.config_widget = ConfigWidget(self)
+        ConfigController(self.config_widget)
+        self.stackedWidget.insertWidget(0, self.config_widget)
         self.stackedWidget.setCurrentIndex(0)
 
+        # Waits until the main window is shown to create the loading dialog, so it can be centered over the main window properly
+        QtCore.QTimer.singleShot(0, self.show_loading)
+
+    def show_loading(self):
+        # Create loading dialog
+        self.loading = LoadingDialog(self)
 

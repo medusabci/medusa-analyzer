@@ -51,20 +51,15 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLineEdit" name="pathEdit">
-       <property name="minimumSize">
-        <size>
-         <width>400</width>
-         <height>0</height>
-        </size>
-       </property>
+      <widget class="QLabel" name="label">
        <property name="font">
         <font>
-         <pointsize>9</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
         </font>
        </property>
-       <property name="placeholderText">
-        <string>Enter experiment path...</string>
+       <property name="text">
+        <string>Enter experiment path</string>
        </property>
       </widget>
      </item>
@@ -97,6 +92,31 @@ QPushButton:disabled {
         <string>Browse</string>
        </property>
       </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="pathLabel">
+       <property name="font">
+        <font>
+         <italic>true</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>

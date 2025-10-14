@@ -3,42 +3,40 @@ from PySide6 import QtWidgets
 
 def on_next_click(controller):
     """
-    Controla el botón Next/Plot. Llama al flow del widget actual.
+    Controls the Next/Plot button. Calls the flow of the current widget.
     """
+
+    # Index of the current widget
     idx = controller.view.stackedWidget.currentIndex()
+
+    # Call the specific on_next_clicked function of the previous widget
     current_widget = controller.view.stackedWidget.widget(idx)
-    module_name = current_widget.__module__.rsplit('.', 1)[0]  # p.ej. plots_and_stats.config
+    module_name = current_widget.__module__.rsplit('.', 1)[0]  # e.g. plots_and_stats.config
     flow_module_name = f"{module_name}.flow"
+    flow_module = importlib.import_module(flow_module_name)
+    next_validation = flow_module.on_next_click(current_widget)
+    if next_validation is False:
+        return False
 
-    try:
-        flow_module = importlib.import_module(flow_module_name)
-    except ModuleNotFoundError:
-        print(f"[FLOW] No flow module found for {module_name}")
-        return
+    idx += 1 # Now is the index of the next widget
 
-    # Llamamos al validador del widget actual (función definida en su flow.py)
-    if hasattr(flow_module, "on_next_click"):
-        can_continue, next_data = flow_module.on_next_click(current_widget)
-        if not can_continue:
-            return  # No pasar al siguiente paso si no está validado
-    else:
-        next_data = None
-
-    # Avanzamos al siguiente widget
-    idx += 1
+    # Update the buttons, if going to the next widget, set text to "Next"
     if idx < controller.view.stackedWidget.count():
         controller.view.stackedWidget.setCurrentIndex(idx)
         controller.view.backButton.setVisible(True)
         controller.view.nextButton.setText("Next")
+    # If going to the last widget
+    elif idx == controller.view.total_steps:
+        controller.view.nextButton.setText("Finish")
+    # If there are no more widgets, you can either close it or launch the plot.
     else:
-        # Si no hay más widgets, puedes cerrarlo o lanzar el plot
         QtWidgets.QMessageBox.information(controller.view, "End", "All steps completed.")
         controller.view.close()
 
 
 def on_back_click(controller):
     """
-    Controla el botón Back. Simplemente retrocede.
+    Controls the Back button. Simply goes back.
     """
     idx = controller.view.stackedWidget.currentIndex()
     if idx > 0:

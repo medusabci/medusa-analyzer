@@ -1,48 +1,50 @@
 import os
 import json
 from PySide6 import QtWidgets, QtCore
-from . import flow
 
-# plots_and_stats/config/controller.py
+
 class ConfigController(QtCore.QObject):
-
-
-    def __init__(self, view, parent=None):
-        super().__init__(parent)
-        self.view = view
-
-        self.view.browseButton.clicked.connect(self.browse_folder)
-        self.view.pathEdit.textChanged.connect(self.validate_path)
-        self.existingPathCorrect = False
+    def __init__(self, ui):
+        super().__init__()
+        self.view = ui
+        self.view.controller = self
+        self.experiment_path = None
+        self.path_correct = False
         self.main_window_controller = None
 
-        self.view.withinRButton.toggled.connect(lambda: self.trigger_validation())
-        self.view.betweenRButton.toggled.connect(lambda: self.trigger_validation())
-        self.view.preprocessedRButton.toggled.connect(lambda: self.trigger_validation())
-        self.view.parametersRButton.toggled.connect(lambda: self.trigger_validation())
-        self.view.pathEdit.textChanged.connect(lambda: self.trigger_validation())
+        # Buttons connects
+        self.view.browseButton.clicked.connect(self.browse_folder)
+        for element in [self.view.withinRButton, self.view.betweenRButton, self.view.preprocessedRButton,
+                        self.view.parametersRButton]:
+            element.toggled.connect(lambda: self.trigger_validation())
 
     def browse_folder(self):
-        print("browse_folder called")
+        """
+        Select a path for the MEDUSA Analyzer experiment.
+        """
         folder = QtWidgets.QFileDialog.getExistingDirectory(
             None,
             "Select Experiment Folder",
             QtCore.QDir.currentPath()
         )
-        print("Selected folder:", folder)
-        if folder:
-            self.view.pathEdit.setText(folder)
+        if folder and self.validate_path(folder):
+            self.experiment_path = folder
+            self.trigger_validation()
+            self.view.pathLabel.setText('Selected path: ' + folder)
 
-    def validate_path(self):
-        """Valida el directorio del experimento y actualiza la vista con los resultados."""
-        path = self.view.pathEdit.text().strip()
+    def validate_path(self, path):
+        """
+        Validate the experiment directory and update the view with the results.
+        """
 
+        # If path does not exist
         if not os.path.exists(path):
             result = {
                 "message": "⚠️ Path does not exist.",
                 "expinfo": "",
                 "experiment_info": None
             }
+        # if there is no settings.json file in the path
         else:
             settings_file = os.path.join(path, "settings.json")
             if not os.path.isfile(settings_file):
@@ -52,6 +54,7 @@ class ConfigController(QtCore.QObject):
                     "experiment_info": None
                 }
             else:
+                # Try to read the settings.json file, and extract experiment_type and selected_biosignal
                 try:
                     with open(settings_file, "r") as f:
                         data = json.load(f)
@@ -62,7 +65,8 @@ class ConfigController(QtCore.QObject):
                         "expinfo": f"✅ Detected Experiment: {exp_type} ({signal_type})",
                         "experiment_info": {"experiment_type": exp_type, "signal_type": signal_type}
                     }
-                    self.existingPathCorrect = True
+                    self.path_correct = True
+                # Otherwise, show an error message
                 except Exception as e:
                     result = {
                         "message": f"⚠️ Error reading settings.json: {e}",
@@ -70,11 +74,32 @@ class ConfigController(QtCore.QObject):
                         "experiment_info": None
                     }
 
-        # Actualiza la vista y guarda la información del experimento
+        # Update the view and save the experiment information.
         self.view.messageLabel.setText(result["message"])
         self.view.expinfoLabel.setText(result["expinfo"])
         self.experiment_info = result["experiment_info"]
+        return self.path_correct
 
     def trigger_validation(self):
-        if self.main_window_controller is not None:
-            flow.validate_initial_configuration(self, self.main_window_controller)
+        """
+        Enables or disables the 'Next' button depending on the current state of the controller.
+        """
+
+        # The path must be correct
+        path_ok = self.path_correct
+
+        # Any of the subject modes must be selected
+        within_or_between = (
+                self.view.betweenRButton.isChecked() or
+                self.view.withinRButton.isChecked()
+        )
+
+        # Any of the data types must be selected
+        preprocessed_or_params = (
+                self.view.preprocessedRButton.isChecked() or
+                self.view.parametersRButton.isChecked()
+        )
+
+        # If all conditions are met, enable the 'Next' button
+        enable_next = path_ok and within_or_between and preprocessed_or_params
+        self.view.main_module.nextButton.setEnabled(enable_next)

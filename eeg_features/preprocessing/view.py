@@ -60,9 +60,6 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_preprocessing):
 
         ### ELEMENT CONFIGURATION ###
 
-        # Define variables
-        self.main_window = main_window
-
         # Filter plots setup
         self.notchCanvas = MplCanvas(self.notchPlotWidget)
         notchLayout = QtWidgets.QVBoxLayout(self.notchPlotWidget)
