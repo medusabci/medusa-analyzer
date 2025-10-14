@@ -307,9 +307,9 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         preproc_dir.mkdir(parents=True, exist_ok=True)
 
         if lead is not None:
-            output_path = preproc_dir / f"{base_stem}_lead-{lead}_cond-{cond}.rec.bson"
+            output_path = preproc_dir / f"{base_stem}_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.rec.bson"
         else:
-            output_path = preproc_dir / f"{base_stem}_cond-{cond}.rec.bson"
+            output_path = preproc_dir / f"{base_stem}_cond-{cond.replace("-", "")}.rec.bson"
         if hasattr(data, "save"):
             data.save(str(output_path))
         elif hasattr(data, "save_to_bson"):
@@ -331,7 +331,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         param_dir.mkdir(parents=True, exist_ok=True)
 
         if not isinstance(data, dict):
-            outname = f"{subj_id}_param-unknown_lead-{lead}_cond-{cond}.mat"
+            outname = f"{subj_id}_param-unknown_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
             controller._log_message(f"⚠️ Parameters: saved fallback file {outpath}")
@@ -344,17 +344,17 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         for k in list(params_dict.keys()):
             if k.startswith('psd_'):
                 psd_bands.add(k[4:])
-            if k.startswith('psd_freqs_'):
+            if k.startswith('psdfreqs_'):
                 psd_bands.add(k[10:])
 
         for b in psd_bands:
-            psd_key = f'psd_{b}'
-            freqs_key = f'psd_freqs_{b}'
+            psd_key = f'psd{b}'
+            freqs_key = f'psdfreqs{b}'
             psd_val = params_dict.pop(psd_key, None)
             freqs_val = params_dict.pop(freqs_key, None)
 
-            metric_label = (f"psd-{b}")
-            outname = f"{base_stem}_param-{metric_label}_lead-{lead}_cond-{cond}.mat"
+            metric_label = (f"psd{b}")
+            outname = f"{base_stem}_param-{metric_label.replace("-", "")}_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
 
             save_struct = {}
@@ -370,7 +370,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         for k, v in list(params_dict.items()):
             metric_label = k.replace('_', '-')
 
-            outname = f"{base_stem}_param-{metric_label}_lead-{lead}_cond-{cond}.mat"
+            outname = f"{base_stem}_param-{metric_label.replace("-", "")}_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
 
             if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict) and 'band' in v[0]:

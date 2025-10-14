@@ -3,8 +3,8 @@ import json
 from PySide6 import QtWidgets, QtCore
 from . import flow
 
-# plots_and_stats/initial_configuration/controller.py
-class PlotStatsInitController(QtCore.QObject):
+# plots_and_stats/config/controller.py
+class ConfigController(QtCore.QObject):
 
 
     def __init__(self, view, parent=None):

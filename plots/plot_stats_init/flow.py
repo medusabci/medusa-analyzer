@@ -1,4 +1,4 @@
-# plots/initial_configuration/flow.py
+# plots/config/flow.py
 import os
 import json
 

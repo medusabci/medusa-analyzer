@@ -1,9 +1,9 @@
 from PySide6 import QtWidgets, QtCore
 from PySide6.QtUiTools import loadUiType
 
-ui_plots_init = loadUiType('plots_and_stats/initial_configuration/view.ui')[0]
+ui_plots_init = loadUiType('plots_and_stats/config/view.ui')[0]
 
-class PlotStatsInitView(QtWidgets.QWidget, ui_plots_init):
+class ConfigWidget(QtWidgets.QWidget, ui_plots_init):
     def __init__(self, main_module):
         super().__init__()
         self.setupUi(self)

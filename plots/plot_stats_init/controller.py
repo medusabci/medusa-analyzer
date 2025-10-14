@@ -1,4 +1,4 @@
-# plots/initial_configuration/controller.py
+# plots/config/controller.py
 import os
 import json
 from PySide6 import QtWidgets, QtCore

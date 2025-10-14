@@ -7,7 +7,7 @@ def on_next_click(controller):
     """
     idx = controller.view.stackedWidget.currentIndex()
     current_widget = controller.view.stackedWidget.widget(idx)
-    module_name = current_widget.__module__.rsplit('.', 1)[0]  # p.ej. plots_and_stats.initial_configuration
+    module_name = current_widget.__module__.rsplit('.', 1)[0]  # p.ej. plots_and_stats.config
     flow_module_name = f"{module_name}.flow"
 
     try:

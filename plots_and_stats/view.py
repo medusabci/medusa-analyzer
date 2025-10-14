@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtGui
 from PySide6.QtUiTools import loadUiType
-from plots_and_stats.initial_configuration.view import PlotStatsInitView
-from plots_and_stats.initial_configuration.controller import PlotStatsInitController
+from plots_and_stats.config.view import ConfigWidget
+from plots_and_stats.config.controller import ConfigController
 from PySide6.QtGui import QPalette
 
 # Load UI class

@@ -616,7 +616,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
             preproc_dir = derivatives_path / "preprocessed" / subj_id / "eeg"
         preproc_dir.mkdir(parents=True, exist_ok=True)
 
-        output_path = preproc_dir / f"{base_stem}_band-{band_name}.rec.bson"
+        output_path = preproc_dir / f"{base_stem}_band-{band_name.replace("-", "")}.rec.bson"
         if hasattr(data, "save"):
             data.save(str(output_path))
         elif hasattr(data, "save_to_bson"):
@@ -635,9 +635,9 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         seg_dir.mkdir(parents=True, exist_ok=True)
 
         if event is not None:
-            output_name = f"{base_stem}_band-{band_name}_cond-{cond}_event-{event}.mat"
+            output_name = f"{base_stem}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}_event-{event.replace("-", "")}.mat"
         else:
-            output_name = f"{base_stem}_band-{band_name}_cond-{cond}.mat"
+            output_name = f"{base_stem}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
         output_path = seg_dir / output_name
 
         savemat(output_path, {'epochs': data})
@@ -653,9 +653,9 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
 
         if not isinstance(data, dict):
             if event is not None:
-                outname = f"{subj_id}_param-unknown_band-{band_name}_cond-{cond}_event-{event}.mat"
+                outname = f"{subj_id}_param-unknown_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}_event-{event.replace("-", "")}.mat"
             else:
-                outname = f"{subj_id}_param-unknown_band-{band_name}_cond-{cond}.mat"
+                outname = f"{subj_id}_param-unknown_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
             controller._log_message(f"⚠️ Parameters: saved fallback file {outpath}")
@@ -668,20 +668,20 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         for k in list(params_dict.keys()):
             if k.startswith('psd_'):
                 psd_bands.add(k[4:])
-            if k.startswith('psd_freqs_'):
+            if k.startswith('psdfreqs_'):
                 psd_bands.add(k[10:])
 
         for b in psd_bands:
-            psd_key = f'psd_{b}'
-            freqs_key = f'psd_freqs_{b}'
+            psd_key = f'psd{b}'
+            freqs_key = f'psdfreqs{b}'
             psd_val = params_dict.pop(psd_key, None)
             freqs_val = params_dict.pop(freqs_key, None)
 
-            metric_label = (f"psd-{b}")
+            metric_label = (f"psd{b}")
             if event is not None:
-                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}_event-{event}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}_event-{event.replace("-", "")}.mat"
             else:
-                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
 
             save_struct = {}
@@ -698,9 +698,9 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
             metric_label = k.replace('_', '-')
 
             if event is not None:
-                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}_event-{event}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name}_cond-{cond}_event-{event.replace("-", "")}.mat"
             else:
-                outname = f"{base_stem}_param-{metric_label}_band-{band_name}_cond-{cond}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
 
             if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict) and 'band' in v[0]:

@@ -1,4 +1,4 @@
-# plots_and_stats/initial_configuration/flow.py
+# plots_and_stats/config/flow.py
 def validate_initial_configuration(controller, main_window):
     """
     Habilita o deshabilita el botón 'Next' según el estado actual del controller.

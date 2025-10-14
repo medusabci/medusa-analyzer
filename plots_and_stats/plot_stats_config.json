@@ -26,9 +26,9 @@
     "parameters": [
       {
         "step": "Initial configuration",
-        "path": "plots_and_stats/initial_configuration",
-        "widget": "PlotStatsInitView",
-        "controller": "PlotStatsInitController"
+        "path": "plots_and_stats/config",
+        "widget": "ConfigWidget",
+        "controller": "ConfigController"
       },
       {
         "step": "Group definition",
