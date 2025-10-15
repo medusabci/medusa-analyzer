@@ -56,7 +56,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.button_group.addButton(self.featureseegRButton)
         self.button_group.addButton(self.featuresecgRButton)
         self.button_group.setExclusive(True)
-        self.featureseegRButton.setChecked(True)
+        # self.featureseegRButton.setChecked(True)
 
         # Experiment and plot button configuration
         self.featureseegRButton.setProperty("experiment_id", "eeg_features")

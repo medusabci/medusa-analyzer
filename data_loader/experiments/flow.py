@@ -1,4 +1,5 @@
 import json, importlib
+from main_window import flow as main_flow
 from PySide6.QtCore import QRunnable, Slot, QThreadPool, QObject, Signal
 import time
 
@@ -7,6 +8,15 @@ def on_next_click(view):
     """
     Handles the event when the "Next" button is clicked. It loads the selected experiment configuration
     """
+    print("→ on_next_click triggered")
+
+    checked_button = view.button_group.checkedButton()
+    print("Checked button:", checked_button)
+    if checked_button:
+        print("Experiment ID:", checked_button.property("experiment_id"))
+    else:
+        print("❌ No checked button found")
+        return
     # Loading screen
     view.main_window.loading.show()
     view.main_window.loading.set_progress(0, view.main_window)
@@ -25,6 +35,7 @@ def on_next_click(view):
     # Load the widgets, instantiate their controllers and add them to the stackedWidget
     for idx, widget_info in enumerate(view.controller.experiment['pipeline']):
         # Take the path
+        print(f"→ Loading widget {idx}: {widget_info}")
         widget_path = widget_info['path'].replace('/', '.')  # use dots instead of slashes
 
         # Import the view
@@ -55,6 +66,8 @@ def on_next_click(view):
     # Update total steps and progress bar in the main window
     view.main_window.nextButton.setDisabled(True)
     # Deactivate Next button
+    view.main_window.nextButton.setDisabled(False)
     view.main_window.controller.set_progressbar()
+    # main_flow.on_next_click(view.main_window.controller) # simulate a click
 
     return True
