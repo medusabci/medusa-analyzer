@@ -11,10 +11,10 @@
         "controller": "GroupsController"
       },
       {
-        "step": "Group Assignement",
-        "path": "plots_and_stats/group_assignement",
-        "widget": "AssignementWidget",
-        "controller": "AssignementController"
+        "step": "Group Assignment",
+        "path": "plots_and_stats/group_assignment",
+        "widget": "AssignmentWidget",
+        "controller": "AssignmentController"
       }
     ]
   },

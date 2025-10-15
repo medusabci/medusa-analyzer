@@ -41,7 +41,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableAssignement"/>
+    <widget class="QTableWidget" name="tableAssignment"/>
    </item>
    <item>
     <widget class="QLabel" name="label">
