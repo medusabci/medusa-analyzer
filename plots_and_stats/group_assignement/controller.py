@@ -6,6 +6,7 @@ class AssignementController(QtCore.QObject):
         super().__init__()
         self.view = ui
         self.view.controller = self
+        self.first_show = False
 
         # If there are already groups defined in the controller, load them
         if self.view.main_module.controller.config_config['selection']['analysis_mode'] == 'within':
@@ -27,32 +28,11 @@ class AssignementController(QtCore.QObject):
         # Right-click event calls the show_context_menu method
         self.view.tableAssignement.customContextMenuRequested.connect(self.show_context_menu)
 
+        # First usage
+        self.view.shown.connect(self.on_show_event)
 
-    def generate_table(self):
-        """
-        Generate the groups table based on the number of groups specified.
-        """
-        # Number of groups
-        n = self.view.numgroupBox.value()
-        self.view.groupstable.setRowCount(n) # A row per group
-        colors = self.generate_distinct_colors(n) # Generate distinct colors, one per group
-
-        # To avoid calling on_cell_changed multiple times, disconnect the signal temporarily
-        self.view.groupstable.cellChanged.disconnect(self.on_cell_changed)
-
-        # For each group, create a row with a name and a color button
-        for i in range(n):
-            # Group name
-            self.view.groupstable.setItem(i, 0, QtWidgets.QTableWidgetItem(f"Group {i+1}"))
-            # Color button
-            btn = QtWidgets.QPushButton()
-            btn.setStyleSheet(f"background-color: {colors[i]}")
-            btn.clicked.connect(lambda _, row=i: self.open_color_dialog(row))
-            self.view.groupstable.setCellWidget(i, 1, btn)
-            self.view.groupstable.setItem(i, 1, QtWidgets.QTableWidgetItem(colors[i]))
-
-        self.view.groupstable.cellChanged.connect(self.on_cell_changed)
-        self.on_cell_changed()
+        # # Connect
+        # self.view.tableAssignement.cellChanged.connect(self.on_cell_changed)
 
 
     def show_context_menu(self, pos):
@@ -73,8 +53,66 @@ class AssignementController(QtCore.QObject):
         """
         Assign the selected group to all selected rows in the table.
         """
+
         # Get the selected rows
         selected_rows = set(idx.row() for idx in self.view.tableAssignement.selectionModel().selectedIndexes())
         # Assign the group to each selected row
         for row in selected_rows:
             self.view.tableAssignement.setItem(row, 1, QtWidgets.QTableWidgetItem(group_str))
+
+            # Change the background color of the row to the group's color
+            color = self.view.main_module.controller.groups[group_str]
+            for col in range(self.view.tableAssignement.columnCount()):
+                item = self.view.tableAssignement.item(row, col)
+                qt_color = QtGui.QColor(color)
+                qt_color.setAlpha(100) # Set transparency
+                item.setBackground(qt_color)
+
+        self.on_cell_changed()
+
+
+    def on_show_event(self):
+        if not self.first_show:
+            # Add the group summary text
+
+            # Start with a horizontal line
+            line = QtWidgets.QFrame()
+            line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+            line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+            # AAdd the horizontal line to the layout
+            self.view.groupLayout.addWidget(line)
+
+            for name in self.view.main_module.controller.groups:
+                # Create the label
+                label = QtWidgets.QLabel(name + ": 0 subjects")
+                label.setStyleSheet("font-weight: bold;")
+                label.setObjectName(name.replace(' ', ''))
+                # Add the label to the layout
+                self.view.groupLayout.addWidget(label)
+
+            # Finish with a horizontal line
+            line = QtWidgets.QFrame()
+            line.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+            line.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+            # AAdd the horizontal line to the layout
+            self.view.groupLayout.addWidget(line)
+
+            self.first_show = False
+
+    def on_cell_changed(self):
+        # Create an empty count dictionary
+        group_counts = {k: 0 for k in self.view.main_module.controller.groups}
+
+        # Groups are in column 1
+        for r in range(self.view.tableAssignement.rowCount()):
+            item = self.view.tableAssignement.item(r, 1)
+            if item:
+                group = item.text()
+                if group:
+                    group_counts[group] = group_counts.get(group, 0) + 1
+
+        # Update the labels
+        for group in group_counts:
+            label = self.view.findChild(QtWidgets.QLabel, group.replace(' ', ''))
+            if label:
+                label.setText(f"{group}: {group_counts[group]} subject(s)")

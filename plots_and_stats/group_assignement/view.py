@@ -4,6 +4,7 @@ from PySide6.QtUiTools import loadUiType
 ui_plots_groups = loadUiType('plots_and_stats/group_assignement/view.ui')[0]
 
 class AssignementWidget(QtWidgets.QWidget, ui_plots_groups):
+    shown = QtCore.Signal()
     def __init__(self, main_module):
         super().__init__()
         self.setupUi(self)
@@ -29,6 +30,8 @@ class AssignementWidget(QtWidgets.QWidget, ui_plots_groups):
         self.tableAssignement.setSelectionMode(QtWidgets.QTableWidget.SelectionMode.ExtendedSelection)
         # Overwrite mouse press event to clean the previous selection if Ctrl or Shift are not pressed
         self.tableAssignement.mousePressEvent = self.table_mouse_press
+        # Do not allow editing the table cells
+        self.tableAssignement.setEditTriggers(QtWidgets.QTableWidget.EditTrigger.NoEditTriggers)
 
         # Search line
         self.searchEdit.setPlaceholderText("Find recordings...")
@@ -36,6 +39,10 @@ class AssignementWidget(QtWidgets.QWidget, ui_plots_groups):
         self.searchEdit.setClearButtonEnabled(True)
         # Botón de lupa
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.shown.emit()
 
 
     def table_mouse_press(self, event):

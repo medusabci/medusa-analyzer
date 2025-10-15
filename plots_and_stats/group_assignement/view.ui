@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>531</width>
-    <height>527</height>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -42,6 +42,21 @@
    </item>
    <item>
     <widget class="QTableWidget" name="tableAssignement"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="font">
+      <font>
+       <italic>true</italic>
+      </font>
+     </property>
+     <property name="text">
+      <string>Select one or more files, then right-click to assign them to a group</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="groupLayout"/>
    </item>
   </layout>
  </widget>
