@@ -100,7 +100,7 @@ def get_recordings_from_list(recordings):
     """
     Extracts subject identifiers from a list of recording filenames.
     """
-    keys_to_remove = ["sub", "ses", "param"]
+    keys_to_remove = ["sub", "ses", "param","band"]
 
     clean_recordings = []
     for f in recordings:
