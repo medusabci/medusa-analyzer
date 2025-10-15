@@ -89,7 +89,7 @@ def get_subjects_from_list(recordings):
     """
     Extracts subject identifiers from a list of recording filenames.
     """
-    sub_ids = [p for p in (Path(p).parts for p in recordings) for p in p if p.startswith("sub-")]
+    sub_ids = [p for p in (Path(p).parts for p in recordings) for p in p if p.startswith("sub-") and not p.endswith(".mat")]
 
     sub_ids = list(set(sub_ids))
     sub_ids.sort()
