@@ -15,9 +15,8 @@ class ConfigController(QtCore.QObject):
 
         # Buttons connects
         self.view.browseButton.clicked.connect(self.browse_folder)
-        for element in [self.view.withinRButton, self.view.betweenRButton, self.view.preprocessedRButton,
-                        self.view.parametersRButton]:
-            element.toggled.connect(lambda: self.trigger_validation())
+        self.view.withinRButton.clicked.connect(self.trigger_validation)
+        self.view.betweenRButton.clicked.connect(self.trigger_validation)
 
     def browse_folder(self):
         """
@@ -68,9 +67,8 @@ class ConfigController(QtCore.QObject):
                     }
                     self.path_correct = True
 
-                    self.view.main_module.controller.all_files = [
-                        str(f) for f in Path(path).rglob('*')
-                            if f.is_file() and (f.suffix == '.mat' or f.name.endswith('.rec.bson'))]
+                    self.view.main_module.controller.all_files = [str(f) for f in Path(path).rglob('*')
+                        if f.is_file() and f.suffix == '.mat']
 
                 # Otherwise, show an error message
                 except Exception as e:
@@ -100,12 +98,6 @@ class ConfigController(QtCore.QObject):
                 self.view.withinRButton.isChecked()
         )
 
-        # Any of the data types must be selected
-        preprocessed_or_params = (
-                self.view.preprocessedRButton.isChecked() or
-                self.view.parametersRButton.isChecked()
-        )
-
         # If all conditions are met, enable the 'Next' button
-        enable_next = path_ok and within_or_between and preprocessed_or_params
+        enable_next = path_ok and within_or_between
         self.view.main_module.nextButton.setEnabled(enable_next)

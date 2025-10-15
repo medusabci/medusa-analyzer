@@ -8,10 +8,7 @@ def get_config_config(controller):
     # Configuration dict
     config = {
         "experiment_info": controller.experiment_info,
-        "selection": {
-            "analysis_mode": "within" if controller.view.withinRButton.isChecked() else "between",
-            "data_type": "preprocessed" if controller.view.preprocessedRButton.isChecked() else "parameters"
-        }
+        "analysis_mode": "within" if controller.view.withinRButton.isChecked() else "between"
     }
     return config
 
@@ -20,9 +17,6 @@ def on_next_click(view):
     """
     Handles the event when the "Next" button is clicked
     """
-
-    # return True  # For testing purposes, skip the rest of the function
-
     # Store the config
     view.main_module.controller.config_config = get_config_config(view.controller)
 
@@ -32,25 +26,17 @@ def on_next_click(view):
         view.main_module.loading.show()
         view.main_module.loading.set_progress(0, view.main_module)
 
-        if view.main_module.controller.config_config['selection']['data_type'] == 'parameters':
-            view.main_module.controller.all_files = get_recordings_with_extension(view.main_module.controller.all_files,
-                                                                                  '.mat')
-        else:
-            view.main_module.controller.all_files = get_recordings_with_extension(view.main_module.controller.all_files,
-                                                                                  '.rec.bson')
-
         # Filter the recordings based on the selected criteria (e.g., within or between subjects)
         view.main_module.controller.subjects = get_subjects_from_list(view.main_module.controller.all_files)
         view.main_module.controller.recordings = get_recordings_from_list(view.main_module.controller.all_files)
 
         # Import the next module, based on the configuration
-        # Read the JSON fil
+        # Read the JSON file
         with open("plots_and_stats/plot_stats_config.json", "r", encoding="utf-8") as f:
             modules_config = json.load(f)
 
         experiment = view.main_module.controller.config_config['experiment_info']['experiment_type']
-        analysis = view.main_module.controller.config_config['selection']['data_type']
-        widgets = modules_config[experiment][analysis]
+        widgets = modules_config[experiment]
 
 
         # Load the widgets, instantiate their controllers and add them to the stackedWidget
@@ -116,13 +102,4 @@ def get_recordings_from_list(recordings):
     clean_recordings.sort()
 
     return clean_recordings
-
-
-def get_recordings_with_extension(recordings, extension):
-    """
-    Given a list of recording names without extensions, find the corresponding files with extensions.
-    """
-    filtered_recordings = [p for p in recordings if p.endswith(extension)]
-
-    return filtered_recordings
 

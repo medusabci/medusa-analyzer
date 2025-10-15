@@ -1,35 +1,24 @@
 {
-  "eeg_features": {
-    "preprocessed": {
-      "step": "Por ahora nada"
+  "eeg_features": [
+    {
+      "step": "Group Definition",
+      "path": "plots_and_stats/group_definition",
+      "widget": "GroupsWidget",
+      "controller": "GroupsController"
     },
-    "parameters": [
-      {
-        "step": "Group Definition",
-        "path": "plots_and_stats/group_definition",
-        "widget": "GroupsWidget",
-        "controller": "GroupsController"
-      },
-      {
-        "step": "Group Assignment",
-        "path": "plots_and_stats/group_assignment",
-        "widget": "AssignmentWidget",
-        "controller": "AssignmentController"
-      }
-    ]
-  },
-
-  "ecg_features": {
-    "preprocessed": {
-      "step": "Por ahora nada"
-    },
-    "parameters": [
-      {
-        "step": "Group definition",
-        "path": "plots_and_stats/group_definition",
-        "widget": "GroupsWidget",
-        "controller": "GroupsController"
-      }
-    ]
-  }
+    {
+      "step": "Group Assignment",
+      "path": "plots_and_stats/group_assignment",
+      "widget": "AssignmentWidget",
+      "controller": "AssignmentController"
+    }
+  ],
+  "ecg_features": [
+    {
+      "step": "Group definition",
+      "path": "plots_and_stats/group_definition",
+      "widget": "GroupsWidget",
+      "controller": "GroupsController"
+    }
+  ]
 }

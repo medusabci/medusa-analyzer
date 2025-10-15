@@ -9,7 +9,7 @@ class AssignmentController(QtCore.QObject):
         self.first_show = False
 
         # If there are already groups defined in the controller, load them
-        if self.view.main_module.controller.config_config['selection']['analysis_mode'] == 'within':
+        if self.view.main_module.controller.config_config['analysis_mode'] == 'within':
             self.all_items = self.view.main_module.controller.recordings
         else:
             self.all_items = self.view.main_module.controller.subjects
