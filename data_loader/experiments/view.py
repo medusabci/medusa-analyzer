@@ -37,7 +37,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
                 </p>
 
                 <p style="font-size: 12pt; font-weight:600; color:#333; margin-top:15px;">
-                    Please select one experiment to begin.
+                    Please select one pipeline to begin.
                 </p>
             </div>
         """)
@@ -58,7 +58,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         self.button_group.setExclusive(True)
         self.featureseegRButton.setChecked(True)
 
-        # Experiment button configuration
+        # Experiment and plot button configuration
         self.featureseegRButton.setProperty("experiment_id", "eeg_features")
         self.featuresecgRButton.setProperty("experiment_id", "ecg_features")
 
