@@ -26,8 +26,8 @@ def on_next_click(controller):
         controller.view.backButton.setVisible(True)
         controller.view.nextButton.setText("Next")
     # If going to the last widget
-    elif idx == controller.view.total_steps:
-        controller.view.nextButton.setText("Finish")
+    elif idx == controller.view.stackedWidget.count():
+        controller.view.nextButton.setText("Close")
     # If there are no more widgets, you can either close it or launch the plot.
     else:
         QtWidgets.QMessageBox.information(controller.view, "End", "All steps completed.")
