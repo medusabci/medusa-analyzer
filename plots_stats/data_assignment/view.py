@@ -1,8 +1,7 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from PySide6.QtCore import Qt
-import os
 
+# Load UI class
 ui_plots_groups = loadUiType('plots_stats/data_assignment/view.ui')[0]
 
 class DataAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
