@@ -62,8 +62,8 @@ class ExperimentsController:
         Open main window of 'Plot & Stats' module depending on 'module_type'.
         """
         # Move inside the loop when preprocessing is done
-        from plots_and_stats.view import MainModuleWindow
-        from plots_and_stats.controller import MainModuleWindowController
+        from plots_and_stats.main_module.view import MainModuleWindow
+        from plots_and_stats.main_module.controller import MainModuleWindowController
 
         if module_type == "params":
             self.plot_stats_window = MainModuleWindow()

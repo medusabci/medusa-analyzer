@@ -1,6 +1,4 @@
-from plots_and_stats.config.controller import ConfigController
-from plots_and_stats.config.view import ConfigWidget
-from plots_and_stats.flow import on_next_click, on_back_click
+from plots_and_stats.main_module.flow import on_next_click, on_back_click
 
 class MainModuleWindowController:
     def __init__(self, ui):
