@@ -31,4 +31,8 @@ class DataAssignmentController(QtCore.QObject):
         self.view.selectedLabel.setText(f"{len(selected_items)} element(s) selected")
         self.view.main_module.nextButton.setEnabled(len(selected_items) > 0)
 
+        # Store the selected items in the main controller
+        self.view.main_module.controller.data_assignment = selected_items
+
+
 
