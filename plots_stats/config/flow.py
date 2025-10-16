@@ -62,6 +62,8 @@ def on_next_click(view):
             widget = widget_class(view.main_module)
             # Instantiate the controller, passing the widget and the main window
             widget_controller_class(widget)
+            controller_instance = widget_controller_class(widget)
+            widget.controller = controller_instance
 
             # Add the widget to a stackedWidget
             view.main_module.stackedWidget.insertWidget(idx + 1, widget)
