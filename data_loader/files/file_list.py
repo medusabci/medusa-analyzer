@@ -31,7 +31,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         self.searchEdit.setPlaceholderText("Find recordings...")
         self.searchEdit.textChanged.connect(self.filter_items)
         self.searchEdit.setClearButtonEnabled(True)
-        # Botón de lupa
+        # Lens icon
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
 
         self.all_items = files
