@@ -27,6 +27,12 @@
         "path": "plots_stats/param_selection",
         "widget": "ParamSelectionWidget",
         "controller": "ParamSelectionController"
+      },
+      {
+        "step": "Plot panel",
+        "path": "plots_stats/plot_panel",
+        "widget": "TabbedPlotWidget",
+        "controller": "TabbedPlotWidgetController"
       }
     ],
     "ecg_features": [

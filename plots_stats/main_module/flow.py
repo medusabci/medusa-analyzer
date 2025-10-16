@@ -5,12 +5,12 @@ def on_next_click(controller):
     """
     Controls the Next/Plot button. Calls the flow of the current widget.
     """
-
     # Index of the current widget
     idx = controller.view.stackedWidget.currentIndex()
 
     # Call the specific on_next_clicked function of the previous widget
     current_widget = controller.view.stackedWidget.widget(idx)
+    print("DEBUG Mostrando widget:", id(current_widget))
     module_name = current_widget.__module__.rsplit('.', 1)[0]  # e.g. plots_stats.config
     flow_module_name = f"{module_name}.flow"
     flow_module = importlib.import_module(flow_module_name)
