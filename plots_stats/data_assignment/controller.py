@@ -10,6 +10,9 @@ class DataAssignmentController(QtCore.QObject):
 
         # Connects
         self.view.searchEdit.textChanged.connect(self.filter_items)
+        self.view.deleteButton.clicked.connect(self.delete_selected)
+        self.view.deleteallButton.clicked.connect(self.delete_all)
+
 
 
     def filter_items(self, text):

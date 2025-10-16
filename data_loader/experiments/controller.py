@@ -81,6 +81,10 @@ class ExperimentsController:
         """
         Open main window of 'Plot & Stats' module depending on 'module_type'.
         """
+        # Loading screen
+        self.view.main_window.loading.show()
+        self.view.main_window.loading.set_progress(50, self.view.main_window)
+
         # Move inside the loop when preprocessing is done
         from plots_stats.main_module.view import MainModuleWindow
         from plots_stats.main_module.controller import MainModuleWindowController
@@ -105,8 +109,9 @@ class ExperimentsController:
         dialog.setMinimumWidth(1200)
         dialog.setMinimumHeight(800)
 
+        # Finish loading
+        self.view.main_window.loading.finish()
+
         layout = QtWidgets.QVBoxLayout(dialog)
         layout.addWidget(self.plot_stats_window)
         dialog.exec()
-
-

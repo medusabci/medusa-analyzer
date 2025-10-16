@@ -20,8 +20,6 @@ class DataAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
         # --- ELEMENT SETUP ---
         self.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.filelistWidget.addItems(self.all_items)
-        self.deleteButton.clicked.connect(self.delete_selected)
-        self.deleteallButton.clicked.connect(self.delete_all)
 
         # Search line
         self.searchEdit.setPlaceholderText("Find elements...")
