@@ -6,7 +6,7 @@ class GroupAssignmentController(QtCore.QObject):
         super().__init__()
         self.view = ui
         self.view.controller = self
-        self.first_show = False
+        self.first_show = True
 
         # If there are already groups defined in the controller, load them
         if self.view.main_module.controller.config_config['analysis_mode'] == 'within':
@@ -33,7 +33,7 @@ class GroupAssignmentController(QtCore.QObject):
 
         # Connects
         self.view.searchEdit.textChanged.connect(self.filter_items)
-        
+
         # Override the table's resize event to call resizeColumns whenever the size changes, and call the function once
         # at the start to adjust the widths.
         self.view.tableAssignment.resizeEvent = lambda event: (self.resize_columns(),
@@ -78,7 +78,7 @@ class GroupAssignmentController(QtCore.QObject):
 
 
     def on_show_event(self):
-        if not self.first_show:
+        if self.first_show:
             # Add the group summary text
 
             # Start with a horizontal line
