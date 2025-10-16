@@ -19,8 +19,6 @@ class TabbedPlotWidget(QtWidgets.QWidget, ui_tab_widget):
 
         self.tab_widgets = [] # store references to tab widgets
 
-        print("DEBUG TabbedPlotWidget creado:", id(self))
-
     def add_tab(self, widget, name: str):
         """Add one tab and save in the list."""
         self.tab_widget.addTab(widget, name)
@@ -28,5 +26,4 @@ class TabbedPlotWidget(QtWidgets.QWidget, ui_tab_widget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        print("DEBUG: showEvent ejecutado -> emitiendo señal 'shown'")
         self.shown.emit()

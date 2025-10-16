@@ -10,15 +10,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self.template_ui_path = 'plots_stats/plot_panel/tab_template.ui'
 
         self._tabs_created = False
-
-        print("DEBUG Controller creado para view:", id(self.view))
         self.view.shown.connect(self.create_tabs)
-        print("DEBUG Conectado signal shown a create_tabs del controller:", id(self))
-        print(f"DEBUG Controller instanciado correctamente, view={id(self.view)} controller={id(self)}")
-    def create_tabs(self):
 
-        if self._tabs_created:
-            print("DEBUG Tabs ya creados, ignorando.")
+    def create_tabs(self):
+        """ Create the tabs """
+        if self._tabs_created: # create tabs only once
             return
 
         selected_parameters = getattr(self.view.main_module.controller, "params", None)
@@ -31,22 +27,21 @@ class TabbedPlotWidgetController(QtCore.QObject):
             param_iter = [str(selected_parameters)]
 
         tab_widget = self.view.tab_widget
-        # Limpiar tabs previos
         while tab_widget.count() > 0:
             tab_widget.removeTab(0)
 
+        # For each selected param, we inset one tab in de TabWidget
         for param in param_iter:
             tab = self.load_ui(self.template_ui_path, parent=tab_widget)
 
-            # Cambiar título
+            # Modify the title with the param name
             title_label = tab.findChild(QtWidgets.QLabel, "titleLabel")
             if title_label:
                 title_label.setText(param)
 
-            # Crear plot
+            # Create de FigureCanvas in the placeholder to inser the plot
             placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
             if placeholder is None:
-                # si no hay placeholder, ignorar la creación del plot
                 layout = None
             else:
                 if placeholder.layout() is None:
@@ -60,25 +55,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 canvas = FigureCanvas(fig)
                 ax = fig.add_subplot(111)
 
-                # Aquí puedes dibujar datos reales más adelante; de momento draw vacío
                 fig.tight_layout()
                 layout.addWidget(canvas)
                 canvas.draw()
 
-            # fig = Figure(figsize=(5, 4))
-            # canvas = FigureCanvas(fig)
-            # ax = fig.add_subplot(111)
-            # layout.addWidget(canvas)
-
-            # Dibujar datos
-            # values = self.param_data[param]
-            # ax.bar(self.channels, values)
-            # ax.set_title(param)
-            # ax.tick_params(axis='x', rotation=90)
-            # fig.tight_layout()
-            # canvas.draw()
-
-            # Conectar botones
+            # Connect buttons
             prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
             next_btn = tab.findChild(QtWidgets.QPushButton, "nextButton")
             export_btn = tab.findChild(QtWidgets.QPushButton, "exportButton")
@@ -90,29 +71,30 @@ class TabbedPlotWidgetController(QtCore.QObject):
             if export_btn:
                 export_btn.clicked.connect(lambda checked, t=tab: self.export_figure(t))
 
-            # Agregar al QTabWidget principal
+            # Add widget to main TabWindget
             self.view.add_tab(tab, str(param))
-
             self._tabs_created = True
 
     def load_ui(self, path, parent=None):
-        """Carga un .ui y devuelve el widget resultante."""
+        """Load the tab_template UI from the given path."""
         form_class, base_class = loadUiType(path)
         widget = base_class(parent) if parent is not None else base_class()
         ui = form_class()
         ui.setupUi(widget)
         return widget
 
-
     def prev_tab(self):
+        """Go back to the previous tab."""
         current = self.view.tab_widget.currentIndex()
         if current > 0:
             self.view.tab_widget.setCurrentIndex(current - 1)
 
     def next_tab(self):
+        """Go forward to the next tab."""
         current = self.view.tab_widget.currentIndex()
         if current < self.view.tab_widget.count() - 1:
             self.view.tab_widget.setCurrentIndex(current + 1)
 
     def export_figure(self, tab):
-        print("Exportar figura del tab:", tab)
+        """Export the figure from the given tab allowing to modify diverse parameters."""
+        print("Export figure:", tab)
