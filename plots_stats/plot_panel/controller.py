@@ -10,22 +10,25 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self.template_ui_path = 'plots_stats/plot_panel/tab_template.ui'
 
         self._tabs_created = False
-        self.view.shown.connect(self.create_tabs)
 
         print("DEBUG Controller creado para view:", id(self.view))
         self.view.shown.connect(self.create_tabs)
         print("DEBUG Conectado signal shown a create_tabs del controller:", id(self))
-
+        print(f"DEBUG Controller instanciado correctamente, view={id(self.view)} controller={id(self)}")
     def create_tabs(self):
 
-        param_selection = getattr(self.view.main_module, "param_selection", None)
-        if param_selection is None:
+        if self._tabs_created:
+            print("DEBUG Tabs ya creados, ignorando.")
+            return
+
+        selected_parameters = getattr(self.view.main_module.controller, "params", None)
+        if selected_parameters is None:
             return
 
         try:
-            param_iter = list(param_selection)
+            param_iter = list(selected_parameters)
         except Exception:
-            param_iter = [str(param_selection)]
+            param_iter = [str(selected_parameters)]
 
         tab_widget = self.view.tab_widget
         # Limpiar tabs previos
