@@ -43,6 +43,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             if title_label:
                 title_label.setText(param)
 
+            self.setup_channel_list(tab, param)
+
             # Create de FigureCanvas in the placeholder to inser the plot
             placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
             if placeholder is None:
@@ -86,6 +88,30 @@ class TabbedPlotWidgetController(QtCore.QObject):
         ui = form_class()
         ui.setupUi(widget)
         return widget
+
+    def setup_channel_list(self, tab, param):
+        """ Config the channel list """
+
+        list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
+        channels = self.view.main_module.controller.config_config.get("channel_names", [])
+
+        if not channels:
+            print('Channels not found')
+            return
+
+        # Add channels to list
+        list_widget.clear()
+        for ch in channels:
+            item = QtWidgets.QListWidgetItem(ch)
+            list_widget.addItem(item)
+
+        # First channel by default
+        if list_widget.count() > 0:
+            list_widget.setCurrentRow(0)
+
+        # Connect --> TO DO (que promedie y luego llame a update_plot)
+        list_widget.currentTextChanged.connect(lambda ch: self.on_channel_selected(param, ch))
+
 
     def prev_tab(self):
         """Go back to the previous tab."""

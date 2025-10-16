@@ -1,6 +1,7 @@
 import json, importlib
 from pathlib import Path
 import re
+import os
 
 
 def get_config_config(controller):
@@ -12,6 +13,14 @@ def get_config_config(controller):
         "experiment_info": controller.experiment_info,
         "analysis_mode": "within" if controller.view.withinRButton.isChecked() else "between"
     }
+    if controller.experiment_path:
+        settings_path = os.path.join(controller.experiment_path, "settings.json")
+        with open(settings_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        config["channel_names"] = data.get("files", {}).get("channel_names", [])
+    else:
+        config["channel_names"] = []
+
     return config
 
 
