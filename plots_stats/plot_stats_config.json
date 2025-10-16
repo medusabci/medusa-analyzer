@@ -21,6 +21,12 @@
         "path": "plots_stats/data_assignment",
         "widget": "DataAssignmentWidget",
         "controller": "DataAssignmentController"
+      },
+      {
+        "step": "Parameter Selection",
+        "path": "plots_stats/param_selection",
+        "widget": "ParamSelectionWidget",
+        "controller": "ParamSelectionController"
       }
     ],
     "ecg_features": [

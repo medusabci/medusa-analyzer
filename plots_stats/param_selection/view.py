@@ -4,7 +4,7 @@ from PySide6.QtUiTools import loadUiType
 # Load UI class
 ui_plots_groups = loadUiType('plots_stats/data_assignment/view.ui')[0]
 
-class DataAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
+class ParamSelectionWidget(QtWidgets.QWidget, ui_plots_groups):
     shown = QtCore.Signal()
     def __init__(self, main_module):
         super().__init__()
