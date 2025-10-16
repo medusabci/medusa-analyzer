@@ -27,3 +27,26 @@ class ConfigWidget(QtWidgets.QWidget, ui_plots_init):
                 </p>
             </div>
         """)
+
+        # Generate the between and within descriptions
+        self.betweenDescription.setText("""
+            <div style="text-align:center; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 8pt; color:#666; margin:0 40px;">
+                    A between-subjects analysis compares different groups of participants to examine the effect of an 
+                    independent variable. Each participant is assigned to only one group, so measurements are 
+                    independent across groups. Differences in outcomes reflect variations between these groups rather 
+                    than within individuals. This design is useful when repeated measurements on the same participant 
+                    are not feasible or may cause carryover effects.
+                </p>
+            </div>
+        """)
+        self.withinDescription.setText("""
+            <div style="text-align:center; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 8pt; color:#666; margin:0 40px;">
+                    A within-subjects analysis compares the same participants under multiple conditions or over time. 
+                    Each participant serves as their own control, reducing variability due to individual differences. 
+                    Differences in outcomes reflect changes within the same individuals across conditions. This design
+                    increases statistical power but may require counterbalancing to avoid order effects.
+                </p>
+            </div>
+        """)
