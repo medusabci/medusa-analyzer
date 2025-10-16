@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtCore
 from PySide6.QtUiTools import loadUiType
 
-ui_plots_groups = loadUiType('plots_and_stats/group_definition/view.ui')[0]
+ui_plots_groups = loadUiType('plots_stats/group_definition/view.ui')[0]
 
 class GroupsWidget(QtWidgets.QWidget, ui_plots_groups):
     def __init__(self, main_module):

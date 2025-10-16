@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtUiTools import loadUiType
 
-ui_plots_groups = loadUiType('plots_and_stats/group_assignment/view.ui')[0]
+ui_plots_groups = loadUiType('plots_stats/group_assignment/view.ui')[0]
 
 class AssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
     shown = QtCore.Signal()

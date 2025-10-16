@@ -32,7 +32,7 @@ def on_next_click(view):
 
         # Import the next module, based on the configuration
         # Read the JSON file
-        with open("plots_and_stats/plot_stats_config.json", "r", encoding="utf-8") as f:
+        with open("plots_stats/plot_stats_config.json", "r", encoding="utf-8") as f:
             modules_config = json.load(f)
 
         experiment = view.main_module.controller.config_config['experiment_info']['experiment_type']

@@ -11,7 +11,7 @@ def on_next_click(controller):
 
     # Call the specific on_next_clicked function of the previous widget
     current_widget = controller.view.stackedWidget.widget(idx)
-    module_name = current_widget.__module__.rsplit('.', 1)[0]  # e.g. plots_and_stats.config
+    module_name = current_widget.__module__.rsplit('.', 1)[0]  # e.g. plots_stats.config
     flow_module_name = f"{module_name}.flow"
     flow_module = importlib.import_module(flow_module_name)
     next_validation = flow_module.on_next_click(current_widget)

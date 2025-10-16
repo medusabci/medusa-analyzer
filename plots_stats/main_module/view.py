@@ -6,7 +6,7 @@ from PySide6.QtGui import QPalette
 from utils import LoadingDialog
 
 # Load UI class
-ui_plots_and_stats_window = loadUiType('plots_and_stats/view.ui')[0]
+ui_plots_and_stats_window = loadUiType('plots_stats/view.ui')[0]
 
 
 class GradientTitleWidget(QtWidgets.QWidget):
