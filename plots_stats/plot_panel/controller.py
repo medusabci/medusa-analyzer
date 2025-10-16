@@ -1,7 +1,11 @@
 from PySide6 import QtWidgets, QtCore
+from PySide6.QtWidgets import (QFileDialog, QDialog)
+
 from PySide6.QtUiTools import loadUiType
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+from plots_stats.plot_panel.export_dialog import ExportDialog
 
 class TabbedPlotWidgetController(QtCore.QObject):
     def __init__(self, view):
@@ -96,5 +100,43 @@ class TabbedPlotWidgetController(QtCore.QObject):
             self.view.tab_widget.setCurrentIndex(current + 1)
 
     def export_figure(self, tab):
-        """Export the figure from the given tab allowing to modify diverse parameters."""
-        print("Export figure:", tab)
+        """Export the figure from the given tab. Open a QFileDialog to choose the path and a dialog
+        with saving options."""
+        dlg = ExportDialog(self.view)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        vals = dlg.get_values()
+        fmt = vals["format"]
+        dpi = vals["dpi"]
+        width_px = vals["width"]
+        height_px = vals["height"]
+        transparent = vals["transparent"]
+        bg_color = vals["bg_color"]
+
+        suggested_name = f"{tab.findChild(QtWidgets.QLabel, 'titleLabel').text()}.{fmt}"
+        fname, _ = QFileDialog.getSaveFileName(self.view, "Save image", suggested_name,
+                                              f"{fmt.upper()} (*.{fmt})")
+        if not fname:
+            return
+
+        # Asjust figure size: matplotlib uses inches so we have to convert px to inches
+        inches_width = width_px / dpi
+        inches_height = height_px / dpi
+
+        fig = getattr(tab, "_figure", None)
+        if fig is None:
+            return
+
+        original_size = fig.get_size_inches()
+        try:
+            fig.set_size_inches(inches_width, inches_height)
+
+            # Si no es transparente, usar el color de fondo elegido
+            facecolor = "none" if transparent else bg_color
+            fig.savefig(fname, dpi=dpi, transparent=transparent,
+                        bbox_inches="tight", facecolor=facecolor)
+        finally:
+            # restore original sizer for avoid afecting the canvas visual representation in the widget
+            fig.set_size_inches(original_size)
+
+        QtWidgets.QMessageBox.information(self.view, "Export", f"Saved to:\n{fname}")

@@ -7,7 +7,8 @@ def get_files_config(controller):
         "selected_biosignal": controller.view.biosignalBox.currentText().split(" ")[
             1] if controller.view.biosignalBox.currentText() else None,
         "selected_class":controller.view.biosignalBox.currentText().split(" ")[
-            -1] if controller.view.biosignalBox.currentText() else None
+            -1] if controller.view.biosignalBox.currentText() else None,
+        "channel_names": controller.channels
     }
     return config
 

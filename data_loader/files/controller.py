@@ -4,7 +4,6 @@ from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
 from data_loader.files.tree_view_list import ExperimentTreeDialog
 from data_loader.files.converter import CONVERTERS
-from plots.filtering.view import FilteringPlotWidget
 import os, json, importlib, time
 
 from PySide6 import QtWidgets, QtCore
@@ -83,6 +82,11 @@ class FilesController:
                 experiment_widget = self.view.main_window.stackedWidget.widget(idx - 1).controller
                 if value['class_name'] not in experiment_widget.experiment['biosignals']:
                     continue
+
+                # Get de channel list
+                channel_set = getattr(recording, key).channel_set
+                self.channels = getattr(channel_set, 'l_cha',
+                                   channel_set.get('l_cha') if isinstance(channel_set, dict) else None)
 
                 # Get the fs (if required)
                 if 'fs' in experiment_widget.experiment['biosignal_information']:
