@@ -19,12 +19,6 @@ class GroupAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
         self.tableAssignment.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Interactive)
         self.tableAssignment.horizontalHeader().setStretchLastSection(False)
 
-        # Override the table's resize event to call resizeColumns whenever the size changes, and call the function once
-        # at the start to adjust the widths.
-        self.tableAssignment.resizeEvent = lambda event: (self.resize_columns(),
-              QtWidgets.QTableWidget.resizeEvent(self.tableAssignment, event))
-        self.resize_columns()
-
         # Allow multiple row selection
         self.tableAssignment.setSelectionBehavior(QtWidgets.QTableWidget.SelectionBehavior.SelectRows)
         self.tableAssignment.setSelectionMode(QtWidgets.QTableWidget.SelectionMode.ExtendedSelection)
@@ -35,7 +29,6 @@ class GroupAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
 
         # Search line
         self.searchEdit.setPlaceholderText("Find recordings...")
-        self.searchEdit.textChanged.connect(self.filter_items)
         self.searchEdit.setClearButtonEnabled(True)
         # Botón de lupa
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
@@ -65,20 +58,6 @@ class GroupAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
             QtWidgets.QTableWidget.mousePressEvent(self.tableAssignment, event)
 
 
-    def resize_columns(self):
-        """
-        Adjust the column widths of the tableAssignment based on the current width of the viewport, the first column
-        takes 80% of the width and the second column takes 20%.
-        """
-        total_width = self.tableAssignment.viewport().width()
-        self.tableAssignment.setColumnWidth(0, int(total_width * 0.8))
-        self.tableAssignment.setColumnWidth(1, int(total_width * 0.2))
 
-    def filter_items(self, text):
-        """Filter the table rows by text in the 'Subject' column."""
-        text = text.lower().strip()
-        for row in range(self.tableAssignment.rowCount()):
-            item = self.tableAssignment.item(row, 0)  # columna 'Subject'
-            if item:
-                # Show or hide the row based on whether the text is found
-                self.tableAssignment.setRowHidden(row, text not in item.text().lower())
+
+

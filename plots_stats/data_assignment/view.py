@@ -3,38 +3,33 @@ from PySide6.QtUiTools import loadUiType
 from PySide6.QtCore import Qt
 import os
 
-# Load UI class
-ui_files_list_dialog = loadUiType("data_loader/files/file_list.ui")[0]
+ui_plots_groups = loadUiType('plots_stats/data_assignment/view.ui')[0]
 
-class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
-    def __init__(self, files, preprocessing_widget):
+class DataAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
+    shown = QtCore.Signal()
+    def __init__(self, main_module):
         super().__init__()
-
-        # Setup UI
         self.setupUi(self)
+        self.main_module = main_module
 
-        # Change the title
-        self.setWindowTitle("List of Files")
-
-        # Store reference to preprocessing widget
-        self.preprocessing_widget = preprocessing_widget
+        # Define the elements based on the configuration
+        if self.main_module.controller.config_config['analysis_mode'] == 'within':
+            self.all_items = self.main_module.controller.subjects
+        else:
+            self.all_items = self.main_module.controller.recordings
 
         # --- ELEMENT SETUP ---
         self.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.filelistWidget.addItems(files)
+        self.filelistWidget.addItems(self.all_items)
         self.deleteButton.clicked.connect(self.delete_selected)
         self.deleteallButton.clicked.connect(self.delete_all)
-        self.acceptButton.clicked.connect(self.accept)
-        self.cancelButton.clicked.connect(self.reject)
 
         # Search line
-        self.searchEdit.setPlaceholderText("Find recordings...")
+        self.searchEdit.setPlaceholderText("Find elements...")
         self.searchEdit.textChanged.connect(self.filter_items)
         self.searchEdit.setClearButtonEnabled(True)
         # Botón de lupa
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
-
-        self.all_items = files
 
 
     def delete_selected(self):

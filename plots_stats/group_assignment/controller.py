@@ -31,8 +31,14 @@ class GroupAssignmentController(QtCore.QObject):
         # First usage
         self.view.shown.connect(self.on_show_event)
 
-        # # Connect
-        # self.view.tableAssignment.cellChanged.connect(self.on_cell_changed)
+        # Connects
+        self.view.searchEdit.textChanged.connect(self.filter_items)
+        
+        # Override the table's resize event to call resizeColumns whenever the size changes, and call the function once
+        # at the start to adjust the widths.
+        self.view.tableAssignment.resizeEvent = lambda event: (self.resize_columns(),
+              QtWidgets.QTableWidget.resizeEvent(self.view.tableAssignment, event))
+        self.resize_columns()
 
 
     def show_context_menu(self, pos):
@@ -130,3 +136,23 @@ class GroupAssignmentController(QtCore.QObject):
                 if group:
                     group_assignment[group].append(subject)
         self.view.main_module.controller.group_assignment = group_assignment
+
+
+    def filter_items(self, text):
+        """Filter the table rows by text in the 'Subject' column."""
+        text = text.lower().strip()
+        for row in range(self.view.tableAssignment.rowCount()):
+            item = self.view.tableAssignment.item(row, 0)  # columna 'Subject'
+            if item:
+                # Show or hide the row based on whether the text is found
+                self.view.tableAssignment.setRowHidden(row, text not in item.text().lower())
+
+
+    def resize_columns(self):
+        """
+        Adjust the column widths of the tableAssignment based on the current width of the viewport, the first column
+        takes 80% of the width and the second column takes 20%.
+        """
+        total_width = self.view.tableAssignment.viewport().width()
+        self.view.tableAssignment.setColumnWidth(0, int(total_width * 0.8))
+        self.view.tableAssignment.setColumnWidth(1, int(total_width * 0.2))

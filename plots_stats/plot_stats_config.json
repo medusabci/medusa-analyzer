@@ -15,6 +15,12 @@
         "path": "plots_stats/group_assignment",
         "widget": "GroupAssignmentWidget",
         "controller": "GroupAssignmentController"
+      },
+      {
+        "step": "Data Assignment",
+        "path": "plots_stats/data_assignment",
+        "widget": "DataAssignmentWidget",
+        "controller": "DataAssignmentController"
       }
     ],
     "ecg_features": [
