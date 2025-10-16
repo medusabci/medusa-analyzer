@@ -34,18 +34,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="frame_2">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="styleSheet">
-         <string notr="true">QLabel {
+    <widget class="QLabel" name="label">
+     <property name="styleSheet">
+      <string notr="true">QLabel {
     font-size: 16pt;
     font-weight: 800;
     letter-spacing: 1px;
@@ -54,12 +45,28 @@
         stop:0 #6a0dad, stop:1 #ec407a
     );
 }</string>
-        </property>
-        <property name="text">
-         <string>Experiments</string>
-        </property>
-       </widget>
-      </item>
+     </property>
+     <property name="text">
+      <string>Experiments</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame_2">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
@@ -85,11 +92,6 @@
           <property name="styleSheet">
            <string notr="true">QFrame {
     border-radius: 18px;
-    background: qlineargradient(
-        spread:pad, x1:0, y1:0, x2:1, y2:1,
-        stop:0 #6a0dad,
-        stop:1 #ec407a
-    );
     color: white;
     border: none;
     box-shadow: 0px 4px 20px rgba(106, 13, 173, 0.35);
@@ -102,16 +104,6 @@
            <enum>QFrame::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
-           <item>
-            <widget class="QLabel" name="label_3">
-             <property name="styleSheet">
-              <string notr="true">QLabel { color: white; font-size: 11pt; background-color: transparent; font-family: Arial; font-weight: bold; }</string>
-             </property>
-             <property name="text">
-              <string>EEG Feature extraction</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <item>
@@ -195,11 +187,6 @@
           <property name="styleSheet">
            <string notr="true">QFrame {
     border-radius: 18px;
-    background: qlineargradient(
-        spread:pad, x1:0, y1:0, x2:1, y2:1,
-        stop:0 #6a0dad,
-        stop:1 #ec407a
-    );
     color: white;
     border: none;
     box-shadow: 0px 4px 20px rgba(106, 13, 173, 0.35);
@@ -212,16 +199,6 @@
            <enum>QFrame::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
-           <item>
-            <widget class="QLabel" name="label_5">
-             <property name="styleSheet">
-              <string notr="true">QLabel { color: white; font-size: 11pt; background-color: transparent; font-family: Arial; font-weight: bold; }</string>
-             </property>
-             <property name="text">
-              <string>ECG Feature extraction</string>
-             </property>
-            </widget>
-           </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_4">
              <item>
@@ -301,18 +278,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QFrame" name="frame">
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_12">
-      <item>
-       <widget class="QLabel" name="label_4">
-        <property name="styleSheet">
-         <string notr="true">QLabel {
+    <widget class="QLabel" name="label_4">
+     <property name="styleSheet">
+      <string notr="true">QLabel {
     font-size: 16pt;
     font-weight: 800;
     letter-spacing: 1px;
@@ -322,15 +290,31 @@
     );
 }
 </string>
-        </property>
-        <property name="text">
-         <string>Plots and stats</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
+     </property>
+     <property name="text">
+      <string>Plots and stats</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_12">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
@@ -356,11 +340,6 @@
           <property name="styleSheet">
            <string notr="true">QFrame {
     border-radius: 18px;
-    background: qlineargradient(
-        spread:pad, x1:0, y1:0, x2:1, y2:1,
-        stop:0 #6a0dad,
-        stop:1 #ec407a
-    );
     color: white;
     border: none;
     box-shadow: 0px 4px 20px rgba(106, 13, 173, 0.35);
@@ -373,19 +352,6 @@
            <enum>QFrame::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_10">
-           <item>
-            <widget class="QLabel" name="label_9">
-             <property name="styleSheet">
-              <string notr="true">QLabel { color: white; font-size: 11pt; background-color: transparent; font-family: Arial; font-weight: bold; }</string>
-             </property>
-             <property name="text">
-              <string>Preprocessed signal</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_16">
              <item>
@@ -429,11 +395,6 @@
           <property name="styleSheet">
            <string notr="true">QFrame {
     border-radius: 18px;
-    background: qlineargradient(
-        spread:pad, x1:0, y1:0, x2:1, y2:1,
-        stop:0 #6a0dad,
-        stop:1 #ec407a
-    );
     color: white;
     border: none;
     box-shadow: 0px 4px 20px rgba(106, 13, 173, 0.35);
@@ -446,19 +407,6 @@
            <enum>QFrame::Raised</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_11">
-           <item>
-            <widget class="QLabel" name="label_10">
-             <property name="styleSheet">
-              <string notr="true">QLabel { color: white; font-size: 11pt; background-color: transparent; font-family: Arial; font-weight: bold; }</string>
-             </property>
-             <property name="text">
-              <string>Parameters</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_18">
              <item>
@@ -475,9 +423,6 @@
               </widget>
              </item>
             </layout>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_19"/>
            </item>
           </layout>
          </widget>

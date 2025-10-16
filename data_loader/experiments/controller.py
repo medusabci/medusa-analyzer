@@ -1,4 +1,6 @@
 from PySide6 import QtGui, QtCore, QtWidgets
+from main_window import flow as main_flow
+from data_loader.experiments.flow import on_next_click
 import os
 
 class ExperimentsController:
@@ -7,10 +9,12 @@ class ExperimentsController:
         self.view.controller = self
 
         # Icons
-        self._set_icon(self.view.eegIcon, "brain2.png", size=[130, 130])
-        self._set_icon(self.view.ecgIcon, "heart.png", size=[130, 130])
-        self._set_icon(self.view.plotparamIcon, "plot_params.png", size=[130, 130])
-        self._set_icon(self.view.plotprepIcon, "plot_params.png", size=[130, 130])
+        self._set_icon(self.view.eegIcon, "eeg_features.png", size=[150, 150])
+        self._set_icon(self.view.ecgIcon, "ecg_features.png", size=[165, 157])
+        self._set_icon(self.view.plotparamIcon, "plot_parameters.png", size=[165, 157])
+        self._set_icon(self.view.plotprepIcon, "plot_preprocessed.jpeg", size=[165, 157])
+
+        self._hide_all_radiobuttons()
 
         # Make all the QFrame clickable, selecting all the QFrame, discarding QFrame subclasses and those without
         # "QFrame" in their objectName
@@ -32,6 +36,22 @@ class ExperimentsController:
             radio.click()
         # Accept the event
         event.accept()
+
+    def on_radiobutton_toggle(self, checked):
+        """
+        Executes when the radiobutton toggle is clicked. Called de on_next_clicked function from flow.py
+        """
+        if checked:
+            main_flow.on_next_click(self.view.main_window.controller)  # simulate a click
+
+    def _hide_all_radiobuttons(self):
+        """
+        Hide all radiobuttons but maintaining the functionality.
+        """
+        radios = self.view.findChildren(QtWidgets.QRadioButton)
+        for radio in radios:
+            radio.setVisible(False)
+            radio.clicked.connect(self.on_radiobutton_toggle)
 
     def _set_icon(self, label, filename, size=None, scale_factor=0.12):
         """

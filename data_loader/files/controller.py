@@ -19,7 +19,6 @@ class FilesController:
         self.view.browseButton.clicked.connect(self.on_select_files_click)
         self.view.viewfilesButton.clicked.connect(self.on_view_files_click)
         self.view.convertButton.clicked.connect(self.on_converter_click)
-        self.view.filteringPlotButton.clicked.connect(self.on_filtering_plot_click)
         self.view.loadExperimentButton.clicked.connect(self.on_load_experiment_click)
 
         self.filtering_window = None
@@ -27,10 +26,6 @@ class FilesController:
         # Load config
         self.view.loadButton.clicked.connect(self.load_config)
 
-    def on_filtering_plot_click(self):
-        if self.filtering_window is None:  # si no existe, la creo
-            self.filtering_window = FilteringPlotWidget(self.view.main_window)
-        self.filtering_window.show()
 
     def on_select_files_click(self):
         """
