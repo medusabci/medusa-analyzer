@@ -95,10 +95,6 @@ class ExperimentsController:
             window_title = "Plot & Stats - Experiment Setup"
 
         elif module_type == "preprocess":
-            # from preprocess_module.view import PreprocessWindow
-            # from preprocess_module.controller import PreprocessWindowController
-            # self.plot_stats_window = PreprocessWindow()
-            # self.plot_stats_controller = PreprocessWindowController(self.plot_stats_window)
             self.plot_stats_window = MainModuleWindow()  # temporal
             self.plot_stats_controller = MainModuleWindowController(self.plot_stats_window)
             window_title = "Preprocessing - Experiment Setup"
@@ -112,6 +108,7 @@ class ExperimentsController:
         # Finish loading
         self.view.main_window.loading.finish()
 
+        # Run the new window
         layout = QtWidgets.QVBoxLayout(dialog)
         layout.addWidget(self.plot_stats_window)
         dialog.exec()

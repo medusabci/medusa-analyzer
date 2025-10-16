@@ -1,5 +1,7 @@
 import json, importlib
 from pathlib import Path
+import re
+
 
 def get_config_config(controller):
     """
@@ -20,15 +22,17 @@ def on_next_click(view):
     # Store the config
     view.main_module.controller.config_config = get_config_config(view.controller)
 
+    # Filter the recordings based on the selected criteria (e.g., within or between subjects)
+    view.main_module.controller.subjects = get_subjects_from_list(view.main_module.controller.all_files)
+    view.main_module.controller.recordings = get_recordings_from_list(view.main_module.controller.all_files)
+    view.main_module.controller.params = get_params_from_list(view.main_module.controller.all_files)
+    view.main_module.controller.bands = get_bands_from_list(view.main_module.controller.all_files)
+
     if not view.controller.loaded_widgets:
 
         # Loading screen
         view.main_module.loading.show()
         view.main_module.loading.set_progress(0, view.main_module)
-
-        # Filter the recordings based on the selected criteria (e.g., within or between subjects)
-        view.main_module.controller.subjects = get_subjects_from_list(view.main_module.controller.all_files)
-        view.main_module.controller.recordings = get_recordings_from_list(view.main_module.controller.all_files)
 
         # Import the next module, based on the configuration
         # Read the JSON file
@@ -104,3 +108,37 @@ def get_recordings_from_list(recordings):
 
     return clean_recordings
 
+def get_params_from_list(recordings):
+    """
+    Extracts the parameter identifiers (values following '_param-') from a list of recording filenames.
+    """
+    params = []
+
+    for f in recordings:
+        match = re.search(r'_param-([^-_]+)', f) # Match '_param-' followed by any characters except '-' or '_'
+        if match: # If a match is found, add the captured group (the parameter value) to the list
+            params.append(match.group(1))
+
+    # Remove duplicates and sort
+    params = list(set(params))
+    params.sort()
+
+    return params
+
+
+def get_bands_from_list(recordings):
+    """
+    Extracts the parameter identifiers (values following '_param-') from a list of recording filenames.
+    """
+    bands = []
+
+    for f in recordings:
+        match = re.search(r'_band-([^-_]+)', f) # Match '_param-' followed by any characters except '-' or '_'
+        if match: # If a match is found, add the captured group (the parameter value) to the list
+            bands.append(match.group(1))
+
+    # Remove duplicates and sort
+    bands = list(set(bands))
+    bands.sort()
+
+    return bands

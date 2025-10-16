@@ -28,7 +28,7 @@ class DataAssignmentController(QtCore.QObject):
     def on_selection_changed(self):
         """Enable the next button if at least one item is selected, and update the selected items label."""
         selected_items = self.view.filelistWidget.selectedItems()
-        self.view.selectedLabel.setText(f"{len(selected_items)} element(s) selected")
+        self.view.selectedLabel.setText(f"{len(selected_items)} parameter(s) selected")
         self.view.main_module.nextButton.setEnabled(len(selected_items) > 0)
 
 
