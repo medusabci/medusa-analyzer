@@ -1,4 +1,4 @@
-from plots_and_stats.main_module.flow import on_next_click, on_back_click
+from plots_stats.main_module.flow import on_next_click, on_back_click
 
 class MainModuleWindowController:
     def __init__(self, ui):

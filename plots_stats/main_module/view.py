@@ -1,12 +1,12 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from plots_and_stats.config.view import ConfigWidget
-from plots_and_stats.config.controller import ConfigController
+from plots_stats.config.view import ConfigWidget
+from plots_stats.config.controller import ConfigController
 from PySide6.QtGui import QPalette
 from utils import LoadingDialog
 
 # Load UI class
-ui_plots_and_stats_window = loadUiType('plots_stats/view.ui')[0]
+ui_plots_stats_window = loadUiType('plots_stats/main_module/view.ui')[0]
 
 
 class GradientTitleWidget(QtWidgets.QWidget):
@@ -39,7 +39,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
         painter.drawText(x, y, text)
 
 
-class MainModuleWindow(QtWidgets.QWidget, ui_plots_and_stats_window):
+class MainModuleWindow(QtWidgets.QWidget, ui_plots_stats_window):
     """
         Main module window. Manages navigation through the main stages of the workflow.
     """

@@ -34,6 +34,7 @@ def on_next_click(view):
         # Read the JSON file
         with open("plots_stats/plot_stats_config.json", "r", encoding="utf-8") as f:
             modules_config = json.load(f)
+            modules_config = modules_config['parameters']
 
         experiment = view.main_module.controller.config_config['experiment_info']['experiment_type']
         widgets = modules_config[experiment]

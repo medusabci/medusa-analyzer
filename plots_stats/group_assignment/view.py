@@ -3,7 +3,7 @@ from PySide6.QtUiTools import loadUiType
 
 ui_plots_groups = loadUiType('plots_stats/group_assignment/view.ui')[0]
 
-class AssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
+class GroupAssignmentWidget(QtWidgets.QWidget, ui_plots_groups):
     shown = QtCore.Signal()
     def __init__(self, main_module):
         super().__init__()
