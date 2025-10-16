@@ -9,6 +9,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         super().__init__()
         self.setupUi(self)
         self.main_window = main_window
+        self.main_window.nextButton.setVisible(False)
 
         ### EXPERIMENTS HEADER ###
         layout = QtWidgets.QVBoxLayout()
