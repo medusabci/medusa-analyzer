@@ -6,6 +6,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from plots_stats.plot_panel.export_dialog import ExportDialog
+import time
+
 
 class TabbedPlotWidgetController(QtCore.QObject):
     def __init__(self, view):
@@ -24,6 +26,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
         selected_parameters = getattr(self.view.main_module.controller, "params", None)
         if selected_parameters is None:
             return
+
+        # Loading screen
+        self.view.main_module.loading.show()
+        self.view.main_module.loading.set_progress(0, self.view.main_module)
 
         try:
             param_iter = list(selected_parameters)
@@ -80,6 +86,12 @@ class TabbedPlotWidgetController(QtCore.QObject):
             # Add widget to main TabWindget
             self.view.add_tab(tab, str(param))
             self._tabs_created = True
+
+            # Update loading progress
+            self.view.main_module.loading.set_progress(((param_iter.index(param) + 1) / len(param_iter)) * 100, self.view.main_module)
+
+        # Finish loading
+        self.view.main_module.loading.finish()
 
     def load_ui(self, path, parent=None):
         """Load the tab_template UI from the given path."""

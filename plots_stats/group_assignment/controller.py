@@ -7,6 +7,7 @@ class GroupAssignmentController(QtCore.QObject):
         self.view = ui
         self.view.controller = self
         self.first_show = True
+        self.group_assignment = {}
 
         # If there are already groups defined in the controller, load them
         if self.view.main_module.controller.config_config['analysis_mode'] == 'within':
@@ -52,6 +53,10 @@ class GroupAssignmentController(QtCore.QObject):
             action = menu.addAction(group)
             action.triggered.connect(lambda checked, g=group: self.assign_group_to_selected(g))
 
+        # Add reset group action
+        action = menu.addAction('Reset Group')
+        action.triggered.connect(lambda checked, g='Reset Group': self.assign_group_to_selected(g))
+
         # Run the context menu at the cursor position
         menu.exec_(self.view.tableAssignment.viewport().mapToGlobal(pos))
 
@@ -64,10 +69,16 @@ class GroupAssignmentController(QtCore.QObject):
         selected_rows = set(idx.row() for idx in self.view.tableAssignment.selectionModel().selectedIndexes())
         # Assign the group to each selected row
         for row in selected_rows:
-            self.view.tableAssignment.setItem(row, 1, QtWidgets.QTableWidgetItem(group_str))
+            if group_str == 'Reset Group':
+                self.view.tableAssignment.setItem(row, 1, QtWidgets.QTableWidgetItem(''))
+            else:
+                self.view.tableAssignment.setItem(row, 1, QtWidgets.QTableWidgetItem(group_str))
 
             # Change the background color of the row to the group's color
-            color = self.view.main_module.controller.groups[group_str]
+            if group_str == 'Reset Group':
+                color = QtGui.QColor(255, 255, 255)  # White color for reset
+            else:
+                color = self.view.main_module.controller.groups[group_str]
             for col in range(self.view.tableAssignment.columnCount()):
                 item = self.view.tableAssignment.item(row, col)
                 qt_color = QtGui.QColor(color)
@@ -126,7 +137,7 @@ class GroupAssignmentController(QtCore.QObject):
 
         ## Store the group assignment in the controller of the main_module
         # Create an empty count dictionary
-        group_assignment = {k: [] for k in self.view.main_module.controller.groups}
+        self.group_assignment = {k: [] for k in self.view.main_module.controller.groups}
         # Groups are in column 1
         for r in range(self.view.tableAssignment.rowCount()):
             item = self.view.tableAssignment.item(r, 1)
@@ -134,8 +145,7 @@ class GroupAssignmentController(QtCore.QObject):
                 group = item.text()
                 subject = self.view.tableAssignment.item(r, 0).text()
                 if group:
-                    group_assignment[group].append(subject)
-        self.view.main_module.controller.group_assignment = group_assignment
+                    self.group_assignment[group].append(subject)
 
 
     def filter_items(self, text):
