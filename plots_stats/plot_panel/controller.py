@@ -6,7 +6,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 from plots_stats.plot_panel.export_dialog import ExportDialog
-import time
+import re
 
 
 class TabbedPlotWidgetController(QtCore.QObject):
@@ -17,6 +17,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         self._tabs_created = False
         self.view.shown.connect(self.create_tabs)
+        self.available_bands = []
 
     def create_tabs(self):
         """ Create the tabs """
@@ -36,6 +37,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
         except Exception:
             param_iter = [str(selected_parameters)]
 
+        # Obtain paths of filtered files:
+        files = self.view.main_module.controller.filtered_files
+        # Extract available bands
+        self.available_bands = self.extract_unique_bands(files)
+
         tab_widget = self.view.tab_widget
         while tab_widget.count() > 0:
             tab_widget.removeTab(0)
@@ -50,6 +56,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 title_label.setText(param)
 
             self.setup_channel_list(tab, param)
+            self.setup_band_list(tab, param)
 
             # Create de FigureCanvas in the placeholder to inser the plot
             placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
@@ -124,6 +131,27 @@ class TabbedPlotWidgetController(QtCore.QObject):
         # Connect --> TO DO (que promedie y luego llame a update_plot)
         list_widget.currentTextChanged.connect(lambda ch: self.on_channel_selected(param, ch))
 
+    def extract_unique_bands(self, param_list):
+        """ Extract unique bands from all files"""
+        bands = set()
+        for p in param_list:
+            match = re.search(r"_band-([a-zA-Z0-9]+)", p)
+            if match:
+                bands.add(match.group(1))
+        return sorted(list(bands))
+
+    def setup_band_list(self, tab, param):
+        """Configure the band list"""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "bandsWidget")
+        list_widget.clear()
+        for b in self.available_bands:
+            item = QtWidgets.QListWidgetItem(b)
+            list_widget.addItem(item)
+
+        if list_widget.count() > 0:
+            list_widget.setCurrentRow(0)
+
+        list_widget.currentTextChanged.connect(lambda band: self.on_band_selected(param, band))
 
     def prev_tab(self):
         """Go back to the previous tab."""
