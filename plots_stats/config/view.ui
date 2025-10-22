@@ -121,9 +121,9 @@ QPushButton:disabled {
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="expinfoLabel">
+    <widget class="QLabel" name="messageLabel">
      <property name="styleSheet">
-      <string notr="true">color: #6a0dad; font-weight: bold;</string>
+      <string notr="true">color: red; font-weight: bold;</string>
      </property>
      <property name="text">
       <string/>
@@ -223,19 +223,6 @@ QPushButton:disabled {
        </layout>
       </item>
      </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="messageLabel">
-     <property name="styleSheet">
-      <string notr="true">color: red; font-weight: bold;</string>
-     </property>
-     <property name="text">
-      <string/>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
     </widget>
    </item>
    <item>

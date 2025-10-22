@@ -363,7 +363,9 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             if freqs_val is not None:
                 save_struct['freqs'] = np.asarray(freqs_val)
 
-            savemat(outpath, {metric_label: save_struct})
+            mat_dict = {metric_label: save_struct}
+
+            savemat(outpath, mat_dict)
             controller._log_message(f"✅ Parameter saved: {outpath}")
 
         # 2) Other parameters

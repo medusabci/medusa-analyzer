@@ -54,3 +54,6 @@ class ConfigWidget(QtWidgets.QWidget, ui_plots_init):
         self.withinDescription.setWordWrap(True)
         self.betweenDescription.mousePressEvent = lambda event: self.betweenRButton.setChecked(True)
         self.withinDescription.mousePressEvent = lambda event: self.withinRButton.setChecked(True)
+
+        # Default to within-subjects
+        self.withinRButton.setChecked(True)

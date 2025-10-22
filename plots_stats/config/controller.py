@@ -41,7 +41,6 @@ class ConfigController(QtCore.QObject):
         if not os.path.exists(path):
             result = {
                 "message": "⚠️ Path does not exist.",
-                "expinfo": "",
                 "experiment_info": None
             }
         # if there is no settings.json file in the path
@@ -50,7 +49,6 @@ class ConfigController(QtCore.QObject):
             if not os.path.isfile(settings_file):
                 result = {
                     "message": "⚠️ settings.json not found in this directory.",
-                    "expinfo": "",
                     "experiment_info": None
                 }
             else:
@@ -61,8 +59,7 @@ class ConfigController(QtCore.QObject):
                     exp_type = data.get("experiment_type", "Unknown")
                     signal_type = data.get("files", {}).get("selected_biosignal", "Unknown").upper()
                     result = {
-                        "message": "",
-                        "expinfo": f"✅ Detected Experiment: {exp_type} ({signal_type})",
+                        "message": f"✅ Detected Experiment: {exp_type} ({signal_type})",
                         "experiment_info": {"experiment_type": exp_type, "signal_type": signal_type}
                     }
                     self.path_correct = True
@@ -75,13 +72,15 @@ class ConfigController(QtCore.QObject):
                 except Exception as e:
                     result = {
                         "message": f"⚠️ Error reading settings.json: {e}",
-                        "expinfo": "",
                         "experiment_info": None
                     }
 
         # Update the view and save the experiment information.
-        self.view.messageLabel.setText(result["message"])
-        self.view.expinfoLabel.setText(result["expinfo"])
+        if "✅" in result["message"]:
+            color = "green"
+        else:
+            color = "red"
+        self.view.messageLabel.setText(f'<span style="color:{color}; font-size:18px;">{result["message"]}</span>')
         self.experiment_info = result["experiment_info"]
         return self.path_correct
 
