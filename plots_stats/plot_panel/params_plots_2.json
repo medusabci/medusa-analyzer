@@ -1,22 +1,50 @@
 {
- "eeg_features": [
-   {
-     "psd": {
-       "Param_name": "PSD",
-       "Plot_params": {
-         "title": "Power Spectral Density",
-         "x_label": "Frequency (Hz)",
-         "y_label": "Power (µV²/Hz)"
-       }
-     },
-     "relativepower": {
-       "Param_name": "Relative Power",
-       "Plot_params": {
-         "title": "Relative Power",
-         "x_label": "Frequency Bands",
-         "y_label": "Relative Power (%)"
-       }
-     }
-   }
-   ]
+  "eeg_features": [
+    {
+      "psd": {
+        "Param_name": "PSD",
+        "Plot_params": {
+          "title": "Power Spectral Density",
+          "x_label": "Frequency (Hz)",
+          "y_label": "Power (µV²/Hz)"
+        }
+      },
+
+      "relativepower": {
+        "Param_name": "Relative Power",
+        "Plot_params": {
+          "title": "Relative Power",
+          "x_label": "Frequency Bands",
+          "y_label": "Relative Power (%)"
+        }
+      },
+
+      "absolutepower": {
+        "Param_name": "Absolute Power",
+        "Plot_params": {
+          "title": "Absolute Power",
+          "x_label": "Frequency Bands",
+          "y_label": "Power (µV²)"
+        }
+      },
+
+      "medianfrequency": {
+        "Param_name": "Median Frequency",
+        "Plot_params": {
+          "title": "Median Frequency",
+          "x_label": "Frequency Bands",
+          "y_label": "Frequency (Hz)"
+        }
+      },
+
+      "spectralentropy": {
+        "Param_name": "Spectral Entropy",
+        "Plot_params": {
+          "title": "Spectral Entropy",
+          "x_label": "Frequency Bands",
+          "y_label": "Entropy"
+        }
+      }
+    }
+  ]
 }

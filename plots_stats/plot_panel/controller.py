@@ -47,18 +47,58 @@ class TabbedPlotWidgetController(QtCore.QObject):
         while tab_widget.count() > 0:
             tab_widget.removeTab(0)
 
-        # Load params_plots.json to obtain plot types and parameters for each param
-        json_path = os.path.join(os.path.dirname(__file__), "params_plots.json")
-        with open(json_path, "r", encoding="utf-8") as f:
+        # Load params_plots.json and plot_plots to obtain plot types and parameters for each param
+        params_json_path = os.path.join(os.path.dirname(__file__), "params_plots_2.json")
+        plots_json_path = os.path.join(os.path.dirname(__file__), "plot_plots.json")
+        with open(params_json_path, "r", encoding="utf-8") as f:
             params_json = json.load(f)
+        with open(plots_json_path, "r", encoding="utf-8") as f:
+            plots_json = json.load(f)
 
         experiment_type = self.view.main_module.controller.experiment_type
-        features_plot_info = params_json.get(experiment_type, {}) # TODO: leer derl experiment ID
+        features_data  = params_json.get(experiment_type, [])[0]
 
         # For each selected param, we inset one tab in de TabWidget
         for param in param_iter:
-            tab = self.load_ui(self.template_ui_path, parent=tab_widget)
 
+            if param not in features_data:
+                print(f"[WARN] Parameter '{param}' not found in params_plots.json. Skipping.")
+                continue
+
+            param_name = features_data[param]["Param_name"]
+            base_plot_params = features_data[param]["Plot_params"]
+
+            # Find the associate plot type
+            plot_type = None
+            for ptype, pdata in plots_json.items():
+                allowed = pdata["allowed_params"]
+                if param_name in allowed:
+                    plot_type = ptype
+                    plot_type_data = pdata
+                    break
+            if not plot_type:
+                print(f"[WARN] No plot type found for '{param}' in plot_plots.json")
+                continue
+            plot_params_meta = plot_type_data["Plot_params"]
+
+            # Merge default values
+            merged_params = {}
+            for key, meta in plot_params_meta.items():
+                default_value = meta.get("default", None)
+
+                if isinstance(default_value, str) and default_value.startswith("Plot_params."):
+                    ref_key = default_value.split(".")[-1]
+                    default_value = base_plot_params.get(ref_key, "")
+
+                merged_params[key] = {
+                    "type": meta.get("type", "text"),
+                    "label": meta.get("label", key),
+                    "default": default_value,
+                    "options": meta.get("options", [])
+                }
+
+            # Create tab
+            tab = self.load_ui(self.template_ui_path, parent=tab_widget)
             self.setup_channel_list(tab, param)
             self.setup_band_list(tab, param)
 
@@ -67,65 +107,73 @@ class TabbedPlotWidgetController(QtCore.QObject):
             if placeholder is None:
                 layout = None
             else:
-                if placeholder.layout() is None:
-                    layout = QtWidgets.QVBoxLayout(placeholder)
-                    layout.setContentsMargins(0, 0, 0, 0)
-                else:
-                    layout = placeholder.layout()
+                layout = QtWidgets.QVBoxLayout(placeholder)
+                layout.setContentsMargins(0, 0, 0, 0)
+                layout = placeholder.layout()
 
-            if layout is not None:
-                # Create plot object and store it in the tab for future.
-                fig = Figure(figsize=(5, 4))
-                canvas = FigureCanvas(fig)
-                ax = fig.add_subplot(111)
+            # Create plot object and store it in the tab for future.
+            fig = Figure(figsize=(5, 4))
+            canvas = FigureCanvas(fig)
+            ax = fig.add_subplot(111)
 
-                # Extract plot type and parameters from params_json
-                feature_data = features_plot_info[0].get(param, {})
-                if not feature_data:
-                    print(f"[WARN] Configuration not found for '{param}'. Skipping plot.")
-                    continue
+            # Modify the title with the param name
+            title_label = tab.findChild(QtWidgets.QLabel, "titleLabel")
+            if title_label:
+                title_label.setText(param_name)
 
-                param_name = feature_data["Param_name"]
-                plot_type = feature_data["Type_of_plot"]
-                plot_params_from_json = feature_data.get("Plot_params", {}) or {}
-                default_params = {
-                    k: (v["default"] if isinstance(v, dict) and "default" in v else v)
-                    for k, v in plot_params_from_json.items()
-                }
+            # Create plot object based on plot_type
+            tab._plot_type = plot_type
+            if plot_type == "PSDPlot":
+                plot_obj = PSDPlot(ax, {k: v["default"] for k, v in merged_params.items()})
+            # elif plot_type == "TopographicPlot":
+            #     plot_obj = TopographicPlotWrapper(ax, {}, merged_params)
+            else:
+                plot_obj = None
 
-                # Modify the title with the param name
-                title_label = tab.findChild(QtWidgets.QLabel, "titleLabel")
-                if title_label:
-                    title_label.setText(param_name)  # TODO: poner un nombre más amigable
-
-                # Create the plot object depending on the type
-                if plot_type == "PSDPlot":
-                    plot_obj = PSDPlot(ax, default_params)
-                elif plot_type == "TopographicPlot":
-                    plot_obj = None
-                    # plot_obj = TopographicPlotWrapper(ax, channel_set, plot_params_from_json)
-                    pass
-                else: # Unknown plot type
-                    print(f"[WARN] Unknown plot type '{plot_type}' for param '{param}'. Skipping plot.")
-                    continue
-
-                # Asociate the plot objet to the tab
+            # Asociate the plot objet to the tab
+            if plot_obj:
                 tab._plot = plot_obj
                 tab._figure = fig
                 tab._canvas = canvas
                 tab._plot_type = plot_type
-                tab._plot_params = plot_params_from_json
-                tab._plot_params_current = dict(default_params)
+                tab._plot_params = merged_params
+                tab._plot_params_current = {k: v["default"] for k, v in merged_params.items()}
 
-                # Insert canvas in the placeholder
-                fig.tight_layout()
                 layout.addWidget(canvas)
                 canvas.draw()
 
-                # Create dynamic controls for plot parameters in the tab view
-                controls_widget = tab.findChild(QtWidgets.QWidget, "TypePlotWidget")
-                if controls_widget:
-                    self._build_dynamic_controls(controls_widget, plot_params_from_json, tab)
+            # Insert canvas in the placeholder
+            layout.addWidget(canvas)
+            canvas.draw()
+
+            # Create dynamic controls for plot parameters in the tab view
+            controls_widget = tab.findChild(QtWidgets.QWidget, "TypePlotWidget")
+
+            if controls_widget:
+                # ✅ Asegurar que esté dentro del controlPanel
+                control_panel = tab.findChild(QtWidgets.QFrame, "controlPanel")
+                if control_panel is not None:
+                    # Si el panel no tiene layout, se lo creamos
+                    if control_panel.layout() is None:
+                        panel_layout = QtWidgets.QVBoxLayout(control_panel)
+                        panel_layout.setContentsMargins(0, 0, 0, 0)
+                        panel_layout.setSpacing(5)
+                        control_panel.setLayout(panel_layout)
+                    else:
+                        panel_layout = control_panel.layout()
+
+                    # ✅ Si el TypePlotWidget no está ya en el layout del panel, lo insertamos
+                    if control_panel.layout().indexOf(controls_widget) == -1:
+                        panel_layout.addWidget(controls_widget)
+
+                    # ✅ Forzar tamaño expandible
+                    controls_widget.setSizePolicy(
+                        QtWidgets.QSizePolicy.Expanding,
+                        QtWidgets.QSizePolicy.Expanding
+                    )
+
+                # Ahora sí construimos los controles
+                self._build_dynamic_controls(controls_widget, merged_params, tab)
 
             # Connect buttons
             prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
@@ -220,79 +268,83 @@ class TabbedPlotWidgetController(QtCore.QObject):
     def _build_dynamic_controls(self, container_widget, plot_params, tab):
         """
         Crea controles dinámicos para editar los parámetros del plot de forma genérica.
-        container_widget: QWidget (no layout). El método creará/establecerá un QFormLayout en él.
-        plot_params: dict con metadatos por parámetro.
+        Añade al inicio una etiqueta 'Plot type: <tipo>'.
         """
         if not isinstance(container_widget, QtWidgets.QWidget):
-            # defensiva: si por cualquier razón llegó otra cosa, intentamos extraer widget
             return
 
-        # Si el widget ya tiene un layout, lo limpiamos y lo sustituimos por QFormLayout
-        existing = container_widget.layout()
-        if existing is not None:
-            self._clear_layout(existing)
-        form = QtWidgets.QFormLayout(container_widget)
-        form.setContentsMargins(0, 0, 0, 0)
+        # --- 🔧 Limpiar layout previo si existe ---
+        old_layout = container_widget.layout()
+        if old_layout is not None:
+            try:
+                self._clear_layout(old_layout)
+                # Desconectar el layout viejo del widget sin destruirlo prematuramente
+                dummy = QtWidgets.QWidget()
+                dummy.setLayout(old_layout)
+            except RuntimeError:
+                # El layout ya fue destruido por Qt, ignoramos
+                pass
 
+        # --- 🔧 Crear un nuevo QFormLayout ---
+        form = QtWidgets.QFormLayout()
+        form.setVerticalSpacing(8)
+        form.setHorizontalSpacing(12)
+        form.setContentsMargins(6, 6, 6, 6)
+        container_widget.setLayout(form)
+
+        # --- 1️⃣ Etiqueta inicial con tipo de plot ---
+        plot_type_label = QtWidgets.QLabel(f"Plot type: {getattr(tab, '_plot_type', 'Unknown')}")
+        font = plot_type_label.font()
+        font.setBold(True)
+        plot_type_label.setFont(font)
+        form.addRow(plot_type_label)
+
+        # --- 2️⃣ Crear dinámicamente cada parámetro ---
         for key, meta in plot_params.items():
-            # --- 1️⃣ Detectar tipo de parámetro ---
             if isinstance(meta, dict) and any(k in meta for k in ("type", "default", "label")):
                 param_type = meta.get("type", "text")
                 label_text = meta.get("label", key)
                 default_value = meta.get("default", "")
             else:
-                # Valor simple → tratamos como texto editable
                 param_type = "text"
                 label_text = key
                 default_value = meta
 
-            # --- 2️⃣ Crear el widget según el tipo ---
             widget = None
 
-            # TEXT / RANGE (edición libre mediante QLineEdit)
+            # TEXT / RANGE
             if param_type in ("text", "range"):
                 widget = QtWidgets.QLineEdit()
                 if isinstance(default_value, (list, tuple, dict)):
                     widget.setText(json.dumps(default_value))
                 else:
                     widget.setText(str(default_value))
-
-                # conectar con update, hacemos parseo JSON dentro de _update_plot_param
                 widget.textChanged.connect(lambda value, k=key, t=tab: self._update_plot_param(t, k, value))
 
-            # BOOL → QCheckBox
+            # BOOL
             elif param_type == "bool":
                 widget = QtWidgets.QCheckBox()
-                # set default state (handle strings like "true"/"false" or bool)
-                if isinstance(default_value, str):
-                    dv = default_value.lower() in ("1", "true", "yes")
-                else:
-                    dv = bool(default_value)
+                dv = bool(default_value) if not isinstance(default_value, str) else default_value.lower() in ("1",
+                                                                                                              "true",
+                                                                                                              "yes")
                 widget.setChecked(dv)
-                # conectar: convertir state a bool
                 widget.stateChanged.connect(lambda state, k=key, t=tab: self._update_plot_param(t, k, bool(state)))
 
-            # SELECT → QComboBox (espera campo "options" en meta: lista)
+            # SELECT
             elif param_type == "select":
                 widget = QtWidgets.QComboBox()
-                options = []
-                if isinstance(meta, dict):
-                    options = meta.get("options", [])
-                # si default_value está en options mostrarlo, si no añadirlo
+                options = meta.get("options", []) if isinstance(meta, dict) else []
                 for opt in options:
                     widget.addItem(str(opt))
-                # set default if present
                 if default_value not in (None, "") and str(default_value) not in [str(o) for o in options]:
-                    # añadir por si acaso
                     widget.addItem(str(default_value))
                 if default_value is not None and default_value != "":
-                    index = widget.findText(str(default_value))
-                    if index >= 0:
-                        widget.setCurrentIndex(index)
-                # conectar: enviar texto seleccionado; si necesitas otro tipo, JSON puede indicarlo
+                    idx = widget.findText(str(default_value))
+                    if idx >= 0:
+                        widget.setCurrentIndex(idx)
                 widget.currentTextChanged.connect(lambda value, k=key, t=tab: self._update_plot_param(t, k, value))
 
-            # Opción por defecto (por ejemplo números, listas, dicts) → QLineEdit
+            # Fallback
             else:
                 widget = QtWidgets.QLineEdit()
                 if isinstance(default_value, (list, tuple, dict)):
@@ -301,12 +353,44 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     widget.setText(str(default_value))
                 widget.textChanged.connect(lambda value, k=key, t=tab: self._update_plot_param(t, k, value))
 
-            # --- 3️⃣ Añadir al layout ---
             if widget is not None:
                 form.addRow(QtWidgets.QLabel(label_text), widget)
 
-            container_widget.updateGeometry()
-            container_widget.repaint()
+        # --- 🔧 Ajustar políticas de tamaño y refrescar ---
+        container_widget.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Preferred
+        )
+        container_widget.setMinimumHeight(250)
+
+        form.invalidate()
+        form.update()
+        container_widget.updateGeometry()
+        container_widget.adjustSize()
+
+        # 🔧 Forzar recalculado hacia arriba
+        parent = container_widget.parentWidget()
+        while parent is not None:
+            parent.adjustSize()
+            parent.updateGeometry()
+            parent = parent.parentWidget()
+
+        QtWidgets.QApplication.processEvents()
+
+        # --- DEBUG visual opcional ---
+        # container_widget.setStyleSheet("background-color: rgba(0,255,0,40); border: 1px dashed green;")
+        # for i in range(form.rowCount()):
+        #     item = form.itemAt(i, QtWidgets.QFormLayout.FieldRole)
+        #     if item and item.widget():
+        #         item.widget().setStyleSheet("background-color: rgba(255,0,0,40); border: 1px solid red;")
+
+        print(f"[DEBUG] Created {form.rowCount()} dynamic rows in {tab._plot_type}")
+        for i in range(form.rowCount()):
+            label_item = form.itemAt(i, QtWidgets.QFormLayout.LabelRole)
+            field_item = form.itemAt(i, QtWidgets.QFormLayout.FieldRole)
+            label_text = label_item.widget().text() if label_item and label_item.widget() else "None"
+            field_type = type(field_item.widget()).__name__ if field_item and field_item.widget() else "None"
+            print(f"   Row {i}: label={label_text}, field={field_type}")
 
     def _update_plot_param(self, tab, key, value):
         """Actualiza un parámetro del plot sin lógica específica."""
