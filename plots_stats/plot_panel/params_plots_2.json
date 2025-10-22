@@ -1,0 +1,22 @@
+{
+ "eeg_features": [
+   {
+     "psd": {
+       "Param_name": "PSD",
+       "Plot_params": {
+         "title": "Power Spectral Density",
+         "x_label": "Frequency (Hz)",
+         "y_label": "Power (µV²/Hz)"
+       }
+     },
+     "relativepower": {
+       "Param_name": "Relative Power",
+       "Plot_params": {
+         "title": "Relative Power",
+         "x_label": "Frequency Bands",
+         "y_label": "Relative Power (%)"
+       }
+     }
+   }
+   ]
+}

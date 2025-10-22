@@ -43,6 +43,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
             if self.confirm_deletion():
                 for item in self.filelistWidget.selectedItems():
                     self.filelistWidget.takeItem(self.filelistWidget.row(item))
+                    self.all_items.remove(item.text())
                 self._update_preprocessing_widget()
 
     def delete_all(self):
@@ -51,6 +52,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
             if self.confirm_deletion():
                 self.filelistWidget.clear()
                 self._update_preprocessing_widget()
+                self.all_items = []
 
     def _update_preprocessing_widget(self):
         """Update the preprocessing widget with current file list."""

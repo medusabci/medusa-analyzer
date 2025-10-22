@@ -1,0 +1,29 @@
+          "PSDPlot": {
+                  "allowed_params": ["psd"],
+          }
+            "title": {
+              "type": "text",
+              "label": "Graph Title",
+              "default": "Plot_params.title"
+            },
+            "x_label": {
+              "type": "text",
+              "label": "X axis Label",
+              "default": "Plot_params.x_label"
+            },
+            "y_label": {
+              "type": "text",
+              "label": "Y axis Label",
+              "default": "Plot_params.y_label"
+            },
+            "xlim": {
+              "type": "range",
+              "label": "X axis Limits",
+              "default": [0, fs/2+10]
+            },
+            "color": {
+              "type": "select",
+              "label": "Line Color",
+              "deafult": "blue",
+              "options": ["blue", "green", "red", "cyan", "magenta", "yellow", "black"]
+            }
