@@ -69,6 +69,7 @@ class ConfigController(QtCore.QObject):
 
                     self.view.main_module.controller.all_files = [str(f) for f in Path(path).rglob('*')
                         if f.is_file() and f.suffix == '.mat']
+                    self.view.main_module.controller.experiment_type = exp_type
 
                 # Otherwise, show an error message
                 except Exception as e:

@@ -1,0 +1,90 @@
+{
+ "eeg_features": [
+      {
+        "psd": {
+          "Param_name": "PSD",
+          "Type_of_plot": "PSDPlot",
+          "Plot_params": {
+            "title": {
+              "type": "text",
+              "label": "Graph Title",
+              "default": "Power Spectral Density"
+            },
+            "x_label": {
+              "type": "text",
+              "label": "X axis Label",
+              "default": "Frequency (Hz)"
+            },
+            "y_label": {
+              "type": "text",
+              "label": "Y axis Label",
+              "default": "Power (µV²/Hz)"
+            },
+            "xlim": {
+              "type": "range",
+              "label": "X axis Limits",
+              "default": [0, 100]
+            },
+            "color": {
+              "type": "select",
+              "label": "Line Color",
+              "deafult": "blue",
+              "options": ["blue", "green", "red", "cyan", "magenta", "yellow", "black"]
+            }
+          }
+        },
+        "relativepower": {
+          "Param_name": "Relative Power",
+          "Type_of_plot": "TopographicPlot",
+          "Plot_params": {
+            "x_label": "Frequency Bands",
+            "y_label": "Relative Power (%)",
+            "color_map": "viridis",
+            "colorbar_min": 0,
+            "colorbar_max": 100
+          }
+        },
+
+          "absolutepower": {
+              "Param_name": "Absolute Power",
+              "Type_of_plot": "TopographicPlot",
+              "Plot_params": {
+                  "x_label": "Frequency Bands",
+                  "y_label": "Absolute Power (µV²)",
+                  "color_map": "plasma",
+                  "colorbar_min": 0,
+                  "colorbar_max": null
+              }
+            },
+
+           "medianfrequency": {
+              "Param_name": "Median Frequency",
+              "Type_of_plot": "TopographicPlot",
+              "Plot_params": {
+                  "x_label": "Frequency (Hz)",
+                  "y_label": "Median Frequency (Hz)",
+                  "color_map": "cividis",
+                  "colorbar_min": null,
+                  "colorbar_max": null
+              }
+            },
+
+             "spectralentropy": {
+               "Param_name": "Spectral Entropy",
+               "Type_of_plot": "TopographicPlot",
+               "Plot_params": {
+                 "x_label": "Entropy",
+                 "y_label": "Spectral Entropy",
+                 "color_map": "magma",
+                 "colorbar_min": null,
+                 "colorbar_max": null
+               }
+             }
+        }
+      ],
+
+  "ecg_features": [
+     {
+     }
+    ]
+}
