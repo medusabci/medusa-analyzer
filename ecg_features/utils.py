@@ -17,8 +17,6 @@ from neurokit2.signal import signal_psd
 from scipy.stats import kurtosis, skew, zscore
 from scipy.io import savemat
 
-from eeg_features.experiments_to_semi_BIDS import output_path
-
 
 def run_pipeline(controller, settings_dic):
     """
@@ -115,7 +113,7 @@ def run_pipeline(controller, settings_dic):
 
                         ## Fifth step: Resample HRV
                         fs_hrv = settings_dic['preprocessing']['resample_fs']
-                        t_hrv = np.cumsum(hrv_signal)
+                        t_hrv = np.cumsum(hrv_signal/1000)
                         t_uniform = np.arange(0, t_hrv[-1], 1/fs_hrv)
                         hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
                         hrv_basename = str(Path(base_name).with_name(Path(base_name).stem + '_hrv' + Path(base_name).suffix))

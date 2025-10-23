@@ -109,7 +109,3 @@ def determine_task_and_level(r_number):
         level = (r_number - 1) // 2  # R3->1, R5->2, ..., R17->8
         return "videogame", level
 
-
-input_path = r"C:\Users\beapa\PycharmProjects\medusa-analyzer\Signals\Test BIDS\Videogame"
-output_path = r"C:\Users\beapa\PycharmProjects\medusa-analyzer\Signals\Test BIDS\Videogame BIDS ECG"
-convert_to_semi_bids(input_path, output_path, 'ecg')
