@@ -103,7 +103,7 @@ class ExperimentsController:
         dialog.setModal(True)
         dialog.setWindowTitle(window_title)
         dialog.setMinimumWidth(1200)
-        dialog.setMinimumHeight(800)
+        dialog.setMinimumHeight(900)
 
         # Finish loading
         self.view.main_window.loading.finish()

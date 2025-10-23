@@ -363,8 +363,12 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 tab._param_widgets[key] = (param_type, widget)
 
             scroll_layout.addWidget(card)
-        scroll_layout.addStretch()
+
+        scroll_content.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        scroll_content.adjustSize()
+
         scroll_area.setWidget(scroll_content)
+        scroll_area.setMinimumHeight(300)
 
         # Place scroll_area into the container widget's layout (replace existing layout)
         main_layout = QtWidgets.QVBoxLayout()
@@ -376,16 +380,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
         container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         container_widget.setMinimumHeight(250)
         container_widget.updateGeometry()
-        container_widget.adjustSize()
-        QtWidgets.QApplication.processEvents()
+        # container_widget.adjustSize()
+        # QtWidgets.QApplication.processEvents()
 
-        # --- Debug output: número de controles y cada label/tipo ---
-        created = len(tab._param_widgets)
-        print(f"[DEBUG] Created {created} dynamic controls in {getattr(tab, '_plot_type', 'Unknown')}")
-        for k, (ptype, w) in tab._param_widgets.items():
-            w_type = type(w).__name__
-            # Si el título lo quieres también en el debug, lo podemos mostrar:
-            print(f"   param key='{k}': type='{ptype}', widget='{w_type}'")
+        # print("TypePlotWidget height:", typePlotWidget.height())
+        # print("ScrollArea height:", typePlotWidget.findChild(QtWidgets.QScrollArea).height())
 
     def update_plot(self, tab):
         """
