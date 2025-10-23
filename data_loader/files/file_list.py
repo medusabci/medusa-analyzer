@@ -35,6 +35,15 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
 
         self.all_items = files
+        self.show_only_names = False  # Checkbox disabled
+
+        self.showNamesCheck.toggled.connect(self.toggle_display_mode)
+
+
+    def toggle_display_mode(self, checked):
+        """Changes between showing complete paths or only the names."""
+        self.show_only_names = checked
+        self._refresh_list()
 
 
     def delete_selected(self):
@@ -55,9 +64,19 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
                 self.all_items = []
 
     def _update_preprocessing_widget(self):
-        """Update the preprocessing widget with current file list."""
-        updated_files = [self.filelistWidget.item(i).text()
-                        for i in range(self.filelistWidget.count())]
+        """Update the preprocessing widget with the current file list."""
+        # Get the currently visible names in the list widget
+        visible_items = [self.filelistWidget.item(i).text()
+                         for i in range(self.filelistWidget.count())]
+
+        # If only names are being displayed, reconstruct the full paths
+        if self.show_only_names:
+            # Keep only the paths that correspond to the visible names
+            updated_files = [path for path in self.all_items
+                             if os.path.basename(path) in visible_items]
+        else:
+            # If full paths are already displayed, use them directly
+            updated_files = visible_items
 
         return updated_files
 
@@ -80,11 +99,25 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
 
     def filter_items(self, text):
         """Filter the recordings in the list."""
-        self.filelistWidget.clear()
-        if not text:
-            self.filelistWidget.addItems(self.all_items)
-            return
+        filtered = self.all_items
+        if text:
+            text = text.lower()
+            filtered = [item for item in self.all_items if text in os.path.basename(item).lower() or text in item.lower()]
+        self._refresh_list(filtered)
 
-        text = text.lower()
-        filtered = [item for item in self.all_items if text in item.lower()]
-        self.filelistWidget.addItems(filtered)
+    def _refresh_list(self, items=None):
+        """Refresh the list according to the visualization mode (paths or names)."""
+        # If no items provided, use all items
+        if items is None:
+            items = self.all_items
+
+        # Clear current list
+        self.filelistWidget.clear()
+
+        if self.show_only_names: # If showing only names
+            display_items = [os.path.basename(item) for item in items]
+        else: # Else, show full paths
+            display_items = items
+
+        # Add items to the list widget
+        self.filelistWidget.addItems(display_items)
