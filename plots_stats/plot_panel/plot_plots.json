@@ -1,29 +1,73 @@
-          "PSDPlot": {
-                  "allowed_params": ["psd"],
-          }
-            "title": {
-              "type": "text",
-              "label": "Graph Title",
-              "default": "Plot_params.title"
-            },
-            "x_label": {
-              "type": "text",
-              "label": "X axis Label",
-              "default": "Plot_params.x_label"
-            },
-            "y_label": {
-              "type": "text",
-              "label": "Y axis Label",
-              "default": "Plot_params.y_label"
-            },
-            "xlim": {
-              "type": "range",
-              "label": "X axis Limits",
-              "default": [0, fs/2+10]
-            },
-            "color": {
-              "type": "select",
-              "label": "Line Color",
-              "deafult": "blue",
-              "options": ["blue", "green", "red", "cyan", "magenta", "yellow", "black"]
-            }
+{
+  "PSDPlot": {
+    "allowed_params": ["PSD"],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X axis Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y axis Label",
+        "default": "Plot_params.y_label"
+      },
+      "xlim": {
+        "type": "range",
+        "label": "X axis Limits",
+        "default": [0, "fs/2+10"]
+      },
+      "color": {
+        "type": "select",
+        "label": "Line Color",
+        "default": "blue",
+        "options": ["blue", "green", "red", "cyan", "magenta", "yellow", "black"]
+      }
+    }
+  },
+
+  "TopographicPlot": {
+    "allowed_params": [
+      "Relative Power",
+      "Absolute Power",
+      "Median Frequency",
+      "Spectral Entropy"
+    ],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "color_map": {
+        "type": "select",
+        "label": "Color Map",
+        "default": "magma",
+        "options": [
+          "magma",
+          "plasma",
+          "viridis",
+          "inferno",
+          "cividis",
+          "jet",
+          "hot"
+        ]
+      },
+      "colorbar_min": {
+        "type": "text",
+        "label": "Colorbar Minimum",
+        "default": null
+      },
+      "colorbar_max": {
+        "type": "text",
+        "label": "Colorbar Maximum",
+        "default": null
+      }
+    }
+  }
+}
