@@ -308,15 +308,15 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             output_path = preproc_dir / f"{base_stem}_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.rec.bson"
         else:
             output_path = preproc_dir / f"{base_stem}_cond-{cond.replace("-", "")}.rec.bson"
-        if hasattr(data, "save"):
+        if isinstance(data, np.ndarray):
+            output_path = output_path.with_suffix('.mat')
+            savemat(output_path, {'data': data})
+        elif hasattr(data, "save"):
             data.save(str(output_path))
         elif hasattr(data, "save_to_bson"):
             data.save_to_bson(str(output_path))
         else:
-            try:
-                savemat(output_path, {'data': data})
-            except Exception:
-                raise RuntimeError('Error saving')
+            savemat(output_path, {'data': data})
 
         controller._log_message(f"✅ Preprocessed saved: {output_path}")
 
