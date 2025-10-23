@@ -356,10 +356,11 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             outpath = param_dir / outname
 
             save_struct = {}
-            if psd_val is not None:
-                save_struct['psd'] = np.asarray(psd_val)
-            if freqs_val is not None:
-                save_struct['freqs'] = np.asarray(freqs_val)
+            if psd_val is not None or freqs_val is not None:
+                save_struct['psd'] = {
+                    'values': np.asarray(psd_val) if psd_val is not None else None,
+                    'freqs': np.asarray(freqs_val) if freqs_val is not None else None
+                }
 
             mat_dict = {metric_label: save_struct}
 

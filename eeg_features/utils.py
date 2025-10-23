@@ -810,9 +810,11 @@ def compute_parameters(epochs, fs, band, cfg):
 
         # Store PSD values: average across trials if averaging is enabled
         try:
-            params[f'psd'] = np.nanmean(psd, axis=0) \
-                if cfg['segmentation']['average'] and epochs.ndim == 3 else psd
-            params[f'psd_freqs'] = fxx
+            psd_values = np.nanmean(psd, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else psd
+            params['psd'] = {
+                'values': psd_values,
+                'freqs': fxx
+            }
         except Exception as e:
             print(e)
 
