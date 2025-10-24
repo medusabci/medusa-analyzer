@@ -8,6 +8,9 @@ from plots_stats.plot_panel.plot_classes import PSDPlot, TopographicPlotWrapper
 from plots_stats.plot_panel.export_dialog import ExportDialog
 from functools import partial
 import re, os, json
+import numpy as np
+from scipy.io import loadmat
+from collections import defaultdict
 
 
 class TabbedPlotWidgetController(QtCore.QObject):
@@ -40,7 +43,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         # Obtain paths of filtered files:
         files = self.view.main_module.controller.filtered_files
-        filtered_files = self.filter_recordings()
+        self.filtered_files = self.filter_recordings()
+
         # Extract available bands
         self.available_bands = self.extract_unique_bands(files)
 
@@ -104,7 +108,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
             self.setup_band_list(tab, param)
 
             # Create de FigureCanvas in the placeholder to insert the plot:
-            # TODO: TANTOS PLOTS COMO GROUPS
             placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
             if placeholder is None:
                 layout = None
@@ -119,7 +122,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
             ax = fig.add_subplot(111)
 
             # Modify the title with the param name
-            # TODO: Param name + group name
             title_label = tab.findChild(QtWidgets.QLabel, "titleLabel")
             if title_label:
                 title_label.setText(param_name)
@@ -201,6 +203,17 @@ class TabbedPlotWidgetController(QtCore.QObject):
         if list_widget.count() > 0:
             list_widget.setCurrentRow(0)
 
+        tab._selected_channels = {param: 0}
+        self.on_channels_selected(tab, param)
+        list_widget.currentRowChanged.connect(lambda _: self.on_channels_selected(tab, param))
+
+    def on_channels_selected(self, tab, param):
+        """Read the selected channels and store its indices"""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
+        current_index = list_widget.currentRow()
+        tab._selected_channels[param] = current_index
+        print(f"Selected channel index for param '{param}': {current_index}")
+
     def extract_unique_bands(self, param_list):
         """ Extract unique bands from all files"""
         bands = set()
@@ -220,6 +233,32 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         if list_widget.count() > 0:
             list_widget.setCurrentRow(0)
+
+        list_widget.currentTextChanged.connect(lambda band: self.on_band_selected(tab, param, band))
+
+        # Initialize paths filtration with the default band
+        if list_widget.count() > 0:
+            default_band = list_widget.currentItem().text()
+            self.on_band_selected(tab, param, default_band)
+
+    def filter_recordings_by_band(self, param, selected_band):
+        """
+        Create a dic with filtered files for the corresponding param and the selected band.
+        """
+        filtered_files_bands = {}
+        param_files_dict = self.filtered_files.get(param, {})
+        for group, file_list in param_files_dict.items():
+            band_files = [f for f in file_list if f"_band-{selected_band}" in f]
+            if band_files:
+                filtered_files_bands.setdefault(param, {}).setdefault(group, []).extend(band_files)
+
+        return filtered_files_bands
+
+    def on_band_selected(self, tab, param, selected_band):
+        filtered_files_bands = self.filter_recordings_by_band(param, selected_band)
+        self.filtered_files_bands = filtered_files_bands
+        tab._filtered_files_bands = filtered_files_bands
+        print(tab._filtered_files_bands)
 
     def _clear_layout(self, layout):
         """Helper to delete all items/widgets from a layout."""
@@ -381,11 +420,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
         container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
         container_widget.setMinimumHeight(250)
         container_widget.updateGeometry()
-        # container_widget.adjustSize()
-        # QtWidgets.QApplication.processEvents()
-
-        # print("TypePlotWidget height:", typePlotWidget.height())
-        # print("ScrollArea height:", typePlotWidget.findChild(QtWidgets.QScrollArea).height())
 
     def update_plot(self, tab):
         """
