@@ -87,8 +87,8 @@ def run_pipeline(controller, settings_dic):
                 segments = []
                 conditions = []
                 if settings_dic['leads']['selected_conditions']:
-                    for cond in settings_dic['segmentation']['selected_conditions']:
-                        segments.append(get_epochs_from_condition(processed_signal, cond, signal_marks, signal_times, fs))
+                    for cond in settings_dic['leads']['selected_conditions']:
+                        segments.append(get_epochs_from_condition(processed_signal, cond, signal_marks, signal_times, fs)[0])
                         conditions.append(cond)
                 else:
                     segments.append(deepcopy(processed_signal))
@@ -235,7 +235,7 @@ def get_epochs_from_condition(signal, condition, marks, times, fs):
         # Extract segment
         segment = signal[start:end]
         # Get epochs from the segment
-        epochs = medusa.get_epochs(segment, segment.shape[0])
+        epochs = medusa.get_epochs(segment[:,None], segment.shape[0])
 
         # Append if epochs were created
         if epochs is not None:

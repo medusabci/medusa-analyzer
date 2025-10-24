@@ -34,7 +34,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
         # Lens icon
         self.iconLabel.setPixmap(QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
 
-        self.all_items = files
+        self.all_items = files.copy()
         self.show_only_names = False  # Checkbox disabled
 
         self.showNamesCheck.toggled.connect(self.toggle_display_mode)
@@ -52,7 +52,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
             if self.confirm_deletion():
                 for item in self.filelistWidget.selectedItems():
                     self.filelistWidget.takeItem(self.filelistWidget.row(item))
-                    self.all_items.remove(item.text())
+                    self.all_items = [x for x in self.all_items if item.text() not in x]
                 self._update_preprocessing_widget()
 
     def delete_all(self):
@@ -64,7 +64,7 @@ class FilesListDialog(QtWidgets.QDialog, ui_files_list_dialog):
                 self.all_items = []
 
     def _update_preprocessing_widget(self):
-        """Update the preprocessing widget with the current file list."""
+        """Update the list with the current file list."""
         # Get the currently visible names in the list widget
         visible_items = [self.filelistWidget.item(i).text()
                          for i in range(self.filelistWidget.count())]

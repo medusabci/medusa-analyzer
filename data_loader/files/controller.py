@@ -109,6 +109,9 @@ class FilesController:
                 self.view.biosignalBox.addItem(f"Name: {key} - Type: {value['class_name']}")
 
             if self.view.biosignalBox.count() == 0:
+                # Finish loading
+                self.view.main_window.loading.finish()
+
                 QtWidgets.QMessageBox.warning(
                     self.view,
                     "No Valid Biosignals",
