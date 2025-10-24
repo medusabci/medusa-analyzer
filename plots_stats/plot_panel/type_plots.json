@@ -20,7 +20,7 @@
       "xlim": {
         "type": "range",
         "label": "X axis Limits",
-        "default": [0, 100]
+        "default": [0, 60]
       },
       "ylim": {
         "type": "range",

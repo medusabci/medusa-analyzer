@@ -129,17 +129,21 @@ class PSDPlot(BasePlot):
             print("[WARN] No PSD data to plot.")
             return
 
-        for group_name, pxx in self._psd_data.items():
-            color = None
+        # Plot PSD
+        for idx, (group_name, pxx) in enumerate(self._psd_data.items()):
             # Prefer color from draw argument
-            if colors and group_name in colors:
-                color = colors[group_name]
+            if colors:
+                color = colors[idx]
             # Otherwise check plot_params
-            elif "group_colors" in self.plot_params and group_name in self.plot_params["group_colors"]:
-                color = self.plot_params["group_colors"][group_name]
+            # elif "group_colors" in self.plot_params:
+            #     color = self.plot_params["group_colors"][idx]
+            else:
+                color = None
 
-            self.ax.plot(self._freqs, pxx, label=group_name, color=color)
+            self.ax.plot(self._freqs, pxx, label=group_name, color=color, linewidth=2.0, alpha=0.9)
 
+
+        # General settings
         self.ax.set_xlabel(self.plot_params.get("x_label", "Frequency (Hz)"))
         self.ax.set_ylabel(self.plot_params.get("y_label", "Power"))
         title = self.plot_params.get("title", "")
@@ -152,6 +156,33 @@ class PSDPlot(BasePlot):
         if ylim is not None:
             self.ax.set_ylim(ylim)
 
-        self.ax.legend()
+        # Add shadows of different eeg bands
+        bands = [
+            (0, 4, 'Delta', '#a6cee3'),  # light blue
+            (4, 8, 'Theta', '#b2df8a'),  # light green
+            (8, 13, 'Alpha', '#fb9a99'),  # light red
+            (13, 20, 'Beta 1', '#fdbf6f'),  # orange
+            (20, 30, 'Beta 2', '#ff7f00'),  # darker orange
+            (30, xlim[1], 'Gamma', '#cab2d6')  # light purple
+        ]
+
+        for start, end, label, color in bands:
+            self.ax.axvspan(start, end, color=color, alpha=0.2, zorder=0)
+            x_pos = (start + end) / 2
+            y_pos = 0.9
+            # if label == 'Gamma':
+            #     x_pos -= 7
+            self.ax.text(
+                x_pos, y_pos, label,
+                ha='center', va='top',
+                fontsize=7,
+                color='black', alpha=0.8, zorder=3,
+                transform = self.ax.get_xaxis_transform()
+            )
+
+        self.ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.6, zorder=0)
+        self.ax.legend(frameon=False, fontsize=10)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['right'].set_visible(False)
         self.ax.relim()
         self.ax.autoscale_view()

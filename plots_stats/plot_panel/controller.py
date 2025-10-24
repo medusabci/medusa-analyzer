@@ -475,11 +475,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 # --- Delegate to PSDPlot instance ---
                 plot_obj.plot_params = tab._plot_params_current
                 plot_obj.load_data(filtered, selected_channels)
-                group_colors = {
-                    "Group 1": "red",
-                    "Group 2": "blue",
-                    "Group 3": "green"
-                }
                 plot_obj.draw(colors = self.group_colors)
 
             else:

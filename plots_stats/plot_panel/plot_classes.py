@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from medusa.plots.head_plots import TopographicPlot as MedusaTopographicPlot
-
+# TODO: BORRAR
 """
 Wrappers for different plot types used in the PlotPanel.
 
@@ -12,52 +12,6 @@ Available plot classes:
     - PSDPlot: Plot Power Spectral Density (PSD) data.
     - TopographicPlot: Plot topographic maps of EEG data. Uses medusa's head_plots module.
 """
-class PSDPlot:
-    """
-    Class for plotting Power Spectral Density (PSD) data.
-    Constructor:
-        ax: matplotlib.axes.Axes
-        plot_params: optional dict with plot parameters:
-            - x_label, y_label, color, title
-    User methods:
-        p = PSDPlot(ax, plot_params)
-    """
-
-    def __init__(self, ax: Axes, plot_params: Optional[Dict[str, Any]] = None):
-        self.ax = ax
-        self.plot_params = plot_params or {}
-        self._line = None
-        self._freqs = None
-        self._psd = None
-
-        # Aplicar labels / título inicial
-        x_label = self.plot_params.get("x_label", "Frequency (Hz)")
-        y_label = self.plot_params.get("y_label", "Power")
-        title = self.plot_params.get("title", "")
-        xlim = self.plot_params.get("xlim", None)
-        ylim = self.plot_params.get("ylim", None)
-        self.ax.set_xlabel(x_label)
-        self.ax.set_ylabel(y_label)
-        if title:
-            self.ax.set_title(title)
-
-        # Clear axis
-        self.ax.clear()
-        # Re-apply labels after clear
-        self.ax.set_xlabel(x_label)
-        self.ax.set_ylabel(y_label)
-        if title:
-            self.ax.set_title(title)
-        if xlim is not None:
-            try:
-                self.ax.set_xlim(xlim)
-            except Exception as e:
-                print(f"[WARN] Failed to set xlim: {e}")
-        if ylim is not None:
-            try:
-                self.ax.set_ylim(ylim)
-            except Exception as e:
-                print(f"[WARN] Failed to set ylim: {e}")
 
 class TopographicPlotWrapper:
     """
