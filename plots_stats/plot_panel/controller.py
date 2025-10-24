@@ -4,11 +4,14 @@ from PySide6.QtWidgets import (QFileDialog, QDialog)
 from PySide6.QtUiTools import loadUiType
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from plots_stats.plot_panel.plot_classes import PSDPlot, TopographicPlotWrapper
+# from plots_stats.plot_panel.plot_classes import PSDPlot, TopographicPlotWrapper
+from plots_stats.plot_panel.plot_classes.base_plot  import BasePlot
+from plots_stats.plot_panel.plot_classes.psd_plot  import PSDPlot
 from plots_stats.plot_panel.export_dialog import ExportDialog
 from functools import partial
 import re, os, json
 import numpy as np
+import scipy
 from scipy.io import loadmat
 from collections import defaultdict
 
@@ -47,6 +50,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         # Extract available bands
         self.available_bands = self.extract_unique_bands(files)
+
+        # Extract group colors
+        self.group_colors = list(self.view.main_module.controller.groups.values())
 
         tab_widget = self.view.tab_widget
         while tab_widget.count() > 0:
@@ -205,14 +211,14 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         tab._selected_channels = {param: 0}
         self.on_channels_selected(tab, param)
-        list_widget.currentRowChanged.connect(lambda _: self.on_channels_selected(tab, param))
+        list_widget.itemSelectionChanged.connect(lambda: self.on_channels_selected(tab, param))
 
     def on_channels_selected(self, tab, param):
         """Read the selected channels and store its indices"""
         list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
-        current_index = list_widget.currentRow()
-        tab._selected_channels[param] = current_index
-        print(f"Selected channel index for param '{param}': {current_index}")
+        selected_indexes = [list_widget.row(item) for item in list_widget.selectedItems()]
+        tab._selected_channels[param] = selected_indexes
+        print(f"Selected channel indices for param '{param}': {selected_indexes}")
 
     def extract_unique_bands(self, param_list):
         """ Extract unique bands from all files"""
@@ -247,10 +253,14 @@ class TabbedPlotWidgetController(QtCore.QObject):
         """
         filtered_files_bands = {}
         param_files_dict = self.filtered_files.get(param, {})
+
         for group, file_list in param_files_dict.items():
-            band_files = [f for f in file_list if f"_band-{selected_band}" in f]
-            if band_files:
-                filtered_files_bands.setdefault(param, {}).setdefault(group, []).extend(band_files)
+            band_param_files = [
+                f for f in file_list
+                if f"_band-{selected_band}" in f and f"_param-{param}" in f
+            ]
+            if band_param_files:
+                filtered_files_bands.setdefault(param, {}).setdefault(group, []).extend(band_param_files)
 
         return filtered_files_bands
 
@@ -423,49 +433,82 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def update_plot(self, tab):
         """
-        Read actual values from dynamic controls and update the plot.
-        Only called when pressing the 'Update' button.
+        Generic update method for plots. Delegates to the specific plot class.
         """
-        # TODO: MODIFICAR PARA QUE FUNCIONE CON TODOS LOS TIPOS DE PLOT Y LO QUE QUIERO YO
-        if not hasattr(tab, "_plot") or not hasattr(tab, "_param_widgets"):
-            print("[WARN] update_plot called but tab has no plot or param widgets.")
-            return
+        try:
+            if not hasattr(tab, "_plot_type"):
+                print("[WARN] Tab has no _plot_type.")
+                return
 
-        params = {}
-        for key, (ptype, widget) in tab._param_widgets.items():
-            if ptype in ("text", "range", "number"):
-                txt = widget.text()
-                # intentar parsear JSON o número
-                try:
-                    params[key] = json.loads(txt)
-                except Exception:
-                    params[key] = txt
+            plot_type = tab._plot_type
+            plot_obj = getattr(tab, "_plot", None)
 
-            elif ptype == "bool":
-                params[key] = widget.isChecked()
+            if plot_obj is None:
+                print(f"[WARN] No plot object found for type {plot_type}.")
+                return
 
-            elif ptype == "select":
-                params[key] = widget.currentText()
+            # Update plot params from widgets
+            if hasattr(tab, "_param_widgets"):
+                tab._plot_params_current = {
+                    key: self._get_widget_value(ptype, widget)
+                    for key, (ptype, widget) in tab._param_widgets.items()
+                }
+
+            # Delegate per-plot data loading
+            if plot_type == "PSDPlot":
+                if not hasattr(tab, "_selected_channels") or not tab._selected_channels:
+                    print("[WARN] No selected channels found in tab.")
+                    return
+
+                param = list(tab._selected_channels.keys())[0]
+                filtered = tab._filtered_files_bands.get(param, {})
+
+                # --- Ensure selected_channels is always a list ---
+                sel = tab._selected_channels.get(param, 0)
+                if isinstance(sel, (int, float)):
+                    selected_channels = [int(sel)]
+                elif isinstance(sel, (list, tuple, set)):
+                    selected_channels = list(sel)
+                else:
+                    selected_channels = [0]
+
+                # --- Delegate to PSDPlot instance ---
+                plot_obj.plot_params = tab._plot_params_current
+                plot_obj.load_data(filtered, selected_channels)
+                group_colors = {
+                    "Group 1": "red",
+                    "Group 2": "blue",
+                    "Group 3": "green"
+                }
+                plot_obj.draw(colors = self.group_colors)
 
             else:
-                params[key] = str(widget.text())
+                print(f"[WARN] Unsupported plot type: {plot_type}")
 
-        # Actualizamos los parámetros actuales
-        tab._plot_params_current.update(params)
-
-        # Actualizamos el plot_params del objeto gráfico
-        plot_obj = tab._plot
-        if hasattr(plot_obj, "plot_params"):
-            plot_obj.plot_params.update(tab._plot_params_current)
-
-        # Redibujar solo si hay datos cargados
-        if getattr(plot_obj, "_freqs", None) is not None and getattr(plot_obj, "_psd", None) is not None:
-            try:
-                plot_obj.update(plot_obj._freqs, plot_obj._psd)
+            if hasattr(tab, "_canvas"):
                 tab._canvas.draw()
-                print("[INFO] Plot updated with new parameters.")
-            except Exception as e:
-                print(f"[ERROR] Failed to update plot: {e}")
+
+        except Exception as e:
+            print(f"[ERROR] Exception in update_plot: {e}")
+            if hasattr(tab, "_plot"):
+                tab._plot.clear()
+            if hasattr(tab, "_canvas"):
+                tab._canvas.draw()
+
+    def _get_widget_value(self, ptype, widget):
+        """Helper to extract a typed value from a widget."""
+        import json
+        if ptype in ("text", "range", "number"):
+            text = widget.text().strip()
+            try:
+                return json.loads(text)
+            except Exception:
+                return text
+        elif ptype == "bool":
+            return widget.isChecked()
+        elif ptype == "select":
+            return widget.currentText()
+        return None
 
     def prev_tab(self):
         """Go back to the previous tab."""

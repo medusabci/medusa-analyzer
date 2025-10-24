@@ -21,8 +21,6 @@ class PSDPlot:
             - x_label, y_label, color, title
     User methods:
         p = PSDPlot(ax, plot_params)
-        p.update(signa)
-        p.clear()
     """
 
     def __init__(self, ax: Axes, plot_params: Optional[Dict[str, Any]] = None):
@@ -36,6 +34,8 @@ class PSDPlot:
         x_label = self.plot_params.get("x_label", "Frequency (Hz)")
         y_label = self.plot_params.get("y_label", "Power")
         title = self.plot_params.get("title", "")
+        xlim = self.plot_params.get("xlim", None)
+        ylim = self.plot_params.get("ylim", None)
         self.ax.set_xlabel(x_label)
         self.ax.set_ylabel(y_label)
         if title:
@@ -48,53 +48,16 @@ class PSDPlot:
         self.ax.set_ylabel(y_label)
         if title:
             self.ax.set_title(title)
-
-
-    def update(self, freqs, pxx):
-        """Plot PSD data."""
-
-        self._freqs = freqs
-        self._psd = pxx
-
-        self.ax.cla() # clear axis
-
-        x_label = self.plot_params.get("x_label", "Frequency (Hz)")
-        y_label = self.plot_params.get("y_label", "Power")
-        title = self.plot_params.get("title", "")
-        self.ax.set_xlabel(x_label)
-        self.ax.set_ylabel(y_label)
-        if title:
-            self.ax.set_title(title)
-
-        line_kwargs = {}
-        if "color" in self.plot_params:
-            line_kwargs["color"] = self.plot_params["color"]
-
-        self._line, = self.ax.plot(freqs, pxx, **line_kwargs)
-
-        # Optional: set x limits
-        xlim = self.plot_params.get("xlim", None)
-        if xlim:
-            self.ax.set_xlim(xlim)
-
-        self.ax.relim()
-        self.ax.autoscale_view()
-
-    def clear(self):
-        """Clear axis."""
-        if self._line is not None:
+        if xlim is not None:
             try:
-                self._line.remove()
-            except Exception:
-                pass
-            self._line = None
-        self.ax.cla()
-        self.ax.set_xlabel(self.plot_params.get("x_label", "Frequency (Hz)"))
-        self.ax.set_ylabel(self.plot_params.get("y_label", "Power"))
-        if self.plot_params.get("title", ""):
-            self.ax.set_title(self.plot_params.get("title", ""))
-
-
+                self.ax.set_xlim(xlim)
+            except Exception as e:
+                print(f"[WARN] Failed to set xlim: {e}")
+        if ylim is not None:
+            try:
+                self.ax.set_ylim(ylim)
+            except Exception as e:
+                print(f"[WARN] Failed to set ylim: {e}")
 
 class TopographicPlotWrapper:
     """
@@ -134,82 +97,3 @@ class TopographicPlotWrapper:
 
         # Inicializar el objeto medusa (sin datos aún)
         self._medusa_topo = MedusaTopographicPlot(**medusa_kwargs)
-
-    def update(self, values):
-        """Actualiza la topografía con un array 'values' (len = n_channels)."""
-        values = np.asarray(values).squeeze()
-        if values.ndim != 1 or values.size != len(self.channel_set.channels):
-            raise ValueError("values must be 1D array with same length as channel_set.channels")
-
-        # Configurar clim si viene en plot_params
-        cmin = self.plot_params.get("colorbar_min", None)
-        cmax = self.plot_params.get("colorbar_max", None)
-        if cmin is not None or cmax is not None:
-            clim = [cmin if cmin is not None else np.min(values),
-                    cmax if cmax is not None else np.max(values)]
-            # setear clim en el objeto medusa (usa atributo clim en __init__)
-            self._medusa_topo.cmap = self.plot_params.get("color_map", self._medusa_topo.cmap)
-            self._medusa_topo.clim = clim
-        else:
-            # si no hay límites, dejamos que Medusa calcule min/max
-            self._medusa_topo.clim = None
-            self._medusa_topo.cmap = self.plot_params.get("color_map", self._medusa_topo.cmap)
-
-        # Hacemos update (medusa crea handles internamente)
-        self._medusa_topo.update(values)
-
-        # (Re)crear / actualizar colorbar si procede
-        # El objeto medusa_topo.plot_handles['color-mesh'] puede ser:
-        # - para interpolation: un PolyMesh (mappable)
-        # - para no-interpolate: mapper (ScalarMappable) guardado en 'color-mesh'
-        # Intentaremos usarlo para colorbar.
-        try:
-            # eliminar colorbar previo
-            if self._cbar is not None:
-                try:
-                    self._cbar.remove()
-                except Exception:
-                    pass
-                self._cbar = None
-
-            # Obtener mappable
-            ph = self._medusa_topo.plot_handles
-            mappable = None
-            if ph is not None and 'color-mesh' in ph:
-                mappable = ph['color-mesh']
-
-            if mappable is not None:
-                # Si es mapper (ScalarMappable) o QuadMesh, podemos añadir colorbar
-                fig = self.ax.figure
-                # crear un axes pequeño a la derecha y poner colorbar allí
-                # Intentamos usar una posición estándar si no existe
-                cax = fig.add_axes([0.92, 0.12, 0.02, 0.76])  # puede ajustarse en el layout del caller
-                # Si mappable es un ScalarMappable: fig.colorbar(mappable, cax=cax)
-                # Si es un PolyCollection/pcolormesh tendrá el mismo comportamiento
-                self._cbar = fig.colorbar(mappable, cax=cax)
-        except Exception:
-            # No rompemos si el colorbar falla; lo dejamos sin colorbar
-            pass
-
-        # Forzar redraw del axes
-        self.ax.relim()
-        self.ax.autoscale_view()
-
-    def clear(self):
-        """Limpia la topografía (borra handles y colorbar)."""
-        if self._medusa_topo is not None:
-            try:
-                self._medusa_topo.clear()
-            except Exception:
-                pass
-        if self._cbar is not None:
-            try:
-                self._cbar.remove()
-            except Exception:
-                pass
-            self._cbar = None
-        # dejar el axes limpio
-        try:
-            self.ax.cla()
-        except Exception:
-            pass

@@ -20,13 +20,12 @@
       "xlim": {
         "type": "range",
         "label": "X axis Limits",
-        "default": [0, "fs/2+10"]
+        "default": [0, 100]
       },
-      "color": {
-        "type": "select",
-        "label": "Line Color",
-        "default": "blue",
-        "options": ["blue", "green", "red", "cyan", "magenta", "yellow", "black"]
+      "ylim": {
+        "type": "range",
+        "label": "Y axis Limits",
+        "default": [0, 10]
       }
     }
   },

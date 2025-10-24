@@ -3,14 +3,14 @@ from eeg_features.utils import run_pipeline
 import json
 from medusa import ecg
 
-file = r'C:\Users\beapa\PycharmProjects\medusa-analyzer\Signals\R9.rec.bson'
-file2 = r'C:\Users\beapa\PycharmProjects\medusa-analyzer\Signals\R3.rec.bson'
+clean = r'D:\Proyectos\medusa-analyzer\results_ecg\results\derivatives\preprocessed\sub-16\ecg\sub-16_task-videogame_level-01_lead-II_cond-all.rec.bson'
+raw = r'D:\Proyectos\medusa-analyzer\results_ecg\results\derivatives\preprocessed\sub-16\ecg\sub-16_task-videogame_level-01_cond-raw-signal.rec.bson'
 
 with open("settings.json", "r", encoding="utf-8") as f:
     settings = json.load(f)
 
-data = medusa.components.Recording.load(file)
-data2 = medusa.components.Recording.load(file2)
+data = medusa.components.Recording.load(clean)
+data2 = medusa.components.Recording.load(raw)
 
 
 
