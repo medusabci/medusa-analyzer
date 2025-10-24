@@ -40,6 +40,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         # Obtain paths of filtered files:
         files = self.view.main_module.controller.filtered_files
+        filtered_files = self.filter_recordings()
         # Extract available bands
         self.available_bands = self.extract_unique_bands(files)
 
@@ -485,3 +486,47 @@ class TabbedPlotWidgetController(QtCore.QObject):
             fig.set_size_inches(original_size)
 
         QtWidgets.QMessageBox.information(self.view, "Export", f"Saved to:\n{fname}")
+
+    def filter_recordings(self):
+        files = self.view.main_module.controller.filtered_files
+
+        parameters = getattr(self.view.main_module.controller, "params", None)
+        separated_files_param = {}
+        for param in parameters:
+            for file in files:
+                if param in file:
+                    separated_files_param.setdefault(param, []).append(file)
+
+        # Separate files by groups
+        groups = self.view.main_module.controller.group_assignment
+        separated_files = {}
+        for key in separated_files_param.keys():
+            for file in separated_files_param[key]:
+                for group in groups:
+
+                    # Group files based on group assignment
+                    pass_group = False
+                    for element in groups[group]:
+                        # Split the element with '_'
+                        parts = element.split('_')
+
+                        # Check if all parts are present in the file name
+                        all_present = True
+                        for part in parts:
+                            if part not in file:
+                                all_present = False
+                                break
+                        # If not all present, skip to the next file
+                        if not all_present:
+                            continue
+                        # If present, mark as passed and break the loop
+                        else:
+                            pass_group = True
+                            break
+                    # If no group matched, skip to the next file
+                    if not pass_group:
+                        continue
+                    else:
+                        separated_files.setdefault(key, {}).setdefault(group, []).append(file)
+                        break
+        return separated_files
