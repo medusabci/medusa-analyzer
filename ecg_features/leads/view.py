@@ -18,7 +18,7 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
         super().__init__()
         self.setupUi(self)
         self.main_window = main_window
-
+        self.first_show = True
 
         ### LEADS HEADER ###
         layout = QtWidgets.QVBoxLayout()
@@ -75,7 +75,9 @@ class LeadsWidget(QtWidgets.QWidget, ui_leads_widget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        self.add_leads_rows()
+        if self.first_show:
+            self.first_show = False
+            self.add_leads_rows()
         self.shown.emit()
 
 
