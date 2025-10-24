@@ -117,7 +117,11 @@ def run_pipeline(controller, settings_dic):
                         t_uniform = np.arange(0, t_hrv[-1], 1/fs_hrv)
                         hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
                         hrv_basename = str(Path(base_name).with_name(Path(base_name).stem + '_hrv' + Path(base_name).suffix))
-                        save_outputs(controller, deepcopy(hrv_signal), hrv_basename, lead_name, cond, 'prep')
+                        hrv_save_struct = {}
+                        hrv_save_struct['hrv'] = {
+                            'hrv': hrv_signal,
+                            'times': t_uniform}
+                        save_outputs(controller, deepcopy(hrv_save_struct), hrv_basename, lead_name, cond, 'prep')
 
                         ## Fifth step: Save outputs
                         params = compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, settings_dic['parameters'])
@@ -311,6 +315,9 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         if isinstance(data, np.ndarray):
             output_path = output_path.with_suffix('.mat')
             savemat(output_path, {'data': data})
+        elif "hrv" in data.keys():
+            output_path = output_path.with_suffix('.mat')
+            savemat(str(output_path), data)
         elif hasattr(data, "save"):
             data.save(str(output_path))
         elif hasattr(data, "save_to_bson"):
