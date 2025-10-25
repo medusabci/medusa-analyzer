@@ -39,7 +39,6 @@ class LinearPlot(BasePlot):
                     print(f"[ERROR] Cannot load .mat file {filepath}: {e}")
                     continue
 
-                # Buscar el vector de datos (intentamos varias claves posibles)
                 data = None
                 for key in ("data", "vector", "values", "valores"):
                     if key in mat:
@@ -47,27 +46,21 @@ class LinearPlot(BasePlot):
                         break
 
                 if data is None:
-                    # Si el archivo tiene solo una variable, cogemos la primera que parezca un vector
                     for key, val in mat.items():
-                        if isinstance(val, np.ndarray) and val.ndim == 1 and val.size == 32:
+                        if isinstance(val, np.ndarray) and val.ndim == 1:
                             data = val
                             break
 
                 if data is None:
-                    print(f"[WARN] No valid 1x32 vector found in {filepath}")
+                    print(f"[WARN] No valid data found in {filepath}")
                     continue
 
-                # Validar tamaño
-                if data.size != 32:
-                    print(f"[WARN] Unexpected vector size ({data.size}) in {filepath}")
-                    continue
-
-                # Validar canales seleccionados
+                # Validate channels
                 valid_channels = [ch for ch in selected_channels if 0 <= ch < data.size]
                 if not valid_channels:
                     valid_channels = [0]  # por defecto canal 0
 
-                # Promedio entre canales seleccionados
+                # Average of selected channels
                 mean_value = np.mean(data[valid_channels])
                 group_values.append(mean_value)
 

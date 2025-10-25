@@ -164,6 +164,8 @@ def run_pipeline(controller, settings_dic):
         {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'],
          'max': settings_dic['preprocessing']['broadband_max']}]
 
+    # Sorted bands to have broadband in the first position
+    bands = sorted(bands, key=lambda b: 0 if b['name'].lower() == 'broadband' else 1)
 
     # Config of the progress bar
     steps_per_cond = 7
@@ -706,11 +708,25 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
             outpath = param_dir / outname
 
             if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict) and 'band' in v[0]:
-                rp_struct = {}
                 for entry in v:
                     bname = entry.get('band', 'unknown')
-                    rp_struct[bname] = np.asarray(entry.get('value'))
-                savemat(outpath, {metric_label: rp_struct})
+                    val = np.asarray(entry.get('value'))
+
+                    # Nombre del archivo: usa la banda del diccionario, NO la del argumento
+                    if event is not None:
+                        outname = (
+                            f"{base_stem}_param-{metric_label.replace('-', '')}_band-{bname.replace('-', '')}"
+                            f"_cond-{cond.replace('-', '')}_event-{event.replace('-', '')}.mat"
+                        )
+                    else:
+                        outname = (
+                            f"{base_stem}_param-{metric_label.replace('-', '')}_band-{bname.replace('-', '')}"
+                            f"_cond-{cond.replace('-', '')}.mat"
+                        )
+
+                    outpath = param_dir / outname
+                    savemat(outpath, {metric_label: val})
+                    controller._log_message(f"✅ Parameter saved: {outpath}")
 
             elif isinstance(v, dict):
                 nested = {}
@@ -844,7 +860,7 @@ def compute_parameters(epochs, fs, band, cfg):
                 val_band = np.nanmean(val_band, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val_band
                 val.append({"band": band["name"], "value": val_band})
 
-        params[f"relative_power"] = val
+            params[f"relative_power"] = val
 
     ## SPECTRAL METRICS - OTHERS
     spectral_funcs = {
