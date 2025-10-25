@@ -30,12 +30,39 @@
     }
   },
 
-  "TopographicPlot": {
+  "LinearPlot": {
     "allowed_params": [
       "Relative Power",
       "Absolute Power",
       "Median Frequency",
       "Spectral Entropy"
+    ],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X axis Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y axis Label",
+        "default": "Plot_params.y_label"
+      },
+      "line_color": {
+        "type": "text",
+        "label": "Line color",
+        "default": "#000000"
+      }
+    }
+  },
+
+  "TopographicPlot": {
+    "allowed_params": [
     ],
     "Plot_params": {
       "title": {

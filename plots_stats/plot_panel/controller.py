@@ -6,7 +6,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # from plots_stats.plot_panel.plot_classes import PSDPlot, TopographicPlotWrapper
 from plots_stats.plot_panel.plot_classes.base_plot  import BasePlot
-from plots_stats.plot_panel.plot_classes.psd_plot  import PSDPlot
+from plots_stats.plot_panel.plot_classes.psd_plot import PSDPlot
+from plots_stats.plot_panel.plot_classes.linear_plot import LinearPlot
 from plots_stats.plot_panel.export_dialog import ExportDialog
 from functools import partial
 import re, os, json
@@ -31,7 +32,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         if self._tabs_created: # create tabs only once
             return
 
-        selected_parameters = getattr(self.view.main_module.controller, "params", None)
+        selected_parameters = self.view.main_module.controller.param_selection
         if selected_parameters is None:
             return
 
@@ -136,6 +137,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             tab._plot_type = plot_type
             if plot_type == "PSDPlot":
                 plot_obj = PSDPlot(ax, {k: v["default"] for k, v in merged_params.items()})
+            elif plot_type == "LinearPlot":
+                plot_obj = LinearPlot(ax, {k: v["default"] for k, v in merged_params.items()})
             # elif plot_type == "TopographicPlot":
             #     plot_obj = TopographicPlotWrapper(ax, {}, merged_params)
             else:
@@ -455,7 +458,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 }
 
             # Delegate per-plot data loading
-            if plot_type == "PSDPlot":
+            if plot_type == "PSDPlot" or plot_type=='LinearPlot':
                 if not hasattr(tab, "_selected_channels") or not tab._selected_channels:
                     print("[WARN] No selected channels found in tab.")
                     return
@@ -475,7 +478,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 # --- Delegate to PSDPlot instance ---
                 plot_obj.plot_params = tab._plot_params_current
                 plot_obj.load_data(filtered, selected_channels)
-                plot_obj.draw(colors = self.group_colors)
+                if plot_type == 'PSDPlot':
+                    plot_obj.draw(colors = self.group_colors)
+                elif plot_type == 'LinearPlot':
+                    plot_obj.draw()
 
             else:
                 print(f"[WARN] Unsupported plot type: {plot_type}")

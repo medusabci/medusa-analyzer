@@ -168,17 +168,15 @@ class PSDPlot(BasePlot):
 
         for start, end, label, color in bands:
             self.ax.axvspan(start, end, color=color, alpha=0.2, zorder=0)
-            x_pos = (start + end) / 2
-            y_pos = 0.9
-            # if label == 'Gamma':
-            #     x_pos -= 7
-            self.ax.text(
-                x_pos, y_pos, label,
-                ha='center', va='top',
-                fontsize=7,
-                color='black', alpha=0.8, zorder=3,
-                transform = self.ax.get_xaxis_transform()
-            )
+            # x_pos = (start + end) / 2
+            # y_pos = 0.9
+            # self.ax.text(
+            #     x_pos, y_pos, label,
+            #     ha='center', va='top',
+            #     fontsize=7,
+            #     color='black', alpha=0.8, zorder=3,
+            #     transform = self.ax.get_xaxis_transform()
+            # )
 
         self.ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.6, zorder=0)
         self.ax.legend(frameon=False, fontsize=10)
