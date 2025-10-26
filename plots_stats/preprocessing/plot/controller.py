@@ -14,28 +14,29 @@ class PlotController(QtCore.QObject):
         self.view = view
         self.view.controller = self
 
-        # Estado
-        self.recording = None
+        self.recording = None # actualizes when loading a valid recording to plot
         self.fs = self.view.main_module.controller.fs
         self.channel_list = self.view.main_module.controller.channel_list
-        self.current_window_start = 0  # segundos
-        self.window_duration = 5  # segundos
-        self.vertical_scale = 1.0  # escala de amplitud (zoom vertical)
+        self.current_window_start = 0  # (s)
+        self.window_duration = 5  # (window plot time in (s))
+        self.vertical_scale = 1.0  # scale for vertical zoom
         self.total_duration = 0
 
-        # Conexiones
+
         self.view.shown.connect(self.on_first_show)
         self.view.sliderRaw.valueChanged.connect(lambda val: self.on_slider_moved("raw", val))
         self.view.sliderClean.valueChanged.connect(lambda val: self.on_slider_moved("clean", val))
-
         self.view.prevButton.clicked.connect(self.prev_tab)
         self.view.nextButton.clicked.connect(self.next_tab)
         self.view.exportButton.clicked.connect(self.export_figure)
-    # ------------------------------------------------------------ #
+        self.view.updatecleanButton.clicked.connect(lambda: self.update_plot_labels("clean"))
+        self.view.updaterawButton.clicked.connect(lambda: self.update_plot_labels("raw"))
+
+
     def on_first_show(self):
-        """Carga el archivo de señal EEG al mostrar el widget."""
+        """ Load de recording file when the widget is first shown """
+
         path = self.view.main_module.controller.file_path_to_plot
-        print(f"[DEBUG] Loading recording from {path}")
         try:
             self.recording = medusa.components.Recording.load(path)
         except Exception as e:
@@ -43,12 +44,12 @@ class PlotController(QtCore.QObject):
             return
 
         self.total_duration = len(self.recording.eeg.times) / self.fs
-
         self.setup_plot("raw")
         self.setup_plot("clean")
 
-    # ------------------------------------------------------------ #
     def setup_plot(self, mode):
+        """ Setup the available plots.
+        """
         if mode == "raw":
             data = np.array(self.recording.eeg.original_signal)
             placeholder = self.view.plotrawPlaceholder
@@ -58,16 +59,14 @@ class PlotController(QtCore.QObject):
             placeholder = self.view.plotcleanPlaceholder
             slider = self.view.sliderClean
 
-        if data.shape[0] < data.shape[1]:
-            data = data.T
-
+        # Obtain the time array based on the signal sampling frequency
         n_samples, n_channels = data.shape
         times = self.recording.eeg.times
-        if times[-1] > self.total_duration * 1.5:  # probablemente están en muestras o ms
+        if times[-1] > self.total_duration * 1.5:
             times = np.arange(len(times)) / self.fs
         setattr(self, f"{mode}_times", times)
 
-        # --- Crear figura ---
+        # Create the figure. Height is adjusted based on the number of channels
         fig_height = max(2.0, n_channels * 0.4)
         fig = Figure(figsize=(8, fig_height))
         canvas = FigureCanvas(fig)
@@ -84,31 +83,24 @@ class PlotController(QtCore.QObject):
         channel_means = np.nanmean(data, axis=0)
         setattr(self, f"{mode}_channel_means", channel_means)
 
-        # --- Calcular offsets fijos ---
+        # Calculate fixed offsets for channels
         spacing = 1.0 / (n_channels + 1)
         offsets = np.linspace(spacing, 1.0 - spacing, n_channels)[::-1]
         setattr(self, f"{mode}_channel_offsets", offsets)
 
-        # --- Calcular escala inicial adaptativa ---
-        # Usamos el percentil 95 de la amplitud típica por canal
-        amp_ref = np.nanmedian([np.nanpercentile(np.abs(data[:, ch] - channel_means[ch]), 95)
-                                for ch in range(n_channels)])
+        # Calculate adaptative initial scale using the 95 percentile of the amplitude of each channel
+        amp_ref = np.nanmedian([np.nanpercentile(np.abs(data[:, ch] - channel_means[ch]), 95) for ch in range(n_channels)])
         if amp_ref == 0 or np.isnan(amp_ref):
-            amp_ref = 1e-6  # evitar divisiones por cero
-
-        # Queremos que ±amp_ref * vertical_scale ≈ 0.4 * spacing
-        # → amplitud visible que no toque el canal de arriba/abajo
+            amp_ref = 1e-6  # avoid zero division
         self.vertical_scale = (0.6 * spacing) / amp_ref
         self.vertical_scale = np.clip(self.vertical_scale, 1e-3, 0.1)
         setattr(self, f"{mode}_base_scale", self.vertical_scale)
         setattr(self, f"{mode}_scale", self.vertical_scale)
 
-        print(f"[DEBUG] {mode.upper()} initial scale set to {self.vertical_scale:.4f} (amp_ref={amp_ref:.4f})")
-
-        # --- Configurar slider ---
+        # Configure slider
         max_start = max(0, self.total_duration - self.window_duration)
         slider.setMinimum(0)
-        slider.setMaximum(int(max_start))  # segundos enteros
+        slider.setMaximum(int(max_start))
         slider.setSingleStep(1)
         slider.setPageStep(int(self.window_duration))
         slider.setValue(0)
@@ -116,8 +108,9 @@ class PlotController(QtCore.QObject):
         canvas.mpl_connect("scroll_event", lambda event, m=mode: self.on_scroll(event, m))
 
         self.draw_window(mode)
+        self.update_plot_labels(mode)
 
-    # ------------------------------------------------------------ #
+
     def draw_window(self, mode):
         ax = getattr(self, f"{mode}_ax")
         canvas = getattr(self, f"{mode}_canvas")
@@ -135,9 +128,8 @@ class PlotController(QtCore.QObject):
 
         ax.cla()
 
-        # Paleta de colores por canal
         n_channels = segment.shape[1]
-        cmap = plt.cm.get_cmap("tab10", n_channels)  # puedes cambiar a "rainbow", "Set3", etc.
+        cmap = plt.cm.get_cmap("tab10", n_channels)
         colors = [cmap(i) for i in range(n_channels)]
 
         scale = getattr(self, f"{mode}_scale", getattr(self, f"{mode}_base_scale", 1.0))
@@ -146,22 +138,45 @@ class PlotController(QtCore.QObject):
             amplified = centered * scale
             ax.plot(segment_times, amplified + offsets[ch], lw=0.8, color=colors[ch])
 
+        # Set titles based on the editable params
+        title_edit = getattr(self.view, f"title{mode}")
+        xlabel_edit = getattr(self.view, f"x{mode}")
+        ylabel_edit = getattr(self.view, f"y{mode}")
+        title_text = title_edit.text() if title_edit.text().strip() else f"EEG {'RAW' if mode == 'raw' else 'CLEAN'} Signal"
+        xlabel_text = xlabel_edit.text() if xlabel_edit.text().strip() else "Time (s)"
+        ylabel_text = ylabel_edit.text() if ylabel_edit.text().strip() else "Channels"
+
         ax.set_ylim(0, 1)
         ax.set_xlim(segment_times[0], segment_times[-1])
-        ax.set_xlabel("Time (s)")
-        ax.set_ylabel("Channels")
+        ax.set_xlabel(xlabel_text)
+        ax.set_ylabel(ylabel_text)
         ax.set_yticks(offsets)
         ax.set_yticklabels(self.channel_list)
         ax.invert_yaxis()
-        ax.set_title(f"EEG {'RAW' if mode == 'raw' else 'CLEAN'} Signal")
+        ax.set_title(title_text)
 
         canvas.draw_idle()
 
-    # ------------------------------------------------------------ #
-    def on_scroll(self, event, mode):
-        """Zoom vertical proporcional y estable respecto a la escala base."""
-        zoom_factor = 1.2
+    def update_plot_labels(self, mode):
+        """Actualizes title and axis labels with QLineEdit information."""
+        ax = getattr(self, f"{mode}_ax", None)
+        canvas = getattr(self, f"{mode}_canvas", None)
 
+        title_edit = getattr(self.view, f"title{mode}")
+        xlabel_edit = getattr(self.view, f"x{mode}")
+        ylabel_edit = getattr(self.view, f"y{mode}")
+
+        ax.set_title(title_edit.text() or f"EEG {'raw' if mode == 'raw' else 'clean'} Signal")
+        ax.set_xlabel(xlabel_edit.text() or "Time (s)")
+        ax.set_ylabel(ylabel_edit.text() or "Channels")
+
+        canvas.draw_idle()
+
+
+    def on_scroll(self, event, mode):
+        """Zoom signal amplitude"""
+
+        zoom_factor = 1.2
         scale = getattr(self, f"{mode}_scale", getattr(self, f"{mode}_base_scale", 1.0))
         base_scale = getattr(self, f"{mode}_base_scale", 1.0)
 
@@ -170,31 +185,20 @@ class PlotController(QtCore.QObject):
         elif event.button == 'down':
             scale /= zoom_factor
 
-        # Limitar entre 0.1x y 10x la escala base
+        # Limit the base_scale
         min_scale = base_scale * 0.1
         max_scale = base_scale * 10.0
         scale = np.clip(scale, min_scale, max_scale)
-
-        # Guardar y aplicar
-        setattr(self, f"{mode}_scale", scale)
-        # Guardar la nueva escala SOLO para este modo
         setattr(self, f"{mode}_scale", scale)
 
-        # Aplicar al dibujar (sin tocar el otro modo)
         self.draw_window(mode)
-        print(f"[DEBUG] Zoom {mode}: scale={scale:.5f} (base={base_scale:.5f})")
 
     def on_slider_moved(self, mode, value):
-        """Actualiza la posición temporal según el valor del slider."""
-        # El slider representa el segundo de inicio de la ventana
-        self.current_window_start = float(value)
+        """Actualizes temporal position depending on slider"""
 
-        # Redibuja solo la vista correspondiente
+        self.current_window_start = float(value)
         self.draw_window(mode)
 
-        # Depuración
-        print(f"[DEBUG] Slider {mode}: start={self.current_window_start:.2f}s "
-              f"(window={self.window_duration:.1f}s)")
 
     def prev_tab(self):
         """Go back to the previous tab."""
