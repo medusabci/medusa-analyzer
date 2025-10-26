@@ -88,22 +88,39 @@ class ExperimentsController:
         # Move inside the loop when preprocessing is done
         from plots_stats.main_module.view import MainModuleWindow
         from plots_stats.main_module.controller import MainModuleWindowController
+        from plots_stats.config.view import ConfigWidget
+        from plots_stats.config.controller import ConfigController
+        from plots_stats.preprocessing.loading.view import PreprocessingWidget
+        from plots_stats.preprocessing.loading.controller import PreprocessingController
 
+        # Main Module
+        self.plot_stats_window = MainModuleWindow()
+        self.plot_stats_controller = MainModuleWindowController(self.plot_stats_window)
+
+        # Setting Main Module tittle depending on module type
         if module_type == "params":
-            self.plot_stats_window = MainModuleWindow()
-            self.plot_stats_controller = MainModuleWindowController(self.plot_stats_window)
             window_title = "Plot & Stats - Experiment Setup"
-
         elif module_type == "preprocess":
-            self.plot_stats_window = MainModuleWindow()  # temporal
-            self.plot_stats_controller = MainModuleWindowController(self.plot_stats_window)
             window_title = "Preprocessing - Experiment Setup"
 
+        # Insert initial widget into the stackedWidget dependindo on module type
+        if module_type == "params":
+            widget = ConfigWidget(self.plot_stats_window)
+            ConfigController(widget)
+        elif module_type == "preprocess":
+            widget = PreprocessingWidget(self.plot_stats_window)
+            PreprocessingController(widget)
+
+        # Replace the default widget in index 0
+        self.plot_stats_window.stackedWidget.insertWidget(0, widget)
+        self.plot_stats_window.stackedWidget.setCurrentIndex(0)
+
+        # Show the dialog
         dialog = QtWidgets.QDialog(self.view.window())
         dialog.setModal(True)
         dialog.setWindowTitle(window_title)
         dialog.setMinimumWidth(1200)
-        dialog.setMinimumHeight(900)
+        dialog.setMinimumHeight(750)
 
         # Finish loading
         self.view.main_window.loading.finish()

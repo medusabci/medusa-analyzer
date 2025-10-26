@@ -75,14 +75,6 @@ class MainModuleWindow(QtWidgets.QWidget, ui_plots_stats_window):
         self.nextButton.setDisabled(True)  # 'Next' is disabled until valid input is provided
         self.backButton.setVisible(False)
 
-        ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
-
-        # Base widget (Initial setup)
-        self.config_widget = ConfigWidget(self)
-        ConfigController(self.config_widget)
-        self.stackedWidget.insertWidget(0, self.config_widget)
-        self.stackedWidget.setCurrentIndex(0)
-
         # Waits until the main window is shown to create the loading dialog, so it can be centered over the main window properly
         QtCore.QTimer.singleShot(0, self.show_loading)
 
