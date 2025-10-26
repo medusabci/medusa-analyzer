@@ -19,6 +19,7 @@ class TabbedPlotWidget(QtWidgets.QWidget, ui_tab_widget):
 
         self.tab_widgets = [] # store references to tab widgets
 
+
     def add_tab(self, widget, name: str):
         """Add one tab and save in the list."""
         self.tab_widget.addTab(widget, name)

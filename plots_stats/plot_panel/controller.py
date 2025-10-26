@@ -293,8 +293,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
         Create dynamic controls to edit plot parameters generically.
         Adds at the top a label 'Plot type: <type>'.
         """
-        if not isinstance(container_widget, QtWidgets.QWidget):
-            return
 
         # Clear old layout if exists to avoid errors
         old_layout = container_widget.layout()
@@ -309,16 +307,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
         # Scoll area
         scroll_area = QtWidgets.QScrollArea(container_widget)
         scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("""
-                QScrollArea {
-                    border: none;
-                    background-color: #222;
-                }
-                QWidget {
-                    background-color: transparent;
-                }
-            """)
-
+        scroll_area.setStyleSheet("""QScrollArea {border: none; background-color: #222;} 
+        QWidget {background-color: transparent;}""")
         scroll_content = QtWidgets.QWidget()
         scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
         scroll_layout.setSpacing(10)
@@ -327,21 +317,13 @@ class TabbedPlotWidgetController(QtCore.QObject):
         # Title label
         plot_type_label = QtWidgets.QLabel(f"Plot type: {getattr(tab, '_plot_type', 'Unknown')}")
         plot_type_label.setAlignment(QtCore.Qt.AlignCenter)
-        plot_type_label.setStyleSheet("""
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                            stop:0 #6a0dad, stop:1 #ec407a);
-                color: white;
-                padding: 6px 12px;
-                font-weight: 700;
-                font-size: 9pt;
-                border-radius: 6px;
-            """)
+        plot_type_label.setStyleSheet("""background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a0dad, stop:1 #ec407a);
+                color: white; padding: 6px 12px; font-weight: 700; font-size: 9pt; border-radius: 6px; """)
         scroll_layout.addWidget(plot_type_label)
 
         tab._param_widgets = {} # Store references to created widgets
 
-        # Loop over plot_params to create specific controls. Controls are created based on the 'type' metadata. For
-        # example, type 'text' creates a QLineEdit, type 'bool' creates a QCheckBox, type 'select' creates a QComboBox, etc.
+        # Loop over plot_params to create specific controls. Controls are created based on the 'type' metadata.
         for key, meta in plot_params.items():
             # If meta is a dict with 'type', 'default', 'label' keys, use them; else assume text type with label=key and default=meta
             if isinstance(meta, dict) and any(k in meta for k in ("type", "default", "label")):
@@ -356,15 +338,12 @@ class TabbedPlotWidgetController(QtCore.QObject):
             # Card container
             card = QtWidgets.QFrame()
             card.setFrameShape(QtWidgets.QFrame.StyledPanel)
-            card.setStyleSheet("""
-                        QFrame {
-                            background-color: transparent;
-                            border-radius: 8px;
-                            padding: 8px;
-                        }
-                    """)
+            card.setStyleSheet("""QFrame {background-color: transparent; border-radius: 8px; } """)
+            card.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+
             card_layout = QtWidgets.QVBoxLayout(card)
-            card_layout.setSpacing(6)
+            card_layout.setContentsMargins(0, 0, 0, 0)
+            card_layout.setSpacing(4)
 
             # Plot parameter subtitle
             title = QtWidgets.QLabel(label_text)
@@ -401,15 +380,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     idx = widget.findText(str(default_value))
                     if idx >= 0:
                         widget.setCurrentIndex(idx)
-                widget.setStyleSheet("""
-                                QComboBox {
-                                    background-color:#DCDCDC;
-                                    color:black;
-                                    border-radius:4px;
-                                    padding:4px;
-                                }
-                            """)
+                widget.setStyleSheet("""QComboBox {background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;}""")
 
+            # Add widget to card layout
             if widget is not None:
                 widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
                 card_layout.addWidget(widget)
@@ -419,9 +392,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         scroll_content.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         scroll_content.adjustSize()
-
         scroll_area.setWidget(scroll_content)
-        scroll_area.setMinimumHeight(300)
 
         # Place scroll_area into the container widget's layout (replace existing layout)
         main_layout = QtWidgets.QVBoxLayout()
@@ -429,9 +400,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
         main_layout.addWidget(scroll_area)
         container_widget.setLayout(main_layout)
 
-        # Adjust sizes
+        # Adjust sizes of the container widget
         container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-        container_widget.setMinimumHeight(250)
+        container_widget.setMinimumHeight(170)
         container_widget.updateGeometry()
 
     def update_plot(self, tab):
