@@ -69,6 +69,8 @@ class PreprocessingController(QtCore.QObject):
                     with open(settings_file, "r") as f:
                         data = json.load(f)
                     self.signal_type = data.get("files", {}).get("selected_biosignal", "Unknown").upper()
+                    self.channel_list = data["files"]["channel_names"]
+                    self.fs = data["preprocessing"]["fs"]
 
                     preprocessed_path = os.path.join(path, "derivatives", "preprocessed")
 
@@ -206,10 +208,13 @@ class PreprocessingController(QtCore.QObject):
             subject = subject_selected_items[0].text()
             file_name = file_selected_items[0].text()
 
-            file_path = os.path.join(self.preprocessing_path, self.signal_type.lower(),
-                                     subject, f"{file_name}.bson")
+            full_file_name = f"{subject}_{file_name}.bson"
+
+            file_path = os.path.join(self.preprocessing_path, subject, self.signal_type.lower(), full_file_name)
             self.view.main_module.controller.file_path_to_plot = file_path
-            print(file_path)
+            self.view.main_module.controller.channel_list = self.channel_list
+            self.view.main_module.controller.fs = self.fs
+
         # If all conditions are met, enable the 'Next' button
         enable_next = path_ok and len(subject_selected_items) > 0 and len(file_selected_items) > 0
         self.view.main_module.nextButton.setEnabled(enable_next)

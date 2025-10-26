@@ -2,7 +2,7 @@
   "preprocess": [
     {
       "step": "Preprocessing Plot",
-      "path": "plots_stats/preprocessed/plot",
+      "path": "plots_stats/preprocessing/plot",
       "widget": "PlotWidget",
       "controller": "PlotController"
     }
