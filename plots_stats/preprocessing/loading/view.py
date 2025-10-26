@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtUiTools import loadUiType
 
 ui_plots_preproc_init = loadUiType('plots_stats/preprocessing/loading/view.ui')[0]
@@ -27,4 +27,11 @@ class PreprocessingWidget(QtWidgets.QWidget, ui_plots_preproc_init):
                 </p>
             </div>
         """)
+
+        # Lens icon
+        self.iconLabel1.setPixmap(
+            QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+        self.iconLabel2.setPixmap(
+            QtGui.QPixmap("media/search.png").scaled(16, 16, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation))
+
 

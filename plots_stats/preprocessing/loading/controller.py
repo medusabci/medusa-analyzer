@@ -16,6 +16,10 @@ class PreprocessingController(QtCore.QObject):
 
         # Buttons connects
         self.view.browseButton.clicked.connect(self.browse_folder)
+        self.view.subjectlistWidget.itemSelectionChanged.connect(self.trigger_validation)
+        self.view.filelistWidget.itemSelectionChanged.connect(self.trigger_validation)
+        self.view.searchsubjectEdit.textChanged.connect(self.filter_subj_items)
+        self.view.searchfileEdit.textChanged.connect(self.filter_file_items)
 
     def browse_folder(self):
         """
@@ -30,6 +34,15 @@ class PreprocessingController(QtCore.QObject):
             self.experiment_path = folder
             self.trigger_validation()
             self.view.pathLabel.setText('Selected path: ' + folder)
+            self.populate_lists(folder)
+            self.view.SubjectSelection.setEnabled(True)
+            self.view.FileSelection.setEnabled(True)
+        else:
+            self.view.subjectlistWidget.clear()
+            self.view.filelistWidget.clear()
+            self.view.SubjectSelection.setEnabled(False)
+            self.view.FileSelection.setEnabled(False)
+            self.view.main_module.nextButton.setEnabled(False)
 
     def validate_path(self, path):
         """
@@ -55,7 +68,7 @@ class PreprocessingController(QtCore.QObject):
                 try:
                     with open(settings_file, "r") as f:
                         data = json.load(f)
-                    signal_type = data.get("files", {}).get("selected_biosignal", "Unknown").upper()
+                    self.signal_type = data.get("files", {}).get("selected_biosignal", "Unknown").upper()
 
                     preprocessed_path = os.path.join(path, "derivatives", "preprocessed")
 
@@ -65,22 +78,13 @@ class PreprocessingController(QtCore.QObject):
                         }
 
                     else:
-
-                        result = {
-                            "data_info": {"✅signal_type": signal_type}
-                        }
+                        self.preprocessing_path = preprocessed_path
+                        result = {"message": f"✅ Detected preprocessed {self.signal_type} signals"}
                         self.path_correct = True
-
-                        self.view.main_module.controller.all_files = [str(f) for f in Path(path).rglob('*')
-                            if f.is_file() and f.suffix == '.mat']
-
 
                 # Otherwise, show an error message
                 except Exception as e:
-                    result = {
-                        "message": f"⚠️ Error reading settings.json: {e}",
-                        "experiment_info": None
-                    }
+                    result = {"message": f"⚠️ Error reading settings.json: {e}"}
 
         # Update the view and save the experiment information.
         if "✅" in result["message"]:
@@ -90,6 +94,104 @@ class PreprocessingController(QtCore.QObject):
         self.view.messageLabel.setText(f'<span style="color:{color}; font-size:18px;">{result["message"]}</span>')
         return self.path_correct
 
+    def populate_lists(self, path):
+        """
+        Fill subjectListWidget and fileListWidget after validating path.
+        """
+        all_files = [str(f) for f in Path(path).rglob('*') if f.is_file() and f.suffix == '.bson']
+        self.subjects = self.get_subjects_from_list(all_files)
+        self.recordings = self.get_recordings_from_list(all_files)
+
+        self.view.main_module.controller.all_files = all_files
+        self.view.main_module.controller.subjects = self.subjects
+        self.view.main_module.controller.recordings = self.recordings
+
+        # Fill list
+        self.view.subjectlistWidget.clear()
+        if self.subjects:
+            self.view.subjectlistWidget.addItems(self.subjects)
+
+        self.view.filelistWidget.clear()
+        if self.recordings:
+            self.view.filelistWidget.addItems(self.recordings)
+
+        # Enable widgets
+        if self.subjects:
+            self.view.SubjectSelection.setEnabled(True)
+        else:
+            self.view.SubjectSelection.setEnabled(False)
+
+        if self.recordings:
+            self.view.FileSelection.setEnabled(True)
+        else:
+            self.view.FileSelection.setEnabled(False)
+
+        self.trigger_validation()
+
+    def get_subjects_from_list(self, recordings):
+        """
+        Extracts subject identifiers from a list of recording filenames.
+        """
+        sub_ids = [p for p in (Path(p).parts for p in recordings) for p in p if
+                   p.startswith("sub-") and not p.endswith(".bson")]
+
+        sub_ids = list(set(sub_ids))
+        sub_ids.sort()
+
+        return sub_ids
+
+    def get_recordings_from_list(self, recordings):
+        """
+        Extracts subject identifiers from a list of recording filenames.
+        """
+        keys_to_remove = ["sub", "ses"]
+
+        clean_recordings = []
+        for f in recordings:
+            p = Path(f)
+            stem = p.stem  # Name without extension
+            parts = stem.split("_")  # Separate by underscores (assuming BIDS-like structure)
+            # Remove parts that start with any of the keys to remove followed by a hyphen
+            new_parts = [part for part in parts if not any(part.startswith(k + "-") for k in keys_to_remove)]
+            clean_name = "_".join(new_parts)  # Add the rest of the parts back together
+            clean_recordings.append(clean_name)
+
+        clean_recordings = list(set(clean_recordings))
+        clean_recordings.sort()
+
+        return clean_recordings
+
+    def filter_subj_items(self, text):
+        """Filter the subjects in the subject list"""
+
+        if not hasattr(self, 'subjects') or self.subjects is None:
+            return
+
+        self.view.subjectlistWidget.clear()
+
+        if not text:
+            self.view.subjectlistWidget.addItems(self.subjects)
+            return
+
+        text_lower = text.lower()
+        filtered = [item for item in self.subjects if text_lower in item.lower()]
+        self.view.subjectlistWidget.addItems(filtered)
+
+    def filter_file_items(self, text):
+        """Filter the recordings in the list."""
+
+        if not hasattr(self, 'recordings') or self.recordings is None:
+            return
+
+        self.view.filelistWidget.clear()
+        if not text:
+            self.view.filelistWidget.addItems(self.recordings)
+            return
+
+        text = text.lower()
+        filtered = [item for item in self.recordings if text in item.lower()]
+        self.view.filelistWidget.addItems(filtered)
+
     def trigger_validation(self):
         """
         Enables or disables the 'Next' button depending on the current state of the controller.
@@ -97,7 +199,17 @@ class PreprocessingController(QtCore.QObject):
 
         # The path must be correct
         path_ok = self.path_correct
+        subject_selected_items = self.view.subjectlistWidget.selectedItems()
+        file_selected_items = self.view.filelistWidget.selectedItems()
 
+        if path_ok and len(subject_selected_items) > 0 and len(file_selected_items) > 0:
+            subject = subject_selected_items[0].text()
+            file_name = file_selected_items[0].text()
+
+            file_path = os.path.join(self.preprocessing_path, self.signal_type.lower(),
+                                     subject, f"{file_name}.bson")
+            self.view.main_module.controller.file_path_to_plot = file_path
+            print(file_path)
         # If all conditions are met, enable the 'Next' button
-        enable_next = path_ok
+        enable_next = path_ok and len(subject_selected_items) > 0 and len(file_selected_items) > 0
         self.view.main_module.nextButton.setEnabled(enable_next)

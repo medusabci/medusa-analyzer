@@ -28,11 +28,6 @@ def on_next_click(view):
     """
     # Store the config
     view.main_module.controller.preproc_plot_config = get_preproc_plot_config(view.controller)
-
-    # Filter the recordings based on the selected criteria (e.g., within or between subjects)
-    view.main_module.controller.subjects = get_subjects_from_list(view.main_module.controller.all_files)
-    view.main_module.controller.recordings = get_recordings_from_list(view.main_module.controller.all_files)
-
     if not view.controller.loaded_widgets:
 
         # Loading screen
@@ -79,35 +74,3 @@ def on_next_click(view):
         view.controller.loaded_widgets = True
 
     return True
-
-def get_subjects_from_list(recordings):
-    """
-    Extracts subject identifiers from a list of recording filenames.
-    """
-    sub_ids = [p for p in (Path(p).parts for p in recordings) for p in p if p.startswith("sub-") and not p.endswith(".mat")]
-
-    sub_ids = list(set(sub_ids))
-    sub_ids.sort()
-
-    return sub_ids
-
-def get_recordings_from_list(recordings):
-    """
-    Extracts subject identifiers from a list of recording filenames.
-    """
-    keys_to_remove = ["sub", "ses", "param","band"]
-
-    clean_recordings = []
-    for f in recordings:
-        p = Path(f)
-        stem = p.stem  # Name without extension
-        parts = stem.split("_")  # Separate by underscores (assuming BIDS-like structure)
-        # Remove parts that start with any of the keys to remove followed by a hyphen
-        new_parts = [part for part in parts if not any(part.startswith(k + "-") for k in keys_to_remove)]
-        clean_name = "_".join(new_parts) # Add the rest of the parts back together
-        clean_recordings.append(clean_name)
-
-    clean_recordings = list(set(clean_recordings))
-    clean_recordings.sort()
-
-    return clean_recordings

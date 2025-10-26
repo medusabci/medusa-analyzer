@@ -120,7 +120,8 @@ class ExperimentsController:
         dialog.setModal(True)
         dialog.setWindowTitle(window_title)
         dialog.setMinimumWidth(1200)
-        dialog.setMinimumHeight(750)
+        dialog.setMinimumHeight(700)
+        dialog.setWindowFlags(QtCore.Qt.Window)
 
         # Finish loading
         self.view.main_window.loading.finish()

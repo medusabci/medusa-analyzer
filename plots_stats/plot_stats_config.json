@@ -1,28 +1,10 @@
 {
   "preprocess": [
     {
-      "step": "Preprocessing Loading",
-      "path": "plots_stats/preprocessed/loading",
-      "widget": "PreprocessingWidget",
-      "controller": "PreprocessingController"
-    },
-    {
-        "step": "Group Assignment",
-        "path": "plots_stats/group_assignment",
-        "widget": "GroupAssignmentWidget",
-        "controller": "GroupAssignmentController"
-      },
-      {
-        "step": "Data Assignment",
-        "path": "plots_stats/data_assignment",
-        "widget": "DataAssignmentWidget",
-        "controller": "DataAssignmentController"
-      },
-    {
       "step": "Preprocessing Plot",
-      "path": "plots_stats/preprocessed/plots",
-      "widget": "PreprocessingWidget",
-      "controller": "PreprocessingController"
+      "path": "plots_stats/preprocessed/plot",
+      "widget": "PlotWidget",
+      "controller": "PlotController"
     }
   ],
   "parameters":
