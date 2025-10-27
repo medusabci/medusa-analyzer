@@ -72,8 +72,16 @@ class PlotController(QtCore.QObject):
         canvas = FigureCanvas(fig)
         ax = fig.add_subplot(111)
 
-        layout = QtWidgets.QVBoxLayout(placeholder)
-        layout.setContentsMargins(0, 0, 0, 0)
+        # Get the old layout or create a new one
+        old_layout = placeholder.layout()
+        if old_layout is None: # if the layout does not exist
+            # Create a new layout
+            layout = QtWidgets.QVBoxLayout(placeholder)
+            layout.setContentsMargins(0, 0, 0, 0)
+        else:
+            # Otherwise, clear the old layout
+            self.clear_layout(old_layout)
+            layout = old_layout
         layout.addWidget(canvas)
 
         setattr(self, f"{mode}_ax", ax)
@@ -109,6 +117,16 @@ class PlotController(QtCore.QObject):
 
         self.draw_window(mode)
         self.update_plot_labels(mode)
+
+    def clear_layout(self, layout):
+        """Elimina todos los widgets de un layout."""
+        if layout is None:
+            return
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
 
 
     def draw_window(self, mode):

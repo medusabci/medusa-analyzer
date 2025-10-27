@@ -276,7 +276,9 @@ def run_pipeline(controller, settings_dic):
 
                 # If the band is not broadband, apply band filtering (the broadband does not require filtering)
                 if band_name != 'broadband':
-                    processed_signal = band_filtering(processed_signal, bp_min, bp_max, fs, settings_dic['preprocessing'])
+                    processed_signal_band = band_filtering(deepcopy(processed_signal), bp_min, bp_max, fs, settings_dic['preprocessing'])
+                else:
+                    processed_signal_band = deepcopy(processed_signal)
 
                 # Update the progress bar and labels
                 global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1) / total_steps * 100
@@ -287,7 +289,7 @@ def run_pipeline(controller, settings_dic):
                 # Get the current signal (e.g., eeg) from the data
                 biosignal = getattr(data_preprocessed, name_signal)
                 # Modify it with the preprocessed signal. It will also be modified in the data_preprocessed object
-                setattr(biosignal, "signal", processed_signal)
+                setattr(biosignal, "signal", processed_signal_band)
                 # Save de original signal
                 setattr(biosignal, "original_signal", original_signal)
 
@@ -302,7 +304,7 @@ def run_pipeline(controller, settings_dic):
                     if settings_dic['segmentation']['segmentation_type'] == 'condition':
                         # Get epochs for the current condition
                         epochs = get_epochs_from_condition(
-                            processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
+                            processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
 
                     elif settings_dic['segmentation']['segmentation_type'] == 'event':
                         # Get all the selected events for this condition
@@ -310,7 +312,7 @@ def run_pipeline(controller, settings_dic):
                         idx_events = []
                         for evt in settings_dic['segmentation']['selected_events']:
                             epochs_tmp = get_epochs_from_condition(
-                                processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
+                                processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
                                 event=evt)
                             if epochs_tmp is not None:
                                 epochs.append(epochs_tmp)
