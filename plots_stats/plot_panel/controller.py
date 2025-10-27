@@ -29,8 +29,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def create_tabs(self):
         """ Create the tabs """
-        if self._tabs_created: # create tabs only once
-            return
+        # if self._tabs_created: # create tabs only once
+        #     return
 
         selected_parameters = self.view.main_module.controller.param_selection
         if selected_parameters is None:

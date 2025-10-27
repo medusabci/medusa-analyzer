@@ -101,4 +101,7 @@ class GroupsController(QtCore.QObject):
         if self.view.groupstable.rowCount() > 0:
             self.view.main_module.nextButton.setEnabled(True)
 
+        # Reset the group assignment
+        self.view.main_module.controller.group_changed = True
+
 

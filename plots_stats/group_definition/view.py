@@ -8,7 +8,6 @@ class GroupsWidget(QtWidgets.QWidget, ui_plots_groups):
         super().__init__()
         self.setupUi(self)
         self.main_module = main_module
-        self.main_module.groups = {}
 
         # Widget resizing policies
         self.setMinimumSize(0, 0) # Minimum size of the widget is set to 0x0 pixels, allowing it to shrink as needed.

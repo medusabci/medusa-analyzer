@@ -116,17 +116,20 @@ class ExperimentsController:
         self.plot_stats_window.stackedWidget.setCurrentIndex(0)
 
         # Show the dialog
-        dialog = QtWidgets.QDialog(self.view.window())
-        dialog.setModal(True)
-        dialog.setWindowTitle(window_title)
-        dialog.setMinimumWidth(1200)
-        dialog.setMinimumHeight(700)
-        dialog.setWindowFlags(QtCore.Qt.Window)
+        self.dialog = QtWidgets.QDialog(self.view.window())
+        self.dialog.setModal(True)
+        self.dialog.setWindowTitle(window_title)
+        self.dialog.setMinimumWidth(1200)
+        self.dialog.setMinimumHeight(700)
+        self.dialog.setWindowFlags(QtCore.Qt.Window)
+
+        # Store the reference of the main QDialog to close it at the end
+        self.plot_stats_controller.dialog = self.dialog
 
         # Finish loading
         self.view.main_window.loading.finish()
 
         # Run the new window
-        layout = QtWidgets.QVBoxLayout(dialog)
+        layout = QtWidgets.QVBoxLayout(self.dialog)
         layout.addWidget(self.plot_stats_window)
-        dialog.exec()
+        self.dialog.exec()

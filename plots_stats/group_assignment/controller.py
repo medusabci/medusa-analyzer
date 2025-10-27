@@ -89,7 +89,24 @@ class GroupAssignmentController(QtCore.QObject):
 
 
     def on_show_event(self):
-        if self.first_show:
+
+        if self.first_show or self.view.main_module.controller.group_changed:
+            self.first_show = False
+
+            # If the group selection has changed, reset the table
+            if self.view.main_module.controller.group_changed:
+                self.view.main_module.controller.group_changed = False
+                for row in range(self.view.tableAssignment.rowCount()):
+                    self.view.tableAssignment.setItem(row, 1, QtWidgets.QTableWidgetItem(''))
+                    color = QtGui.QColor(255, 255, 255)  # White color for reset
+                    for col in range(self.view.tableAssignment.columnCount()):
+                        item = self.view.tableAssignment.item(row, col)
+                        qt_color = QtGui.QColor(color)
+                        qt_color.setAlpha(100) # Set transparency
+                        item.setBackground(qt_color)
+
+            self.clear_layout(self.view.groupLayout)
+
             # Add the group summary text
 
             # Start with a horizontal line
@@ -114,7 +131,18 @@ class GroupAssignmentController(QtCore.QObject):
             # AAdd the horizontal line to the layout
             self.view.groupLayout.addWidget(line)
 
-            self.first_show = False
+
+    def clear_layout(self, layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+            else:
+                # Si el item es un layout hijo, también lo limpiamos
+                sub_layout = item.layout()
+                if sub_layout is not None:
+                    self.clear_layout(sub_layout)
 
     def on_cell_changed(self):
 
