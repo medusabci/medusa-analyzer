@@ -355,10 +355,15 @@ class TabbedPlotWidgetController(QtCore.QObject):
             #If the param type is text or range, create a QLineEdit
             if param_type in ("text", "range", "number"):
                 widget = QtWidgets.QLineEdit()
-                if isinstance(default_value, (list, tuple, dict)):
-                    widget.setText(json.dumps(default_value))
+                if default_value is None and param_type == "range":
+                    display_value = "[None, None]"
+                elif default_value is None:
+                    display_value = ""
+                elif isinstance(default_value, (list, tuple, dict)):
+                    display_value = json.dumps(default_value)
                 else:
-                    widget.setText(str(default_value))
+                    display_value = str(default_value)
+                widget.setText(display_value)
                 widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
             # If the param type is bool, create a QCheckBox
@@ -452,7 +457,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 if plot_type == 'PSDPlot':
                     plot_obj.draw(colors = self.group_colors)
                 elif plot_type == 'LinearPlot':
-                    plot_obj.draw()
+                    plot_obj.draw(colors = self.group_colors)
 
             else:
                 print(f"[WARN] Unsupported plot type: {plot_type}")

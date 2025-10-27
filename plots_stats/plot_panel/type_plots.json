@@ -53,10 +53,19 @@
         "label": "Y axis Label",
         "default": "Plot_params.y_label"
       },
+      "ylim": {
+        "type": "range",
+        "label": "Y axis Limits"
+      },
       "line_color": {
         "type": "text",
         "label": "Line color",
         "default": "#000000"
+      },
+      "plot_std": {
+        "type": "bool",
+        "label": "Plot std",
+        "default": true
       }
     }
   },

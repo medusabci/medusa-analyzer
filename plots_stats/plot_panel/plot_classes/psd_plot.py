@@ -184,3 +184,20 @@ class PSDPlot(BasePlot):
         self.ax.spines['right'].set_visible(False)
         self.ax.relim()
         self.ax.autoscale_view()
+
+    def _safe_set_lim(self, ax, method, lim):
+        """Utility to safely set axis limits."""
+        if not isinstance(lim, (list, tuple)) or len(lim) != 2:
+            return  # ignore invalid
+        lo, hi = lim
+        if lo is None and hi is None:
+            return
+        try:
+            ax_method = getattr(ax, method)
+            current_lo, current_hi = ax_method()
+            new_lo = lo if lo is not None else current_lo
+            new_hi = hi if hi is not None else current_hi
+            ax_method([new_lo, new_hi])
+        except Exception as e:
+            print(f"[WARN] Could not apply {method}: {e}")
+            pass
