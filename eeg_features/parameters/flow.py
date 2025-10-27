@@ -86,8 +86,7 @@ def on_next_click(view):
             view.meanCBox, view.medianCBox, view.varianceCBox, view.kurtosisCBox, view.skewnessCBox,
             view.psdCBox, view.rpCBox, view.apCBox, view.mfCBox, view.seCBox,
             view.ctmCBox, view.sampenCBox, view.msampenCBox, view.lzcCBox, view.mlzcCBox,
-            view.iacCBox, view.aecCBox, view.pliCBox, view.plvCBox, view.wpliCBox, view.catchCBox
-        ]
+            view.iacCBox, view.aecCBox, view.pliCBox, view.plvCBox, view.wpliCBox]
         if any(box.isChecked() for box in param_cboxes):
             save_widget.paramsignalsCBox.setVisible(True)
         else:
