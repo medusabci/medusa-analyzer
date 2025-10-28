@@ -9,7 +9,6 @@ class LeadsController:
         self.view.controller = self
 
         # Show event
-        self.first_show = False
         self.view.shown.connect(self.on_show_event)
 
 
@@ -56,23 +55,24 @@ class LeadsController:
         self.view.conditionLabel.setText(f"Conditions: {cond_text}")
 
     def on_show_event(self):
-        if not self.first_show:
-            self.first_show = True
+        """
+        Scan the selected files for available conditions to show them in the list.
+        """
 
-            # Loading screen
-            self.view.main_window.loading.show()
-            self.view.main_window.loading.set_progress(25, self.view.main_window)
-            time.sleep(0.3)  # Simulate loading time for better UX
+        # Loading screen
+        self.view.main_window.loading.show()
+        self.view.main_window.loading.set_progress(25, self.view.main_window)
+        time.sleep(0.3)  # Simulate loading time for better UX
 
-            files_widget_controller = self.view.main_window.stackedWidget.widget(1).controller # widget(1) is the file selection widget
-            selected_files = files_widget_controller.selected_files
-            # Update loading progress
-            self.view.main_window.loading.set_progress(75, self.view.main_window)
+        files_widget_controller = self.view.main_window.stackedWidget.widget(1).controller # widget(1) is the file selection widget
+        selected_files = files_widget_controller.selected_files
+        # Update loading progress
+        self.view.main_window.loading.set_progress(75, self.view.main_window)
 
-            self.load_marks_from_file(selected_files[0])
-            # Update loading progress
-            self.view.main_window.loading.set_progress(100, self.view.main_window)
-            time.sleep(0.5)  # Simulate loading time for better UX
+        self.load_marks_from_file(selected_files[0])
+        # Update loading progress
+        self.view.main_window.loading.set_progress(100, self.view.main_window)
+        time.sleep(0.5)  # Simulate loading time for better UX
 
-            # Finish loading
-            self.view.main_window.loading.finish()
+        # Finish loading
+        self.view.main_window.loading.finish()
