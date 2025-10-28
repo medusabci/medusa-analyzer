@@ -55,3 +55,17 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         self.selected_folder = None
         for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
             w.setChecked(True)
+
+        # Preparar el spinner (una sola vez, al inicializar la GUI)
+        from PySide6.QtWidgets import QLabel
+        from PySide6.QtGui import QMovie
+        from PySide6.QtCore import Qt
+
+        self.loadingLabel = QLabel(self)
+        self.loadingLabel.setAlignment(Qt.AlignCenter)  # Centrado
+        self.loadingLabel.setFixedSize(100, 100)  # Tamaño del spinner
+        self.loadingLabel.hide()  # Oculto al inicio
+
+        self.spinner = QtGui.QMovie("media/spinner.gif")
+        self.loadingLabel.setMovie(self.spinner)
+        self.loadingLabel.hide()

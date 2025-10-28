@@ -1,4 +1,5 @@
-from eeg_features.utils import run_pipeline
+from eeg_features.utils import run_pipeline, PipelineWorker
+from PySide6.QtCore import QThread
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
@@ -19,7 +20,7 @@ def handle_exceptions(func):
             else:
                 print(f"[ERROR] {func.__name__}: {str(e)}")
 
-            # To vaoid closing the app
+            # To avoid closing the app
             return False
 
     return wrapper
@@ -76,14 +77,46 @@ def on_next_click(view):
         if view.settingsCBox.isChecked():
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
-        # Run the pipeline
-        error_found = run_pipeline(view.controller, view.controller.settings_dic)
+        # --- Crear el thread y el worker ---
+        view.loadingLabel.show()
+        view.spinner.start()
+        view.main_window.nextButton.setEnabled(False)
+        view.main_window.nextButton.setEnabled(False)
 
-        # If success change the button text to "Close"
-        if not error_found:
-            view.main_window.nextButton.setText('Close')
-            # Set the pipeline as completed, to avoid computing it again and closing the app
-            view.controller.pipeline_completed = True
+        view.thread = QThread()
+        worker = PipelineWorker(view.controller, view.controller.settings_dic)
+        worker.moveToThread(view.thread)
+
+        # --- Conectar señales ---
+        worker.progress.connect(lambda val: view.progressBar.setValue(val))
+        worker.text_progress.connect(lambda text: view.progressLabel.setText(text))
+        worker.log.connect(lambda msg, style: view.controller._log_message(msg, style))
+
+        # Cuando acabe el thread:
+        worker.finished.connect(view.thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        view.thread.finished.connect(view.thread.deleteLater)
+
+        # Cuando acabe el pipeline, actualizamos el botón
+        def on_finished(error_found):
+            view.spinner.stop()
+            view.loadingLabel.hide()
+
+            view.main_window.nextButton.setEnabled(True)
+
+            if not error_found:
+                view.main_window.nextButton.setText('Close')
+                view.controller.pipeline_completed = True
+
+        worker.finished.connect(on_finished)
+
+        view.controller.on_log = lambda msg, style=None: worker.log.emit(msg, style)
+        view.controller.on_progress_text = worker.text_progress.emit
+        view.controller.on_progress_value = worker.progress.emit
+
+        # --- Lanzar el thread ---
+        view.thread.started.connect(worker.run)
+        view.thread.start()
 
         return False # Prevent closing the app immediately
 
