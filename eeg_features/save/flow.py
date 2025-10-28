@@ -78,9 +78,9 @@ def on_next_click(view):
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
         # --- Crear el thread y el worker ---
-        view.loadingLabel.show()
-        view.spinner.start()
-        view.main_window.nextButton.setEnabled(False)
+        # view.loadingLabel.show()
+        # view.spinner.start()
+        # view.main_window.nextButton.setEnabled(False)
         view.main_window.nextButton.setEnabled(False)
 
         view.thread = QThread()
