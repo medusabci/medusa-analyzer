@@ -312,10 +312,11 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             output_path = preproc_dir / f"{base_stem}_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.rec.bson"
         else:
             output_path = preproc_dir / f"{base_stem}_cond-{cond.replace("-", "")}.rec.bson"
+
         if isinstance(data, np.ndarray):
             output_path = output_path.with_suffix('.mat')
             savemat(output_path, {'data': data})
-        elif "hrv" in data.keys():
+        elif isinstance(data, dict) and "hrv" in data:
             output_path = output_path.with_suffix('.mat')
             savemat(str(output_path), data)
         elif hasattr(data, "save"):
