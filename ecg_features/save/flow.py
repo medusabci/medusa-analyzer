@@ -44,6 +44,7 @@ def on_next_click(view):
         view.progressBar.show()
         view.progressBar.setValue(0)
         view.error_occurred = False
+        view._log_message("Starting...")
 
         # Get the total number of tasks to perform
         total_tasks = sum([

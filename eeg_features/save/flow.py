@@ -44,6 +44,7 @@ def on_next_click(view):
         view.progressBar.show()
         view.progressBar.setValue(0)
         view.error_occurred = False
+        view._log_message("Starting...")
 
         # If we are band segmenting, include the broadband as a new band, as we need it for the RP
         if view.main_window.controller.preproc_config['band_segmentation']:
