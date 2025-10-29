@@ -1,5 +1,5 @@
 from PySide6 import QtWidgets
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QThread, Signal
 import medusa
 import medusa.artifact_removal
 import medusa.transforms
@@ -18,138 +18,9 @@ import re
 import json
 from pathlib import Path
 
-def load_config(files_widget, data):
-
-    # BIOSIGNAL INFO
-    biosignal_txt = files_widget.biosignalBox.currentText()
-    biosignal = biosignal_txt.split(" ")[1]
-    files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
-
-    # PREPROCESSING
-    prep_cfg = data["preprocessing"]
-    preproc_widget = files_widget.main_window.stackedWidget.widget(2)  # widget(2) is the preprocessing widget
-    preproc_widget.minbroadBox.setValue(prep_cfg['broadband_min'])
-    preproc_widget.maxbroadBox.setValue(prep_cfg['broadband_max'])
-    preproc_widget.preprocessingButton.setChecked(bool(prep_cfg["apply_preprocessing"]))
-    preproc_widget.notchCBox.setChecked(bool(prep_cfg['notch']))
-    preproc_widget.minfreqnotchBox.setValue(
-        prep_cfg['notch_min'] if prep_cfg['notch_min'] is not None else preproc_widget.defaults["minfreqnotch"])
-    preproc_widget.maxfreqnotchBox.setValue(
-        prep_cfg['notch_max'] if prep_cfg['notch_max'] is not None else preproc_widget.defaults["minfreqnotch"])
-    preproc_widget.orderNotchBox.setValue(
-        prep_cfg['notch_order'] if prep_cfg['notch_order'] is not None else preproc_widget.defaults["ordernotch"])
-    preproc_widget.winnotchBox.setCurrentText(prep_cfg['notch_win'])
-    preproc_widget.bpCBox.setChecked(bool(prep_cfg['bandpass']))
-    preproc_widget.minfreqbpBox.setValue(
-        prep_cfg['bp_min'] if prep_cfg['bp_min'] is not None else preproc_widget.defaults["minfreqbp"])
-    preproc_widget.maxfreqbpBox.setValue(
-        prep_cfg['bp_max'] if prep_cfg['bp_max'] is not None else preproc_widget.defaults["maxfreqbp"])
-    preproc_widget.orderbpBox.setValue(
-        prep_cfg['bp_order'] if prep_cfg['bp_order'] is not None else preproc_widget.defaults["orderbp"])
-    preproc_widget.winbpBox.setCurrentText(prep_cfg['bp_win'])
-    preproc_widget.carCBox.setChecked(bool(prep_cfg['car']))
-    preproc_widget.bandCBox.setChecked(bool(prep_cfg['band_segmentation']))
-    bands_list = prep_cfg.get("selected_bands") or []
-    bands = bands_list[1:] if len(bands_list) > 1 else []  # Exclude 'broadband' if other bands are present
-    if bands:
-        preproc_widget.controller.update_band_label("segmentation", bands)
-    # Store
-    files_widget.main_window.controller.preproc_config = prep_cfg
-
-    # SEGMENTATION
-    segm_cfg = data["segmentation"]
-    segm_widget = files_widget.main_window.stackedWidget.widget(3)  # widget(3) is the segmentation widget
-    segm_widget.conditionRButton.setChecked(
-        segm_cfg['segmentation_type'] == 'condition')  # RButton, so it is exclusive with eventRButton
-    segm_widget.trialBox.setValue(
-        segm_cfg['trial_length'] if segm_cfg['trial_length'] is not None else segm_widget.defaults['triallength'])
-    segm_widget.trialstrideBox.setValue(
-        segm_cfg['trial_stride'] if segm_cfg['trial_stride'] is not None else segm_widget.defaults['trialstride'])
-    segm_widget.winBox_1.setValue(
-        segm_cfg['window_start'] if segm_cfg['window_start'] is not None else segm_widget.defaults['windowbox1'])
-    segm_widget.winBox_2.setValue(
-        segm_cfg['window_end'] if segm_cfg['window_end'] is not None else segm_widget.defaults['windowbox2'])
-    segm_widget.normCBox.setChecked(bool(segm_cfg['norm']))
-    if segm_cfg['norm_type'] == 'z':
-        segm_widget.zscoreRButton.setChecked(True)  # RButton, so it is exclusive with dcRButton
-    segm_widget.baselineCBox_1.setValue(
-        segm_cfg['baseline_start'] if segm_cfg['baseline_start'] is not None else segm_widget.defaults['baselinewin1'])
-    segm_widget.baselineCBox_2.setValue(
-        segm_cfg['baseline_end'] if segm_cfg['baseline_end'] is not None else segm_widget.defaults['baselinewin2'])
-    segm_widget.averageCBox.setChecked(bool(segm_cfg['average']))
-    segm_widget.thresCBox.setChecked(bool(segm_cfg['thresholding']))
-    segm_widget.threskBox.setValue(
-        segm_cfg['thres_k'] if segm_cfg['thres_k'] is not None else segm_widget.defaults['threshold'])
-    segm_widget.thressampBox.setValue(
-        segm_cfg['thres_samples'] if segm_cfg['thres_samples'] is not None else segm_widget.defaults['thressamples'])
-    segm_widget.threschanBox.setValue(
-        segm_cfg['thres_channels'] if segm_cfg['thres_channels'] is not None else segm_widget.defaults['threschannels'])
-    segm_widget.resampleCBox.setChecked(bool(segm_cfg['resample']))
-    segm_widget.resamplefsBox.setValue(
-        segm_cfg['resample_fs'] if segm_cfg['resample_fs'] is not None else segm_widget.defaults['resamplefs'])
-    # Store
-    files_widget.main_window.controller.segmentation_config = segm_cfg
-
-    # PARAMETERS
-    params_cfg = data["parameters"]
-    params_widget = files_widget.main_window.stackedWidget.widget(4)  # widget(4) is the parameters widget
-    params_widget.meanCBox.setChecked(bool(params_cfg['mean']))
-    params_widget.medianCBox.setChecked(bool(params_cfg['median']))
-    params_widget.varianceCBox.setChecked(bool(params_cfg['variance']))
-    params_widget.kurtosisCBox.setChecked(bool(params_cfg['kurtosis']))
-    params_widget.skewnessCBox.setChecked(bool(params_cfg['skewness']))
-    params_widget.psdCBox.setChecked(bool(params_cfg['psd']))
-    params_widget.segmentpsdBox.setValue(
-        params_cfg['psd_segment_pct'] if params_cfg['psd_segment_pct'] is not None else params_widget.defaults[
-            'psdsegment'])
-    params_widget.overlappsdBox.setValue(
-        params_cfg['psd_overlap_pct'] if params_cfg['psd_overlap_pct'] is not None else params_widget.defaults[
-            'psdoverlap'])
-    params_widget.psdcomboBox.setCurrentText(params_cfg['psd_window'])
-    params_widget.controller.loading_config = True
-    params_widget.rpCBox.setChecked(bool(params_cfg['relative_power']))
-    params_widget.controller.update_band_label('rp', params_cfg["selected_rp_bands"])
-    params_widget.controller.loading_config = False
-    params_widget.apCBox.setChecked(bool(params_cfg['absolute_power']))
-    params_widget.mfCBox.setChecked(bool(params_cfg['median_frequency']))
-    params_widget.seCBox.setChecked(bool(params_cfg['spectral_entropy']))
-    params_widget.ctmCBox.setChecked(bool(params_cfg['ctm']))
-    params_widget.ctmrBox.setValue(
-        params_cfg['ctm_r'] if params_cfg['ctm_r'] is not None else params_widget.defaults['ctmradius'])
-    params_widget.sampenCBox.setChecked(bool(params_cfg['sample_entropy']))
-    params_widget.sampenrBox.setValue(
-        params_cfg['sample_entropy_r'] if params_cfg['sample_entropy_r'] is not None else params_widget.defaults[
-            'sampradius'])
-    params_widget.sampenmBox.setValue(
-        params_cfg['sample_entropy_m'] if params_cfg['sample_entropy_m'] is not None else params_widget.defaults[
-            'sampm'])
-    params_widget.msampenCBox.setChecked(bool(params_cfg['multiscale_sample_entropy']))
-    params_widget.msampenrBox.setValue(
-        params_cfg['multiscale_sample_entropy_r'] if params_cfg['multiscale_sample_entropy_r'] is not None else
-        params_widget.defaults['multisampradius'])
-    params_widget.msampenmBox.setValue(
-        params_cfg['multiscale_sample_entropy_m'] if params_cfg['multiscale_sample_entropy_m'] is not None else
-        params_widget.defaults['multisampm'])
-    params_widget.msampenscaleBox.setValue(
-        params_cfg['multiscale_sample_entropy_scale'] if params_cfg['multiscale_sample_entropy_scale'] is not None else
-        params_widget.defaults['multisampmaxscale'])
-    params_widget.lzcCBox.setChecked(bool(params_cfg['lzc']))
-    params_widget.mlzcCBox.setChecked(bool(params_cfg['multiscale_lzc']))
-    if params_cfg['multiscale_lzc_scales'] is not None:
-        params_widget.mlzcEdit.setText(str(params_cfg['multiscale_lzc_scales']))
-    params_widget.iacCBox.setChecked(bool(params_cfg['iac']))
-    params_widget.iacortButton.setChecked(bool(params_cfg['ort_iac']))
-    params_widget.aecCBox.setChecked(bool(params_cfg['aec']))
-    params_widget.aecortButton.setChecked(bool(params_cfg['ort_aec']))
-    params_widget.pliCBox.setChecked(bool(params_cfg['pli']))
-    params_widget.plvCBox.setChecked(bool(params_cfg['plv']))
-    params_widget.wpliCBox.setChecked(bool(params_cfg['wpli']))
-    # Store
-    files_widget.main_window.controller.parameters_config = params_cfg
-
 
 # Worker class to run the pipeline in a separate thread
-class PipelineWorker(QObject):
+class PipelineWorker(QThread):
     # Emit when the processing is finished
     finished = Signal(bool)
     # For updating the progress bar in the GUI
@@ -159,23 +30,22 @@ class PipelineWorker(QObject):
     # For updating log messages in the GUI
     log = Signal(str,str)
 
-    def __init__(self, controller, settings_dic):
+    def __init__(self, settings_dic):
         super().__init__()
-        self.controller = controller
         self.settings_dic = settings_dic
 
     def run(self):
         """Runs run_pipeline in a separate thread and emits finished signal when done."""
         try:
             # Call the main pipeline function
-            error_found = self.run_pipeline(self.controller, self.settings_dic)
+            error_found = self.run_pipeline(self.settings_dic)
         except Exception as e: # if error
-            self.log.emit(f"Error in pipeline: {e}")
+            self.log.emit(f"Error in pipeline: {e}","error")
             error_found = True
         self.finished.emit(error_found)
 
 
-    def run_pipeline(self, controller, settings_dic):
+    def run_pipeline(self, settings_dic):
         """
         Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
         computation for all selected files based on the provided configuration.
@@ -205,9 +75,8 @@ class PipelineWorker(QObject):
         for i, file in enumerate(selected_files):
             try:
                 # Logging and GUI updates
-                # controller.on_log(f"Processing file: {file}")
                 self.log.emit(f"Processing file: {file}", "")
-                controller.on_progress_text(f"Processing: {basename(file)}")
+                self.text_progress.emit(f"Processing: {basename(file)}")
 
                 # Load data
                 base_name = splitext(basename(file))[0]
@@ -221,7 +90,7 @@ class PipelineWorker(QObject):
 
                 # Update the progress bar and labels
                 global_progress = (i*steps_per_file + 1) / total_steps * 100
-                controller.on_progress_value(int(global_progress))
+                self.progress.emit(int(global_progress))
 
                 # Ensure consistent sampling frequency
                 if fs != settings_dic['preprocessing']['fs']:
@@ -234,7 +103,7 @@ class PipelineWorker(QObject):
 
                 # Update the progress bar and labels
                 global_progress = (i*steps_per_file + 2) / total_steps * 100
-                controller.on_progress_value(int(global_progress))
+                self.progress.emit(int(global_progress))
 
                 ## Second step: Get indices of the thresholding
                 if settings_dic['segmentation']["thresholding"]:
@@ -271,9 +140,7 @@ class PipelineWorker(QObject):
 
                         # If no epochs were found for this condition, skip it
                         if len(epochs) == 0:
-                            controller.on_log(
-                                f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
-                                style='warning')
+                            self.log.emit(f"No valid epochs for '{cond}' in file '{file}'. Skipping.",'warning')
                             continue
 
                         # Get the indices of rejected epochs
@@ -287,7 +154,7 @@ class PipelineWorker(QObject):
 
                 # Update the progress bar and labels
                 global_progress = (i*steps_per_file + 3) / total_steps * 100
-                controller.on_progress_value(int(global_progress))
+                self.progress.emit(int(global_progress))
 
                 ## Third step: Band segmentation
                 # For each band...
@@ -308,7 +175,7 @@ class PipelineWorker(QObject):
 
                     # Update the progress bar and labels
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1) / total_steps * 100
-                    controller.on_progress_value(int(global_progress))
+                    self.progress.emit(int(global_progress))
 
                     # Create a copy of the data to store the preprocessed signal (to be saved if required)
                     data_preprocessed = deepcopy(data)
@@ -320,7 +187,7 @@ class PipelineWorker(QObject):
                     setattr(biosignal, "original_signal", original_signal)
 
                     # Deepcopy the data to avoid modifying the original data object
-                    save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, None, None, 'prep')
+                    save_outputs(self, deepcopy(data_preprocessed), base_name, band_name, None, None, 'prep', settings_dic['save'])
 
                     ## Fourth step: Segmentation
                     # For each condition selected...
@@ -353,23 +220,19 @@ class PipelineWorker(QObject):
 
                         # If no epochs were found for this condition, skip it
                         if len(epochs) == 0:
-                            controller.on_log(
-                                f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
-                                style='warning')
+                            self.log.emit(f"No valid epochs for '{cond}' in file '{file}'. Skipping.",'warning')
                             continue
 
                         # Update the progress bar and labels
                         global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 1) / total_steps * 100
-                        controller.on_progress_value(int(global_progress))
+                        self.progress.emit(int(global_progress))
 
 
                         ## Fifth step: Apply thresholding rejection if enabled
                         if settings_dic['segmentation']["thresholding"]:
                             # If all the epochs are rejected, skip this condition
                             if all(idx_threshold[cond]):
-                                controller.on_log(
-                                    f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",
-                                    style='warning')
+                                self.log.emit(f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",'warning')
                                 continue
 
                             # Remove the rejected epochs from the epochs array
@@ -380,7 +243,7 @@ class PipelineWorker(QObject):
 
                         # Update the progress bar and labels
                         global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 2) / total_steps * 100
-                        controller.on_progress_value(int(global_progress))
+                        self.progress.emit(int(global_progress))
 
                         ## Sixth step: Apply resampling if enabled
                         if epochs is not None and settings_dic['segmentation']['resample']:
@@ -390,11 +253,11 @@ class PipelineWorker(QObject):
 
                         # Update the progress bar and labels
                         global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 3) / total_steps * 100
-                        controller.on_progress_value(int(global_progress))
+                        self.progress.emit(int(global_progress))
 
                         # Save the segmented signals (if required), separately for each condition (and event, if selected)
                         if settings_dic['segmentation']['segmentation_type'] == 'condition':
-                            save_outputs(controller, deepcopy(epochs), base_name, band_name, cond, None, 'seg')
+                            save_outputs(self, deepcopy(epochs), base_name, band_name, cond, None, 'seg', settings_dic['save'])
                         elif settings_dic['segmentation']['segmentation_type'] == 'event':
                             for evt in np.unique(idx_events):
                                 # Get the epochs corresponding to the current event
@@ -405,11 +268,11 @@ class PipelineWorker(QObject):
                                     if info['label'] == evt:
                                         event_name = key
                                         break
-                                save_outputs(controller, deepcopy(current_epochs), base_name, band_name, cond, event_name, 'seg')
+                                save_outputs(self, deepcopy(current_epochs), base_name, band_name, cond, event_name, 'seg', settings_dic['save'])
                         ## Seventh step: Parameter computation
                         if settings_dic['segmentation']['segmentation_type'] == 'condition':
                             params = compute_parameters(epochs, fs, band, settings_dic)
-                            save_outputs(controller, deepcopy(params), base_name, band_name, cond, None, 'param')
+                            save_outputs(self, deepcopy(params), base_name, band_name, cond, None, 'param', settings_dic['save'])
                         elif settings_dic['segmentation']['segmentation_type'] == 'event':
                             for evt in np.unique(idx_events):
                                 # Get the epochs corresponding to the current event
@@ -421,17 +284,17 @@ class PipelineWorker(QObject):
                                     if info['label'] == evt:
                                         event_name = key
                                         break
-                                save_outputs(controller, deepcopy(current_params), base_name, band_name, cond, event_name, 'param')
+                                save_outputs(self, deepcopy(current_params), base_name, band_name, cond, event_name, 'param', settings_dic['save'])
                         # Update the progress bar and labels
                         global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
-                        controller.on_progress_value(int(global_progress))
+                        self.progress.emit(int(global_progress))
 
-                controller.on_progress_text("Completed")
+                self.text_progress.emit("Completed")
             # Exception handling
             except Exception as e:
                 error_found = True
-                controller.on_log(f"Error preprocessing {file}: {e}", style='error')
-                controller.on_progress_text("Error")
+                self.log.emit(f"Error preprocessing {file}: {e}",'error')
+                self.text_progress.emit("Error")
 
         return error_found
 
@@ -618,7 +481,7 @@ def _get_event_indices_in_range(marks, event_key, start_time, end_time):
         (events_times <= end_time))[0]
 
 
-def save_outputs(controller, data, base_name, band_name, cond, event, key):
+def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_dic):
     """
     Guarda los resultados del pipeline en estructura semi-BIDS dentro de /derivatives.
 
@@ -628,7 +491,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         ├── segmented/
         └── parameters/
     """
-    selected_folder = Path(controller.view.selected_folder)
+    selected_folder = Path(settings_dic["folder"])
     derivatives_path = selected_folder / "derivatives"
     derivatives_path.mkdir(exist_ok=True)
 
@@ -639,7 +502,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
     ses_id = ses_match.group(1) if ses_match else None
     base_stem = Path(base_name).stem
     # --- Saving preprocessed signals (.rec.bson) ---
-    if key == "prep" and controller.view.prepsignalsCBox.isChecked():
+    if key == "prep" and settings_dic["save_preproc"]:
         if ses_id:
             preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "eeg"
         else:
@@ -654,10 +517,10 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         else:
             raise RuntimeError('Error saving')
 
-        controller.on_log(f"✅ Preprocessed saved: {output_path}")
+        worker.log.emit(f"✅ Preprocessed saved: {output_path}","")
 
     # --- Saving segmented signals (.mat) ---
-    if key == "seg" and controller.view.segsignalsCBox.isChecked():
+    if key == "seg" and settings_dic["save_segmented"]:
         if ses_id:
             seg_dir = derivatives_path / "segmented" / subj_id / ses_id / "eeg"
         else:
@@ -671,10 +534,10 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         output_path = seg_dir / output_name
 
         savemat(output_path, {'epochs': data})
-        controller.on_log(f"✅ Segmented saved: {output_path}")
+        worker.log.emit(f"✅ Segmented saved: {output_path}","")
 
     # --- Saving parameters (.mat) ---
-    if key == "param" and controller.view.paramsignalsCBox.isChecked():
+    if key == "param" and settings_dic["save_params"]:
         if ses_id:
             param_dir = derivatives_path / "parameters" / subj_id / ses_id / "eeg"
         else:
@@ -688,7 +551,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
                 outname = f"{subj_id}_param-unknown_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
-            controller.on_log(f"⚠️ Parameters: saved fallback file {outpath}")
+            worker.log.emit(f"⚠️ Parameters: saved fallback file {outpath}","")
             return
 
         params_dict = dict(data)
@@ -723,7 +586,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
             mat_dict = {metric_label: save_struct}
 
             savemat(outpath, mat_dict)
-            controller.on_log(f"✅ Parameter saved: {outpath}")
+            worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
         # 2) Other parameters
         for k, v in list(params_dict.items()):
@@ -754,7 +617,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
 
                     outpath = param_dir / outname
                     savemat(outpath, {metric_label: val})
-                    controller.on_log(f"✅ Parameter saved: {outpath}")
+                    worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
             elif isinstance(v, dict):
                 nested = {}
@@ -767,7 +630,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
                 except Exception:
                     savemat(outpath, {'value': np.asarray(v)})
 
-            controller.on_log(f"✅ Parameter saved: {outpath}")
+            worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
 #################### PREPROCESSING
 
@@ -957,3 +820,132 @@ def compute_parameters(epochs, fs, band, cfg):
             params[f"{name}"] = val
 
     return params
+
+def load_config(files_widget, data):
+
+    # BIOSIGNAL INFO
+    biosignal_txt = files_widget.biosignalBox.currentText()
+    biosignal = biosignal_txt.split(" ")[1]
+    files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
+
+    # PREPROCESSING
+    prep_cfg = data["preprocessing"]
+    preproc_widget = files_widget.main_window.stackedWidget.widget(2)  # widget(2) is the preprocessing widget
+    preproc_widget.minbroadBox.setValue(prep_cfg['broadband_min'])
+    preproc_widget.maxbroadBox.setValue(prep_cfg['broadband_max'])
+    preproc_widget.preprocessingButton.setChecked(bool(prep_cfg["apply_preprocessing"]))
+    preproc_widget.notchCBox.setChecked(bool(prep_cfg['notch']))
+    preproc_widget.minfreqnotchBox.setValue(
+        prep_cfg['notch_min'] if prep_cfg['notch_min'] is not None else preproc_widget.defaults["minfreqnotch"])
+    preproc_widget.maxfreqnotchBox.setValue(
+        prep_cfg['notch_max'] if prep_cfg['notch_max'] is not None else preproc_widget.defaults["minfreqnotch"])
+    preproc_widget.orderNotchBox.setValue(
+        prep_cfg['notch_order'] if prep_cfg['notch_order'] is not None else preproc_widget.defaults["ordernotch"])
+    preproc_widget.winnotchBox.setCurrentText(prep_cfg['notch_win'])
+    preproc_widget.bpCBox.setChecked(bool(prep_cfg['bandpass']))
+    preproc_widget.minfreqbpBox.setValue(
+        prep_cfg['bp_min'] if prep_cfg['bp_min'] is not None else preproc_widget.defaults["minfreqbp"])
+    preproc_widget.maxfreqbpBox.setValue(
+        prep_cfg['bp_max'] if prep_cfg['bp_max'] is not None else preproc_widget.defaults["maxfreqbp"])
+    preproc_widget.orderbpBox.setValue(
+        prep_cfg['bp_order'] if prep_cfg['bp_order'] is not None else preproc_widget.defaults["orderbp"])
+    preproc_widget.winbpBox.setCurrentText(prep_cfg['bp_win'])
+    preproc_widget.carCBox.setChecked(bool(prep_cfg['car']))
+    preproc_widget.bandCBox.setChecked(bool(prep_cfg['band_segmentation']))
+    bands_list = prep_cfg.get("selected_bands") or []
+    bands = bands_list[1:] if len(bands_list) > 1 else []  # Exclude 'broadband' if other bands are present
+    if bands:
+        preproc_widget.controller.update_band_label("segmentation", bands)
+    # Store
+    files_widget.main_window.controller.preproc_config = prep_cfg
+
+    # SEGMENTATION
+    segm_cfg = data["segmentation"]
+    segm_widget = files_widget.main_window.stackedWidget.widget(3)  # widget(3) is the segmentation widget
+    segm_widget.conditionRButton.setChecked(
+        segm_cfg['segmentation_type'] == 'condition')  # RButton, so it is exclusive with eventRButton
+    segm_widget.trialBox.setValue(
+        segm_cfg['trial_length'] if segm_cfg['trial_length'] is not None else segm_widget.defaults['triallength'])
+    segm_widget.trialstrideBox.setValue(
+        segm_cfg['trial_stride'] if segm_cfg['trial_stride'] is not None else segm_widget.defaults['trialstride'])
+    segm_widget.winBox_1.setValue(
+        segm_cfg['window_start'] if segm_cfg['window_start'] is not None else segm_widget.defaults['windowbox1'])
+    segm_widget.winBox_2.setValue(
+        segm_cfg['window_end'] if segm_cfg['window_end'] is not None else segm_widget.defaults['windowbox2'])
+    segm_widget.normCBox.setChecked(bool(segm_cfg['norm']))
+    if segm_cfg['norm_type'] == 'z':
+        segm_widget.zscoreRButton.setChecked(True)  # RButton, so it is exclusive with dcRButton
+    segm_widget.baselineCBox_1.setValue(
+        segm_cfg['baseline_start'] if segm_cfg['baseline_start'] is not None else segm_widget.defaults['baselinewin1'])
+    segm_widget.baselineCBox_2.setValue(
+        segm_cfg['baseline_end'] if segm_cfg['baseline_end'] is not None else segm_widget.defaults['baselinewin2'])
+    segm_widget.averageCBox.setChecked(bool(segm_cfg['average']))
+    segm_widget.thresCBox.setChecked(bool(segm_cfg['thresholding']))
+    segm_widget.threskBox.setValue(
+        segm_cfg['thres_k'] if segm_cfg['thres_k'] is not None else segm_widget.defaults['threshold'])
+    segm_widget.thressampBox.setValue(
+        segm_cfg['thres_samples'] if segm_cfg['thres_samples'] is not None else segm_widget.defaults['thressamples'])
+    segm_widget.threschanBox.setValue(
+        segm_cfg['thres_channels'] if segm_cfg['thres_channels'] is not None else segm_widget.defaults['threschannels'])
+    segm_widget.resampleCBox.setChecked(bool(segm_cfg['resample']))
+    segm_widget.resamplefsBox.setValue(
+        segm_cfg['resample_fs'] if segm_cfg['resample_fs'] is not None else segm_widget.defaults['resamplefs'])
+    # Store
+    files_widget.main_window.controller.segmentation_config = segm_cfg
+
+    # PARAMETERS
+    params_cfg = data["parameters"]
+    params_widget = files_widget.main_window.stackedWidget.widget(4)  # widget(4) is the parameters widget
+    params_widget.meanCBox.setChecked(bool(params_cfg['mean']))
+    params_widget.medianCBox.setChecked(bool(params_cfg['median']))
+    params_widget.varianceCBox.setChecked(bool(params_cfg['variance']))
+    params_widget.kurtosisCBox.setChecked(bool(params_cfg['kurtosis']))
+    params_widget.skewnessCBox.setChecked(bool(params_cfg['skewness']))
+    params_widget.psdCBox.setChecked(bool(params_cfg['psd']))
+    params_widget.segmentpsdBox.setValue(
+        params_cfg['psd_segment_pct'] if params_cfg['psd_segment_pct'] is not None else params_widget.defaults[
+            'psdsegment'])
+    params_widget.overlappsdBox.setValue(
+        params_cfg['psd_overlap_pct'] if params_cfg['psd_overlap_pct'] is not None else params_widget.defaults[
+            'psdoverlap'])
+    params_widget.psdcomboBox.setCurrentText(params_cfg['psd_window'])
+    params_widget.controller.loading_config = True
+    params_widget.rpCBox.setChecked(bool(params_cfg['relative_power']))
+    params_widget.controller.update_band_label('rp', params_cfg["selected_rp_bands"])
+    params_widget.controller.loading_config = False
+    params_widget.apCBox.setChecked(bool(params_cfg['absolute_power']))
+    params_widget.mfCBox.setChecked(bool(params_cfg['median_frequency']))
+    params_widget.seCBox.setChecked(bool(params_cfg['spectral_entropy']))
+    params_widget.ctmCBox.setChecked(bool(params_cfg['ctm']))
+    params_widget.ctmrBox.setValue(
+        params_cfg['ctm_r'] if params_cfg['ctm_r'] is not None else params_widget.defaults['ctmradius'])
+    params_widget.sampenCBox.setChecked(bool(params_cfg['sample_entropy']))
+    params_widget.sampenrBox.setValue(
+        params_cfg['sample_entropy_r'] if params_cfg['sample_entropy_r'] is not None else params_widget.defaults[
+            'sampradius'])
+    params_widget.sampenmBox.setValue(
+        params_cfg['sample_entropy_m'] if params_cfg['sample_entropy_m'] is not None else params_widget.defaults[
+            'sampm'])
+    params_widget.msampenCBox.setChecked(bool(params_cfg['multiscale_sample_entropy']))
+    params_widget.msampenrBox.setValue(
+        params_cfg['multiscale_sample_entropy_r'] if params_cfg['multiscale_sample_entropy_r'] is not None else
+        params_widget.defaults['multisampradius'])
+    params_widget.msampenmBox.setValue(
+        params_cfg['multiscale_sample_entropy_m'] if params_cfg['multiscale_sample_entropy_m'] is not None else
+        params_widget.defaults['multisampm'])
+    params_widget.msampenscaleBox.setValue(
+        params_cfg['multiscale_sample_entropy_scale'] if params_cfg['multiscale_sample_entropy_scale'] is not None else
+        params_widget.defaults['multisampmaxscale'])
+    params_widget.lzcCBox.setChecked(bool(params_cfg['lzc']))
+    params_widget.mlzcCBox.setChecked(bool(params_cfg['multiscale_lzc']))
+    if params_cfg['multiscale_lzc_scales'] is not None:
+        params_widget.mlzcEdit.setText(str(params_cfg['multiscale_lzc_scales']))
+    params_widget.iacCBox.setChecked(bool(params_cfg['iac']))
+    params_widget.iacortButton.setChecked(bool(params_cfg['ort_iac']))
+    params_widget.aecCBox.setChecked(bool(params_cfg['aec']))
+    params_widget.aecortButton.setChecked(bool(params_cfg['ort_aec']))
+    params_widget.pliCBox.setChecked(bool(params_cfg['pli']))
+    params_widget.plvCBox.setChecked(bool(params_cfg['plv']))
+    params_widget.wpliCBox.setChecked(bool(params_cfg['wpli']))
+    # Store
+    files_widget.main_window.controller.parameters_config = params_cfg

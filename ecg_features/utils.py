@@ -1,5 +1,5 @@
 from PySide6 import QtWidgets
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtCore import QThread, Signal
 import medusa
 import medusa.artifact_removal
 import medusa.transforms
@@ -20,7 +20,7 @@ from scipy.io import savemat
 
 
 # Worker class to run the pipeline in a separate thread
-class PipelineWorker(QObject):
+class PipelineWorker(QThread):
     # Emit when the processing is finished
     finished = Signal(bool)
     # For updating the progress bar in the GUI
@@ -30,141 +30,140 @@ class PipelineWorker(QObject):
     # For updating log messages in the GUI
     log = Signal(str,str)
 
-    def __init__(self, controller, settings_dic):
+    def __init__(self, settings_dic):
         super().__init__()
-        self.controller = controller
         self.settings_dic = settings_dic
 
     def run(self):
         """Runs run_pipeline in a separate thread and emits finished signal when done."""
         try:
             # Call the main pipeline function
-            error_found = run_pipeline(self.controller, self.settings_dic)
+            error_found = self.run_pipeline(self.settings_dic)
         except Exception as e: # if error
-            self.log.emit(f"Error in pipeline: {e}")
+            self.log.emit(f"Error in pipeline: {e}", 'error')
             error_found = True
         self.finished.emit(error_found)
         
 
-def run_pipeline(controller, settings_dic):
-    """
-    Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
-    computation for all selected files based on the provided configuration.
-    """
+    def run_pipeline(self, settings_dic):
+        """
+        Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
+        computation for all selected files based on the provided configuration.
+        """
 
-    # Get the selected files and associated variables
-    selected_files = settings_dic['files'].get('selected_files', [])
-    total_files = len(selected_files)
+        # Get the selected files and associated variables
+        selected_files = settings_dic['files'].get('selected_files', [])
+        total_files = len(selected_files)
 
-    error_found = False
+        error_found = False
 
-    # Config of the progress bar
-    steps_per_lead = 2 + 4
-    steps_per_file = 1 + steps_per_lead * len(settings_dic['leads']['selected_leads'])
-    total_steps = total_files * steps_per_file # Total steps for the progress bar
+        # Config of the progress bar
+        steps_per_lead = 2 + 4
+        steps_per_file = 1 + steps_per_lead * len(settings_dic['leads']['selected_leads'])
+        total_steps = total_files * steps_per_file # Total steps for the progress bar
 
-    # Loop through each selected file
-    for i, file in enumerate(selected_files):
-        try:
-            # Logging and GUI updates
-            controller.on_log(f"Processing file: {file}")
-            controller.on_progress_text(f"Processing: {basename(file)}")
-            QtWidgets.QApplication.processEvents()
+        # Loop through each selected file
+        for i, file in enumerate(selected_files):
+            try:
+                # Logging and GUI updates
+                self.log.emit(f"Processing file: {file}","")
+                self.text_progress.emit(f"Processing: {basename(file)}")
+                QtWidgets.QApplication.processEvents()
 
-            # Load data
-            base_name = splitext(basename(file))[0]
-            data = medusa.components.Recording.load(file)
-            # Initialize variables
-            name_signal = settings_dic['files']['selected_biosignal']  # ej: "eeg"
-            original_signal = np.array(getattr(data, name_signal).signal)
-            signal_times = getattr(data, name_signal).times
-            channel_set = getattr(data, name_signal).channel_set
-            signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
-            fs = getattr(data, name_signal).fs
+                # Load data
+                base_name = splitext(basename(file))[0]
+                data = medusa.components.Recording.load(file)
+                # Initialize variables
+                name_signal = settings_dic['files']['selected_biosignal']  # ej: "eeg"
+                original_signal = np.array(getattr(data, name_signal).signal)
+                signal_times = getattr(data, name_signal).times
+                channel_set = getattr(data, name_signal).channel_set
+                signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
+                fs = getattr(data, name_signal).fs
 
-            # Save original data
-            save_outputs(controller, deepcopy(data), base_name, None, 'raw-signal', 'prep')
-            # Ensure consistent sampling frequency
-            if fs != settings_dic['preprocessing']['fs']:
-                raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
-
-            # Update the progress bar and labels
-            global_progress = (i*steps_per_file + 1) / total_steps * 100
-            controller.on_progress_value(int(global_progress))
-
-            ## First step: Select channels
-            for j, chan_name in enumerate(settings_dic['leads']['selected_leads']):
-                lead_name = settings_dic['leads']['selected_leads'][chan_name]
-                idx_chan = channel_set['l_cha'].index(chan_name)
-
-                original_signal_chan = deepcopy(original_signal[:, idx_chan])
-                original_signal_chan = np.ravel(original_signal_chan)
-
-                ## Second step: Preprocessing ECG
-                processed_signal = deepcopy(original_signal_chan)
-                if settings_dic['preprocessing']['clean'] or settings_dic['preprocessing']['zscore']:
-                    processed_signal = clean_zscore_ecg(processed_signal, fs, settings_dic['preprocessing'])
+                # Save original data
+                save_outputs(self, deepcopy(data), base_name, None, 'raw-signal', 'prep', settings_dic['save'])
+                # Ensure consistent sampling frequency
+                if fs != settings_dic['preprocessing']['fs']:
+                    raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
 
                 # Update the progress bar and labels
-                global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 1) / total_steps * 100
-                controller.on_progress_value(int(global_progress))
+                global_progress = (i*steps_per_file + 1) / total_steps * 100
+                self.progress.emit(int(global_progress))
 
-                ## Third step: Separate by condition
-                segments = []
-                conditions = []
-                if settings_dic['leads']['selected_conditions']:
-                    for cond in settings_dic['leads']['selected_conditions']:
-                        segments.append(get_epochs_from_condition(processed_signal, cond, signal_marks, signal_times, fs)[0])
-                        conditions.append(cond)
-                else:
-                    segments.append(deepcopy(processed_signal))
-                    conditions.append('all')
+                ## First step: Select channels
+                for j, chan_name in enumerate(settings_dic['leads']['selected_leads']):
+                    lead_name = settings_dic['leads']['selected_leads'][chan_name]
+                    idx_chan = channel_set['l_cha'].index(chan_name)
 
-                # Update the progress bar and labels
-                global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 2) / total_steps * 100
-                controller.on_progress_value(int(global_progress))
+                    original_signal_chan = deepcopy(original_signal[:, idx_chan])
+                    original_signal_chan = np.ravel(original_signal_chan)
 
-                # For each segment (condition)...
-                for segment_idx, segment in enumerate(segments):
+                    ## Second step: Preprocessing ECG
+                    processed_signal = deepcopy(original_signal_chan)
+                    if settings_dic['preprocessing']['clean'] or settings_dic['preprocessing']['zscore']:
+                        processed_signal = clean_zscore_ecg(processed_signal, fs, settings_dic['preprocessing'])
 
-                    cond = conditions[segment_idx]
-                    save_outputs(controller, deepcopy(segment), base_name, lead_name, cond, 'prep')
-                    ## Fourth step: HRV computation
-                    if settings_dic['preprocessing']['hrv']:
-                        method = settings_dic['preprocessing']['processing_method']
-                        correction = settings_dic['preprocessing']['correct_artifacts']
-                        peaks, _ = nkecg.ecg_peaks(segment, sampling_rate=fs, method=method, correct_artifacts=correction)
-                        pulse_rate = signal_rate(peaks, sampling_rate=fs)
-                        hrv_signal = np.divide(60, pulse_rate) * 1000 # In ms
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 1) / total_steps * 100
+                    self.progress.emit(int(global_progress))
 
-                        ## Fifth step: Resample HRV
-                        fs_hrv = settings_dic['preprocessing']['resample_fs']
-                        t_hrv = np.cumsum(hrv_signal/1000)
-                        t_uniform = np.arange(0, t_hrv[-1], 1/fs_hrv)
-                        hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
-                        hrv_basename = str(Path(base_name).with_name(Path(base_name).stem + '_hrv' + Path(base_name).suffix))
-                        hrv_save_struct = {}
-                        hrv_save_struct['hrv'] = {
-                            'hrv': hrv_signal,
-                            'times': t_uniform}
-                        save_outputs(controller, deepcopy(hrv_save_struct), hrv_basename, lead_name, cond, 'prep')
+                    ## Third step: Separate by condition
+                    segments = []
+                    conditions = []
+                    if settings_dic['leads']['selected_conditions']:
+                        for cond in settings_dic['leads']['selected_conditions']:
+                            segments.append(get_epochs_from_condition(processed_signal, cond, signal_marks, signal_times, fs)[0])
+                            conditions.append(cond)
+                    else:
+                        segments.append(deepcopy(processed_signal))
+                        conditions.append('all')
 
-                        ## Fifth step: Save outputs
-                        params = compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, settings_dic['parameters'])
-                        save_outputs(controller, deepcopy(params), hrv_basename, lead_name, cond, 'param')
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 2) / total_steps * 100
+                    self.progress.emit(int(global_progress))
 
-                # Update the progress bar and labels
-                global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 6) / total_steps * 100
-                controller.on_progress_value(int(global_progress))
+                    # For each segment (condition)...
+                    for segment_idx, segment in enumerate(segments):
 
-            controller.on_progress_text("Completed")
-        # Exception handling
-        except Exception as e:
-            error_found = True
-            controller.on_log(f"Error preprocessing {file}: {e}", style='error')
-            controller.on_progress_text("Error")
+                        cond = conditions[segment_idx]
+                        save_outputs(self, deepcopy(segment), base_name, lead_name, cond, 'prep', settings_dic['save'])
+                        ## Fourth step: HRV computation
+                        if settings_dic['preprocessing']['hrv']:
+                            method = settings_dic['preprocessing']['processing_method']
+                            correction = settings_dic['preprocessing']['correct_artifacts']
+                            peaks, _ = nkecg.ecg_peaks(segment, sampling_rate=fs, method=method, correct_artifacts=correction)
+                            pulse_rate = signal_rate(peaks, sampling_rate=fs)
+                            hrv_signal = np.divide(60, pulse_rate) * 1000 # In ms
 
-    return error_found
+                            ## Fifth step: Resample HRV
+                            fs_hrv = settings_dic['preprocessing']['resample_fs']
+                            t_hrv = np.cumsum(hrv_signal/1000)
+                            t_uniform = np.arange(0, t_hrv[-1], 1/fs_hrv)
+                            hrv_signal = np.interp(t_uniform, t_hrv, hrv_signal)
+                            hrv_basename = str(Path(base_name).with_name(Path(base_name).stem + '_hrv' + Path(base_name).suffix))
+                            hrv_save_struct = {}
+                            hrv_save_struct['hrv'] = {
+                                'hrv': hrv_signal,
+                                'times': t_uniform}
+                            save_outputs(self, deepcopy(hrv_save_struct), hrv_basename, lead_name, cond, 'prep', settings_dic['save'])
+
+                            ## Fifth step: Save outputs
+                            params = compute_parameters_hrv(peaks, hrv_signal, fs, fs_hrv, settings_dic['parameters'])
+                            save_outputs(self, deepcopy(params), hrv_basename, lead_name, cond, 'param', settings_dic['save'])
+
+                    # Update the progress bar and labels
+                    global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 6) / total_steps * 100
+                    self.progress.emit(int(global_progress))
+
+                self.text_progress.emit("Completed")
+            # Exception handling
+            except Exception as e:
+                error_found = True
+                self.log.emit(f"Error preprocessing {file}: {e}", 'error')
+                self.text_progress.emit("Error")
+
+        return error_found
 
 #################### HELPER FUNCTIONS
 
@@ -307,7 +306,7 @@ def _find_nearest_index(reference_times, query_times):
     # If the input was an array, return an array of indices
     return nearest_indices
 
-def save_outputs(controller, data, base_name, lead, cond, key):
+def save_outputs(worker, data, base_name, lead, cond, key, settings_dic):
     """
     Guarda los resultados del pipeline en estructura semi-BIDS dentro de /derivatives.
 
@@ -316,7 +315,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         ├── preprocessed/
         └── parameters/
     """
-    selected_folder = Path(controller.view.selected_folder)
+    selected_folder = Path(settings_dic["folder"])
     derivatives_path = selected_folder / "derivatives"
     derivatives_path.mkdir(exist_ok=True)
 
@@ -327,7 +326,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
     ses_id = ses_match.group(1) if ses_match else None
     base_stem = Path(base_name).stem
     # --- Saving preprocessed signals (.rec.bson) ---
-    if key == "prep" and controller.view.prepsignalsCBox.isChecked():
+    if key == "prep" and settings_dic["save_preproc"]:
         if ses_id:
             preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "ecg"
         else:
@@ -352,10 +351,10 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         else:
             savemat(output_path, {'data': data})
 
-        controller.on_log(f"✅ Preprocessed saved: {output_path}")
+        worker.log.emit(f"✅ Preprocessed saved: {output_path}", "")
 
     # --- Saving parameters (.mat) ---
-    if key == "param" and controller.view.paramsignalsCBox.isChecked():
+    if key == "param" and settings_dic["save_params"]:
         if ses_id:
             param_dir = derivatives_path / "parameters" / subj_id / ses_id / "ecg"
         else:
@@ -366,7 +365,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             outname = f"{subj_id}_param-unknown_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
-            controller.on_log(f"⚠️ Parameters: saved fallback file {outpath}")
+            worker.log.emit(f"⚠️ Parameters: saved fallback file {outpath}","")
             return
 
         params_dict = dict(data)
@@ -399,7 +398,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             mat_dict = {metric_label: save_struct}
 
             savemat(outpath, mat_dict)
-            controller.on_log(f"✅ Parameter saved: {outpath}")
+            worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
         # 2) Other parameters
         for k, v in list(params_dict.items()):
@@ -426,7 +425,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
                 except Exception:
                     savemat(outpath, {'value': np.asarray(v)})
 
-            controller.on_log(f"✅ Parameter saved: {outpath}")
+            worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
 #################### PREPROCESSING
 
@@ -580,46 +579,6 @@ def load_config(files_widget, data):
     biosignal_txt = files_widget.biosignalBox.currentText()
     biosignal = biosignal_txt.split(" ")[1]
     files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
-
-    # --- LEADS ---
-    # lead_cfg = data["leads"]
-    # leads_widget = files_widget.main_window.stackedWidget.widget(2)
-    # # Set selected leads
-    # selected_leads = lead_cfg.get("selected_leads", {})
-    # if hasattr(leads_widget, "controller"):
-    #     leads_widget.controller.selected_leads = selected_leads
-    #     leads_widget.controller.selected_conditions = lead_cfg.get("selected_conditions", [])
-    #
-    # layout = leads_widget.LeadsSelection.layout()
-    # if layout is None:
-    #     return
-    # for i in range(layout.count()):
-    #     row_widget = layout.itemAt(i).widget()
-    #     if not row_widget:
-    #         continue
-    #
-    #     checkbox = row_widget.findChild(QtWidgets.QCheckBox)
-    #     combo = row_widget.findChild(QtWidgets.QComboBox)
-    #
-    #     if not checkbox or not combo:
-    #         continue
-    #
-    #     channel_name = checkbox.text().replace("Channel ", "").strip()
-    #     if channel_name in selected_leads:
-    #         checkbox.setChecked(True)
-    #         desired_lead = selected_leads[channel_name]
-    #         index = combo.findText(desired_lead)
-    #         if index != -1:
-    #             combo.setCurrentIndex(index)
-    #     else:
-    #         checkbox.setChecked(False)
-    #
-    # if len(selected_leads) == 1:
-    #     leads_widget.leadLabel.setText(list(selected_leads.values())[0])
-    # elif len(selected_leads) > 1:
-    #     leads_widget.leadLabel.setText(", ".join(selected_leads.values()))
-    # else:
-    #     leads_widget.leadLabel.clear()
 
     # --- PREPROCESSING ---
     prep_cfg = data["preprocessing"]

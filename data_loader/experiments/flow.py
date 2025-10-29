@@ -65,8 +65,6 @@ def on_next_click(view):
     view.main_window.selected_experiment = experiment_id
     # Update total steps and progress bar in the main window
     view.main_window.nextButton.setDisabled(True)
-    # Deactivate Next button
-    view.main_window.nextButton.setDisabled(False)
     view.main_window.controller.set_progressbar()
     # main_flow.on_next_click(view.main_window.controller) # simulate a click
 

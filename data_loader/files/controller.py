@@ -24,7 +24,7 @@ class FilesController:
 
         # Load config
         self.view.loadButton.clicked.connect(self.load_config)
-
+        self.view.main_window.nextButton.setDisabled(True)
 
     def on_select_files_click(self):
         """
@@ -71,8 +71,8 @@ class FilesController:
             self.biosignals = recording.biosignals
 
             # Update loading progress
-            self.view.main_window.loading.set_progress(50, self.view.main_window)
-            time.sleep(0.5)  # Simulate loading time for better UX
+            self.view.main_window.loading.set_progress(25, self.view.main_window)
+            time.sleep(1)  # Simulate loading time for better UX
 
             # For each biosignal, get its sampling frequency and number of channels
             for key, value in recording.biosignals.items():

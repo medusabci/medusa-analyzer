@@ -1,5 +1,5 @@
 from ecg_features.utils import PipelineWorker
-from PySide6.QtCore import QThread, Qt
+from PySide6.QtCore import Qt
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
@@ -70,7 +70,13 @@ def on_next_click(view):
             "files": files,
             "leads": leads,
             "preprocessing": preprocessing,
-            "parameters": parameters
+            "parameters": parameters,
+            "save": {
+                "folder": view.selected_folder,
+                "save_settings": view.settingsCBox.isChecked(),
+                "save_preproc": view.prepsignalsCBox.isChecked(),
+                "save_params": view.paramsignalsCBox.isChecked()
+            }
         }
         # Save the settings dict
         if view.settingsCBox.isChecked():
@@ -78,21 +84,17 @@ def on_next_click(view):
 
         # Disable the button while the pipeline is running
         view.main_window.nextButton.setEnabled(False)
-        # Create the thread and worker
-        view.thread = QThread()
-        worker = PipelineWorker(view.controller, view.controller.settings_dic)
-        # Move the worker to the thread
-        worker.moveToThread(view.thread)
+        # Create the thread
+        view.worker = PipelineWorker(view.controller.settings_dic)
+
 
         # Connect the signals to the functions
-        worker.progress.connect(view.progressBar.setValue, type=Qt.QueuedConnection)
-        worker.text_progress.connect(view.progressLabel.setText, type=Qt.QueuedConnection)
-        worker.log.connect(view._log_message, type=Qt.QueuedConnection)
+        view.worker.progress.connect(view.progressBar.setValue, type=Qt.QueuedConnection)
+        view.worker.text_progress.connect(view.progressLabel.setText, type=Qt.QueuedConnection)
+        view.worker.log.connect(view._log_message, type=Qt.QueuedConnection)
 
         # Clean up when done
-        worker.finished.connect(view.thread.quit)
-        worker.finished.connect(worker.deleteLater)
-        view.thread.finished.connect(view.thread.deleteLater)
+        view.worker.finished.connect(view.worker.deleteLater)
 
         # When the worker is finished, enable the button and change its text
         def on_finished(error_found):
@@ -102,17 +104,10 @@ def on_next_click(view):
                 view.main_window.nextButton.setText('Close')
                 view.controller.pipeline_completed = True
         # Connect the on_finished function
-        worker.finished.connect(on_finished)
-
-        # Assign the callbacks, the worker will call these to update the UI, and we assign them to the signals
-        view.controller.on_log = lambda msg, style="": worker.log.emit(msg,style)
-        view.controller.on_progress_text = worker.text_progress.emit
-        view.controller.on_progress_value = worker.progress.emit
+        view.worker.finished.connect(on_finished)
 
         # Run the thread
-        view.thread.started.connect(worker.run)
-        view.thread.start()
-
+        view.worker.start()
         return False # Prevent closing the app immediately
 
     # Otherwise, if the pipeline was already completed, return True to close the app
