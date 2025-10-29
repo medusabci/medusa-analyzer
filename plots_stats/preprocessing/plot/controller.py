@@ -235,7 +235,7 @@ class PlotController(QtCore.QObject):
         with saving options."""
 
         current_index = self.view.tabWidget.currentIndex()
-        mode = "raw" if current_index == 0 else "clean"
+        mode = "clean" if current_index == 0 else "raw"
         canvas = getattr(self, f"{mode}_canvas", None)
         if canvas is None:
             QtWidgets.QMessageBox.warning(self.view, "Export", "No hay figura para exportar.")
