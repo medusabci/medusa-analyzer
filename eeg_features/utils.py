@@ -157,7 +157,7 @@ class PipelineWorker(QObject):
     # For updating text progress in the GUI
     text_progress = Signal(str)
     # For updating log messages in the GUI
-    log = Signal(str, str)
+    log = Signal(str)
 
     def __init__(self, controller, settings_dic):
         super().__init__()

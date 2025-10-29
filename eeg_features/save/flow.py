@@ -1,5 +1,5 @@
 from eeg_features.utils import run_pipeline, PipelineWorker
-from PySide6.QtCore import QThread
+from PySide6.QtCore import QThread, Qt
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
@@ -88,9 +88,9 @@ def on_next_click(view):
         worker.moveToThread(view.thread)
 
         # --- Conectar señales ---
-        worker.progress.connect(lambda val: view.progressBar.setValue(val))
-        worker.text_progress.connect(lambda text: view.progressLabel.setText(text))
-        worker.log.connect(lambda msg, style: view.controller._log_message(msg, style))
+        worker.progress.connect(view.progressBar.setValue, type=Qt.QueuedConnection)
+        worker.text_progress.connect(view.progressLabel.setText, type=Qt.QueuedConnection)
+        worker.log.connect(view.controller._log_message, type=Qt.QueuedConnection)
 
         # Cuando acabe el thread:
         worker.finished.connect(view.thread.quit)
@@ -99,9 +99,6 @@ def on_next_click(view):
 
         # Cuando acabe el pipeline, actualizamos el botón
         def on_finished(error_found):
-            view.spinner.stop()
-            view.loadingLabel.hide()
-
             view.main_window.nextButton.setEnabled(True)
 
             if not error_found:
@@ -110,7 +107,7 @@ def on_next_click(view):
 
         worker.finished.connect(on_finished)
 
-        view.controller.on_log = lambda msg, style=None: worker.log.emit(msg, style)
+        view.controller.on_log = lambda msg: worker.log.emit(msg)
         view.controller.on_progress_text = worker.text_progress.emit
         view.controller.on_progress_value = worker.progress.emit
 
