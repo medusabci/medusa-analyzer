@@ -1,6 +1,7 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QApplication
 
 # Load UI class
 ui_save_widget = loadUiType("eeg_features/save/view.ui")[0]
@@ -55,3 +56,36 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         self.selected_folder = None
         for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
             w.setChecked(True)
+
+
+    def _log_message(self, msg, style=""):
+        """
+        Logs messages with custom formatting and styles. Used for errors, warnings, and progress info.
+        """
+        # Styles adapted to the white format
+        theme_colors = {
+            'THEME_RED': '#D32F2F',  # Darker red
+            'THEME_YELLOW': '#FBC02D'  # Darker yellow
+        }
+        # Format the message based on the style (type of message)
+        if isinstance(style, str):
+            if style == 'error':
+                style = {'color': theme_colors['THEME_RED']}
+            elif style == 'warning':
+                style = {'color': theme_colors['THEME_YELLOW']}
+            # If the style is not recognized, use default
+            else:
+                style = dict()
+        elif style == "":
+            style = dict()
+
+        # Set font size
+        style.setdefault('font-size', '9pt')
+        # Convert style dict to string
+        style_str = ';'.join(f'{k}: {v}' for k, v in style.items())
+        # Apply the style to the message
+        formatted = f'<p style="margin:0;margin-top:2;{style_str}"> >> {msg} </p>'
+        # Append the formatted message to the log text browser
+        self.logtextBrowser.append(formatted)
+        self.logtextBrowser.moveCursor(QTextCursor.End)
+        QApplication.processEvents()

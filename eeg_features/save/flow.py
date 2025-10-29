@@ -1,4 +1,5 @@
-from eeg_features.utils import run_pipeline
+from eeg_features.utils import PipelineWorker
+from PySide6.QtCore import QThread, Qt
 from PySide6 import QtWidgets
 
 def handle_exceptions(func):
@@ -19,7 +20,7 @@ def handle_exceptions(func):
             else:
                 print(f"[ERROR] {func.__name__}: {str(e)}")
 
-            # To vaoid closing the app
+            # To avoid closing the app
             return False
 
     return wrapper
@@ -43,6 +44,7 @@ def on_next_click(view):
         view.progressBar.show()
         view.progressBar.setValue(0)
         view.error_occurred = False
+        view._log_message("Starting...")
 
         # If we are band segmenting, include the broadband as a new band, as we need it for the RP
         if view.main_window.controller.preproc_config['band_segmentation']:
@@ -76,14 +78,42 @@ def on_next_click(view):
         if view.settingsCBox.isChecked():
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
-        # Run the pipeline
-        error_found = run_pipeline(view.controller, view.controller.settings_dic)
+        # Disable the button while the pipeline is running
+        view.main_window.nextButton.setEnabled(False)
+        # Create the thread and worker
+        view.thread = QThread()
+        worker = PipelineWorker(view.controller, view.controller.settings_dic)
+        # Move the worker to the thread
+        worker.moveToThread(view.thread)
 
-        # If success change the button text to "Close"
-        if not error_found:
-            view.main_window.nextButton.setText('Close')
-            # Set the pipeline as completed, to avoid computing it again and closing the app
-            view.controller.pipeline_completed = True
+        # Connect the signals to the functions
+        worker.progress.connect(view.progressBar.setValue, type=Qt.QueuedConnection)
+        worker.text_progress.connect(view.progressLabel.setText, type=Qt.QueuedConnection)
+        worker.log.connect(view._log_message, type=Qt.QueuedConnection)
+
+        # Clean up when done
+        worker.finished.connect(view.thread.quit)
+        worker.finished.connect(worker.deleteLater)
+        view.thread.finished.connect(view.thread.deleteLater)
+
+        # When the worker is finished, enable the button and change its text
+        def on_finished(error_found):
+            view.main_window.nextButton.setEnabled(True)
+            # If not error found, change button text to "Close"
+            if not error_found:
+                view.main_window.nextButton.setText('Close')
+                view.controller.pipeline_completed = True
+        # Connect the on_finished function
+        worker.finished.connect(on_finished)
+
+        # Assign the callbacks, the worker will call these to update the UI, and we assign them to the signals
+        view.controller.on_log = lambda msg, style="": worker.log.emit(msg,style)
+        view.controller.on_progress_text = worker.text_progress.emit
+        view.controller.on_progress_value = worker.progress.emit
+
+        # Run the thread
+        view.thread.started.connect(worker.run)
+        view.thread.start()
 
         return False # Prevent closing the app immediately
 

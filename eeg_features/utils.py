@@ -1,4 +1,5 @@
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtWidgets
+from PySide6.QtCore import QObject, Signal
 import medusa
 import medusa.artifact_removal
 import medusa.transforms
@@ -23,7 +24,6 @@ def load_config(files_widget, data):
     biosignal_txt = files_widget.biosignalBox.currentText()
     biosignal = biosignal_txt.split(" ")[1]
     files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
-
 
     # PREPROCESSING
     prep_cfg = data["preprocessing"]
@@ -147,6 +147,34 @@ def load_config(files_widget, data):
     # Store
     files_widget.main_window.controller.parameters_config = params_cfg
 
+
+# Worker class to run the pipeline in a separate thread
+class PipelineWorker(QObject):
+    # Emit when the processing is finished
+    finished = Signal(bool)
+    # For updating the progress bar in the GUI
+    progress = Signal(int)
+    # For updating text progress in the GUI
+    text_progress = Signal(str)
+    # For updating log messages in the GUI
+    log = Signal(str,str)
+
+    def __init__(self, controller, settings_dic):
+        super().__init__()
+        self.controller = controller
+        self.settings_dic = settings_dic
+
+    def run(self):
+        """Runs run_pipeline in a separate thread and emits finished signal when done."""
+        try:
+            # Call the main pipeline function
+            error_found = run_pipeline(self.controller, self.settings_dic)
+        except Exception as e: # if error
+            self.log.emit(f"Error in pipeline: {e}")
+            error_found = True
+        self.finished.emit(error_found)
+
+
 def run_pipeline(controller, settings_dic):
     """
     Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
@@ -173,15 +201,12 @@ def run_pipeline(controller, settings_dic):
     steps_per_file = 3 + steps_per_band * len(bands)
     total_steps = total_files * steps_per_file # Total steps for the progress bar
 
-    view = controller.view
-
     # Loop through each selected file
     for i, file in enumerate(selected_files):
         try:
             # Logging and GUI updates
-            controller._log_message(f"Processing file: {file}")
-            view.progressLabel.setText(f"Processing: {basename(file)}")
-            QtWidgets.QApplication.processEvents()
+            controller.on_log(f"Processing file: {file}")
+            controller.on_progress_text(f"Processing: {basename(file)}")
 
             # Load data
             base_name = splitext(basename(file))[0]
@@ -195,7 +220,7 @@ def run_pipeline(controller, settings_dic):
 
             # Update the progress bar and labels
             global_progress = (i*steps_per_file + 1) / total_steps * 100
-            controller.view.progressBar.setValue(int(global_progress))
+            controller.on_progress_value(int(global_progress))
 
             # Ensure consistent sampling frequency
             if fs != settings_dic['preprocessing']['fs']:
@@ -208,7 +233,7 @@ def run_pipeline(controller, settings_dic):
 
             # Update the progress bar and labels
             global_progress = (i*steps_per_file + 2) / total_steps * 100
-            controller.view.progressBar.setValue(int(global_progress))
+            controller.on_progress_value(int(global_progress))
 
             ## Second step: Get indices of the thresholding
             if settings_dic['segmentation']["thresholding"]:
@@ -245,7 +270,7 @@ def run_pipeline(controller, settings_dic):
 
                     # If no epochs were found for this condition, skip it
                     if len(epochs) == 0:
-                        controller._log_message(
+                        controller.on_log(
                             f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
                             style='warning')
                         continue
@@ -261,7 +286,7 @@ def run_pipeline(controller, settings_dic):
 
             # Update the progress bar and labels
             global_progress = (i*steps_per_file + 3) / total_steps * 100
-            controller.view.progressBar.setValue(int(global_progress))
+            controller.on_progress_value(int(global_progress))
 
             ## Third step: Band segmentation
             # For each band...
@@ -282,7 +307,7 @@ def run_pipeline(controller, settings_dic):
 
                 # Update the progress bar and labels
                 global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1) / total_steps * 100
-                controller.view.progressBar.setValue(int(global_progress))
+                controller.on_progress_value(int(global_progress))
 
                 # Create a copy of the data to store the preprocessed signal (to be saved if required)
                 data_preprocessed = deepcopy(data)
@@ -327,21 +352,21 @@ def run_pipeline(controller, settings_dic):
 
                     # If no epochs were found for this condition, skip it
                     if len(epochs) == 0:
-                        controller._log_message(
+                        controller.on_log(
                             f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
                             style='warning')
                         continue
 
                     # Update the progress bar and labels
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 1) / total_steps * 100
-                    controller.view.progressBar.setValue(int(global_progress))
+                    controller.on_progress_value(int(global_progress))
 
 
                     ## Fifth step: Apply thresholding rejection if enabled
                     if settings_dic['segmentation']["thresholding"]:
                         # If all the epochs are rejected, skip this condition
                         if all(idx_threshold[cond]):
-                            controller._log_message(
+                            controller.on_log(
                                 f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",
                                 style='warning')
                             continue
@@ -354,7 +379,7 @@ def run_pipeline(controller, settings_dic):
 
                     # Update the progress bar and labels
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 2) / total_steps * 100
-                    controller.view.progressBar.setValue(int(global_progress))
+                    controller.on_progress_value(int(global_progress))
 
                     ## Sixth step: Apply resampling if enabled
                     if epochs is not None and settings_dic['segmentation']['resample']:
@@ -364,7 +389,7 @@ def run_pipeline(controller, settings_dic):
 
                     # Update the progress bar and labels
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 3) / total_steps * 100
-                    controller.view.progressBar.setValue(int(global_progress))
+                    controller.on_progress_value(int(global_progress))
 
                     # Save the segmented signals (if required), separately for each condition (and event, if selected)
                     if settings_dic['segmentation']['segmentation_type'] == 'condition':
@@ -398,14 +423,14 @@ def run_pipeline(controller, settings_dic):
                             save_outputs(controller, deepcopy(current_params), base_name, band_name, cond, event_name, 'param')
                     # Update the progress bar and labels
                     global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
-                    controller.view.progressBar.setValue(int(global_progress))
+                    controller.on_progress_value(int(global_progress))
 
-            view.progressLabel.setText("Completed")
+            controller.on_progress_text("Completed")
         # Exception handling
         except Exception as e:
             error_found = True
-            controller._log_message(f"Error preprocessing {file}: {e}", style='error')
-            view.progressLabel.setText("Error")
+            controller.on_log(f"Error preprocessing {file}: {e}", style='error')
+            controller.on_progress_text("Error")
 
     return error_found
 
@@ -628,7 +653,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         else:
             raise RuntimeError('Error saving')
 
-        controller._log_message(f"✅ Preprocessed saved: {output_path}")
+        controller.on_log(f"✅ Preprocessed saved: {output_path}")
 
     # --- Saving segmented signals (.mat) ---
     if key == "seg" and controller.view.segsignalsCBox.isChecked():
@@ -645,7 +670,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
         output_path = seg_dir / output_name
 
         savemat(output_path, {'epochs': data})
-        controller._log_message(f"✅ Segmented saved: {output_path}")
+        controller.on_log(f"✅ Segmented saved: {output_path}")
 
     # --- Saving parameters (.mat) ---
     if key == "param" and controller.view.paramsignalsCBox.isChecked():
@@ -662,7 +687,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
                 outname = f"{subj_id}_param-unknown_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
-            controller._log_message(f"⚠️ Parameters: saved fallback file {outpath}")
+            controller.on_log(f"⚠️ Parameters: saved fallback file {outpath}")
             return
 
         params_dict = dict(data)
@@ -697,7 +722,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
             mat_dict = {metric_label: save_struct}
 
             savemat(outpath, mat_dict)
-            controller._log_message(f"✅ Parameter saved: {outpath}")
+            controller.on_log(f"✅ Parameter saved: {outpath}")
 
         # 2) Other parameters
         for k, v in list(params_dict.items()):
@@ -728,7 +753,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
 
                     outpath = param_dir / outname
                     savemat(outpath, {metric_label: val})
-                    controller._log_message(f"✅ Parameter saved: {outpath}")
+                    controller.on_log(f"✅ Parameter saved: {outpath}")
 
             elif isinstance(v, dict):
                 nested = {}
@@ -741,7 +766,7 @@ def save_outputs(controller, data, base_name, band_name, cond, event, key):
                 except Exception:
                     savemat(outpath, {'value': np.asarray(v)})
 
-            controller._log_message(f"✅ Parameter saved: {outpath}")
+            controller.on_log(f"✅ Parameter saved: {outpath}")
 
 #################### PREPROCESSING
 
