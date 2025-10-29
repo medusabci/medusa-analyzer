@@ -14,7 +14,7 @@ def handle_exceptions(func):
         except Exception as e:
             # Log the error with the custom format, if possible
             if hasattr(self, 'log_message'):
-                self._log_message(f"[ERROR] {func.__name__}: {str(e)}", style='error')
+                self.view._log_message(f"[ERROR] {func.__name__}: {str(e)}", style='error')
             # Otherwise, print it
             else:
                 print(f"[ERROR] {func.__name__}: {str(e)}")

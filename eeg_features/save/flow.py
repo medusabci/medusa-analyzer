@@ -90,7 +90,7 @@ def on_next_click(view):
         # --- Conectar señales ---
         worker.progress.connect(view.progressBar.setValue, type=Qt.QueuedConnection)
         worker.text_progress.connect(view.progressLabel.setText, type=Qt.QueuedConnection)
-        worker.log.connect(view.controller._log_message, type=Qt.QueuedConnection)
+        worker.log.connect(view._log_message, type=Qt.QueuedConnection)
 
         # Cuando acabe el thread:
         worker.finished.connect(view.thread.quit)
