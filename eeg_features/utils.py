@@ -168,271 +168,272 @@ class PipelineWorker(QObject):
         """Runs run_pipeline in a separate thread and emits finished signal when done."""
         try:
             # Call the main pipeline function
-            error_found = run_pipeline(self.controller, self.settings_dic)
+            error_found = self.run_pipeline(self.controller, self.settings_dic)
         except Exception as e: # if error
             self.log.emit(f"Error in pipeline: {e}")
             error_found = True
         self.finished.emit(error_found)
 
 
-def run_pipeline(controller, settings_dic):
-    """
-    Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
-    computation for all selected files based on the provided configuration.
-    """
+    def run_pipeline(self, controller, settings_dic):
+        """
+        Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
+        computation for all selected files based on the provided configuration.
+        """
 
-    # Get the selected files and associated variables
-    selected_files = settings_dic['files'].get('selected_files', [])
-    total_files = len(selected_files)
-    error_found = False
+        # Get the selected files and associated variables
+        selected_files = settings_dic['files'].get('selected_files', [])
+        total_files = len(selected_files)
+        error_found = False
 
-    # Store the bands if band segmentation is enabled, otherwise use broadband
-    bands = settings_dic['preprocessing']['selected_bands'] if (
-        settings_dic['preprocessing']['band_segmentation']) else [
-        {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'],
-         'max': settings_dic['preprocessing']['broadband_max']}]
+        # Store the bands if band segmentation is enabled, otherwise use broadband
+        bands = settings_dic['preprocessing']['selected_bands'] if (
+            settings_dic['preprocessing']['band_segmentation']) else [
+            {'name': 'broadband', 'min': settings_dic['preprocessing']['broadband_min'],
+             'max': settings_dic['preprocessing']['broadband_max']}]
 
-    # Sorted bands to have broadband in the first position
-    bands = sorted(bands, key=lambda b: 0 if b['name'].lower() == 'broadband' else 1)
+        # Sorted bands to have broadband in the first position
+        bands = sorted(bands, key=lambda b: 0 if b['name'].lower() == 'broadband' else 1)
 
-    # Config of the progress bar
-    steps_per_cond = 7
-    steps_per_band = 1 + steps_per_cond * len(settings_dic['segmentation']['selected_conditions'])
-    steps_per_file = 3 + steps_per_band * len(bands)
-    total_steps = total_files * steps_per_file # Total steps for the progress bar
+        # Config of the progress bar
+        steps_per_cond = 7
+        steps_per_band = 1 + steps_per_cond * len(settings_dic['segmentation']['selected_conditions'])
+        steps_per_file = 3 + steps_per_band * len(bands)
+        total_steps = total_files * steps_per_file # Total steps for the progress bar
 
-    # Loop through each selected file
-    for i, file in enumerate(selected_files):
-        try:
-            # Logging and GUI updates
-            controller.on_log(f"Processing file: {file}")
-            controller.on_progress_text(f"Processing: {basename(file)}")
+        # Loop through each selected file
+        for i, file in enumerate(selected_files):
+            try:
+                # Logging and GUI updates
+                # controller.on_log(f"Processing file: {file}")
+                self.log.emit(f"Processing file: {file}", "")
+                controller.on_progress_text(f"Processing: {basename(file)}")
 
-            # Load data
-            base_name = splitext(basename(file))[0]
-            data = medusa.components.Recording.load(file)
-            # Initialize variables
-            name_signal = settings_dic['files']['selected_biosignal']  # ej: "eeg"
-            original_signal = getattr(data, name_signal).signal
-            signal_times = getattr(data, name_signal).times
-            signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
-            fs = getattr(data, name_signal).fs
-
-            # Update the progress bar and labels
-            global_progress = (i*steps_per_file + 1) / total_steps * 100
-            controller.on_progress_value(int(global_progress))
-
-            # Ensure consistent sampling frequency
-            if fs != settings_dic['preprocessing']['fs']:
-                raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
-
-            ## First step: Preprocessing
-            processed_signal = deepcopy(original_signal)
-            if settings_dic['preprocessing']['apply_preprocessing']:
-                processed_signal = apply_preprocessing(processed_signal, fs, settings_dic['preprocessing'])
-
-            # Update the progress bar and labels
-            global_progress = (i*steps_per_file + 2) / total_steps * 100
-            controller.on_progress_value(int(global_progress))
-
-            ## Second step: Get indices of the thresholding
-            if settings_dic['segmentation']["thresholding"]:
-                # Get the thresholding parameters
-                thres_k = settings_dic['segmentation']['thres_k']
-                thres_samples = settings_dic['segmentation']["thres_samples"]
-                thres_channels = settings_dic['segmentation']["thres_channels"]
-                # Dict containing the indices of rejected epochs for each condition
-                idx_threshold = dict()
-
-                # For each condition selected...
-                for cond in settings_dic['segmentation']['selected_conditions']:
-
-                    # If segmentation type is 'condition'
-                    if settings_dic['segmentation']['segmentation_type'] == 'condition':
-                        # Get epochs for the current condition
-                        epochs = get_epochs_from_condition(
-                            processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
-
-                    elif settings_dic['segmentation']['segmentation_type'] == 'event':
-                        # Get all the selected events for this condition
-                        epochs = []
-                        for evt in settings_dic['segmentation']['selected_events']:
-                            epochs_tmp = get_epochs_from_condition(
-                                processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
-                                event=evt)
-                            if epochs_tmp is not None:
-                                epochs.append(epochs_tmp)
-                                del epochs_tmp
-
-                        # Stack the epochs of the events for this condition
-                        if epochs:
-                            epochs = np.vstack(epochs)
-
-                    # If no epochs were found for this condition, skip it
-                    if len(epochs) == 0:
-                        controller.on_log(
-                            f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
-                            style='warning')
-                        continue
-
-                    # Get the indices of rejected epochs
-                    _, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
-                        epochs, np.nanmean(original_signal, axis=0), np.std(original_signal, axis=0),
-                        k=thres_k, n_samp=thres_samples, n_cha=thres_channels)
-
-                    # Store the rejected indices for the current condition
-                    idx_threshold[cond] = idx_reject
-                    del epochs  # Free memory
-
-            # Update the progress bar and labels
-            global_progress = (i*steps_per_file + 3) / total_steps * 100
-            controller.on_progress_value(int(global_progress))
-
-            ## Third step: Band segmentation
-            # For each band...
-            for j, band in enumerate(bands):
-                # Band info
-                band_name = band['name']
-                bp_min, bp_max = band['min'], band['max']
-
-                # Workaround to allow filtering in the Nyquist frequency
-                if bp_max == settings_dic['preprocessing']['fs'] / 2:
-                    bp_max -= 1e-6
-
-                # If the band is not broadband, apply band filtering (the broadband does not require filtering)
-                if band_name != 'broadband':
-                    processed_signal_band = band_filtering(deepcopy(processed_signal), bp_min, bp_max, fs, settings_dic['preprocessing'])
-                else:
-                    processed_signal_band = deepcopy(processed_signal)
+                # Load data
+                base_name = splitext(basename(file))[0]
+                data = medusa.components.Recording.load(file)
+                # Initialize variables
+                name_signal = settings_dic['files']['selected_biosignal']  # ej: "eeg"
+                original_signal = getattr(data, name_signal).signal
+                signal_times = getattr(data, name_signal).times
+                signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
+                fs = getattr(data, name_signal).fs
 
                 # Update the progress bar and labels
-                global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1) / total_steps * 100
+                global_progress = (i*steps_per_file + 1) / total_steps * 100
                 controller.on_progress_value(int(global_progress))
 
-                # Create a copy of the data to store the preprocessed signal (to be saved if required)
-                data_preprocessed = deepcopy(data)
-                # Get the current signal (e.g., eeg) from the data
-                biosignal = getattr(data_preprocessed, name_signal)
-                # Modify it with the preprocessed signal. It will also be modified in the data_preprocessed object
-                setattr(biosignal, "signal", processed_signal_band)
-                # Save de original signal
-                setattr(biosignal, "original_signal", original_signal)
+                # Ensure consistent sampling frequency
+                if fs != settings_dic['preprocessing']['fs']:
+                    raise Exception("One of the selected signals do not have the same sampling frequency: " + file)
 
-                # Deepcopy the data to avoid modifying the original data object
-                save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, None, None, 'prep')
+                ## First step: Preprocessing
+                processed_signal = deepcopy(original_signal)
+                if settings_dic['preprocessing']['apply_preprocessing']:
+                    processed_signal = apply_preprocessing(processed_signal, fs, settings_dic['preprocessing'])
 
-                ## Fourth step: Segmentation
-                # For each condition selected...
-                for k, cond in enumerate(settings_dic['segmentation']['selected_conditions']):
+                # Update the progress bar and labels
+                global_progress = (i*steps_per_file + 2) / total_steps * 100
+                controller.on_progress_value(int(global_progress))
 
-                    # If segmentation type is 'condition'
-                    if settings_dic['segmentation']['segmentation_type'] == 'condition':
-                        # Get epochs for the current condition
-                        epochs = get_epochs_from_condition(
-                            processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
+                ## Second step: Get indices of the thresholding
+                if settings_dic['segmentation']["thresholding"]:
+                    # Get the thresholding parameters
+                    thres_k = settings_dic['segmentation']['thres_k']
+                    thres_samples = settings_dic['segmentation']["thres_samples"]
+                    thres_channels = settings_dic['segmentation']["thres_channels"]
+                    # Dict containing the indices of rejected epochs for each condition
+                    idx_threshold = dict()
 
-                    elif settings_dic['segmentation']['segmentation_type'] == 'event':
-                        # Get all the selected events for this condition
-                        epochs = []
-                        idx_events = []
-                        for evt in settings_dic['segmentation']['selected_events']:
-                            epochs_tmp = get_epochs_from_condition(
-                                processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
-                                event=evt)
-                            if epochs_tmp is not None:
-                                epochs.append(epochs_tmp)
-                                # Store the event label for each epoch
-                                evt_key = signal_marks.app_settings['events'][evt]['label']
-                                idx_events.append(np.full((epochs_tmp.shape[0], 1), evt_key))
-                                del epochs_tmp
-                        # Stack the epochs for all the events (and their corresponding event labels)
-                        if epochs:
-                            epochs = np.vstack(epochs)
-                            idx_events = np.vstack(idx_events)
+                    # For each condition selected...
+                    for cond in settings_dic['segmentation']['selected_conditions']:
 
-                    # If no epochs were found for this condition, skip it
-                    if len(epochs) == 0:
-                        controller.on_log(
-                            f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
-                            style='warning')
-                        continue
+                        # If segmentation type is 'condition'
+                        if settings_dic['segmentation']['segmentation_type'] == 'condition':
+                            # Get epochs for the current condition
+                            epochs = get_epochs_from_condition(
+                                processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
 
-                    # Update the progress bar and labels
-                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 1) / total_steps * 100
-                    controller.on_progress_value(int(global_progress))
+                        elif settings_dic['segmentation']['segmentation_type'] == 'event':
+                            # Get all the selected events for this condition
+                            epochs = []
+                            for evt in settings_dic['segmentation']['selected_events']:
+                                epochs_tmp = get_epochs_from_condition(
+                                    processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
+                                    event=evt)
+                                if epochs_tmp is not None:
+                                    epochs.append(epochs_tmp)
+                                    del epochs_tmp
 
+                            # Stack the epochs of the events for this condition
+                            if epochs:
+                                epochs = np.vstack(epochs)
 
-                    ## Fifth step: Apply thresholding rejection if enabled
-                    if settings_dic['segmentation']["thresholding"]:
-                        # If all the epochs are rejected, skip this condition
-                        if all(idx_threshold[cond]):
+                        # If no epochs were found for this condition, skip it
+                        if len(epochs) == 0:
                             controller.on_log(
-                                f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",
+                                f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
                                 style='warning')
                             continue
 
-                        # Remove the rejected epochs from the epochs array
-                        epochs = np.delete(epochs, idx_threshold[cond], axis=0)
-                        # Also remove the discarded epochs from idx_events if segmentation type is 'event'
-                        if settings_dic['segmentation']['segmentation_type'] == 'event':
-                            idx_events = np.delete(idx_events, idx_threshold[cond], axis=0)
+                        # Get the indices of rejected epochs
+                        _, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
+                            epochs, np.nanmean(original_signal, axis=0), np.std(original_signal, axis=0),
+                            k=thres_k, n_samp=thres_samples, n_cha=thres_channels)
+
+                        # Store the rejected indices for the current condition
+                        idx_threshold[cond] = idx_reject
+                        del epochs  # Free memory
+
+                # Update the progress bar and labels
+                global_progress = (i*steps_per_file + 3) / total_steps * 100
+                controller.on_progress_value(int(global_progress))
+
+                ## Third step: Band segmentation
+                # For each band...
+                for j, band in enumerate(bands):
+                    # Band info
+                    band_name = band['name']
+                    bp_min, bp_max = band['min'], band['max']
+
+                    # Workaround to allow filtering in the Nyquist frequency
+                    if bp_max == settings_dic['preprocessing']['fs'] / 2:
+                        bp_max -= 1e-6
+
+                    # If the band is not broadband, apply band filtering (the broadband does not require filtering)
+                    if band_name != 'broadband':
+                        processed_signal_band = band_filtering(deepcopy(processed_signal), bp_min, bp_max, fs, settings_dic['preprocessing'])
+                    else:
+                        processed_signal_band = deepcopy(processed_signal)
 
                     # Update the progress bar and labels
-                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 2) / total_steps * 100
+                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1) / total_steps * 100
                     controller.on_progress_value(int(global_progress))
 
-                    ## Sixth step: Apply resampling if enabled
-                    if epochs is not None and settings_dic['segmentation']['resample']:
-                        resample_fs = settings_dic['segmentation']['resample_fs']
-                        window = [0, (epochs.shape[1] / fs) * 1000]  # Window in ms
-                        epochs = medusa.resample_epochs(epochs, window, resample_fs)
+                    # Create a copy of the data to store the preprocessed signal (to be saved if required)
+                    data_preprocessed = deepcopy(data)
+                    # Get the current signal (e.g., eeg) from the data
+                    biosignal = getattr(data_preprocessed, name_signal)
+                    # Modify it with the preprocessed signal. It will also be modified in the data_preprocessed object
+                    setattr(biosignal, "signal", processed_signal_band)
+                    # Save de original signal
+                    setattr(biosignal, "original_signal", original_signal)
 
-                    # Update the progress bar and labels
-                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 3) / total_steps * 100
-                    controller.on_progress_value(int(global_progress))
+                    # Deepcopy the data to avoid modifying the original data object
+                    save_outputs(controller, deepcopy(data_preprocessed), base_name, band_name, None, None, 'prep')
 
-                    # Save the segmented signals (if required), separately for each condition (and event, if selected)
-                    if settings_dic['segmentation']['segmentation_type'] == 'condition':
-                        save_outputs(controller, deepcopy(epochs), base_name, band_name, cond, None, 'seg')
-                    elif settings_dic['segmentation']['segmentation_type'] == 'event':
-                        for evt in np.unique(idx_events):
-                            # Get the epochs corresponding to the current event
-                            current_epochs = epochs[(idx_events.ravel() == evt),:,:]
-                            # Get the event name from its label
-                            event_name = None
-                            for key, info in signal_marks.app_settings['events'].items():
-                                if info['label'] == evt:
-                                    event_name = key
-                                    break
-                            save_outputs(controller, deepcopy(current_epochs), base_name, band_name, cond, event_name, 'seg')
-                    ## Seventh step: Parameter computation
-                    if settings_dic['segmentation']['segmentation_type'] == 'condition':
-                        params = compute_parameters(epochs, fs, band, settings_dic)
-                        save_outputs(controller, deepcopy(params), base_name, band_name, cond, None, 'param')
-                    elif settings_dic['segmentation']['segmentation_type'] == 'event':
-                        for evt in np.unique(idx_events):
-                            # Get the epochs corresponding to the current event
-                            current_epochs = epochs[(idx_events.ravel() == evt),:,:]
-                            current_params = compute_parameters(current_epochs, fs, band, settings_dic)
-                            # Get the event name from its label
-                            event_name = None
-                            for key, info in signal_marks.app_settings['events'].items():
-                                if info['label'] == evt:
-                                    event_name = key
-                                    break
-                            save_outputs(controller, deepcopy(current_params), base_name, band_name, cond, event_name, 'param')
-                    # Update the progress bar and labels
-                    global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
-                    controller.on_progress_value(int(global_progress))
+                    ## Fourth step: Segmentation
+                    # For each condition selected...
+                    for k, cond in enumerate(settings_dic['segmentation']['selected_conditions']):
 
-            controller.on_progress_text("Completed")
-        # Exception handling
-        except Exception as e:
-            error_found = True
-            controller.on_log(f"Error preprocessing {file}: {e}", style='error')
-            controller.on_progress_text("Error")
+                        # If segmentation type is 'condition'
+                        if settings_dic['segmentation']['segmentation_type'] == 'condition':
+                            # Get epochs for the current condition
+                            epochs = get_epochs_from_condition(
+                                processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'])
 
-    return error_found
+                        elif settings_dic['segmentation']['segmentation_type'] == 'event':
+                            # Get all the selected events for this condition
+                            epochs = []
+                            idx_events = []
+                            for evt in settings_dic['segmentation']['selected_events']:
+                                epochs_tmp = get_epochs_from_condition(
+                                    processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
+                                    event=evt)
+                                if epochs_tmp is not None:
+                                    epochs.append(epochs_tmp)
+                                    # Store the event label for each epoch
+                                    evt_key = signal_marks.app_settings['events'][evt]['label']
+                                    idx_events.append(np.full((epochs_tmp.shape[0], 1), evt_key))
+                                    del epochs_tmp
+                            # Stack the epochs for all the events (and their corresponding event labels)
+                            if epochs:
+                                epochs = np.vstack(epochs)
+                                idx_events = np.vstack(idx_events)
+
+                        # If no epochs were found for this condition, skip it
+                        if len(epochs) == 0:
+                            controller.on_log(
+                                f"No valid epochs for '{cond}' in file '{file}'. Skipping.",
+                                style='warning')
+                            continue
+
+                        # Update the progress bar and labels
+                        global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 1) / total_steps * 100
+                        controller.on_progress_value(int(global_progress))
+
+
+                        ## Fifth step: Apply thresholding rejection if enabled
+                        if settings_dic['segmentation']["thresholding"]:
+                            # If all the epochs are rejected, skip this condition
+                            if all(idx_threshold[cond]):
+                                controller.on_log(
+                                    f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",
+                                    style='warning')
+                                continue
+
+                            # Remove the rejected epochs from the epochs array
+                            epochs = np.delete(epochs, idx_threshold[cond], axis=0)
+                            # Also remove the discarded epochs from idx_events if segmentation type is 'event'
+                            if settings_dic['segmentation']['segmentation_type'] == 'event':
+                                idx_events = np.delete(idx_events, idx_threshold[cond], axis=0)
+
+                        # Update the progress bar and labels
+                        global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 2) / total_steps * 100
+                        controller.on_progress_value(int(global_progress))
+
+                        ## Sixth step: Apply resampling if enabled
+                        if epochs is not None and settings_dic['segmentation']['resample']:
+                            resample_fs = settings_dic['segmentation']['resample_fs']
+                            window = [0, (epochs.shape[1] / fs) * 1000]  # Window in ms
+                            epochs = medusa.resample_epochs(epochs, window, resample_fs)
+
+                        # Update the progress bar and labels
+                        global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 3) / total_steps * 100
+                        controller.on_progress_value(int(global_progress))
+
+                        # Save the segmented signals (if required), separately for each condition (and event, if selected)
+                        if settings_dic['segmentation']['segmentation_type'] == 'condition':
+                            save_outputs(controller, deepcopy(epochs), base_name, band_name, cond, None, 'seg')
+                        elif settings_dic['segmentation']['segmentation_type'] == 'event':
+                            for evt in np.unique(idx_events):
+                                # Get the epochs corresponding to the current event
+                                current_epochs = epochs[(idx_events.ravel() == evt),:,:]
+                                # Get the event name from its label
+                                event_name = None
+                                for key, info in signal_marks.app_settings['events'].items():
+                                    if info['label'] == evt:
+                                        event_name = key
+                                        break
+                                save_outputs(controller, deepcopy(current_epochs), base_name, band_name, cond, event_name, 'seg')
+                        ## Seventh step: Parameter computation
+                        if settings_dic['segmentation']['segmentation_type'] == 'condition':
+                            params = compute_parameters(epochs, fs, band, settings_dic)
+                            save_outputs(controller, deepcopy(params), base_name, band_name, cond, None, 'param')
+                        elif settings_dic['segmentation']['segmentation_type'] == 'event':
+                            for evt in np.unique(idx_events):
+                                # Get the epochs corresponding to the current event
+                                current_epochs = epochs[(idx_events.ravel() == evt),:,:]
+                                current_params = compute_parameters(current_epochs, fs, band, settings_dic)
+                                # Get the event name from its label
+                                event_name = None
+                                for key, info in signal_marks.app_settings['events'].items():
+                                    if info['label'] == evt:
+                                        event_name = key
+                                        break
+                                save_outputs(controller, deepcopy(current_params), base_name, band_name, cond, event_name, 'param')
+                        # Update the progress bar and labels
+                        global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
+                        controller.on_progress_value(int(global_progress))
+
+                controller.on_progress_text("Completed")
+            # Exception handling
+            except Exception as e:
+                error_found = True
+                controller.on_log(f"Error preprocessing {file}: {e}", style='error')
+                controller.on_progress_text("Error")
+
+        return error_found
 
 #################### HELPER FUNCTIONS
 
