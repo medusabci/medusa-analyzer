@@ -71,7 +71,7 @@ class FilesController:
             self.biosignals = recording.biosignals
 
             # Update loading progress
-            self.view.main_window.loading.set_progress(25, self.view.main_window)
+            self.view.main_window.loading.set_progress(50, self.view.main_window)
             time.sleep(1)  # Simulate loading time for better UX
 
             # For each biosignal, get its sampling frequency and number of channels

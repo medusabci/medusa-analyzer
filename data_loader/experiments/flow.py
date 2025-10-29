@@ -32,6 +32,10 @@ def on_next_click(view):
 
     view.main_window.total_steps = len(view.controller.experiment['pipeline'])
 
+    # Loading
+    view.main_window.loading.set_progress((1 / view.main_window.total_steps) * 100, view.main_window)
+
+
     # Load the widgets, instantiate their controllers and add them to the stackedWidget
     for idx, widget_info in enumerate(view.controller.experiment['pipeline']):
         # Take the path
@@ -56,7 +60,7 @@ def on_next_click(view):
         view.main_window.stackedWidget.insertWidget(idx + 1, widget)
 
         # Update loading progress
-        view.main_window.loading.set_progress(((idx + 1) / view.main_window.total_steps) * 100, view.main_window)
+        view.main_window.loading.set_progress(((idx + 2) / view.main_window.total_steps) * 100, view.main_window)
 
     # Finish loading
     view.main_window.loading.finish()

@@ -217,11 +217,10 @@ class SegmentationController:
             # Loading screen
             self.view.main_window.loading.show()
             self.view.main_window.loading.set_progress(0, self.view.main_window)
-
-            self.conditions, self.events, self.events_condition = marks_utils.extract_condition_events([file])
+            time.sleep(0.5)
 
             self.view.main_window.loading.set_progress(50, self.view.main_window)
-            time.sleep(0.5)
+            self.conditions, self.events, self.events_condition = marks_utils.extract_condition_events([file])
 
             # Set unique sorted conditions and events in models
             self.view.conditionList.setModel(QStringListModel(sorted(set(self.conditions))))
@@ -235,7 +234,7 @@ class SegmentationController:
             self.update_next_button_state()
 
             self.view.main_window.loading.set_progress(100, self.view.main_window)
-            time.sleep(0.5)
+            time.sleep(1)
             self.view.main_window.loading.finish()
 
 

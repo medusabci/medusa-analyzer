@@ -1,5 +1,8 @@
 from PySide6 import QtWidgets
 
+from ecg_features.leads.view import LeadsWidget
+
+
 def on_next_click(controller):
     """
     Controls the next (and finish) button behaviour
@@ -39,6 +42,10 @@ def on_back_click(controller):
     """
     idx = controller.view.stackedWidget.currentIndex() # idx is the index of the previous widget
     idx -= 1 # Now is the index of the future widget
+
+    # If going back to the LeadsWidget, set from_back to True to avoid reloading, sorry for this but I cannot find a better way :(
+    if isinstance(controller.view.stackedWidget.widget(idx), LeadsWidget):
+        controller.view.stackedWidget.widget(idx).controller.from_back = True
 
     if idx == 0:
         msg = QtWidgets.QMessageBox()
