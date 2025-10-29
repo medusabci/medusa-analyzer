@@ -57,21 +57,8 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
         for w in [self.settingsCBox, self.prepsignalsCBox, self.segsignalsCBox, self.paramsignalsCBox]:
             w.setChecked(True)
 
-        # Preparar el spinner (una sola vez, al inicializar la GUI)
-        # from PySide6.QtWidgets import QLabel
-        # from PySide6.QtGui import QMovie
-        # from PySide6.QtCore import Qt
-        #
-        # self.loadingLabel = QLabel(self)
-        # self.loadingLabel.setAlignment(Qt.AlignCenter)  # Centrado
-        # self.loadingLabel.setFixedSize(100, 100)  # Tamaño del spinner
-        # self.loadingLabel.hide()  # Oculto al inicio
-        #
-        # self.spinner = QtGui.QMovie("media/spinner.gif")
-        # self.loadingLabel.setMovie(self.spinner)
-        # self.loadingLabel.hide()
 
-    def _log_message(self, msg, style=None):
+    def _log_message(self, msg, style=""):
         """
         Logs messages with custom formatting and styles. Used for errors, warnings, and progress info.
         """
@@ -89,7 +76,7 @@ class SaveWidget(QtWidgets.QWidget, ui_save_widget):
             # If the style is not recognized, use default
             else:
                 style = dict()
-        elif style is None:
+        elif style == "":
             style = dict()
 
         # Set font size

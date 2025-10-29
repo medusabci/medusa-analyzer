@@ -1,4 +1,5 @@
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtWidgets
+from PySide6.QtCore import QObject, Signal
 import medusa
 import medusa.artifact_removal
 import medusa.transforms
@@ -18,6 +19,33 @@ from scipy.stats import kurtosis, skew, zscore
 from scipy.io import savemat
 
 
+# Worker class to run the pipeline in a separate thread
+class PipelineWorker(QObject):
+    # Emit when the processing is finished
+    finished = Signal(bool)
+    # For updating the progress bar in the GUI
+    progress = Signal(int)
+    # For updating text progress in the GUI
+    text_progress = Signal(str)
+    # For updating log messages in the GUI
+    log = Signal(str,str)
+
+    def __init__(self, controller, settings_dic):
+        super().__init__()
+        self.controller = controller
+        self.settings_dic = settings_dic
+
+    def run(self):
+        """Runs run_pipeline in a separate thread and emits finished signal when done."""
+        try:
+            # Call the main pipeline function
+            error_found = run_pipeline(self.controller, self.settings_dic)
+        except Exception as e: # if error
+            self.log.emit(f"Error in pipeline: {e}")
+            error_found = True
+        self.finished.emit(error_found)
+        
+
 def run_pipeline(controller, settings_dic):
     """
     Main pipeline function of the eeg features extraction that executes preprocessing, segmentation, and parameter
@@ -30,8 +58,6 @@ def run_pipeline(controller, settings_dic):
 
     error_found = False
 
-    view = controller.view
-
     # Config of the progress bar
     steps_per_lead = 2 + 4
     steps_per_file = 1 + steps_per_lead * len(settings_dic['leads']['selected_leads'])
@@ -41,8 +67,8 @@ def run_pipeline(controller, settings_dic):
     for i, file in enumerate(selected_files):
         try:
             # Logging and GUI updates
-            controller._log_message(f"Processing file: {file}")
-            view.progressLabel.setText(f"Processing: {basename(file)}")
+            controller.on_log(f"Processing file: {file}")
+            controller.on_progress_text(f"Processing: {basename(file)}")
             QtWidgets.QApplication.processEvents()
 
             # Load data
@@ -64,7 +90,7 @@ def run_pipeline(controller, settings_dic):
 
             # Update the progress bar and labels
             global_progress = (i*steps_per_file + 1) / total_steps * 100
-            controller.view.progressBar.setValue(int(global_progress))
+            controller.on_progress_value(int(global_progress))
 
             ## First step: Select channels
             for j, chan_name in enumerate(settings_dic['leads']['selected_leads']):
@@ -81,7 +107,7 @@ def run_pipeline(controller, settings_dic):
 
                 # Update the progress bar and labels
                 global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 1) / total_steps * 100
-                controller.view.progressBar.setValue(int(global_progress))
+                controller.on_progress_value(int(global_progress))
 
                 ## Third step: Separate by condition
                 segments = []
@@ -96,7 +122,7 @@ def run_pipeline(controller, settings_dic):
 
                 # Update the progress bar and labels
                 global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 2) / total_steps * 100
-                controller.view.progressBar.setValue(int(global_progress))
+                controller.on_progress_value(int(global_progress))
 
                 # For each segment (condition)...
                 for segment_idx, segment in enumerate(segments):
@@ -129,14 +155,14 @@ def run_pipeline(controller, settings_dic):
 
                 # Update the progress bar and labels
                 global_progress = (i * steps_per_file + 1 + j * steps_per_lead + 6) / total_steps * 100
-                controller.view.progressBar.setValue(int(global_progress))
+                controller.on_progress_value(int(global_progress))
 
-            view.progressLabel.setText("Completed")
+            controller.on_progress_text("Completed")
         # Exception handling
         except Exception as e:
             error_found = True
-            controller._log_message(f"Error preprocessing {file}: {e}", style='error')
-            view.progressLabel.setText("Error")
+            controller.on_log(f"Error preprocessing {file}: {e}", style='error')
+            controller.on_progress_text("Error")
 
     return error_found
 
@@ -326,7 +352,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
         else:
             savemat(output_path, {'data': data})
 
-        controller._log_message(f"✅ Preprocessed saved: {output_path}")
+        controller.on_log(f"✅ Preprocessed saved: {output_path}")
 
     # --- Saving parameters (.mat) ---
     if key == "param" and controller.view.paramsignalsCBox.isChecked():
@@ -340,7 +366,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             outname = f"{subj_id}_param-unknown_lead-{lead.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
-            controller._log_message(f"⚠️ Parameters: saved fallback file {outpath}")
+            controller.on_log(f"⚠️ Parameters: saved fallback file {outpath}")
             return
 
         params_dict = dict(data)
@@ -373,7 +399,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
             mat_dict = {metric_label: save_struct}
 
             savemat(outpath, mat_dict)
-            controller._log_message(f"✅ Parameter saved: {outpath}")
+            controller.on_log(f"✅ Parameter saved: {outpath}")
 
         # 2) Other parameters
         for k, v in list(params_dict.items()):
@@ -400,7 +426,7 @@ def save_outputs(controller, data, base_name, lead, cond, key):
                 except Exception:
                     savemat(outpath, {'value': np.asarray(v)})
 
-            controller._log_message(f"✅ Parameter saved: {outpath}")
+            controller.on_log(f"✅ Parameter saved: {outpath}")
 
 #################### PREPROCESSING
 

@@ -1,4 +1,4 @@
-from eeg_features.utils import run_pipeline, PipelineWorker
+from eeg_features.utils import PipelineWorker
 from PySide6.QtCore import QThread, Qt
 from PySide6 import QtWidgets
 
@@ -77,41 +77,40 @@ def on_next_click(view):
         if view.settingsCBox.isChecked():
             view.controller.save_settings_to_json(view.controller.settings_dic)
 
-        # --- Crear el thread y el worker ---
-        # view.loadingLabel.show()
-        # view.spinner.start()
-        # view.main_window.nextButton.setEnabled(False)
+        # Disable the button while the pipeline is running
         view.main_window.nextButton.setEnabled(False)
-
+        # Create the thread and worker
         view.thread = QThread()
         worker = PipelineWorker(view.controller, view.controller.settings_dic)
+        # Move the worker to the thread
         worker.moveToThread(view.thread)
 
-        # --- Conectar señales ---
+        # Connect the signals to the functions
         worker.progress.connect(view.progressBar.setValue, type=Qt.QueuedConnection)
         worker.text_progress.connect(view.progressLabel.setText, type=Qt.QueuedConnection)
         worker.log.connect(view._log_message, type=Qt.QueuedConnection)
 
-        # Cuando acabe el thread:
+        # Clean up when done
         worker.finished.connect(view.thread.quit)
         worker.finished.connect(worker.deleteLater)
         view.thread.finished.connect(view.thread.deleteLater)
 
-        # Cuando acabe el pipeline, actualizamos el botón
+        # When the worker is finished, enable the button and change its text
         def on_finished(error_found):
             view.main_window.nextButton.setEnabled(True)
-
+            # If not error found, change button text to "Close"
             if not error_found:
                 view.main_window.nextButton.setText('Close')
                 view.controller.pipeline_completed = True
-
+        # Connect the on_finished function
         worker.finished.connect(on_finished)
 
-        view.controller.on_log = lambda msg: worker.log.emit(msg)
+        # Assign the callbacks, the worker will call these to update the UI, and we assign them to the signals
+        view.controller.on_log = lambda msg, style="": worker.log.emit(msg,style)
         view.controller.on_progress_text = worker.text_progress.emit
         view.controller.on_progress_value = worker.progress.emit
 
-        # --- Lanzar el thread ---
+        # Run the thread
         view.thread.started.connect(worker.run)
         view.thread.start()
 

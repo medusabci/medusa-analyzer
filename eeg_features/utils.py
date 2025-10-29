@@ -25,7 +25,6 @@ def load_config(files_widget, data):
     biosignal = biosignal_txt.split(" ")[1]
     files_widget.controller.biosignal_info = files_widget.controller.biosignals[biosignal]
 
-
     # PREPROCESSING
     prep_cfg = data["preprocessing"]
     preproc_widget = files_widget.main_window.stackedWidget.widget(2)  # widget(2) is the preprocessing widget
@@ -149,6 +148,7 @@ def load_config(files_widget, data):
     files_widget.main_window.controller.parameters_config = params_cfg
 
 
+# Worker class to run the pipeline in a separate thread
 class PipelineWorker(QObject):
     # Emit when the processing is finished
     finished = Signal(bool)
@@ -157,7 +157,7 @@ class PipelineWorker(QObject):
     # For updating text progress in the GUI
     text_progress = Signal(str)
     # For updating log messages in the GUI
-    log = Signal(str)
+    log = Signal(str,str)
 
     def __init__(self, controller, settings_dic):
         super().__init__()
@@ -165,15 +165,14 @@ class PipelineWorker(QObject):
         self.settings_dic = settings_dic
 
     def run(self):
-        """Ejecuta la función pesada en un thread."""
+        """Runs run_pipeline in a separate thread and emits finished signal when done."""
         try:
             # Call the main pipeline function
             error_found = run_pipeline(self.controller, self.settings_dic)
-        except Exception as e:
+        except Exception as e: # if error
             self.log.emit(f"Error in pipeline: {e}")
             error_found = True
         self.finished.emit(error_found)
-
 
 
 def run_pipeline(controller, settings_dic):
@@ -202,15 +201,12 @@ def run_pipeline(controller, settings_dic):
     steps_per_file = 3 + steps_per_band * len(bands)
     total_steps = total_files * steps_per_file # Total steps for the progress bar
 
-    view = controller.view
-
     # Loop through each selected file
     for i, file in enumerate(selected_files):
         try:
             # Logging and GUI updates
             controller.on_log(f"Processing file: {file}")
             controller.on_progress_text(f"Processing: {basename(file)}")
-            QtWidgets.QApplication.processEvents()
 
             # Load data
             base_name = splitext(basename(file))[0]
