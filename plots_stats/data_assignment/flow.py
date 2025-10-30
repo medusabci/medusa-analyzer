@@ -5,6 +5,8 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked
     """
 
+    view.main_module.controller.data_assignment = view.controller.data_assignment
+
     if not view.main_module.controller.data_assignment:
         QtWidgets.QMessageBox.warning(
             view,

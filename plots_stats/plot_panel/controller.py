@@ -70,6 +70,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
         experiment_type = self.view.main_module.controller.experiment_type
         features_data  = params_json.get(experiment_type, [])[0]
 
+        # Update loading progress
+        self.view.main_module.loading.set_progress((1 / len(param_iter)) * 100,
+                                                   self.view.main_module)
+
         # For each selected param, we inset one tab in de TabWidget
         for param in param_iter:
 
@@ -179,7 +183,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             self._tabs_created = True
 
             # Update loading progress
-            self.view.main_module.loading.set_progress(((param_iter.index(param) + 1) / len(param_iter)) * 100, self.view.main_module)
+            self.view.main_module.loading.set_progress(((param_iter.index(param) + 2) / len(param_iter)) * 100, self.view.main_module)
 
         # Finish loading
         self.view.main_module.loading.finish()

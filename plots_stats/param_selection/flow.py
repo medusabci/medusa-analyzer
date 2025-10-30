@@ -5,7 +5,9 @@ def on_next_click(view):
     Handles the event when the "Next" button is clicked
     """
 
-    if not view.main_module.controller.data_assignment:
+    view.main_module.controller.param_selection = view.controller.param_selection
+
+    if not view.main_module.controller.param_selection:
         QtWidgets.QMessageBox.warning(
             view,
             "Parameter Selection Error",

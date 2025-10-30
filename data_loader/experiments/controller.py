@@ -1,3 +1,5 @@
+import time
+
 from PySide6 import QtGui, QtCore, QtWidgets
 from main_window import flow as main_flow
 from data_loader.experiments.flow import on_next_click
@@ -102,6 +104,10 @@ class ExperimentsController:
             window_title = "Plot & Stats - Experiment Setup"
         elif module_type == "preprocess":
             window_title = "Preprocessing - Experiment Setup"
+
+        # Loading screen
+        self.view.main_window.loading.set_progress(100, self.view.main_window)
+        time.sleep(0.5) # Just to see the loading bar complete
 
         # Insert initial widget into the stackedWidget dependindo on module type
         if module_type == "params":

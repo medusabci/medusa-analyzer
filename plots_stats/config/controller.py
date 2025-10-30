@@ -12,6 +12,7 @@ class ConfigController(QtCore.QObject):
         self.experiment_path = None
         self.path_correct = False
         self.loaded_widgets = False
+        self.new_selection = False
 
         # Buttons connects
         self.view.browseButton.clicked.connect(self.browse_folder)
@@ -101,3 +102,4 @@ class ConfigController(QtCore.QObject):
         # If all conditions are met, enable the 'Next' button
         enable_next = path_ok and within_or_between
         self.view.main_module.nextButton.setEnabled(enable_next)
+        self.new_selection = True

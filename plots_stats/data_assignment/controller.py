@@ -7,6 +7,7 @@ class DataAssignmentController(QtCore.QObject):
         self.view = ui
         self.view.controller = self
         self.first_show = False
+        self.data_assignment = {}
 
         # Connects
         self.view.searchEdit.textChanged.connect(self.filter_items)
@@ -32,7 +33,7 @@ class DataAssignmentController(QtCore.QObject):
         self.view.main_module.nextButton.setEnabled(len(selected_items) > 0)
 
         # Store the selected items in the main controller
-        self.view.main_module.controller.data_assignment = [item.text() for item in selected_items]
+        self.data_assignment = [item.text() for item in selected_items]
 
 
 

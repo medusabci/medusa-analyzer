@@ -37,6 +37,14 @@ def on_next_click(view):
     view.main_module.controller.params = get_params_from_list(view.main_module.controller.all_files)
     view.main_module.controller.bands = get_bands_from_list(view.main_module.controller.all_files)
 
+    # If widgets were already loaded, but a new selection of experiment has been made, clear the stackedWidget
+    if  view.controller.loaded_widgets and view.controller.new_selection:
+        # Clear stackedWidget except for the first page
+        for i in range(view.main_module.stackedWidget.count() - 1, 0, -1):
+            widget_to_remove = view.main_module.stackedWidget.widget(i)
+            view.main_module.stackedWidget.removeWidget(widget_to_remove)
+            widget_to_remove.deleteLater()
+        view.controller.loaded_widgets = False
     if not view.controller.loaded_widgets:
 
         # Loading screen
@@ -52,6 +60,8 @@ def on_next_click(view):
         experiment = view.main_module.controller.config_config['experiment_info']['experiment_type']
         widgets = modules_config[experiment]
 
+        # Update loading progress
+        view.main_module.loading.set_progress((1 / len(widgets)) * 100, view.main_module)
 
         # Load the widgets, instantiate their controllers and add them to the stackedWidget
         for idx, widget_info in enumerate(widgets):
@@ -79,7 +89,7 @@ def on_next_click(view):
             view.main_module.stackedWidget.insertWidget(idx + 1, widget)
 
             # Update loading progress
-            view.main_module.loading.set_progress(((idx + 1) / len(widgets)) * 100, view.main_module)
+            view.main_module.loading.set_progress(((idx + 2) / len(widgets)) * 100, view.main_module)
 
         # Finish loading
         view.main_module.loading.finish()
