@@ -342,8 +342,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
             # Card container
             card = QtWidgets.QFrame()
             card.setFrameShape(QtWidgets.QFrame.StyledPanel)
-            card.setStyleSheet("""QFrame {background-color: transparent; border-radius: 8px; } """)
             card.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            if isinstance(meta, dict) and meta.get("type") == "bool":
+                card.setStyleSheet("""QFrame {background-color: #DCDCDC; border-radius: 8px;} """)
+            else:
+                card.setStyleSheet("""QFrame {background-color: transparent; border-radius: 8px;} """)
 
             card_layout = QtWidgets.QVBoxLayout(card)
             card_layout.setContentsMargins(0, 0, 0, 0)
@@ -517,7 +520,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
         transparent = vals["transparent"]
         bg_color = vals["bg_color"]
 
-        suggested_name = f"{tab.findChild(QtWidgets.QLabel, 'titleLabel').text()}.{fmt}"
+        # suggested_name = f"{tab.findChild(QtWidgets.QLabel, 'titleLabel').text()}.{fmt}"
+        plot_type = getattr(tab, "_plot_type", "figure")
+        suggested_name = f"{plot_type}.{fmt}"
         fname, _ = QFileDialog.getSaveFileName(self.view, "Save image", suggested_name,
                                               f"{fmt.upper()} (*.{fmt})")
         if not fname:
