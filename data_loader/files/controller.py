@@ -147,7 +147,6 @@ class FilesController:
                 self.selected_files = dialog._update_preprocessing_widget()
                 self.on_file_selection_changed()
 
-
     def on_converter_click(self):
         """
         Function that opens a file dialog to select files to convert, and uses the conversor_to_rec
@@ -164,6 +163,7 @@ class FilesController:
 
         valid_files = []
         for file in files:
+            file = str(file)
             if not any(file.endswith(ext) for ext in CONVERTERS.keys()):
                 continue
             extension = file.split(".")[-1]
@@ -190,7 +190,8 @@ class FilesController:
         QtWidgets.QApplication.processEvents()
 
         try:
-            successfully_converted_files = conversor_to_rec(valid_files, self.view.convertProgressBar, self.view.convertLogTextBrowser)
+            successfully_converted_files = conversor_to_rec(valid_files, self.view.convertProgressBar,
+                                                            self.view.convertLogTextBrowser, self.view.main_window)
             QtWidgets.QMessageBox.information(
                 self.view,
                 "Conversion Complete",

@@ -14,7 +14,7 @@ class ExperimentsController:
         self._set_icon(self.view.eegIcon, "eeg_features.png", size=[150, 150])
         self._set_icon(self.view.ecgIcon, "ecg_features.png", size=[165, 157])
         self._set_icon(self.view.plotparamIcon, "plot_parameters.png", size=[165, 157])
-        self._set_icon(self.view.plotprepIcon, "plot_preprocessed.jpeg", size=[165, 157])
+        self._set_icon(self.view.plotprepIcon, "plot_preprocessed.png", size=[165, 157])
 
         self._hide_all_radiobuttons()
 

@@ -110,6 +110,6 @@ def determine_task_and_level(r_number):
         return "videogame", level
 
 input_path = r'D:\Proyectos\medusa-analyzer\BIE\raw'
-output_path = r'D:\Proyectos\medusa-analyzer\BIE\BIDS'
+output_path = r'D:\Proyectos\medusa-analyzer\BIE\raw_BIDS'
 
 convert_to_semi_bids(input_path, output_path, 'eeg')
