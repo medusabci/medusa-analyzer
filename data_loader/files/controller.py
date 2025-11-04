@@ -2,7 +2,7 @@
 from data_loader.files.converter import conversor_to_rec
 from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
-from data_loader.files.tree_view_list import ExperimentTreeDialog
+from data_loader.files.tree_view_list import ExperimentTreeDialog, GenericFileTreeDialog
 from data_loader.files.converter import CONVERTERS
 import os, json, importlib, time
 
@@ -33,14 +33,12 @@ class FilesController:
             - Updates the label with the number of files.
             - If invalid files are selected, prompts to open the converter.
         """
-        files, _ = QtWidgets.QFileDialog.getOpenFileNames(
-            self.view, "Select recordings", "", "Recording files (*.rec.bson)"
-        )
+        files, _ = QtWidgets.QFileDialog.getOpenFileNames(self.view, "Select recordings", "", "Recording files (*.rec.bson)")
 
         if not files:
             return
 
-        # Include them in the salection and update the label accordingly
+        # Include them in the selection and update the label accordingly
         self.selected_files.extend(files)
         self.on_file_selection_changed()
         self.view.loadButton.setEnabled(True)
@@ -149,70 +147,86 @@ class FilesController:
 
     def on_converter_click(self):
         """
-        Function that opens a file dialog to select files to convert, and uses the conversor_to_rec
+        Opens a dialog that allows the user to select a directory containing data files
+        to be converted, displays a tree-view dialog to select specific files, and runs `conversor_to_rec` on the
+        chosen files.
         """
-        files, _ = QtWidgets.QFileDialog.getOpenFileNames(
-            self.view,
-            "Select files to convert",
-            "",
-            "All files (*.*)"
+        msg = QtWidgets.QMessageBox(self.view)
+        msg.setWindowTitle("Data Conversion Wizard")
+        msg.setIcon(QtWidgets.QMessageBox.Information)
+        msg.setTextFormat(QtCore.Qt.RichText)
+        msg.setText(
+            "<b>Welcome to the Data Conversion Wizard</b><br><br>"
+            "This tool helps you convert supported data files into the <b>.rec.bson</b> format.<br><br>"
+            "✅ You can select a <b>root directory</b> (e.g., <i>data/</i>) that contains your files.<br>"
+            "✅ All subfolders will be scanned automatically.<br>"
+            "✅ You can then choose which files to include in the conversion.<br><br>"
+            "Click <b>OK</b> to continue and select the root folder."
         )
+        msg.exec()
 
-        if not files:
+        # Select the root input directory
+        input_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self.view,"Select Root Directory Containing Data to Convert"))
+        if not input_dir:
+            QtWidgets.QMessageBox.information(self.view, "Operation cancelled", "No folder was selected. Conversion aborted.")
             return
 
-        valid_files = []
-        for file in files:
-            file = str(file)
-            if not any(file.endswith(ext) for ext in CONVERTERS.keys()):
-                continue
-            extension = file.split(".")[-1]
-            rec_path = file.replace("." + extension, ".rec.bson")
-            if os.path.exists(rec_path):
-                result = QtWidgets.QMessageBox.question(
-                    self.view,
-                    "File already exists",
-                    f"The file '{os.path.basename(rec_path)}' already exists.\nDo you want to overwrite it?",
-                    QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
-                )
-                if result == QtWidgets.QMessageBox.No:
-                    continue
-            valid_files.append(file)
+        # Gather valid files recursively
+        valid_exts = tuple(CONVERTERS.keys())
+        rec_files = [os.path.join(root, f) for root, _, files in os.walk(input_dir) for f in files if f.endswith(valid_exts)]
 
-        if not valid_files:
-            QtWidgets.QMessageBox.information(self.view, "No Valid Files", "No valid files selected for conversion.")
+        if not rec_files:
+            QtWidgets.QMessageBox.warning(
+                self.view,
+                "No Valid Files Found",
+                f"No supported files were detected in:\n{input_dir}\n\n"
+                f"Supported extensions: {', '.join(valid_exts)}"
+            )
             return
 
+        # Display the file selection tree
+        dialog = GenericFileTreeDialog(rec_files, parent=self.view)
+        if dialog.exec() != QtWidgets.QDialog.Accepted:
+            QtWidgets.QMessageBox.information(self.view, "Cancelled", "No files were selected for conversion.")
+            return
+
+        selected_files = dialog.get_selected_files()
+        if not selected_files:
+            QtWidgets.QMessageBox.information(self.view, "No Selection", "No files were selected for conversion.")
+            return
+
+        # Prepare the UI for conversion
         self.view.convertLogTextBrowser.clear()
         self.view.convertLogTextBrowser.setVisible(True)
         self.view.convertProgressBar.setValue(0)
         self.view.convertProgressBar.setVisible(True)
         QtWidgets.QApplication.processEvents()
 
+        # Run the conversion process
         try:
-            successfully_converted_files = conversor_to_rec(valid_files, self.view.convertProgressBar,
+            successfully_converted_files = conversor_to_rec(selected_files, self.view.convertProgressBar,
                                                             self.view.convertLogTextBrowser, self.view.main_window)
             QtWidgets.QMessageBox.information(
                 self.view,
                 "Conversion Complete",
-                f"Successfully converted {len(successfully_converted_files)} file(s)."
+                f"✅ Successfully converted {len(successfully_converted_files)} file(s)."
             )
             # Add the successfully converted files to the selected files, avoiding duplicates
-            for f in successfully_converted_files:
-                if f not in self.selected_files:
-                    self.selected_files.append(f)
+            new_files = [f for f in successfully_converted_files if f not in self.selected_files]
+            self.selected_files.extend(new_files)
             self.on_file_selection_changed()
 
         except Exception as e:
             QtWidgets.QMessageBox.critical(
                 self.view,
                 "Conversion Error",
-                f"An error occurred:\n{str(e)}"
+                f"❌ An unexpected error occurred during conversion:\n\n{str(e)}"
             )
+
         finally:
+            # Always restore the UI state
             self.view.convertProgressBar.setVisible(False)
             self.view.convertLogTextBrowser.setVisible(False)
-
 
     def load_config(self):
         file, _ = QtWidgets.QFileDialog.getOpenFileName(
