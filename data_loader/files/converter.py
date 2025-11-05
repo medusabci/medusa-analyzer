@@ -9,25 +9,13 @@ import scipy.io as sio
 from medusa.meeg.meeg import EEG, EEGChannelSet
 from medusa.bci import erp_spellers
 from medusa import ecg
+from PySide6.QtCore import QThread, Signal
 
 # README: To include a new converter, just create a function that takes a file path as input (e.g.
 # _convert_newformat_file(filepath)) and returns the new filepath, and include it in the CONVERTERS dictionary with the
 # corresponding file extension.
 
 # ----------------------------- UTILITY FUNCTIONS -----------------------------
-def _log_message(log_browser, message):
-    """Helper function for logging messages"""
-    if log_browser:
-        log_browser.append(message)
-        QtWidgets.QApplication.processEvents()
-
-
-def _update_progress(progress_bar, current, total):
-    """Helper function for updating progress bar"""
-    if progress_bar:
-        progress_bar.setValue(int((current + 1) / total * 100))
-        QtWidgets.QApplication.processEvents()
-
 
 def _create_empty_marks():
     """Create empty marks structure"""
@@ -65,7 +53,7 @@ def _run_converter(converter, file, log_browser=None, output_dir=None):
 
     return None
 
-def _select_output_directory(experiment_type, log_browser):
+def _select_output_directory(experiment_type, worker):
     """Ask the user for output directory and prepare folders."""
     msg = QtWidgets.QMessageBox()
     msg.setWindowTitle("Select output path")
@@ -82,33 +70,33 @@ def _select_output_directory(experiment_type, log_browser):
         "Select destination folder for converted files (semi-BIDS root)"
     )
     if not output_path:
-        _log_message(log_browser, "🚫 Conversion cancelled (no output folder selected).")
+        worker.log.emit("🚫 Conversion cancelled (no output folder selected).")
         return None
 
     output_dir = Path(output_path)
     output_dir.mkdir(parents=True, exist_ok=True)
-    _log_message(log_browser, f"📁 Output path selected: {output_dir}")
+    worker.log.emit(f"📁 Output path selected: {output_dir}")
     return output_dir
 
 
-def _handle_ecg_conversion(files, output_dir, tmp_dir, log_browser):
+def _handle_ecg_conversion(files, output_dir, tmp_dir, worker):
     """Simplified handler for ECG (no actual conversion)."""
-    _log_message(log_browser, "🫀 ECG experiment detected — organizing in semi-BIDS.")
+    worker.log.emit("🫀 ECG experiment detected — organizing in semi-BIDS.")
     try:
         input_dir = os.path.dirname(files[0])
         semi_bids_files = convert_to_semi_bids(input_dir, output_dir, 'ecg')
-        _log_message(log_browser, "✅ ECG semi-BIDS organization completed successfully.")
+        worker.log.emit("✅ ECG semi-BIDS organization completed successfully.")
     except Exception as e:
-        _log_message(log_browser, f"❌ Error organizing ECG semi-BIDS: {e}")
+        worker.log.emit(f"❌ Error organizing ECG semi-BIDS: {e}")
         return []
     finally:
-        _cleanup_tmp(tmp_dir, log_browser)
+        _cleanup_tmp(tmp_dir, worker)
 
-    _log_message(log_browser, f"<hr><b>Summary:</b><br>🔵 Organized files: {len(semi_bids_files)}<br>")
+    worker.log.emit(f"<hr><b>Summary:</b><br>🔵 Organized files: {len(semi_bids_files)}<br>")
     return [str(f) for f in semi_bids_files]
 
 
-def _handle_eeg_conversion(files, tmp_dir, output_dir, log_browser, progress_bar):
+def _handle_eeg_conversion(files, tmp_dir, output_dir, worker):
     """Handle EEG conversion and organization."""
     valid_files = []
     counters = {"converted": 0, "accepted": 0, "skipped": 0}
@@ -120,87 +108,87 @@ def _handle_eeg_conversion(files, tmp_dir, output_dir, log_browser, progress_bar
 
         if matched_ext is None:
             counters["skipped"] += 1
-            _log_message(log_browser, f"⚠️ <b>{filename}</b> → Unsupported file type.")
-            _update_progress(progress_bar, i, total)
+            worker.log.emit(f"⚠️ <b>{filename}</b> → Unsupported file type.")
+            worker.progress.emit(int((i + 1) / total * 100))
             continue
 
         converter = CONVERTERS[matched_ext]["converter"]
 
         if matched_ext == ".rec.bson":
-            _process_rec_bson(file, filename, tmp_dir, converter, log_browser, counters)
+            _process_rec_bson(file, filename, tmp_dir, converter, worker, counters)
         else:
-            _process_other_file(file, filename, tmp_dir, converter, log_browser, counters)
+            _process_other_file(file, filename, tmp_dir, converter, worker, counters)
 
-        _update_progress(progress_bar, i, total)
+        worker.progress.emit(int((i + 1) / total * 100))
 
-    semi_bids_files = _organize_semi_bids(tmp_dir, output_dir, log_browser)
-    _cleanup_tmp(tmp_dir, log_browser)
-    _log_summary(log_browser, counters)
+    semi_bids_files = _organize_semi_bids(tmp_dir, output_dir, worker)
+    _cleanup_tmp(tmp_dir, worker)
+    _log_summary(worker, counters)
     return [str(f) for f in semi_bids_files]
 
 
-def _process_rec_bson(file, filename, tmp_dir, converter, log_browser, counters):
+def _process_rec_bson(file, filename, tmp_dir, converter, worker, counters):
     """Handle existing .rec.bson files."""
     try:
         data = Recording.load(file)
     except Exception as e:
-        _log_message(log_browser, f"❌ <b>{filename}</b> → Error loading .rec.bson: {e}")
+        worker.log.emit(f"❌ <b>{filename}</b> → Error loading .rec.bson: {e}")
         return
 
     if getattr(data, "marks", None):
         shutil.copy2(file, tmp_dir / Path(file).name)
         counters["accepted"] += 1
-        _log_message(log_browser, f"ℹ️ {filename} → Already contains 'marks', skipped conversion.")
+        worker.log.emit(f"ℹ️ {filename} → Already contains 'marks', skipped conversion.")
     else:
-        _convert_and_add(file, filename, converter, tmp_dir, log_browser, counters, normalize=True)
+        _convert_and_add(file, filename, converter, tmp_dir, worker, counters, normalize=True)
 
 
-def _process_other_file(file, filename, tmp_dir, converter, log_browser, counters):
+def _process_other_file(file, filename, tmp_dir, converter, worker, counters):
     """Handle non-.rec.bson files using their converter."""
-    _convert_and_add(file, filename, converter, tmp_dir, log_browser, counters)
+    _convert_and_add(file, filename, converter, tmp_dir, worker, counters)
 
 
-def _convert_and_add(file, filename, converter, tmp_dir, log_browser, counters, normalize=False):
+def _convert_and_add(file, filename, converter, tmp_dir, worker, counters, normalize=False):
     """Generic conversion logic shared between cases."""
     # action = "Normalizing" if normalize else "Converting"
     action = "Converting"
-    _log_message(log_browser, f"⚙️ {filename} → {action}...")
+    worker.log.emit(f"⚙️ {filename} → {action}...")
     try:
-        new_file = _run_converter(converter, file, log_browser, output_dir=tmp_dir)
+        new_file = _run_converter(converter, file, worker, output_dir=tmp_dir)
         if not new_file or not os.path.exists(new_file):
-            _log_message(log_browser, f"❌ {filename} → Converter returned no valid path.")
+            worker.log.emit(f"❌ {filename} → Converter returned no valid path.")
             return
         dest_file = tmp_dir / Path(file).name.replace(' ', '_')
         dest_file = dest_file.with_suffix(".rec.bson")
         shutil.copy2(new_file, dest_file)
         counters["converted"] += 1
-        _log_message(log_browser, f"✅ {filename} → {action} successful.")
+        worker.log.emit(f"✅ {filename} → {action} successful.")
     except Exception as e:
-        _log_message(log_browser, f"❌ {filename} → Error during {action.lower()}: {e}")
+        worker.log.emit(f"❌ {filename} → Error during {action.lower()}: {e}")
 
 
-def _organize_semi_bids(tmp_dir, output_dir, log_browser):
+def _organize_semi_bids(tmp_dir, output_dir, worker):
     """Organize converted files into semi-BIDS structure."""
     try:
-        _log_message(log_browser, "📂 Organizing converted files into semi-BIDS structure...")
+        worker.log.emit("📂 Organizing converted files into semi-BIDS structure...")
         files = convert_to_semi_bids(tmp_dir, output_dir, 'eeg')
-        _log_message(log_browser, "✅ EEG semi-BIDS organization completed successfully.")
+        worker.log.emit("✅ EEG semi-BIDS organization completed successfully.")
         return files
     except Exception as e:
-        _log_message(log_browser, f"❌ Error organizing semi-BIDS: {e}")
+        worker.log.emit(f"❌ Error organizing semi-BIDS: {e}")
         return []
 
 
-def _cleanup_tmp(tmp_dir, log_browser):
+def _cleanup_tmp(tmp_dir, worker):
     """Remove temporary folder safely."""
     try:
         shutil.rmtree(tmp_dir)
-        _log_message(log_browser, "🧹 Temporary conversion folder removed.")
+        worker.log.emit("🧹 Temporary conversion folder removed.")
     except Exception:
-        _log_message(log_browser, "⚠️ Could not remove temporary folder (in use?).")
+        worker.log.emit("⚠️ Could not remove temporary folder (in use?).")
 
 
-def _log_summary(log_browser, counters):
+def _log_summary(worker, counters):
     """Print final summary."""
     summary = (
         "<hr><b>Summary:</b><br>"
@@ -209,7 +197,7 @@ def _log_summary(log_browser, counters):
     )
     if counters["skipped"]:
         summary += f"⚠️ Skipped: {counters['skipped']} file(s)"
-    _log_message(log_browser, summary)
+    worker.log.emit(summary)
 
 # ----------------------------- CONVERTERS -----------------------------
 def _convert_rcp_file(file, log_browser=None, output_dir=None):
@@ -433,28 +421,51 @@ def process_recordings(source_dir, dest_root, anat, record_pattern):
     return final_files
 
 # ----------------------------- MAIN ENTRY -----------------------------
-def conversor_to_rec(files, progress_bar=None, log_browser=None, main_window=None):
-    """
-    Convert different file types to .rec.bson format and arrange them in semi-BIDS structure.
-    - If a file is .rec.bson and already contains data.marks -> skip.
-    - If a file is .rec.bson and lacks data.marks -> run the normalizer converter.
-    - For other supported extensions -> run their converters.
-    """
+# Worker class to run the converter in a separate thread
+class ConverterWorker(QThread):
+    # Emit when the processing is finished
+    finished = Signal(bool)
+    # For updating the progress bar in the GUI
+    progress = Signal(int)
+    # For updating log messages in the GUI
+    log = Signal(str)
 
-    available_experiments_to_convert = ["EEG", "ECG"]
-    experiment_type = getattr(main_window, "selected_experiment", "").split('_')[0].upper()
-    if experiment_type not in available_experiments_to_convert:
-        _log_message(log_browser, f"⚠️ Experiment type '{experiment_type}' not supported.")
-        return []
+    def __init__(self, files, experiment_type):
+        super().__init__()
+        self.files = files
+        self.experiment_type = experiment_type
 
-    output_dir = _select_output_directory(experiment_type, log_browser)
-    if not output_dir:
-        return []
+    def run(self):
+        """Runs run_pipeline in a separate thread and emits finished signal when done."""
+        try:
+            # Call the main pipeline function
+            converted_files = self.conversor_to_rec(self.files, self.experiment_type)
+        except Exception as e: # if error
+            self.log.emit(f"Error in conversion: {e}")
+            converted_files = []
+        self.finished.emit(converted_files)
 
-    tmp_dir = output_dir / "tmp_conversion"
-    tmp_dir.mkdir(exist_ok=True)
+    def conversor_to_rec(self, files, experiment_type):
+        """
+        Convert different file types to .rec.bson format and arrange them in semi-BIDS structure.
+        - If a file is .rec.bson and already contains data.marks -> skip.
+        - If a file is .rec.bson and lacks data.marks -> run the normalizer converter.
+        - For other supported extensions -> run their converters.
+        """
 
-    if experiment_type == "ECG":
-        return _handle_ecg_conversion(files, output_dir, tmp_dir, log_browser)
+        available_experiments_to_convert = ["EEG", "ECG"]
+        if experiment_type not in available_experiments_to_convert:
+            self.log.emit(f"⚠️ Experiment type '{experiment_type}' not supported.")
+            return []
 
-    return _handle_eeg_conversion(files, tmp_dir, output_dir, log_browser, progress_bar)
+        output_dir = _select_output_directory(experiment_type, self)
+        if not output_dir:
+            return []
+
+        tmp_dir = output_dir / "tmp_conversion"
+        tmp_dir.mkdir(exist_ok=True)
+
+        if experiment_type == "ECG":
+            return _handle_ecg_conversion(files, output_dir, tmp_dir, self)
+
+        return _handle_eeg_conversion(files, tmp_dir, output_dir, self)

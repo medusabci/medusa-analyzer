@@ -1,10 +1,12 @@
 
-from data_loader.files.converter import conversor_to_rec
+from data_loader.files.converter import ConverterWorker
 from medusa import components, ecg
 from data_loader.files.file_list import FilesListDialog
 from data_loader.files.tree_view_list import ExperimentTreeDialog, GenericFileTreeDialog
 from data_loader.files.converter import CONVERTERS
 import os, json, importlib, time
+from PySide6.QtCore import Qt
+
 
 from PySide6 import QtWidgets, QtCore
 import os
@@ -204,17 +206,40 @@ class FilesController:
 
         # Run the conversion process
         try:
-            successfully_converted_files = conversor_to_rec(selected_files, self.view.convertProgressBar,
-                                                            self.view.convertLogTextBrowser, self.view.main_window)
-            QtWidgets.QMessageBox.information(
-                self.view,
-                "Conversion Complete",
-                f"✅ Successfully converted {len(successfully_converted_files)} file(s)."
-            )
-            # Add the successfully converted files to the selected files, avoiding duplicates
-            new_files = [f for f in successfully_converted_files if f not in self.selected_files]
-            self.selected_files.extend(new_files)
-            self.on_file_selection_changed()
+            # successfully_converted_files = conversor_to_rec(selected_files, self.view.convertProgressBar,
+            #                                                 , self.view.main_window)
+
+            # Disable the button while the pipeline is running
+            self.view.main_window.nextButton.setEnabled(False)
+
+            # Create the thread
+            experiment_type = getattr(self.view.main_window, "selected_experiment", "").split('_')[0].upper()
+            self.view.worker = ConverterWorker(selected_files, experiment_type)
+
+            # Connect the signals to the functions
+            self.view.worker.progress.connect(self.view.convertProgressBar.setValue, type=Qt.QueuedConnection)
+            self.view.worker.log.connect(self.view._log_message, type=Qt.QueuedConnection)
+
+            # Clean up when done
+            self.view.worker.finished.connect(self.view.worker.deleteLater)
+
+            # When the worker is finished, enable the button and change its text
+            def on_finished(converted_files):
+                QtWidgets.QMessageBox.information(
+                    self.view,
+                    "Conversion Complete",
+                    f"✅ Successfully converted {len(converted_files)} file(s)."
+                )
+                # Add the successfully converted files to the selected files, avoiding duplicates
+                new_files = [f for f in converted_files if f not in self.selected_files]
+                self.selected_files.extend(new_files)
+                self.on_file_selection_changed()
+
+            # Connect the on_finished function
+            self.view.worker.finished.connect(on_finished)
+
+            # Run the thread
+            self.view.worker.start()
 
         except Exception as e:
             QtWidgets.QMessageBox.critical(

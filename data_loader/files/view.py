@@ -1,5 +1,7 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
+from PySide6.QtGui import QTextCursor
+from PySide6.QtWidgets import QApplication
 
 # Load UI class
 ui_files = loadUiType('data_loader/files/view.ui')[0]
@@ -79,3 +81,8 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
                                 );
                             }
                         """)
+
+    def _log_message(self, text):
+        self.convertLogTextBrowser.append(text)
+        self.convertLogTextBrowser.moveCursor(QTextCursor.End)
+        QApplication.processEvents()
