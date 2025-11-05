@@ -53,31 +53,6 @@ def _run_converter(converter, file, log_browser=None, output_dir=None):
 
     return None
 
-def _select_output_directory(experiment_type, worker):
-    """Ask the user for output directory and prepare folders."""
-    msg = QtWidgets.QMessageBox()
-    msg.setWindowTitle("Select output path")
-    msg.setIcon(QtWidgets.QMessageBox.Information)
-    msg.setText(
-        f"Starting the conversion of {experiment_type} files.\n\n"
-        "First, select a folder to save files in semi-BIDS format.\n\n"
-        "Note that original files will not be modified."
-    )
-    msg.exec()
-
-    output_path = QtWidgets.QFileDialog.getExistingDirectory(
-        None,
-        "Select destination folder for converted files (semi-BIDS root)"
-    )
-    if not output_path:
-        worker.log.emit("🚫 Conversion cancelled (no output folder selected).")
-        return None
-
-    output_dir = Path(output_path)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    worker.log.emit(f"📁 Output path selected: {output_dir}")
-    return output_dir
-
 
 def _handle_ecg_conversion(files, output_dir, tmp_dir, worker):
     """Simplified handler for ECG (no actual conversion)."""
@@ -386,7 +361,7 @@ def convert_to_semi_bids(input_path, output_path, anat):
             files_from_process = process_recordings(subj_dir, subj_bids_path, anat, record_pattern)
             all_final_files.extend(files_from_process)
 
-    print(f"✅ Conversion to semi-BIDS completed ({len(all_final_files)} files).")
+    # print(f"✅ Conversion to semi-BIDS completed ({len(all_final_files)} files).")
     return all_final_files
 
 def process_recordings(source_dir, dest_root, anat, record_pattern):
@@ -424,28 +399,31 @@ def process_recordings(source_dir, dest_root, anat, record_pattern):
 # Worker class to run the converter in a separate thread
 class ConverterWorker(QThread):
     # Emit when the processing is finished
-    finished = Signal(bool)
+    finished = Signal(list, bool)
     # For updating the progress bar in the GUI
     progress = Signal(int)
     # For updating log messages in the GUI
     log = Signal(str)
 
-    def __init__(self, files, experiment_type):
+    def __init__(self, files, experiment_type, output_dir):
         super().__init__()
         self.files = files
         self.experiment_type = experiment_type
+        self.output_dir = output_dir
 
     def run(self):
         """Runs run_pipeline in a separate thread and emits finished signal when done."""
+        error_found = False
         try:
             # Call the main pipeline function
-            converted_files = self.conversor_to_rec(self.files, self.experiment_type)
+            converted_files = self.conversor_to_rec(self.files, self.experiment_type, self.output_dir)
         except Exception as e: # if error
             self.log.emit(f"Error in conversion: {e}")
             converted_files = []
-        self.finished.emit(converted_files)
+            error_found = True
+        self.finished.emit(converted_files, error_found)
 
-    def conversor_to_rec(self, files, experiment_type):
+    def conversor_to_rec(self, files, experiment_type, output_dir):
         """
         Convert different file types to .rec.bson format and arrange them in semi-BIDS structure.
         - If a file is .rec.bson and already contains data.marks -> skip.
@@ -458,7 +436,6 @@ class ConverterWorker(QThread):
             self.log.emit(f"⚠️ Experiment type '{experiment_type}' not supported.")
             return []
 
-        output_dir = _select_output_directory(experiment_type, self)
         if not output_dir:
             return []
 
