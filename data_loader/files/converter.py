@@ -67,7 +67,7 @@ def process_file(file, filename, tmp_dir, converter, worker, matched_ext, root_d
         # File path relative to root_dir
         relative = file_path.relative_to(Path(root_dir))
         folder_structure = relative.parent # Discard the filename to keep the relative folder structure
-        tmp_dir_complete = tmp_dir / folder_structure # Include the folder structure in the tmp_dir
+        tmp_dir_complete = Path(tmp_dir) / folder_structure # Include the folder structure in the tmp_dir
 
         # Run the converter
         new_file = converter(file, tmp_dir_complete, worker)
