@@ -133,9 +133,10 @@ def _convert_and_add(file, filename, converter, tmp_dir, worker, counters, norma
         if not new_file or not os.path.exists(new_file):
             worker.log.emit(f"❌ {filename} → Converter returned no valid path.")
             return
-        dest_file = tmp_dir / Path(file).name.replace(' ', '_')
-        dest_file = dest_file.with_suffix(".rec.bson")
-        shutil.copy2(new_file, dest_file)
+        # dest_file = tmp_dir / Path(file).name.replace(' ', '_')
+        # # dest_file = dest_file.with_suffix(".rec.bson")
+        # dest_file = dest_file.with_name(dest_file.stem.split('.')[0] + '.rec.bson')
+        # shutil.copy2(new_file, dest_file)
         counters["converted"] += 1
         worker.log.emit(f"✅ {filename} → {action} successful.")
     except Exception as e:
@@ -277,18 +278,30 @@ def _convert_mat_file(file, worker=None, output_dir=None):
             worker.log.emit(f"❌ Error converting MAT file: {e}")
         return None
 
-def _convert_rec_file(file):
+def _convert_rec_file(file, worker=None, output_dir=None):
     """
     Normalize REC file: ensure it always contains a 'marks' entry.
     """
-    # Load the recording
-    data = Recording.load(file)
-    # Check if 'marks' attribute exists
-    if not hasattr(data, "marks") or data.marks is None:
-        marks = _create_empty_marks()
-        data.add_experiment_data(marks, key="marks")
-    # Return the normalized file path
-    return file
+    file = Path(file)
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    base_name = file.stem.replace(".rec", "")  # clean possible double extension
+    new_file = output_dir / f"{base_name}.rec.bson"
+
+    try:
+        # Load the recording
+        recording = Recording.load(str(file))
+        # Check if 'marks' attribute exists
+        if not hasattr(recording, "marks") or recording.marks is None:
+            marks = _create_empty_marks()
+            recording.add_experiment_data(marks, key="marks")
+        # Return the normalized file path
+        recording.save(str(new_file))
+        return new_file
+    except Exception as e:
+        if worker:
+            worker.log.emit(f"❌ Error converting REC.BSON file: {e}")
+        return None
 
 # Converter registry
 CONVERTERS = {
