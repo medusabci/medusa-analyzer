@@ -13,7 +13,6 @@ from PySide6.QtCore import QThread, Signal
 # corresponding file extension.
 
 # ----------------------------- UTILITY FUNCTIONS -----------------------------
-
 def _create_empty_marks():
     """Create empty marks structure"""
     marks = CustomExperimentData()
@@ -25,28 +24,7 @@ def _create_empty_marks():
     return marks
 
 
-def _organize_semi_bids(tmp_dir, output_dir, worker):
-    """Organize converted files into semi-BIDS structure."""
-    try:
-        worker.log.emit("📂 Organizing converted files into semi-BIDS structure...")
-        files = convert_to_semi_bids(tmp_dir, output_dir, 'eeg')
-        worker.log.emit("✅ EEG semi-BIDS organization completed successfully.")
-        return files
-    except Exception as e:
-        worker.log.emit(f"❌ Error organizing semi-BIDS: {e}")
-        return []
-
-
-def _cleanup_tmp(tmp_dir, worker):
-    """Remove temporary folder safely."""
-    try:
-        shutil.rmtree(tmp_dir)
-        worker.log.emit("🧹 Temporary conversion folder removed.")
-    except Exception:
-        worker.log.emit("⚠️ Could not remove temporary folder (in use?).")
-
-
-def _log_summary(worker, counters):
+def _log_conversion_summary(worker, counters):
     """Print final summary."""
     summary = (
         "<hr><b>Summary:</b><br>"
@@ -58,35 +36,17 @@ def _log_summary(worker, counters):
     worker.log.emit(summary)
 
 
-def run_conversion(files, tmp_dir, output_dir, worker):
-    """Handle EEG conversion and organization."""
-    counters = {"converted": 0, "accepted": 0, "skipped": 0}
-    total = len(files)
-
-    for i, file in enumerate(files):
-        filename = os.path.basename(file)
-        matched_ext = next((ext for ext in CONVERTERS if file.endswith(ext)), None)
-
-        if matched_ext is None:
-            counters["skipped"] += 1
-            worker.log.emit(f"⚠️ <b>{filename}</b> → Unsupported file type.")
-            worker.progress.emit(int((i + 1) / total * 100))
-            continue
-
-        converter = CONVERTERS[matched_ext]["converter"]
-
-        result = process_file(file, filename, tmp_dir, converter, worker, matched_ext)
-        counters[result] += 1
-
-        worker.progress.emit(int((i + 1) / total * 100))
-
-    semi_bids_files = _organize_semi_bids(tmp_dir, output_dir, worker)
-    _cleanup_tmp(tmp_dir, worker)
-    _log_summary(worker, counters)
-    return [str(f) for f in semi_bids_files]
+def _cleanup_tmp_folder(tmp_dir, worker):
+    """Remove temporary folder safely."""
+    try:
+        shutil.rmtree(tmp_dir)
+        worker.log.emit("🧹 Temporary conversion folder removed.")
+    except Exception:
+        worker.log.emit("⚠️ Could not remove temporary folder (in use?).")
 
 
-def process_file(file, filename, tmp_dir, converter, worker, matched_ext):
+# ----------------------------- ADDITIONAL FUNCTIONS -----------------------------
+def process_file(file, filename, tmp_dir, converter, worker, matched_ext, root_dir):
     if matched_ext == ".rec.bson": # Check if the rec.bson file is valid
         """Handle existing .rec.bson files."""
         try:
@@ -102,8 +62,15 @@ def process_file(file, filename, tmp_dir, converter, worker, matched_ext):
 
     worker.log.emit(f"⚙️ {filename} → Converting...")
     try:
+        # Get the output path with the original folder structure
+        file_path = Path(file)
+        # File path relative to root_dir
+        relative = file_path.relative_to(Path(root_dir))
+        folder_structure = relative.parent # Discard the filename to keep the relative folder structure
+        tmp_dir_complete = tmp_dir / folder_structure # Include the folder structure in the tmp_dir
+
         # Run the converter
-        new_file = converter(file, tmp_dir, worker)
+        new_file = converter(file, tmp_dir_complete, worker)
 
         if not new_file or not os.path.exists(new_file):
             worker.log.emit(f"❌ {filename} → Converter returned no valid path.")
@@ -135,10 +102,10 @@ def _convert_rec_file(file, output_dir, worker=None):
             recording.add_experiment_data(marks, key="marks")
         # Save the normalized recording
         recording.save(str(converted_file))
-        return converted_file
+        return str(converted_file)
     except Exception as e:
         if worker:
-            worker.log.emit(f"❌ Error converting REC.BSON file: {e}")
+            worker.log.emit(f"❌ Error converting REC file: {e}")
         return None
 
 
@@ -150,7 +117,7 @@ def _convert_rcp_file(file, output_dir, worker=None):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     base_name = file.name.replace(".rcp.bson", ".rec.bson")  # Replace extension from .rcp.bson to .rec.bson
-    new_file = output_dir / base_name
+    converted_file = output_dir / base_name
 
     try:
         # Create Recording object
@@ -166,10 +133,13 @@ def _convert_rcp_file(file, output_dir, worker=None):
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
 
         # Fill the Recording object
-        recording.add_biosignal(biosignal=data.eeg)
+        for biosignal in data.biosignals.values():
+            # biosignal_type = biosignal['class_name']
+            # recording.add_biosignal(**{biosignal_type: biosignal})
+            recording.add_biosignal(biosignal=biosignal)
         recording.add_experiment_data(marks, key='marks')
-        recording.save(str(new_file))
-        return str(new_file)
+        recording.save(str(converted_file))
+        return str(converted_file)
 
     except Exception as e:
         if worker:
@@ -177,29 +147,14 @@ def _convert_rcp_file(file, output_dir, worker=None):
         return None
 
 
-
-
-
-
-
-
-
-
-
-
 def _convert_mat_file(file, output_dir, worker=None):
     """Convert MATLAB (.mat) file to REC format."""
     file = Path(file)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-
     # Create unique output filename inside output_dir
-    base_name = file.stem.replace(".mat", "")
-    new_file = output_dir / f"{base_name}.rec.bson"
-    counter = 1
-    while new_file.exists():
-        new_file = output_dir / f"{base_name}_{counter}.rec.bson"
-        counter += 1
+    base_name = file.name.replace(".mat", ".rec.bson") # Replace extension from .mat to .rec.bson
+    converted_file = output_dir / base_name
 
     try:
         subj_id = file.stem.split('.')[0]
@@ -240,14 +195,12 @@ def _convert_mat_file(file, output_dir, worker=None):
         recording.add_biosignal(biosignal=eeg)
         recording.add_experiment_data(marks, key='marks')
 
-        recording.save(str(new_file))
-        return str(new_file)
-
+        recording.save(str(converted_file))
+        return str(converted_file)
     except Exception as e:
         if worker:
             worker.log.emit(f"❌ Error converting MAT file: {e}")
         return None
-
 
 # Converter registry
 CONVERTERS = {
@@ -262,10 +215,10 @@ CONVERTERS = {
     }
 }
 
-# ----------------------------- SEMI BIDS -----------------------------
-def convert_to_semi_bids(input_path, output_path, anat):
+# ----------------------------- BIDS -----------------------------
+def convert_to_bids(input_path, output_path, anat, worker):
     """
-    Organize recordings into a semi-BIDS structure.
+    Organize recordings into a BIDS structure.
 
     Example structure:
     output_path/
@@ -281,54 +234,60 @@ def convert_to_semi_bids(input_path, output_path, anat):
         │       └── ...
         └── ...
     """
+    worker.log.emit("📂 Organizing converted files into BIDS structure...")
 
     input_path = Path(input_path)
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
     all_final_files = []
 
-    # --- Regex patterns for subjects, sessions and runs ---
-    subject_pattern = re.compile(r'(?:sujeto[_\s-]*|sub[_\s-]*|s)(\d+)', re.IGNORECASE)
-    session_pattern = re.compile(r'(?:sesion[_\s-]*|session[_\s-]*|ses[_\s-]*)(\d+)', re.IGNORECASE)
-    record_pattern = re.compile(
-        r'(?:run[_\s-]*|r[_\s-]*|recording[_\s-]*|rec[_\s-]*|registro[_\s-]*|ran[_\s-]*)(\d+)',
-        re.IGNORECASE
-    )
+    try:
+        # --- Regex patterns for subjects, sessions and runs ---
+        subject_pattern = re.compile(r'(?:sujeto[_\s-]*|sub[_\s-]*|s)(\d+)', re.IGNORECASE)
+        session_pattern = re.compile(r'(?:sesion[_\s-]*|session[_\s-]*|ses[_\s-]*)(\d+)', re.IGNORECASE)
+        record_pattern = re.compile(
+            r'(?:run[_\s-]*|r[_\s-]*|recording[_\s-]*|rec[_\s-]*|registro[_\s-]*|ran[_\s-]*)(\d+)',
+            re.IGNORECASE
+        )
 
-    # --- Detect subjects ---
-    # If not folders, we consider the input path as a unique subject
-    subj_dirs = [d for d in input_path.iterdir() if d.is_dir()] or [input_path]
+        # --- Detect subjects ---
+        # If not folders, we consider the input path as a unique subject
+        subj_dirs = [d for d in input_path.iterdir() if d.is_dir()] or [input_path]
 
-    for subj_dir in subj_dirs:
-        subj_match = subject_pattern.search(subj_dir.name)
-        subj_id = subj_match.group(1).zfill(2) if subj_match else "01"
-        subj_bids_path = output_path / f"sub-{subj_id}"
-        subj_bids_path.mkdir(exist_ok=True)
+        for subj_dir in subj_dirs:
+            subj_match = subject_pattern.search(subj_dir.name)
+            subj_id = subj_match.group(1).zfill(2) if subj_match else "01"
+            subj_bids_path = output_path / f"sub-{subj_id}"
+            subj_bids_path.mkdir(exist_ok=True)
 
-        # Detect sessions
-        session_dirs = [d for d in subj_dir.iterdir() if d.is_dir() and session_pattern.search(d.name)]
-        if session_dirs:
-            for ses_dir in session_dirs:
-                ses_match = session_pattern.search(ses_dir.name)
-                ses_id = ses_match.group(1).zfill(2)
-                ses_bids_path = subj_bids_path / f"ses-{ses_id}"
-                ses_bids_path.mkdir(exist_ok=True)
-                files_from_process = process_recordings(ses_dir, ses_bids_path, anat, record_pattern)
+            # Detect sessions
+            session_dirs = [d for d in subj_dir.iterdir() if d.is_dir() and session_pattern.search(d.name)]
+            if session_dirs:
+                for ses_dir in session_dirs:
+                    ses_match = session_pattern.search(ses_dir.name)
+                    ses_id = ses_match.group(1).zfill(2)
+                    ses_bids_path = subj_bids_path / f"ses-{ses_id}"
+                    ses_bids_path.mkdir(exist_ok=True)
+                    files_from_process = move_recordings(ses_dir, ses_bids_path, anat, record_pattern)
+                    all_final_files.extend(files_from_process)
+            else:
+                # No sessions detected → process subject root directly
+                files_from_process = move_recordings(subj_dir, subj_bids_path, anat, record_pattern)
                 all_final_files.extend(files_from_process)
-        else:
-            # No sessions detected → process subject root directly
-            files_from_process = process_recordings(subj_dir, subj_bids_path, anat, record_pattern)
-            all_final_files.extend(files_from_process)
 
-    # print(f"✅ Conversion to semi-BIDS completed ({len(all_final_files)} files).")
-    return all_final_files
+        worker.log.emit("✅ BIDS organization completed successfully.")
+        return all_final_files
 
-def process_recordings(source_dir, dest_root, anat, record_pattern):
+    except Exception as e:
+        worker.log.emit(f"❌ Error organizing BIDS: {e}")
+        return []
+
+def move_recordings(source_dir, dest_root, anat, record_pattern):
     """
     Process all .rec.bson files in a directory and copy them into the BIDS structure.
     """
 
-    # Folder with the biosignal tyoe (i.e. EEG, ECG)
+    # Folder with the biosignal type (i.e. EEG, ECG)
     anat_dir = dest_root / anat
     anat_dir.mkdir(parents=True, exist_ok=True)
 
@@ -365,26 +324,28 @@ class ConverterWorker(QThread):
     # For updating log messages in the GUI
     log = Signal(str)
 
-    def __init__(self, files, output_dir):
+    def __init__(self, files, output_dir, experiment, root_dir):
         super().__init__()
         self.files = files
         self.output_dir = output_dir
+        self.experiment = experiment
+        self.root_dir = root_dir
 
     def run(self):
         """Runs run_pipeline in a separate thread and emits finished signal when done."""
         error_found = False
         try:
             # Call the main pipeline function
-            converted_files = self.converter_main(self.files, self.output_dir)
+            converted_files = self.converter_main(self.files, self.output_dir, self.experiment, self.root_dir)
         except Exception as e: # if error
             self.log.emit(f"Error in conversion: {e}")
             converted_files = []
             error_found = True
         self.finished.emit(converted_files, error_found)
 
-    def converter_main(self, files, output_dir):
+    def converter_main(self, files, output_dir, experiment, root_dir):
         """
-        Convert different file types to .rec.bson format and arrange them in semi-BIDS structure.
+        Convert different file types to .rec.bson format and arrange them in BIDS structure.
         - If a file is .rec.bson and already contains data.marks -> skip.
         - If a file is .rec.bson and lacks data.marks -> run the normalizer converter.
         - For other supported extensions -> run their converters.
@@ -396,6 +357,28 @@ class ConverterWorker(QThread):
         tmp_dir = output_dir / "TMP"
         tmp_dir.mkdir(exist_ok=True)
 
-        converted_files = run_conversion(files, tmp_dir, output_dir, self)
+        counters = {"converted": 0, "accepted": 0, "skipped": 0}
+        total = len(files)
 
+        for i, file in enumerate(files):
+            filename = os.path.basename(file)
+            matched_ext = next((ext for ext in CONVERTERS if file.endswith(ext)), None)
+
+            if matched_ext is None:
+                counters["skipped"] += 1
+                self.log.emit(f"⚠️ <b>{filename}</b> → Unsupported file type.")
+                self.progress.emit(int((i + 1) / total * 100))
+                continue
+
+            converter = CONVERTERS[matched_ext]["converter"]
+
+            result = process_file(file, filename, tmp_dir, converter, self, matched_ext, root_dir)
+            counters[result] += 1
+
+            self.progress.emit(int((i + 1) / total * 100))
+
+        bids_files = convert_to_bids(tmp_dir, output_dir, self, experiment)
+        _cleanup_tmp_folder(tmp_dir, self)
+        _log_conversion_summary(self, counters)
+        converted_files = [str(f) for f in bids_files]
         return converted_files

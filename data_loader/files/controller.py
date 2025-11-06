@@ -204,17 +204,13 @@ class FilesController:
         self.view.convertProgressBar.setVisible(True)
         QtWidgets.QApplication.processEvents()
 
-        # Run the conversion process
-        # successfully_converted_files = conversor_to_rec(selected_files, self.view.convertProgressBar,
-        #                                                 , self.view.main_window)
-
         # Disable the button while the pipeline is running
         self.view.main_window.nextButton.setEnabled(False)
 
         # Create the thread
         experiment_type = getattr(self.view.main_window, "selected_experiment", "").split('_')[0].upper()
         output_path = self._select_output_directory(experiment_type)
-        self.view.worker = ConverterWorker(selected_files, experiment_type, output_path)
+        self.view.worker = ConverterWorker(selected_files, experiment_type, output_path, input_dir)
 
         # Connect the signals to the functions
         self.view.worker.progress.connect(self.view.convertProgressBar.setValue, type=Qt.QueuedConnection)
