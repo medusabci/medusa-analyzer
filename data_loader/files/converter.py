@@ -28,18 +28,18 @@ def _create_empty_marks():
     return marks
 
 
-def _run_converter(converter, file, log_browser=None, output_dir=None):
+def _run_converter(converter, file, worker=None, output_dir=None):
     """
-    Try to run converter(file, log_browser). If the converter doesn't accept
+    Try to run converter(file, worker). If the converter doesn't accept
     the extra arg, fallback to converter(file).
     Return the converter result (path) or None if it fails.
     """
     data = None
     try:
-        result = converter(file, log_browser, output_dir=output_dir)
+        result = converter(file, worker, output_dir=output_dir)
     except TypeError:
         try:
-            result = converter(file, log_browser)
+            result = converter(file, worker)
         except TypeError:
             result = converter(file)
 
@@ -175,7 +175,7 @@ def _log_summary(worker, counters):
     worker.log.emit(summary)
 
 # ----------------------------- CONVERTERS -----------------------------
-def _convert_rcp_file(file, log_browser=None, output_dir=None):
+def _convert_rcp_file(file, worker=None, output_dir=None):
     """
     Convert RCP file to REC format.
     """
@@ -211,12 +211,12 @@ def _convert_rcp_file(file, log_browser=None, output_dir=None):
         return str(new_file)
 
     except Exception as e:
-        if log_browser:
-            log_browser.append(f"❌ Error converting RCP file: {e}")
+        if worker:
+            worker.log.emit(f"❌ Error converting RCP file: {e}")
         return None
 
 
-def _convert_mat_file(file, log_browser=None, output_dir=None):
+def _convert_mat_file(file, worker=None, output_dir=None):
     """Convert MATLAB (.mat) file to REC format."""
     file = Path(file)
     output_dir = Path(output_dir)
@@ -273,8 +273,8 @@ def _convert_mat_file(file, log_browser=None, output_dir=None):
         return str(new_file)
 
     except Exception as e:
-        if log_browser:
-            log_browser.append(f"❌ Error converting MAT file: {e}")
+        if worker:
+            worker.log.emit(f"❌ Error converting MAT file: {e}")
         return None
 
 def _convert_rec_file(file):
