@@ -173,9 +173,17 @@ class FilesController:
             QtWidgets.QMessageBox.information(self.view, "Operation cancelled", "No folder was selected. Conversion aborted.")
             return
 
+        # Loading screen
+        self.view.main_window.loading.show()
+        self.view.main_window.loading.set_progress(50, self.view.main_window)
+
         # Gather valid files recursively
         valid_exts = tuple(CONVERTERS.keys())
         rec_files = [os.path.join(root, f) for root, _, files in os.walk(input_dir) for f in files if f.endswith(valid_exts)]
+
+        # Loading screen
+        self.view.main_window.loading.set_progress(100, self.view.main_window)
+        time.sleep(0.5) # Simulate loading time for better UX
 
         if not rec_files:
             QtWidgets.QMessageBox.warning(
@@ -184,17 +192,6 @@ class FilesController:
                 f"No supported files were detected in:\n{input_dir}\n\n"
                 f"Supported extensions: {', '.join(valid_exts)}"
             )
-            return
-
-        # Display the file selection tree
-        dialog = GenericFileTreeDialog(rec_files, parent=self.view)
-        if dialog.exec() != QtWidgets.QDialog.Accepted:
-            QtWidgets.QMessageBox.information(self.view, "Cancelled", "No files were selected for conversion.")
-            return
-
-        selected_files = dialog.get_selected_files()
-        if not selected_files:
-            QtWidgets.QMessageBox.information(self.view, "No Selection", "No files were selected for conversion.")
             return
 
         # Prepare the UI for conversion
@@ -207,9 +204,23 @@ class FilesController:
         # Disable the button while the pipeline is running
         self.view.main_window.nextButton.setEnabled(False)
 
+        # Finish loading
+        self.view.main_window.loading.finish()
+
+        # Display the file selection tree
+        dialog = GenericFileTreeDialog(rec_files, parent=self.view)
+        if dialog.exec() != QtWidgets.QDialog.Accepted:
+            QtWidgets.QMessageBox.information(self.view, "Cancelled", "No files were selected for conversion.")
+            return
+
+        selected_files = dialog.get_selected_files()
+        if not selected_files:
+            QtWidgets.QMessageBox.information(self.view, "No Selection", "No files were selected for conversion.")
+            return
+
         # Create the thread
+        output_path = self._select_output_directory()
         experiment_type = getattr(self.view.main_window, "selected_experiment", "").split('_')[0].upper()
-        output_path = self._select_output_directory(experiment_type)
         self.view.worker = ConverterWorker(selected_files, experiment_type, output_path, input_dir)
 
         # Connect the signals to the functions
@@ -311,13 +322,13 @@ class FilesController:
             self.selected_files = selected
             self.on_file_selection_changed()
 
-    def _select_output_directory(self, experiment_type):
+    def _select_output_directory(self):
         """Ask the user for output directory and prepare folders."""
         msg = QtWidgets.QMessageBox()
         msg.setWindowTitle("Select output path")
         msg.setIcon(QtWidgets.QMessageBox.Information)
         msg.setText(
-            f"Starting the conversion of {experiment_type} files.\n\n"
+            f"Starting the conversion.\n\n"
             "First, select a folder to save files in semi-BIDS format.\n\n"
             "Note that original files will not be modified."
         )

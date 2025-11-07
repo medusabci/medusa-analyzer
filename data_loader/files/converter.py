@@ -24,7 +24,7 @@ def _create_empty_marks():
     return marks
 
 
-def _log_conversion_summary(worker, counters):
+def _log_conversion_summary(counters, worker):
     """Print final summary."""
     summary = (
         "<hr><b>Summary:</b><br>"
@@ -47,6 +47,16 @@ def _cleanup_tmp_folder(tmp_dir, worker):
 
 # ----------------------------- ADDITIONAL FUNCTIONS -----------------------------
 def process_file(file, filename, tmp_dir, converter, worker, matched_ext, root_dir):
+    # Get the output path with the original folder structure
+    file_path = Path(file)
+    # File path relative to root_dir
+    relative = file_path.relative_to(Path(root_dir))
+    folder_structure = relative.parent  # Discard the filename to keep the relative folder structure
+    tmp_dir_complete = Path(tmp_dir) / folder_structure  # Include the folder structure in the tmp_dir
+    tmp_dir_complete = Path(tmp_dir_complete)
+    tmp_dir_complete.mkdir(parents=True, exist_ok=True)
+
+
     if matched_ext == ".rec.bson": # Check if the rec.bson file is valid
         """Handle existing .rec.bson files."""
         try:
@@ -56,19 +66,12 @@ def process_file(file, filename, tmp_dir, converter, worker, matched_ext, root_d
             return 'skipped'
 
         if getattr(data, "marks", None):
-            shutil.copy2(file, tmp_dir / Path(file).name)
+            shutil.copy2(file, tmp_dir_complete / Path(file).name)
             worker.log.emit(f"ℹ️ {filename} → Already contains 'marks', skipped conversion.")
             return 'accepted'
 
     worker.log.emit(f"⚙️ {filename} → Converting...")
     try:
-        # Get the output path with the original folder structure
-        file_path = Path(file)
-        # File path relative to root_dir
-        relative = file_path.relative_to(Path(root_dir))
-        folder_structure = relative.parent # Discard the filename to keep the relative folder structure
-        tmp_dir_complete = Path(tmp_dir) / folder_structure # Include the folder structure in the tmp_dir
-
         # Run the converter
         new_file = converter(file, tmp_dir_complete, worker)
 
@@ -88,8 +91,6 @@ def _convert_rec_file(file, output_dir, worker=None):
     Normalize REC file: ensure it always contains a 'marks' entry.
     """
     file = Path(file)
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     base_name = file.name # It is not necessary to change the extension
     converted_file = output_dir / base_name
 
@@ -114,8 +115,6 @@ def _convert_rcp_file(file, output_dir, worker=None):
     Convert RCP file to REC format.
     """
     file = Path(file)
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     base_name = file.name.replace(".rcp.bson", ".rec.bson")  # Replace extension from .rcp.bson to .rec.bson
     converted_file = output_dir / base_name
 
@@ -150,8 +149,6 @@ def _convert_rcp_file(file, output_dir, worker=None):
 def _convert_mat_file(file, output_dir, worker=None):
     """Convert MATLAB (.mat) file to REC format."""
     file = Path(file)
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     # Create unique output filename inside output_dir
     base_name = file.name.replace(".mat", ".rec.bson") # Replace extension from .mat to .rec.bson
     converted_file = output_dir / base_name
@@ -324,7 +321,7 @@ class ConverterWorker(QThread):
     # For updating log messages in the GUI
     log = Signal(str)
 
-    def __init__(self, files, output_dir, experiment, root_dir):
+    def __init__(self, files, experiment, output_dir, root_dir):
         super().__init__()
         self.files = files
         self.output_dir = output_dir
@@ -336,14 +333,14 @@ class ConverterWorker(QThread):
         error_found = False
         try:
             # Call the main pipeline function
-            converted_files = self.converter_main(self.files, self.output_dir, self.experiment, self.root_dir)
+            converted_files = self.converter_main(self.files, self.experiment, self.output_dir, self.root_dir)
         except Exception as e: # if error
             self.log.emit(f"Error in conversion: {e}")
             converted_files = []
             error_found = True
         self.finished.emit(converted_files, error_found)
 
-    def converter_main(self, files, output_dir, experiment, root_dir):
+    def converter_main(self, files, experiment, output_dir, root_dir):
         """
         Convert different file types to .rec.bson format and arrange them in BIDS structure.
         - If a file is .rec.bson and already contains data.marks -> skip.
@@ -358,7 +355,7 @@ class ConverterWorker(QThread):
         tmp_dir.mkdir(exist_ok=True)
 
         counters = {"converted": 0, "accepted": 0, "skipped": 0}
-        total = len(files)
+        total = len(files) + 1 # +1 to account for BIDS conversion step
 
         for i, file in enumerate(files):
             filename = os.path.basename(file)
@@ -377,8 +374,9 @@ class ConverterWorker(QThread):
 
             self.progress.emit(int((i + 1) / total * 100))
 
-        bids_files = convert_to_bids(tmp_dir, output_dir, self, experiment)
+        bids_files = convert_to_bids(tmp_dir, output_dir, experiment, self)
+        self.progress.emit(100)
         _cleanup_tmp_folder(tmp_dir, self)
-        _log_conversion_summary(self, counters)
+        _log_conversion_summary(counters, self)
         converted_files = [str(f) for f in bids_files]
         return converted_files
