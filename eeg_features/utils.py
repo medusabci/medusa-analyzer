@@ -504,9 +504,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
     # --- Saving preprocessed signals (.rec.bson) ---
     if key == "prep" and settings_dic["save_preproc"]:
         if ses_id:
-            preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "eeg"
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "EEG"
         else:
-            preproc_dir = derivatives_path / "preprocessed" / subj_id / "eeg"
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / "EEG"
         preproc_dir.mkdir(parents=True, exist_ok=True)
 
         output_path = preproc_dir / f"{base_stem}_band-{band_name.replace("-", "")}.rec.bson"
@@ -522,9 +522,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
     # --- Saving segmented signals (.mat) ---
     if key == "seg" and settings_dic["save_segmented"]:
         if ses_id:
-            seg_dir = derivatives_path / "segmented" / subj_id / ses_id / "eeg"
+            seg_dir = derivatives_path / "segmented" / subj_id / ses_id / "EEG"
         else:
-            seg_dir = derivatives_path / "segmented" / subj_id / "eeg"
+            seg_dir = derivatives_path / "segmented" / subj_id / "EEG"
         seg_dir.mkdir(parents=True, exist_ok=True)
 
         if event is not None:
@@ -539,9 +539,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
     # --- Saving parameters (.mat) ---
     if key == "param" and settings_dic["save_params"]:
         if ses_id:
-            param_dir = derivatives_path / "parameters" / subj_id / ses_id / "eeg"
+            param_dir = derivatives_path / "parameters" / subj_id / ses_id / "EEG"
         else:
-            param_dir = derivatives_path / "parameters" / subj_id / "eeg"
+            param_dir = derivatives_path / "parameters" / subj_id / "EEG"
         param_dir.mkdir(parents=True, exist_ok=True)
 
         if not isinstance(data, dict):

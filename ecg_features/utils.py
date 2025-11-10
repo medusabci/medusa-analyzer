@@ -328,9 +328,9 @@ def save_outputs(worker, data, base_name, lead, cond, key, settings_dic):
     # --- Saving preprocessed signals (.rec.bson) ---
     if key == "prep" and settings_dic["save_preproc"]:
         if ses_id:
-            preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "ecg"
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / ses_id / "ECG"
         else:
-            preproc_dir = derivatives_path / "preprocessed" / subj_id / "ecg"
+            preproc_dir = derivatives_path / "preprocessed" / subj_id / "ECG"
         preproc_dir.mkdir(parents=True, exist_ok=True)
 
         if lead is not None:
@@ -356,9 +356,9 @@ def save_outputs(worker, data, base_name, lead, cond, key, settings_dic):
     # --- Saving parameters (.mat) ---
     if key == "param" and settings_dic["save_params"]:
         if ses_id:
-            param_dir = derivatives_path / "parameters" / subj_id / ses_id / "ecg"
+            param_dir = derivatives_path / "parameters" / subj_id / ses_id / "ECG"
         else:
-            param_dir = derivatives_path / "parameters" / subj_id / "ecg"
+            param_dir = derivatives_path / "parameters" / subj_id / "ECG"
         param_dir.mkdir(parents=True, exist_ok=True)
 
         if not isinstance(data, dict):
