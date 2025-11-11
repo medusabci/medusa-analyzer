@@ -736,20 +736,23 @@ def compute_parameters(epochs, fs, band, cfg):
         else:
             selected_bands = cfg['parameters']['selected_rp_bands']
 
-        # Define broadband range, as the minimum of the mins and the maximum of the maxs of the selected bands
-        min_val = min(band["min"] for band in selected_bands if band["name"] != 'broadband')
-        max_val = max(band["max"] for band in selected_bands if band["name"] != 'broadband')
+        # # Define broadband range, as the minimum of the mins and the maximum of the maxs of the selected bands
+        # min_val = min(band["min"] for band in selected_bands if band["name"] != 'broadband')
+        # max_val = max(band["max"] for band in selected_bands if band["name"] != 'broadband')
+        # Define broadband range based on the broadband limits
+        min_val = band['min']
+        max_val = band['max']
 
         # Loop through each selected band
-        for band in selected_bands:
-            if band["name"] != 'broadband':
+        for band_rp in selected_bands:
+            if band_rp["name"] != 'broadband':
                 # Define band parameters
-                band_range = [band["min"], band["max"]]
+                band_range = [band_rp["min"], band_rp["max"]]
                 # Compute the metric
                 val_band = medusa.signal_metrics.band_power.band_power(psd, fs, band_range, 'relative', [min_val, max_val])
                 # Average across epochs if required and if multiple epochs are present
                 val_band = np.nanmean(val_band, axis=0) if cfg['segmentation']['average'] and epochs.ndim == 3 else val_band
-                val.append({"band": band["name"], "value": val_band})
+                val.append({"band": band_rp["name"], "value": val_band})
 
             params[f"relative_power"] = val
 
