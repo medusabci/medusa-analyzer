@@ -740,7 +740,7 @@ def compute_parameters(epochs, fs, band, cfg):
         # min_val = min(band["min"] for band in selected_bands if band["name"] != 'broadband')
         # max_val = max(band["max"] for band in selected_bands if band["name"] != 'broadband')
         # Define broadband range based on the broadband limits
-        min_val = band['min']
+        min_val = band['min'] # Now band is broadband (condition above), so we can use its min and max values to define the range
         max_val = band['max']
 
         # Loop through each selected band
