@@ -1,0 +1,52 @@
+site_name: MEDUSA© Analyzer User Manual
+site_url: https://medusa-analyzer-docs.readthedocs.io/
+site_description: Official user manual for MEDUSA© Analyzer — the graphical interface for biosignal preprocessing and analysis
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.sections
+    - navigation.expand
+    - toc.integrate
+    - content.code.copy
+    - header.autohide
+  palette:
+    - scheme: default
+      primary: teal
+      accent: indigo
+    - scheme: slate
+      primary: teal
+      accent: indigo
+  logo: assets/logo.png
+  favicon: assets/favicon.ico
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+  - def_list
+  - tables
+  - codehilite
+  - pymdownx.emoji
+  - pymdownx.tabbed
+  - pymdownx.mark
+  - pymdownx.tasklist
+
+nav:
+  - Getting Started:
+      - What is MEDUSA© Analyzer: getting-started.md
+      - Installation: installation.md
+      - Running the Analyzer: running.md
+      - Supported Data Formats: formats.md
+      - Main Interface Overview: interface-overview.md
+  - Experiments:
+      - EEG Feature Extraction: eeg.md
+      - ECG Feature Extraction: ecg.md
+  - Plots and Statistics Module: plots.md
+  - Troubleshooting & FAQ: problems.md

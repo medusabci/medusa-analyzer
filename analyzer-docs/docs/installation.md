@@ -1,9 +1,9 @@
-# How to Set Up Medusa Analyzer
+# How to Set Up MEDUSA© Analyzer
 
-To get **Medusa Analyzer** up and running, follow these steps:
+To get **MEDUSA© Analyzer** up and running, follow these steps:
 
-## 1. Clone the Medusa Analyzer repository
-First, download the main branch of Medusa-Analyzer from our [GitHub repository](https://github.com/medusabci/medusa-analyzer) using [this link](https://github.com/medusabci/medusa-analyzer/archive/refs/heads/main.zip). After downloading it, extract it in an empty folder.
+## 1. Clone the MEDUSA© Analyzer repository
+First, download the main branch of MEDUSA©-Analyzer from our [GitHub repository](https://github.com/medusabci/medusa-analyzer) using [this link](https://github.com/medusabci/medusa-analyzer/archive/refs/heads/main.zip). After downloading it, extract it in an empty folder.
 Suggestion: Extract it into the following folder **C:/Users/Your_Useer/Documents/Medusa_Analyzer/Analyzer**
 
 Alternatively, if you are an advanced user, you may want to clone the main branch onto your computer:
@@ -12,8 +12,8 @@ Alternatively, if you are an advanced user, you may want to clone the main branc
 git clone -b main https://github.com/medusabci/medusa-analyzer.git
 ```
 
-## 2. Download the Medusa Kernel (Analyzer branch)
-Medusa Analyzer requires the `developers_analyzer` branch of the Medusa Kernel. Download it from its [GitHub Repository](https://github.com/medusabci/medusa-kernel/tree/developers_analyzer) using [this link](https://github.com/medusabci/medusa-kernel/archive/refs/heads/developers_analyzer.zip). After downloading it, extract it in an empty folder. 
+## 2. Download the MEDUSA© Kernel (Analyzer branch)
+MEDUSA© Analyzer requires the `developers_analyzer` branch of the MEDUSA© Kernel. Download it from its [GitHub Repository](https://github.com/medusabci/medusa-kernel/tree/developers_analyzer) using [this link](https://github.com/medusabci/medusa-kernel/archive/refs/heads/developers_analyzer.zip). After downloading it, extract it in an empty folder. 
 Suggestion: Extract it into the following folder **C:/Users/Your_Useer/Documents/Medusa_Analyzer/Kernel**
 
 Alternatively, if you are an advanced user, you may want to clone the branch:
@@ -37,8 +37,8 @@ Create a virtual environment. To do so:
 This will create a new folder called venv inside your project folder containing the virtual environment
 - **4.3**  Activate the environment: ```venv/Scripts/activate```.
 
-## 5. Install the Medusa Kernel dependencies
-Install the Medusa Kernel into your virtual environment. In the CMD window type:
+## 5. Install the MEDUSA© Kernel dependencies
+Install the MEDUSA© Kernel into your virtual environment. In the CMD window type:
 
 ```bash
 pip install /path/to/medusa-kernel
