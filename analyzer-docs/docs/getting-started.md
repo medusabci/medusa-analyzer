@@ -8,11 +8,11 @@ It allows researchers, engineers, and clinicians to **load, preprocess, segment,
 ## The MEDUSA© Ecosystem
 MEDUSA© Analyzer works in conjunction with other components of the MEDUSA© framework:
 
-| Component | Description |
-|------------|--------------|
+| Component | Description                                                                                               |
+|------------|-----------------------------------------------------------------------------------------------------------|
 | **MEDUSA© Kernel** | The core Python backend that performs signal processing, filtering, segmentation, and feature extraction. |
-| **MEDUSA© Platform** | A set of scripts and services that allow integration of MEDUSA© modules into larger pipelines or distributed systems. |
-| **MEDUSA© Analyzer** | The graphical interface (GUI) that allows non-programmatic interaction with the MEDUSA© Kernel. |
+| **MEDUSA© Platform** | An appealing user interface for visualizing biosignals and performing BCI experiments in real time.       |
+| **MEDUSA© Analyzer** | The graphical interface (GUI) that allows non-programmatic interaction with the MEDUSA© Kernel.           |
 
 All three modules are designed to be **interoperable**, using a common data format (`.rec.bson`) and a **semi-BIDS structure** for reproducible data organization.
 

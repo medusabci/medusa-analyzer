@@ -56,7 +56,8 @@ sub-01_ses-01_band-alpha_cond-eyesclosed_event-stim01.mat
 ---
 ### parameters/
 Stores one `.mat` file per parameter, band, condition, and event.
-These files contain the numerical results of each metric (e.g., PSD, mean, variance, entropy, connectivity). 
+These files contain the numerical results of each metric (e.g., PSD, mean, variance, entropy, connectivity).
+
 - **For PSDs**: variables psd and freqs are included. 
 - **For other metrics**: the variable name matches the parameter label.
 
@@ -68,6 +69,7 @@ sub-01_param-psd_band-delta_cond-eyesClosed_event-stim01.mat
 If your raw data is not in `.rec.bson` format, you can use the **Converter** integrated into the MEDUSA© Analyzer main window.
 
 It allows you to:
+
 - Convert supported formats into `.rec.bson`
 - Export to **BIDS-compatible** structure automatically
 

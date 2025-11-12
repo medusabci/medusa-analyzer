@@ -6,6 +6,7 @@ The **Main Interface** of MEDUSA© Analyzer is divided into two principal sectio
 
 ## 1️⃣ Experiment Selection
 The upper part of the interface lists the available experiments you can run:
+
 - **EEG Feature Extraction**
 - **ECG Feature Extraction**
 
@@ -16,14 +17,14 @@ Each button opens a complete workflow for loading, preprocessing, segmenting, an
 ## 2️⃣ Plots and Statistical Analysis Module
 The lower section of the main window gives access to visualization and statistical tools.  
 You can use this module to:
+
 - Visualize processed data
 - Compare metrics across subjects or conditions
 - Generate publication-ready plots
 
 ---
 
-![Main interface screenshot](assets/main_interface.png){width=80%}
-
+![Main interface screenshot](media/main_interface.png){ width="600px"}
 ---
 
 !!! tip "Tip"
