@@ -41,7 +41,7 @@ markdown_extensions:
 
 nav:
   - Getting Started:
-      - What is MEDUSA© Analyzer: getting-started.md
+      - What is MEDUSA© Analyzer: what-is-medusa-analyzer.md
       - Installation: installation.md
       - Running the Analyzer: running.md
       - Supported Data Formats: formats.md
