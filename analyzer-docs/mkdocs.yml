@@ -19,7 +19,7 @@ theme:
       primary: teal
       accent: indigo
   logo: media/logo.png
-  favicon: assets/favicon.ico
+  favicon: media/favicon.ico
 
 plugins:
   - search
