@@ -31,7 +31,7 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
 
                 <p style="font-size: 11pt; color:#777; margin:0 40px;">
                     For more information, see the 
-                    <a href="https://docs.medusabci.com/platform/v2024/getstarted.php" 
+                    <a href="https://medusabci.github.io/medusa-analyzer/" 
                        style="color:#007acc; font-weight:bold; text-decoration:none;">
                        manual of use
                     </a>.
