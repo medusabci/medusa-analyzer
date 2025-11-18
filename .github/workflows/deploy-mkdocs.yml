@@ -28,3 +28,4 @@ jobs:
 
       - name: Build and deploy site to gh-pages
         run: mkdocs gh-deploy --force
+        working-directory: analyzer-docs
