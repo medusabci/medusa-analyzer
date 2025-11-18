@@ -3,7 +3,7 @@
 # How to run MEDUSA© Analyzer
 Once the installation is complete, follow these steps to start **MEDUSA© Analyzer**.
 
----Si
+---
 ## 1. Activate the virtual environment
 From your Analyzer folder (```C:/Users/Your_Useer/Documents/Medusa_Analyzer/Analyzer```), 
 open a **command prompt** as in step 4 of the installation guide and run:

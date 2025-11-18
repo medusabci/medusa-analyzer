@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://medusa-analyzer-docs.readthedocs.io/formats/</loc>
+         <lastmod>2025-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://medusa-analyzer-docs.readthedocs.io/getting-started/</loc>
+         <lastmod>2025-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://medusa-analyzer-docs.readthedocs.io/installation/</loc>
+         <lastmod>2025-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://medusa-analyzer-docs.readthedocs.io/interface-overview/</loc>
+         <lastmod>2025-11-12</lastmod>
+    </url>
+    <url>
+         <loc>https://medusa-analyzer-docs.readthedocs.io/running/</loc>
+         <lastmod>2025-11-12</lastmod>
+    </url>
+</urlset>

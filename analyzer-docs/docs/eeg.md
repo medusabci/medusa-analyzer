@@ -14,8 +14,8 @@ Here, you can:
 
 The supported file format for EEG data is **`.rec.bson`**, which is the **native MEDUSA© format**, also used across the MEDUSA© ecosystem (e.g., *MEDUSA© Platform* and *MEDUSA© Kernel*).
 
-![Data loader screenshot](media/data_loader.png){ width="600px"}
----
+![Data loader screenshot](media/data_loader.png){ width="1000px"}
+
 ### Converter Tool
 
 In the Data Loader window, you will find a **Converter** button.  
@@ -54,14 +54,14 @@ Available preprocessing options include:
 Each filter has customizable parameters such as **filter order**, **window size**, and **frequency limits**.
 To update filter plots after modifying parameters, click on '**Update graph**'.
 
-![Preprocessing screenshot](media/preprocessing.png){ width="600px"}
----
+![Preprocessing screenshot](media/preprocessing.png){ width="1000px"}
 
 ### Band Filtering
 
 At the bottom of this window, you can enable **band filtering** to split your signal into specific frequency bands.
 
 By default, the EEG bands are:
+
 | **Band** | **Frequency Range (Hz)** |
 |----------|---------------------------|
 | Delta | 0.5–4 |
@@ -77,7 +77,7 @@ You can:
 - Remove bands that you do **not** wish to include.
 - Add new bands by clicking **Add Band**.
 
-![Band filtering screenshot](media/band_filtering.png){ width="600px"}
+![Band filtering screenshot](media/band_filtering.png){ width="1000px"}
 
 !!! warning
     Band names **must not contain spaces**.  
@@ -109,11 +109,11 @@ Additional options include:
 !!! tip
     It is recommended to enable **Average epochs** for better visualization and summary statistics in later analyses.
 
-![Segmentation screenshot](media/segmentation.png){ width="600px"}
+![Segmentation screenshot](media/segmentation.png){ width="1000px"}
 
 ---
 
-## 📊 4. Feature Extraction
+## 4. Feature Extraction
 
 In the **Feature Extraction** window, you can compute a wide range of features grouped into several categories:
 
@@ -182,7 +182,7 @@ You can then choose which stages of the analysis to save:
 - **Segmented signal**
 - **Extracted features**
 
-![Saving screenshot](media/saving.png){ width="600px"}
+![Saving screenshot](media/saving.png){ width="1000px"}
 
 ### Reusing Configurations
 The saved `.json` configuration file can later be **loaded in the Data Loader window**, automatically restoring all parameters used in the original experiment.  
@@ -190,7 +190,7 @@ This allows you to share your full pipeline setup with other users to replicate 
 
 ---
 
-## 📁 Output Structure (BIDS Format)
+## Output Structure (BIDS Format)
 
 All saved data follow the **semi-BIDS directory structure**, consistent with MEDUSA© Analyzer conventions:
 
@@ -204,3 +204,4 @@ All saved data follow the **semi-BIDS directory structure**, consistent with MED
     │   └── EEG/
     └── parameters/
         └── EEG/
+```

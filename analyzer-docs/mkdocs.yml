@@ -49,5 +49,7 @@ nav:
   - Experiments:
       - EEG Feature Extraction: eeg.md
       - ECG Feature Extraction: ecg.md
-  - Plots and Statistics Module: plots.md
+  - Plots and Statistics Module:
+      - Preprocessed signals: plots-preprocessed.md
+      - Parameters: plots-parameters.md
   - Troubleshooting & FAQ: problems.md
