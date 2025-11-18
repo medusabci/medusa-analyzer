@@ -1,5 +1,5 @@
 site_name: MEDUSA© Analyzer User Manual
-site_url: https://medusa-analyzer-docs.readthedocs.io/
+site_url: https://medusabci.github.io/medusa-analyzer/
 site_description: Official user manual for MEDUSA© Analyzer — the graphical interface for biosignal preprocessing and analysis
 
 theme:
