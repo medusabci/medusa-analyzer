@@ -198,6 +198,7 @@ Click `Next` to reach the visualization window.
 
 The visualization interface is identical for within- and between-subjects.
 
+![General](media/general.png){ width="1000px"}
 ### Parameter Tabs
 At the top-left, you will find one tab per selected parameter:
 
