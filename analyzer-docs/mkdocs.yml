@@ -18,7 +18,7 @@ theme:
     - scheme: slate
       primary: teal
       accent: indigo
-  logo: assets/logo.png
+  logo: media/logo.png
   favicon: assets/favicon.ico
 
 plugins:
