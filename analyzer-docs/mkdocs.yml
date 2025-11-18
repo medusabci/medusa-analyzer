@@ -3,7 +3,7 @@ site_url: https://medusa-analyzer-docs.readthedocs.io/
 site_description: Official user manual for MEDUSA© Analyzer — the graphical interface for biosignal preprocessing and analysis
 
 theme:
-  name: architect
+  name: material
   language: en
   features:
     - navigation.sections
