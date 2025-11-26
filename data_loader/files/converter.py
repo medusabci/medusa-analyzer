@@ -208,7 +208,7 @@ def _convert_csv_file(file, output_dir, worker=None):
     Convert RCP file to REC format.
     """
     if "EEG" not in file.split('\\')[-1].upper():
-        return None  # Only process EEG CSV files
+        raise TypeError('File skipped - Not a valid EEG file')   # Only process EEG CSV files
 
     file = Path(file)
     base_name = file.name.replace(".csv", ".rec.bson")  # Replace extension from .rcp.bson to .rec.bson
@@ -242,8 +242,7 @@ def _convert_csv_file(file, output_dir, worker=None):
                           and "annotations" in f.name]
         # If no annotations file found, return None
         if not annotations:
-            print("Annotations file not found.")
-            return None
+            raise FileNotFoundError("Annotations file not found for this file")
         # We should have only one annotations file
         annot_df = pd.read_csv(annotations[0], delimiter=';')
         annots = annot_df.iloc[:, [1, 2]].to_numpy()
