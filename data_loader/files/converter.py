@@ -7,9 +7,12 @@ import numpy as np
 import scipy.io as sio
 from medusa.meeg.meeg import EEG, EEGChannelSet
 from PySide6.QtCore import QThread, Signal
+import csv
+import pandas as pd
+
 
 # README: To include a new converter, just create a function that takes a file path as input (e.g.
-# _convert_newformat_file(filepath)) and returns the new filepath, and include it in the CONVERTERS dictionary with the
+# _convert_newformat_file(filepath,output_dir,worker=None)) and returns the new filepath, and include it in the CONVERTERS dictionary with the
 # corresponding file extension.
 
 # ----------------------------- UTILITY FUNCTIONS -----------------------------
@@ -199,6 +202,75 @@ def _convert_mat_file(file, output_dir, worker=None):
             worker.log.emit(f"❌ Error converting MAT file: {e}")
         return None
 
+
+def _convert_csv_file(file, output_dir, worker=None):
+    """
+    Convert RCP file to REC format.
+    """
+    if "EEG" not in file.split('\\')[-1].upper():
+        return None  # Only process EEG CSV files
+
+    file = Path(file)
+    base_name = file.name.replace(".csv", ".rec.bson")  # Replace extension from .rcp.bson to .rec.bson
+    converted_file = output_dir / base_name
+
+    try:
+        subj_id = file.stem.split('.')[0]
+        subj_id = subj_id.split("_")[:3]
+        subj_id = "_".join(subj_id)
+        recording = Recording(subject_id=subj_id)
+        # Load MATLAB data
+        with open(file, newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=',')
+            signal = np.array(list(reader), dtype=float)
+
+        data = signal[:,1]
+        data = data.reshape(-1,1)  # Reshape to 2D array
+        del signal
+        fs = 200
+        times = np.linspace(0, data.shape[0] / fs, data.shape[0], endpoint=False)
+
+        # Create the channel set
+        channel_set = EEGChannelSet(reference_method="average")
+        channel_set.set_montage(channels=[{"label": "EEG1", "coord": "all", "reference": None}], allow_unlocated_channels=True)
+
+        # Create the marks from annotations file
+
+        # Get annotations (same folder, same subject id, and annotations in the filename)
+        annotations = [f for f in file.parent.iterdir() if f.is_file()
+                          and subj_id in f.name
+                          and "annotations" in f.name]
+        # If no annotations file found, return None
+        if not annotations:
+            print("Annotations file not found.")
+            return None
+        # We should have only one annotations file
+        annot_df = pd.read_csv(annotations[0], delimiter=';')
+        annots = annot_df.iloc[:, [1, 2]].to_numpy()
+        del annot_df
+
+        # Create marks structure
+        marks = CustomExperimentData()
+        marks.events_labels = []
+        marks.events_times = []
+        marks.conditions_labels, marks.conditions_times = [0] * annots.shape[0], annots
+        marks.app_settings = {'conditions': {'restful': {'label': 0}}, 'events': {}}
+
+        # Create EEG object
+        eeg = EEG(times=times, signal=data, fs=fs, channel_set=channel_set)
+
+        # Fill and save recording
+        recording.add_biosignal(biosignal=eeg)
+        recording.add_experiment_data(marks, key='marks')
+
+        recording.save(str(converted_file))
+        return str(converted_file)
+
+    except Exception as e:
+        if worker:
+            worker.log.emit(f"❌ Error converting MAT file: {e}")
+        return None
+
 # Converter registry
 CONVERTERS = {
     ".rcp.bson": {
@@ -209,6 +281,9 @@ CONVERTERS = {
     },
     ".rec.bson": {
         "converter": _convert_rec_file
+    },
+    ".csv": {
+        "converter": _convert_csv_file
     }
 }
 
