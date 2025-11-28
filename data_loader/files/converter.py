@@ -1,4 +1,4 @@
-import os
+import os, stat, glob
 from medusa.components import Recording, CustomExperimentData
 import re
 import shutil
@@ -42,11 +42,13 @@ def _log_conversion_summary(counters, worker):
 def _cleanup_tmp_folder(tmp_dir, worker):
     """Remove temporary folder safely."""
     try:
-        shutil.rmtree(tmp_dir)
+        shutil.rmtree(tmp_dir, onerror=redo_with_write)
         worker.log.emit("🧹 Temporary conversion folder removed.")
     except Exception:
         worker.log.emit("⚠️ Could not remove temporary folder (in use?).")
-
+def redo_with_write(redo_func, path, err):
+    os.chmod(path, stat.S_IWRITE)
+    redo_func(path)
 
 # ----------------------------- ADDITIONAL FUNCTIONS -----------------------------
 def process_file(file, filename, tmp_dir, converter, worker, matched_ext, root_dir):
@@ -211,13 +213,15 @@ def _convert_csv_file(file, output_dir, worker=None):
         raise TypeError('File skipped - Not a valid EEG file')   # Only process EEG CSV files
 
     file = Path(file)
-    base_name = file.name.replace(".csv", ".rec.bson")  # Replace extension from .rcp.bson to .rec.bson
-    converted_file = output_dir / base_name
 
     try:
         subj_id = file.stem.split('.')[0]
         subj_id = subj_id.split("_")[:3]
         subj_id = "_".join(subj_id)
+
+        # Final output file name
+        converted_file = output_dir / Path(subj_id + ".rec.bson")
+
         recording = Recording(subject_id=subj_id)
         # Load MATLAB data
         with open(file, newline='') as csvfile:
@@ -323,32 +327,47 @@ def convert_to_bids(input_path, output_path, anat, worker):
 
         # --- Detect subjects ---
         # If not folders, we consider the input path as a unique subject
-        subj_dirs = [d for d in input_path.iterdir() if d.is_dir()] or [input_path]
+        subj_dirs = [d for d in input_path.iterdir() if d.is_dir()]
 
-        for subj_dir in subj_dirs:
-            subj_match = subject_pattern.search(subj_dir.name)
-            subj_id = subj_match.group(1).zfill(2) if subj_match else "01"
-            subj_bids_path = output_path / f"sub-{subj_id}"
-            subj_bids_path.mkdir(exist_ok=True)
+        if subj_dirs:
+            for subj_dir in subj_dirs:
+                subj_match = subject_pattern.search(subj_dir.name)
+                subj_id = subj_match.group(1).zfill(2) if subj_match else "01"
+                subj_bids_path = output_path / f"sub-{subj_id}"
+                subj_bids_path.mkdir(exist_ok=True)
 
-            # Detect sessions
-            session_dirs = [d for d in subj_dir.iterdir() if d.is_dir() and session_pattern.search(d.name)]
-            if session_dirs:
-                for ses_dir in session_dirs:
-                    ses_match = session_pattern.search(ses_dir.name)
-                    ses_id = ses_match.group(1).zfill(2)
-                    ses_bids_path = subj_bids_path / f"ses-{ses_id}"
-                    ses_bids_path.mkdir(exist_ok=True)
-                    files_from_process = move_recordings(ses_dir, ses_bids_path, anat, record_pattern)
+                # Detect sessions
+                session_dirs = [d for d in subj_dir.iterdir() if d.is_dir() and session_pattern.search(d.name)]
+                if session_dirs:
+                    for ses_dir in session_dirs:
+                        ses_match = session_pattern.search(ses_dir.name)
+                        ses_id = ses_match.group(1).zfill(2)
+                        ses_bids_path = subj_bids_path / f"ses-{ses_id}"
+                        ses_bids_path.mkdir(exist_ok=True)
+                        files_from_process = move_recordings(ses_dir, ses_bids_path, anat, record_pattern)
+                        all_final_files.extend(files_from_process)
+                else:
+                    # No sessions detected → process subject root directly
+                    files_from_process = move_recordings(subj_dir, subj_bids_path, anat, record_pattern)
                     all_final_files.extend(files_from_process)
-            else:
+
+            worker.log.emit("✅ BIDS organization completed successfully.")
+            return all_final_files
+        else: # If subject folders not found, process files individually
+            files = glob.glob(str(input_path) + "/*.rec.bson")
+
+            for file in files:
+                subj_id = file.split('\\')[-1].split('.')[0]
+                subj_id = re.sub(r"[-_]", "", subj_id)
+                subj_bids_path = output_path / f"sub-{subj_id}"
+                subj_bids_path.mkdir(exist_ok=True)
+
                 # No sessions detected → process subject root directly
-                files_from_process = move_recordings(subj_dir, subj_bids_path, anat, record_pattern)
+                files_from_process = move_recordings(input_path, subj_bids_path, anat, record_pattern)
                 all_final_files.extend(files_from_process)
 
-        worker.log.emit("✅ BIDS organization completed successfully.")
-        return all_final_files
-
+            worker.log.emit("✅ BIDS organization completed successfully.")
+            return all_final_files
     except Exception as e:
         worker.log.emit(f"❌ Error organizing BIDS: {e}")
         return []
@@ -368,7 +387,7 @@ def move_recordings(source_dir, dest_root, anat, record_pattern):
         return []
 
     # Get subject id. If not, we consider subject 01 by default.
-    subj_match = re.search(r'sub-(\d+)', str(dest_root))
+    subj_match = re.search(r'sub-(.*?)(?=_|-|//|\\|$)', str(dest_root))
     subj_id = subj_match.group(1) if subj_match else "01"
 
     final_files = []
