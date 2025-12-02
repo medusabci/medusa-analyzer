@@ -1,0 +1,934 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1399</width>
+    <height>660</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0">
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="QFrame" name="topContentWidget">
+     <property name="styleSheet">
+      <string notr="true">QFrame {
+	border: none;
+}</string>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="Datapreprocessing">
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox#Datapreprocessing::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}
+
+</string>
+     </property>
+     <property name="title">
+      <string>Preprocessing</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_7">
+        <item>
+         <widget class="QLabel" name="broadbandLabel">
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Data frequency range</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="minbroadBox">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="singleStep">
+           <double>0.100000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="broadbandauxLabel">
+          <property name="text">
+           <string>-</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="maxbroadBox">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="maximum">
+           <double>9999.989999999999782</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="hzbroadbandLabel">
+          <property name="text">
+           <string>Hz</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QToolButton" name="broadbandButton">
+          <property name="text">
+           <string>What is this?</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_49">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="preprocessing_selection">
+        <item>
+         <widget class="QCheckBox" name="preprocessingButton">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="preprocessingLabel">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Preprocess data</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_3" native="true">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QGroupBox" name="cargroupBox">
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
+           <property name="title">
+            <string>Common average reference</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <item>
+             <layout class="QHBoxLayout" name="CAR_filtering">
+              <item>
+               <widget class="QCheckBox" name="carCBox">
+                <property name="font">
+                 <font>
+                  <weight>75</weight>
+                  <bold>true</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Common average reference (CAR)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="carLabel">
+                <property name="font">
+                 <font>
+                  <weight>50</weight>
+                  <bold>false</bold>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>- Re-reference channels using Common Average</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,1">
+        <property name="sizeConstraint">
+         <enum>QLayout::SetFixedSize</enum>
+        </property>
+        <item>
+         <widget class="QWidget" name="widget_2" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <widget class="QGroupBox" name="notchgroupBox">
+             <property name="font">
+              <font>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
+             <property name="title">
+              <string>Notch filtering</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_6">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QCheckBox" name="notchCBox">
+                  <property name="font">
+                   <font>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Notch filter</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="notchfilterLabel">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>- Remove powerline or frequency interference.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_8">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_4">
+                <item>
+                 <widget class="QLabel" name="notchminLabel">
+                  <property name="text">
+                   <string>Min. freq.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="minfreqnotchBox">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="minimum">
+                   <double>0.100000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
+                  </property>
+                  <property name="value">
+                   <double>49.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="notchmaxLabel">
+                  <property name="text">
+                   <string>Max. freq</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="maxfreqnotchBox">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="minimum">
+                   <double>0.200000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
+                  </property>
+                  <property name="value">
+                   <double>51.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="orderNotchLabel">
+                  <property name="text">
+                   <string>Order</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="orderNotchBox">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>9999</number>
+                  </property>
+                  <property name="singleStep">
+                   <number>10</number>
+                  </property>
+                  <property name="value">
+                   <number>1001</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="winnotchLabel">
+                  <property name="text">
+                   <string>Win</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="winnotchBox">
+                  <property name="currentIndex">
+                   <number>9</number>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>barthann</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>bartlett</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>blackman</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>blackmanharris</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>bohman</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>boxcar</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>cosine</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>exponential</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>flattop</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>hamming</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>hann</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>lanczos</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>nuttall</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>parzen</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>taylor</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>triang</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>tukey</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QPushButton" name="drawnotchButton">
+                <property name="text">
+                 <string>Update graph</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QWidget" name="notchPlotWidget" native="true"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QWidget" name="widget" native="true">
+          <layout class="QVBoxLayout" name="verticalLayout_5">
+           <item>
+            <widget class="QGroupBox" name="bpgroupBox">
+             <property name="font">
+              <font>
+               <pointsize>9</pointsize>
+              </font>
+             </property>
+             <property name="title">
+              <string>Bandpass filtering</string>
+             </property>
+             <layout class="QVBoxLayout" name="verticalLayout_7">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_5">
+                <item>
+                 <widget class="QCheckBox" name="bpCBox">
+                  <property name="font">
+                   <font>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Bandpass</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="bpLabel">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>– Focus on frequency ranges of interest</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_2">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_6">
+                <item>
+                 <widget class="QLabel" name="bpminfreqLabel">
+                  <property name="text">
+                   <string>Min. freq.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="minfreqbpBox">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="minimum">
+                   <double>0.100000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>999.990000000000009</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.100000000000000</double>
+                  </property>
+                  <property name="value">
+                   <double>1.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="bpmaxfreqLabel">
+                  <property name="text">
+                   <string>Max. freq.</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="maxfreqbpBox">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="minimum">
+                   <double>0.200000000000000</double>
+                  </property>
+                  <property name="maximum">
+                   <double>9999.989999999999782</double>
+                  </property>
+                  <property name="value">
+                   <double>70.000000000000000</double>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="orderbpLabel">
+                  <property name="text">
+                   <string>Order</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="orderbpBox">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>9999</number>
+                  </property>
+                  <property name="singleStep">
+                   <number>10</number>
+                  </property>
+                  <property name="value">
+                   <number>1000</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="winbpLabel">
+                  <property name="text">
+                   <string>Win</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QComboBox" name="winbpBox">
+                  <property name="currentIndex">
+                   <number>9</number>
+                  </property>
+                  <item>
+                   <property name="text">
+                    <string>barthann</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>bartlett</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>backman</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>blackmanharris</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>bohman</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>boxcar</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>cosine</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>exponential</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>flattop</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>hamming</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>hann</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>lanczos</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>nuttall</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>parzen</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>taylor</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>triang</string>
+                   </property>
+                  </item>
+                  <item>
+                   <property name="text">
+                    <string>tukey</string>
+                   </property>
+                  </item>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QPushButton" name="drawbpButton">
+                <property name="text">
+                 <string>Update graph</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QWidget" name="bandpassPlotWidget" native="true"/>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="bandsegmentation">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>100</height>
+      </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>16</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left; 
+    padding: 5px;                 
+    letter-spacing: 1px;
+    
+    color: qlineargradient(
+        spread:pad, x1:0, y1:0, x2:1, y2:0,
+        stop:0 #6a0dad, stop:1 #ec407a
+    );
+}</string>
+     </property>
+     <property name="title">
+      <string>Band Filtering</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_8" stretch="1,1">
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="band_segmentation_selection">
+        <item>
+         <widget class="QCheckBox" name="bandCBox">
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>Band Filtering</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>- Filter signal into frequency bands to compute band-specific parameter. METHODOLOGICAL NOTE: Filter parameters will be taken from the band-pass filtering</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="band_edition">
+        <item>
+         <spacer name="horizontalSpacer_47">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="bandButton">
+          <property name="text">
+           <string>Edit bands</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="selectedbandsLabel">
+          <property name="text">
+           <string>Selected bands</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="selectedbandsauxLabel">
+          <property name="text">
+           <string>:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="bandLabel">
+          <property name="text">
+           <string>None</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_48">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

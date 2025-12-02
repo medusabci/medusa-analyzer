@@ -1,0 +1,33 @@
+{
+  "name": "Template Experiment",
+  "experiment_path": "experiment_template",
+  "biosignals": ["XXX"],
+  "biosignal_information": ["fs"],
+  "pipeline":
+  [
+    {
+      "step": "Files",
+      "path": "data_loader/files",
+      "widget": "FilesWidget",
+      "controller": "FilesController"
+    },
+    {
+      "step": "Step_1",
+      "path": "template_experiment/step_1",
+      "widget": "Step1Widget",
+      "controller": "Step1Controller"
+    },
+    {
+      "step": "Step_2",
+      "path": "template_experiment/step_2",
+      "widget": "Step2Widget",
+      "controller": "Step2Controller"
+    },
+    {
+      "step": "Save",
+      "path": "template_experiment/save",
+      "widget": "SaveWidget",
+      "controller": "SaveController"
+    }
+  ]
+}

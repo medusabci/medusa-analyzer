@@ -1,0 +1,108 @@
+{
+  "PSDPlot": {
+    "allowed_params": ["PSD"],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X axis Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y axis Label",
+        "default": "Plot_params.y_label"
+      },
+      "xlim": {
+        "type": "range",
+        "label": "X axis Limits",
+        "default": [0, 60]
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Y axis Limits",
+        "default": [0, 10]
+      }
+    }
+  },
+
+  "LinearPlot": {
+    "allowed_params": [
+      "Relative Power",
+      "Absolute Power",
+      "Median Frequency",
+      "Spectral Entropy"
+    ],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X axis Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y axis Label",
+        "default": "Plot_params.y_label"
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Y axis Limits"
+      },
+      "line_color": {
+        "type": "text",
+        "label": "Line color",
+        "default": "#000000"
+      },
+      "plot_std": {
+        "type": "bool",
+        "label": "Plot std",
+        "default": true
+      }
+    }
+  },
+
+  "TopographicPlot": {
+    "allowed_params": [
+    ],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "color_map": {
+        "type": "select",
+        "label": "Color Map",
+        "default": "magma",
+        "options": [
+          "magma",
+          "plasma",
+          "viridis",
+          "inferno",
+          "cividis",
+          "jet",
+          "hot"
+        ]
+      },
+      "colorbar_min": {
+        "type": "text",
+        "label": "Colorbar Minimum",
+        "default": null
+      },
+      "colorbar_max": {
+        "type": "text",
+        "label": "Colorbar Maximum",
+        "default": null
+      }
+    }
+  }
+}

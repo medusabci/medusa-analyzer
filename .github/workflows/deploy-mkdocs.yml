@@ -1,0 +1,31 @@
+name: Deploy MkDocs site
+
+# Ejecuta al hacer push a main
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write   # permite a la action empujar a gh-pages usando GITHUB_TOKEN
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material pymdown-extensions
+
+      - name: Build and deploy site to gh-pages
+        run: mkdocs gh-deploy --force
+        working-directory: analyzer-docs

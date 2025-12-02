@@ -210,3 +210,12 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+/.idea/copilot.data.migration.ask.xml
+/.idea/copilot.data.migration.ask2agent.xml
+/ecg_features/preprocessing/view - Copy.ui
+
+results/
+results_ecg/
+/results_minitas_rubo/
+/results_minitas_rubo_2/
+/results_eeg/
