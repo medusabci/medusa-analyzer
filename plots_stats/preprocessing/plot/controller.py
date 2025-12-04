@@ -1,12 +1,15 @@
 from PySide6 import QtCore, QtWidgets
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-import matplotlib.pyplot as plt
 import numpy as np
 import medusa
 import medusa.ecg
+import os
+import json
+from PySide6.QtUiTools import loadUiType
 from plots_stats.plot_panel.export_dialog import ExportDialog
+from medusa.analysis.time_plot.time_plot import TimeSeriesPlot, TimePlotManager
 
+medusa_path = os.path.dirname(medusa.__file__)
+timeplot_ui_path = os.path.join(medusa_path, "analysis", "time_plot", "time_plot.ui")
 
 class PlotController(QtCore.QObject):
     def __init__(self, view):
@@ -17,230 +20,556 @@ class PlotController(QtCore.QObject):
         self.recording = None # actualizes when loading a valid recording to plot
         self.fs = self.view.main_module.controller.fs
         self.channel_list = self.view.main_module.controller.channel_list
-        self.current_window_start = 0  # (s)
-        self.window_duration = 5  # (window plot time in (s))
-        self.vertical_scale = 1.0  # scale for vertical zoom
-        self.total_duration = 0
+        self.template_ui_path = 'plots_stats/preprocessing/plot/tab_template.ui'
+
+        self._tabs_created = False
+        self.view.shown.connect(self.create_tabs)
+
+    def load_ui(self, path, parent=None):
+        """Load the tab_template UI from the given path."""
+        form_class, base_class = loadUiType(path)
+        widget = base_class(parent) if parent is not None else base_class()
+        ui = form_class()
+        ui.setupUi(widget)
+        return widget
+
+    def create_tabs(self):
+        """ Create the tabs """
+
+        self.type_signal = self.view.main_module.controller.signal_type
+
+        # Loading screen
+        self.view.main_module.loading.show()
+        self.view.main_module.loading.set_progress(0, self.view.main_module)
 
 
-        self.view.shown.connect(self.on_first_show)
-        self.view.sliderRaw.valueChanged.connect(lambda val: self.on_slider_moved("raw", val))
-        self.view.sliderClean.valueChanged.connect(lambda val: self.on_slider_moved("clean", val))
-        self.view.prevButton.clicked.connect(self.prev_tab)
-        self.view.nextButton.clicked.connect(self.next_tab)
-        self.view.exportButton.clicked.connect(self.export_figure)
-        self.view.updatecleanButton.clicked.connect(lambda: self.update_plot_labels("clean"))
-        self.view.updaterawButton.clicked.connect(lambda: self.update_plot_labels("raw"))
+        # Obtain paths of filtered files:
+        self.filtered_files = self.view.main_module.controller.file_path_to_plot
+
+        # Load recording
+        # TODO: in future versions, load all selected preprocessed recordings and the associate each one to a tab
+        self.recording = self.recording = medusa.components.Recording.load(self.filtered_files)
+
+        tab_widget = self.view.tab_widget
+        while tab_widget.count() > 0:
+            tab_widget.removeTab(0)
+
+        # Load available_signals.json and type_plots.json to obtain the available plot the selected signal with its default params
+        signals_json_path = os.path.join(os.path.dirname(__file__), "available_signals.json")
+        plots_json_path = os.path.join(os.path.dirname(__file__), "type_plots.json")
+        with open(signals_json_path, "r", encoding="utf-8") as f:
+            signal_json = json.load(f)
+        with open(plots_json_path, "r", encoding="utf-8") as f:
+            plots_json = json.load(f)
+
+        plot_option = self.view.main_module.controller.plot_option
+        signal_plot_data  = signal_json.get(plot_option, [])[0]
+
+        # Update loading progress
+        self.view.main_module.loading.set_progress((1 / len(self.type_signal)) * 100,
+                                                   self.view.main_module)
+
+        # For each selected signal, we inset one tab in de TabWidget
+        # TODO: instead of looping trhough signal, loop through the selected preprocessed recordings in 'loading' step
+        for sig in self.type_signal:
+            if sig not in signal_plot_data:
+                print(f"[WARN] Signal '{sig}' not found in available_signals.json. Skipping.")
+                continue
+
+            base_plot_params = signal_plot_data[sig]["Plot_params"]
+
+            # Find the associate plot type
+            plot_type = None
+            for ptype, pdata in plots_json.items():
+                allowed = pdata["allowed_signals"]
+                if sig in allowed:
+                    plot_type = ptype
+                    plot_type_data = pdata
+                    break
+            if not plot_type:
+                print(f"[WARN] No plot type found for '{sig}' in plot_plots.json")
+                continue
+            plot_params_meta = plot_type_data["Plot_params"]
+
+            # Merge default values
+            merged_params = {}
+            for key, meta in plot_params_meta.items():
+                default_value = meta.get("default", None)
+
+                if isinstance(default_value, str) and default_value.startswith("Plot_params."):
+                    ref_key = default_value.split(".")[-1]
+                    default_value = base_plot_params.get(ref_key, "")
+
+                merged_params[key] = {
+                    "type": meta.get("type", "text"),
+                    "label": meta.get("label", key),
+                    "default": default_value,
+                    "options": meta.get("options", [])
+                }
+
+            # Create tab
+            tab = self.load_ui(self.template_ui_path, parent=tab_widget)
+            self.setup_channel_list(tab, sig)
+            self.setup_conditions_list(tab)
+            self.setup_events_list(tab)
+
+            # Create plot object based on plot_type
+            tab._plot_type = plot_type
+            if plot_type == "TimePlot":
+                print("[DEBUG] Creating TimePlot")
+
+            # Create dynamic controls for plot parameters in the tab view
+            controls_widget = tab.findChild(QtWidgets.QWidget, "TypePlotWidget")
+            self._build_dynamic_controls(controls_widget, merged_params, tab)
+
+            # Insert time_plot UI into the tab's plot area
+            time_plot_widget = self.load_ui(timeplot_ui_path, parent=tab)
+            placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
+            layout = placeholder.layout()
+            if layout is None:
+                layout = QtWidgets.QVBoxLayout(placeholder)
+                placeholder.setLayout(layout)
+            layout.addWidget(time_plot_widget)
+
+            # Connect buttons
+            # prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
+            # prev_btn.clicked.connect(self.prev_tab)
+            # next_btn = tab.findChild(QtWidgets.QPushButton, "nextButton")
+            # next_btn.clicked.connect(self.next_tab)
+            export_btn = tab.findChild(QtWidgets.QPushButton, "exportButton")
+            export_btn.clicked.connect(lambda checked, t=tab: self.export_figure(t))
+            update_btn = tab.findChild(QtWidgets.QPushButton, "updateButton")
+            update_btn.clicked.connect(lambda checked, t=tab: self.update_plot(t))
+
+            # Add splitter
+            self.convert_to_splitter(tab)
+
+            # Add widget to main TabWinget
+            self.view.add_tab(tab, str(sig))
+            self._tabs_created = True
+
+            QtCore.QTimer.singleShot(0, lambda t=tab: self.update_plot(t))
+
+            # Update loading progress
+            #TODO: recalculate progress bar
+            # self.view.main_module.loading.set_progress(((param_iter.index(sig) + 2) / len(param_iter)) * 100, self.view.main_module)
+            self.view.main_module.loading.set_progress(100, self.view.main_module)
 
 
-    def on_first_show(self):
-        """ Load de recording file when the widget is first shown """
+        # Finish loading
+        self.view.main_module.loading.finish()
 
-        path = self.view.main_module.controller.file_path_to_plot
-        try:
-            self.recording = medusa.components.Recording.load(path)
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self.view, "Error", f"Error loading recording:\n{e}")
+    def setup_channel_list(self, tab, sig):
+        """ Config the channel list """
+
+        list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
+        channels = self.view.main_module.controller.channel_list
+
+        if not channels:
+            print('Channels not found')
             return
 
-        self.total_duration = len(self.recording.eeg.times) / self.fs
-        self.setup_plot("raw")
-        self.setup_plot("clean")
+        # Add channels to list
+        list_widget.clear()
+        for ch in channels:
+            item = QtWidgets.QListWidgetItem(ch)
+            list_widget.addItem(item)
 
-    def setup_plot(self, mode):
-        """ Setup the available plots.
+        list_widget.selectAll()
+        tab._selected_channels = {sig: list(range(list_widget.count()))}
+        self.on_channels_selected(tab, sig)
+        list_widget.itemSelectionChanged.connect(lambda: self.on_channels_selected(tab, sig))
+
+    def on_channels_selected(self, tab, sig):
+        """Read the selected channels and store its indices"""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
+        selected_indexes = [list_widget.row(item) for item in list_widget.selectedItems()]
+        tab._selected_channels[sig] = selected_indexes
+        print(f"Selected channel indices for param '{sig}': {selected_indexes}")
+
+    def setup_conditions_list(self, tab):
+        """Configura la lista de condiciones disponibles en el tab."""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "conditionsWidget")
+
+        conds = self.recording.marks.app_settings.get("conditions", {})
+        if not conds:
+            print("No conditions found in recording.")
+            return
+
+        list_widget.clear()
+
+        # Add condition names
+        for cond_name in conds.keys():
+            item = QtWidgets.QListWidgetItem(cond_name)
+            list_widget.addItem(item)
+
+        # Select all by default
+        list_widget.selectAll()
+
+        # Store selection
+        tab._selected_conditions = list(conds.keys())
+
+        list_widget.itemSelectionChanged.connect(lambda: self.on_conditions_selected(tab))
+
+    def on_conditions_selected(self, tab):
+        """Lee las condiciones seleccionadas y guarda sus nombres."""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "conditionsWidget")
+        selected = [item.text() for item in list_widget.selectedItems()]
+        tab._selected_conditions = selected
+        print("Selected conditions:", selected)
+
+    def setup_events_list(self, tab):
+        """Configura la lista de eventos disponibles en el tab."""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "eventsWidget")
+
+        events = self.recording.marks.app_settings.get("events", {})
+        if not events:
+            print("No events found in recording.")
+            return
+
+        list_widget.clear()
+
+        # Add event names
+        for ev_name in events.keys():
+            item = QtWidgets.QListWidgetItem(ev_name)
+            list_widget.addItem(item)
+
+        # Select all by default
+        list_widget.selectAll()
+
+        # Store selection
+        tab._selected_events = list(events.keys())
+
+        list_widget.itemSelectionChanged.connect(lambda: self.on_events_selected(tab))
+
+    def on_events_selected(self, tab):
+        """Lee los eventos seleccionados y guarda sus nombres."""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "eventsWidget")
+        selected = [item.text() for item in list_widget.selectedItems()]
+        tab._selected_events = selected
+        print("Selected events:", selected)
+
+
+    def _build_dynamic_controls(self, container_widget, plot_params, tab):
         """
-        if mode == "raw":
-            data = np.array(self.recording.eeg.original_signal)
-            placeholder = self.view.plotrawPlaceholder
-            slider = self.view.sliderRaw
-        else:
-            data = np.array(self.recording.eeg.signal)
-            placeholder = self.view.plotcleanPlaceholder
-            slider = self.view.sliderClean
+        Create dynamic controls to edit plot parameters generically.
+        Adds at the top a label 'Plot type: <type>'.
+        """
 
-        # Obtain the time array based on the signal sampling frequency
-        n_samples, n_channels = data.shape
-        times = self.recording.eeg.times
-        if times[-1] > self.total_duration * 1.5:
-            times = np.arange(len(times)) / self.fs
-        setattr(self, f"{mode}_times", times)
+        # Clear old layout if exists to avoid errors
+        old_layout = container_widget.layout()
+        if old_layout is not None:
+            try:
+                self._clear_layout(old_layout)
+                dummy = QtWidgets.QWidget()
+                dummy.setLayout(old_layout)
+            except RuntimeError:
+                pass
 
-        # Create the figure. Height is adjusted based on the number of channels
-        fig_height = max(2.0, n_channels * 0.4)
-        fig = Figure(figsize=(8, fig_height))
-        canvas = FigureCanvas(fig)
-        ax = fig.add_subplot(111)
+        # Scoll area
+        scroll_area = QtWidgets.QScrollArea(container_widget)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setStyleSheet("""QScrollArea {border: none; background-color: #222;} 
+        QWidget {background-color: transparent;}""")
+        scroll_content = QtWidgets.QWidget()
+        scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
+        scroll_layout.setSpacing(10)
+        scroll_layout.setContentsMargins(10, 10, 10, 10)
 
-        # Get the old layout or create a new one
-        old_layout = placeholder.layout()
-        if old_layout is None: # if the layout does not exist
-            # Create a new layout
-            layout = QtWidgets.QVBoxLayout(placeholder)
-            layout.setContentsMargins(0, 0, 0, 0)
-        else:
-            # Otherwise, clear the old layout
-            self.clear_layout(old_layout)
-            layout = old_layout
-        layout.addWidget(canvas)
+        # Title label
+        plot_type_label = QtWidgets.QLabel(f"Plot type: {getattr(tab, '_plot_type', 'Unknown')}")
+        plot_type_label.setAlignment(QtCore.Qt.AlignCenter)
+        plot_type_label.setStyleSheet("""background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a0dad, stop:1 #ec407a);
+                color: white; padding: 6px 12px; font-weight: 700; font-size: 9pt; border-radius: 6px; """)
+        scroll_layout.addWidget(plot_type_label)
 
-        setattr(self, f"{mode}_ax", ax)
-        setattr(self, f"{mode}_canvas", canvas)
-        setattr(self, f"{mode}_data", data)
-        setattr(self, f"{mode}_times", times)
-        channel_means = np.nanmean(data, axis=0)
-        setattr(self, f"{mode}_channel_means", channel_means)
+        tab._param_widgets = {} # Store references to created widgets
 
-        # Calculate fixed offsets for channels
-        spacing = 1.0 / (n_channels + 1)
-        offsets = np.linspace(spacing, 1.0 - spacing, n_channels)[::-1]
-        setattr(self, f"{mode}_channel_offsets", offsets)
+        # Loop over plot_params to create specific controls. Controls are created based on the 'type' metadata.
+        for key, meta in plot_params.items():
+            # If meta is a dict with 'type', 'default', 'label' keys, use them; else assume text type with label=key and default=meta
+            if isinstance(meta, dict) and any(k in meta for k in ("type", "default", "label")):
+                param_type = meta.get("type", "text")
+                label_text = meta.get("label", key)
+                default_value = meta.get("default", "")
+            else:
+                param_type = "text"
+                label_text = key
+                default_value = meta
 
-        # Calculate adaptative initial scale using the 95 percentile of the amplitude of each channel
-        amp_ref = np.nanmedian([np.nanpercentile(np.abs(data[:, ch] - channel_means[ch]), 95) for ch in range(n_channels)])
-        if amp_ref == 0 or np.isnan(amp_ref):
-            amp_ref = 1e-6  # avoid zero division
-        self.vertical_scale = (0.6 * spacing) / amp_ref
-        self.vertical_scale = np.clip(self.vertical_scale, 1e-3, 0.1)
-        setattr(self, f"{mode}_base_scale", self.vertical_scale)
-        setattr(self, f"{mode}_scale", self.vertical_scale)
+            # Card container
+            card = QtWidgets.QFrame()
+            card.setFrameShape(QtWidgets.QFrame.StyledPanel)
+            card.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            if isinstance(meta, dict) and meta.get("type") == "bool":
+                card.setStyleSheet("""QFrame {background-color: #DCDCDC; border-radius: 8px;} """)
+            else:
+                card.setStyleSheet("""QFrame {background-color: transparent; border-radius: 8px;} """)
 
-        # Configure slider
-        max_start = max(0, self.total_duration - self.window_duration)
-        slider.setMinimum(0)
-        slider.setMaximum(int(max_start))
-        slider.setSingleStep(1)
-        slider.setPageStep(int(self.window_duration))
-        slider.setValue(0)
+            card_layout = QtWidgets.QVBoxLayout(card)
+            card_layout.setContentsMargins(0, 0, 0, 0)
+            card_layout.setSpacing(4)
 
-        canvas.mpl_connect("scroll_event", lambda event, m=mode: self.on_scroll(event, m))
+            # Plot parameter subtitle
+            title = QtWidgets.QLabel(label_text)
+            title.setStyleSheet("font-weight:600; color:white; font-size:9pt; background-color: #C53189;")
+            card_layout.addWidget(title)
 
-        self.draw_window(mode)
-        self.update_plot_labels(mode)
+            # Create the corresponding widget
+            widget = None
+            #If the param type is text or range, create a QLineEdit
+            if param_type in ("text", "range", "number"):
+                widget = QtWidgets.QLineEdit()
+                if default_value is None and param_type == "range":
+                    display_value = "[None, None]"
+                elif default_value is None:
+                    display_value = ""
+                elif isinstance(default_value, (list, tuple, dict)):
+                    display_value = json.dumps(default_value)
+                else:
+                    display_value = str(default_value)
+                widget.setText(display_value)
+                widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
-    def clear_layout(self, layout):
-        """Elimina todos los widgets de un layout."""
+            # If the param type is bool, create a QCheckBox
+            elif param_type == "bool":
+                widget = QtWidgets.QCheckBox()
+                dv = bool(default_value) if not isinstance(default_value, str) else default_value.lower() in ("1","true","yes")
+                widget.setChecked(dv)
+                widget.setStyleSheet("color:white;")
+
+            # If the param type is select, create a QComboBox
+            elif param_type == "select":
+                widget = QtWidgets.QComboBox()
+                options = meta.get("options", []) if isinstance(meta, dict) else []
+                for opt in options:
+                    widget.addItem(str(opt))
+                if default_value not in (None, "") and str(default_value) not in [str(o) for o in options]:
+                    widget.addItem(str(default_value))
+                if default_value is not None and default_value != "":
+                    idx = widget.findText(str(default_value))
+                    if idx >= 0:
+                        widget.setCurrentIndex(idx)
+                widget.setStyleSheet("""QComboBox {background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;}""")
+
+            # Add widget to card layout
+            if widget is not None:
+                widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+                card_layout.addWidget(widget)
+                tab._param_widgets[key] = (param_type, widget)
+
+            scroll_layout.addWidget(card)
+
+        scroll_content.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        scroll_content.adjustSize()
+        scroll_area.setWidget(scroll_content)
+
+        # Place scroll_area into the container widget's layout (replace existing layout)
+        main_layout = QtWidgets.QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll_area)
+        container_widget.setLayout(main_layout)
+
+        # Adjust sizes of the container widget
+        container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        container_widget.setMinimumHeight(170)
+        container_widget.updateGeometry()
+
+    def get_current_params(self, tab):
+        params = {}
+
+        for name, (param_type, widget) in tab._param_widgets.items():
+
+            if param_type in ("text", "range", "number"):
+                text = widget.text()
+                # Si es JSON (lista, tuple, dict), intenta parsearlo
+                try:
+                    value = json.loads(text)
+                except:
+                    value = text
+                params[name] = value
+
+            elif param_type == "bool":
+                params[name] = widget.isChecked()
+
+            elif param_type == "select":
+                params[name] = widget.currentText()
+
+        return params
+
+    def _clear_layout(self, layout):
+        """Helper to delete all items/widgets from a layout."""
         if layout is None:
             return
         while layout.count():
             item = layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.setParent(None)
+            w = item.widget()
+            if w is not None:
+                w.deleteLater()
+            else:
+                # If item is a layout, clear it recursively
+                sub = item.layout()
+                if sub is not None:
+                    self._clear_layout(sub)
 
+    def update_plot(self, tab):
 
-    def draw_window(self, mode):
-        ax = getattr(self, f"{mode}_ax")
-        canvas = getattr(self, f"{mode}_canvas")
-        data = getattr(self, f"{mode}_data")
-        times = getattr(self, f"{mode}_times")
-        offsets = getattr(self, f"{mode}_channel_offsets")
-        channel_means = getattr(self, f"{mode}_channel_means")
+        # user parameters
+        params = self.get_current_params(tab)
+        print("PARAMS:", params)
 
-        start_idx = int(self.current_window_start * self.fs)
-        end_idx = int((self.current_window_start + self.window_duration) * self.fs)
-        end_idx = min(end_idx, len(times))
+        recording = self.recording
+        times = getattr(recording, self.type_signal[0].lower()).times
+        signal = getattr(recording, self.type_signal[0].lower()).signal
+        ch_labels = self.view.main_module.controller.channel_list
+        selected_idxs = tab._selected_channels[self.type_signal[0]]
+        n_channels = len(selected_idxs)
 
-        segment = data[start_idx:end_idx, :]
-        segment_times = times[start_idx:end_idx]
+        time_plot = TimeSeriesPlot(
+            n_cha=n_channels,
+            cha_labels=[ch_labels[i] for i in selected_idxs],
+            cha_to_show=n_channels, #TODO: AQUÍ NO SERÍA LEN(SELECTED_IDXS)?
+            reverse_channels=True
+        )
 
-        ax.cla()
+        # Build conditions dictionary based on user selection
+        conds_all = self.recording.marks.app_settings.get("conditions", {})
+        cond_labels = self.recording.marks.conditions_labels
+        cond_times = self.recording.marks.conditions_times
 
-        n_channels = segment.shape[1]
-        cmap = plt.cm.get_cmap("tab10", n_channels)
-        colors = [cmap(i) for i in range(n_channels)]
+        # Filtrar solo las seleccionadas
+        selected_conds = tab._selected_conditions
 
-        scale = getattr(self, f"{mode}_scale", getattr(self, f"{mode}_base_scale", 1.0))
-        for ch in range(n_channels):
-            centered = segment[:, ch] - channel_means[ch]
-            amplified = centered * scale
-            ax.plot(segment_times, amplified + offsets[ch], lw=0.8, color=colors[ch])
+        # Filtrado de condiciones
+        conds_filtered = {
+            k: v for k, v in conds_all.items()
+            if k in selected_conds
+        }
 
-        # Set titles based on the editable params
-        title_edit = getattr(self.view, f"title{mode}")
-        xlabel_edit = getattr(self.view, f"x{mode}")
-        ylabel_edit = getattr(self.view, f"y{mode}")
-        title_text = title_edit.text() if title_edit.text().strip() else f"EEG {'RAW' if mode == 'raw' else 'CLEAN'} Signal"
-        xlabel_text = xlabel_edit.text() if xlabel_edit.text().strip() else "Time (s)"
-        ylabel_text = ylabel_edit.text() if ylabel_edit.text().strip() else "Channels"
+        # Sólo dejamos las etiquetas que existan en conds_filtered
+        valid_labels = [conds_all[c]["label"] for c in selected_conds]
 
-        ax.set_ylim(0, 1)
-        ax.set_xlim(segment_times[0], segment_times[-1])
-        ax.set_xlabel(xlabel_text)
-        ax.set_ylabel(ylabel_text)
-        ax.set_yticks(offsets)
-        ax.set_yticklabels(self.channel_list)
-        ax.invert_yaxis()
-        ax.set_title(title_text)
+        cond_labels_filtered = [
+            lbl for lbl in cond_labels if lbl in valid_labels
+        ]
 
-        canvas.draw_idle()
+        # Filtrar tiempos paralelos
+        cond_times_filtered = [
+            t for lbl, t in zip(cond_labels, cond_times)
+            if lbl in valid_labels
+        ]
 
-    def update_plot_labels(self, mode):
-        """Actualizes title and axis labels with QLineEdit information."""
-        ax = getattr(self, f"{mode}_ax", None)
-        canvas = getattr(self, f"{mode}_canvas", None)
+        conditions_dict = {
+            "conditions": conds_filtered,
+            "conditions_labels": cond_labels_filtered,
+            "conditions_times": cond_times_filtered
+        } if selected_conds else None
 
-        title_edit = getattr(self.view, f"title{mode}")
-        xlabel_edit = getattr(self.view, f"x{mode}")
-        ylabel_edit = getattr(self.view, f"y{mode}")
+        events_all = self.recording.marks.app_settings.get("events", {})
+        event_labels = self.recording.marks.events_labels
+        event_times = self.recording.marks.events_times
 
-        ax.set_title(title_edit.text() or f"EEG {'raw' if mode == 'raw' else 'clean'} Signal")
-        ax.set_xlabel(xlabel_edit.text() or "Time (s)")
-        ax.set_ylabel(ylabel_edit.text() or "Channels")
+        selected_events = tab._selected_events
 
-        canvas.draw_idle()
+        events_filtered = {
+            k: v for k, v in events_all.items()
+            if k in selected_events
+        }
 
+        valid_event_labels = [events_all[e]["label"] for e in selected_events]
 
-    def on_scroll(self, event, mode):
-        """Zoom signal amplitude"""
+        event_labels_filtered = [
+            lbl for lbl in event_labels if lbl in valid_event_labels
+        ]
 
-        zoom_factor = 1.2
-        scale = getattr(self, f"{mode}_scale", getattr(self, f"{mode}_base_scale", 1.0))
-        base_scale = getattr(self, f"{mode}_base_scale", 1.0)
+        event_times_filtered = [
+            t for lbl, t in zip(event_labels, event_times)
+            if lbl in valid_event_labels
+        ]
 
-        if event.button == 'up':
-            scale *= zoom_factor
-        elif event.button == 'down':
-            scale /= zoom_factor
+        events_dict = {
+            "events": events_filtered,
+            "events_labels": event_labels_filtered,
+            "events_times": event_times_filtered
+        } if selected_events else None
 
-        # Limit the base_scale
-        min_scale = base_scale * 0.1
-        max_scale = base_scale * 10.0
-        scale = np.clip(scale, min_scale, max_scale)
-        setattr(self, f"{mode}_scale", scale)
+        # Add data
+        time_plot.add_data(
+            times=times,
+            data=signal[:, selected_idxs],
+            data_label="EEG",
+            cha_idx=np.arange(0, n_channels),
+            time_ref=None,
+            conditions_dict=conditions_dict,
+            events_dict=None,
+            style_params=None
+        )
 
-        self.draw_window(mode)
+        # Insert the plot widget into the tab's placeholder
+        placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
+        layout = placeholder.layout()
+        if layout is None:
+            layout = QtWidgets.QVBoxLayout(placeholder)
+            placeholder.setLayout(layout)
+        ## Clear previous plot widget
+        while layout.count():
+            child = layout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
 
-    def on_slider_moved(self, mode, value):
-        """Actualizes temporal position depending on slider"""
+        # Hide export buttons from time_plot UI
+        widgets_to_hide = ["btn_download", "label", "edit_dpi"]
+        for w in widgets_to_hide:
+            widget = getattr(time_plot, w, None)
+            if widget:
+                widget.hide()
 
-        self.current_window_start = float(value)
-        self.draw_window(mode)
+        # Add the TimeSeriesPlot widget
+        layout.addWidget(time_plot)
 
+    def convert_to_splitter(self, tab):
+        control_panel = tab.findChild(QtWidgets.QFrame, "controlPanelArea")
+        plot_placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
 
-    def prev_tab(self):
-        """Go back to the previous tab."""
-        current = self.view.tabWidget.currentIndex()
-        if current > 0:
-            self.view.tabWidget.setCurrentIndex(current - 1)
+        parent_layout = tab.layout()
 
-    def next_tab(self):
-        """Go forward to the next tab."""
-        current = self.view.tabWidget.currentIndex()
-        if current < self.view.tabWidget.count() - 1:
-            self.view.tabWidget.setCurrentIndex(current + 1)
+        # 1. Remove widgets from existing layout
+        parent_layout.removeWidget(control_panel)
+        parent_layout.removeWidget(plot_placeholder)
+
+        # 2. Create splitter
+        splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal)
+        splitter.addWidget(control_panel)
+        splitter.addWidget(plot_placeholder)
+
+        # 3. Add splitter to the main tab layout
+        parent_layout.addWidget(splitter)
+
+        # 4. Give proper stretch so the panel nunca desaparece
+        splitter.setStretchFactor(0, 0)  # Panel de config fijo
+        splitter.setStretchFactor(1, 1)  # Plot ocupa el resto
+
+        # 5. Minimum width for control panel
+        control_panel.setMinimumWidth(260)
 
     def export_figure(self, tab):
         """Export the figure from the given tab. Open a QFileDialog to choose the path and a dialog
         with saving options."""
 
-        current_index = self.view.tabWidget.currentIndex()
-        mode = "clean" if current_index == 0 else "raw"
-        canvas = getattr(self, f"{mode}_canvas", None)
-        if canvas is None:
-            QtWidgets.QMessageBox.warning(self.view, "Export", "No hay figura para exportar.")
+        placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
+        layout = placeholder.layout()
+        time_plot_widget = None
+        for i in range(layout.count()):
+            w = layout.itemAt(i).widget()
+            if isinstance(w, TimeSeriesPlot):
+                time_plot_widget = w
+                break
+
+        if time_plot_widget is None:
+            QtWidgets.QMessageBox.warning(self.view, "Export", "No plot to export.")
             return
 
+        canvas = time_plot_widget.canvas
         fig = canvas.figure
 
         dlg = ExportDialog(self.view)
@@ -254,7 +583,7 @@ class PlotController(QtCore.QObject):
         transparent = vals["transparent"]
         bg_color = vals["bg_color"]
 
-        suggested_name = f"EEG_{mode}.{fmt}"
+        suggested_name = f"EEG_clean.{fmt}"
         fname, _ = QtWidgets.QFileDialog.getSaveFileName(self.view, "Save image", suggested_name,
                                               f"{fmt.upper()} (*.{fmt})")
         if not fname:

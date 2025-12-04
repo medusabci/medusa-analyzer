@@ -210,10 +210,12 @@ class PreprocessingController(QtCore.QObject):
 
             full_file_name = f"{subject}_{file_name}.bson"
 
-            file_path = os.path.join(self.preprocessing_path, subject, self.signal_type.lower(), full_file_name)
+            file_path = os.path.join(self.preprocessing_path, subject, self.signal_type, full_file_name)
             self.view.main_module.controller.file_path_to_plot = file_path
             self.view.main_module.controller.channel_list = self.channel_list
             self.view.main_module.controller.fs = self.fs
+            self.view.main_module.controller.plot_option = "preprocess"
+            self.view.main_module.controller.signal_type = [self.signal_type]
 
         # If all conditions are met, enable the 'Next' button
         enable_next = path_ok and len(subject_selected_items) > 0 and len(file_selected_items) > 0

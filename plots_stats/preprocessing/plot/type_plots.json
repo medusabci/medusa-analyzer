@@ -1,0 +1,38 @@
+{
+  "TimePlot": {
+    "allowed_signals": ["EEG"],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X axis Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y axis Label",
+        "default": "Plot_params.y_label"
+      },
+      "time_to_show": {
+        "type": "range",
+        "label": "Time window [start, end]",
+        "default": [0, 10]
+      },
+      "ch_offset": {
+        "type": "number",
+        "label": "Vertical channel offset",
+        "default": 0
+      },
+      "show_epoch_lines": {
+        "type": "bool",
+        "label": "Show Epoch Lines",
+        "default": true
+      }
+
+    }
+  }
+}
