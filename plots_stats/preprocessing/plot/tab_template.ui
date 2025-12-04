@@ -208,6 +208,9 @@ font-weight: 700;</string>
                       <height>50</height>
                      </size>
                     </property>
+                    <property name="selectionMode">
+                     <enum>QAbstractItemView::ExtendedSelection</enum>
+                    </property>
                    </widget>
                   </item>
                  </layout>
@@ -246,6 +249,9 @@ font-weight: 700;
                       <width>16777215</width>
                       <height>50</height>
                      </size>
+                    </property>
+                    <property name="selectionMode">
+                     <enum>QAbstractItemView::ExtendedSelection</enum>
                     </property>
                    </widget>
                   </item>

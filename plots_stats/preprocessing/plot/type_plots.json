@@ -16,23 +16,7 @@
         "type": "text",
         "label": "Y axis Label",
         "default": "Plot_params.y_label"
-      },
-      "time_to_show": {
-        "type": "range",
-        "label": "Time window [start, end]",
-        "default": [0, 10]
-      },
-      "ch_offset": {
-        "type": "number",
-        "label": "Vertical channel offset",
-        "default": 0
-      },
-      "show_epoch_lines": {
-        "type": "bool",
-        "label": "Show Epoch Lines",
-        "default": true
       }
-
     }
   }
 }

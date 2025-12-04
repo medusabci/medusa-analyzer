@@ -188,38 +188,82 @@ class PlotController(QtCore.QObject):
         print(f"Selected channel indices for param '{sig}': {selected_indexes}")
 
     def setup_conditions_list(self, tab):
-        """Configura la lista de condiciones disponibles en el tab."""
+        """Configure the QListWidget with the available conditions in each tab."""
         list_widget = tab.findChild(QtWidgets.QListWidget, "conditionsWidget")
 
         conds = self.recording.marks.app_settings.get("conditions", {})
         if not conds:
             print("No conditions found in recording.")
             return
+        cond_labels_used = getattr(self.recording.marks, "conditions_labels", [])
+        if not cond_labels_used:
+            print("Recording has no condition labels. No conditions will be shown.")
+            list_widget.clear()
+            tab._selected_conditions = []
+            return
+
+        cond_labels_used = set(int(l) for l in cond_labels_used)
 
         list_widget.clear()
+        filtered_cond_names = []
 
-        # Add condition names
-        for cond_name in conds.keys():
-            item = QtWidgets.QListWidgetItem(cond_name)
-            list_widget.addItem(item)
+        # Add filtered condition names
+        for cond_name, cond_data in conds.items():
+            label = cond_data.get("label", None)
+            if label in cond_labels_used:
+                item = QtWidgets.QListWidgetItem(cond_name)
+                list_widget.addItem(item)
+                filtered_cond_names.append(cond_name)
 
-        # Select all by default
+        # Select all by default and store selection
         list_widget.selectAll()
-
-        # Store selection
         tab._selected_conditions = list(conds.keys())
-
         list_widget.itemSelectionChanged.connect(lambda: self.on_conditions_selected(tab))
 
     def on_conditions_selected(self, tab):
-        """Lee las condiciones seleccionadas y guarda sus nombres."""
+        """Read de selected conditions."""
         list_widget = tab.findChild(QtWidgets.QListWidget, "conditionsWidget")
         selected = [item.text() for item in list_widget.selectedItems()]
         tab._selected_conditions = selected
         print("Selected conditions:", selected)
 
+    def build_conditions_dict(self, tab):
+        """Build the conditions_dict based on user selection."""
+        conds_all = self.recording.marks.app_settings.get("conditions", {})
+        cond_labels = self.recording.marks.conditions_labels
+        cond_times = self.recording.marks.conditions_times
+        selected_conds = getattr(tab, "_selected_conditions", [])
+
+        if not selected_conds:
+            return None
+
+        conds_filtered = {k: v for k, v in conds_all.items() if k in selected_conds}
+        valid_labels = [conds_all[c]["label"] for c in selected_conds]
+        cond_labels_filtered = [lbl for lbl in cond_labels if lbl in valid_labels]
+        cond_times_filtered = [t for lbl, t in zip(cond_labels, cond_times) if lbl in valid_labels]
+
+        return {"conditions": conds_filtered, "conditions_labels": cond_labels_filtered, "conditions_times": cond_times_filtered}
+
+    def build_events_dict(self, tab):
+        """Build the events_dict based on user selection."""
+        events_all  = self.recording.marks.app_settings.get("events", {})
+        event_labels  = self.recording.marks.events_labels
+        event_times  = self.recording.marks.events_times
+        selected_events  = getattr(tab, "_selected_events", [])
+
+        if not selected_events:
+            return None
+
+        events_filtered  = {k: v for k, v in events_all.items() if k in selected_events}
+        valid_event_labels  = [events_all[c]["label"] for c in selected_events]
+        event_labels_filtered  = [lbl for lbl in event_labels if lbl in valid_event_labels ]
+        event_times_filtered  = [t for lbl, t in zip(event_labels, event_times) if lbl in valid_event_labels ]
+
+        return {"events": events_filtered, "events_labels": event_labels_filtered ,
+                "events_times": event_times_filtered }
+
     def setup_events_list(self, tab):
-        """Configura la lista de eventos disponibles en el tab."""
+        """Configure the QListWidget with the available events in each tab."""
         list_widget = tab.findChild(QtWidgets.QListWidget, "eventsWidget")
 
         events = self.recording.marks.app_settings.get("events", {})
@@ -227,23 +271,33 @@ class PlotController(QtCore.QObject):
             print("No events found in recording.")
             return
 
+        event_labels_used = getattr(self.recording.marks, "events_labels", [])
+        if not event_labels_used:
+            print("Recording has no event labels. No events will be shown.")
+            list_widget.clear()
+            tab._selected_events = []
+            return
+
+        event_labels_used = set(int(l) for l in event_labels_used)
+
         list_widget.clear()
+        filtered_event_names = []
 
-        # Add event names
-        for ev_name in events.keys():
-            item = QtWidgets.QListWidgetItem(ev_name)
-            list_widget.addItem(item)
+        # Add filtered event names
+        for ev_name, ev_data in events.items():
+            label = ev_data.get("label", None)
+            if label in event_labels_used:
+                item = QtWidgets.QListWidgetItem(ev_name)
+                list_widget.addItem(item)
+                filtered_event_names.append(ev_name)
 
-        # Select all by default
+        # Select all by default and store selection
         list_widget.selectAll()
-
-        # Store selection
         tab._selected_events = list(events.keys())
-
         list_widget.itemSelectionChanged.connect(lambda: self.on_events_selected(tab))
 
     def on_events_selected(self, tab):
-        """Lee los eventos seleccionados y guarda sus nombres."""
+        """Read de selected events."""
         list_widget = tab.findChild(QtWidgets.QListWidget, "eventsWidget")
         selected = [item.text() for item in list_widget.selectedItems()]
         tab._selected_events = selected
@@ -425,73 +479,15 @@ class PlotController(QtCore.QObject):
         selected_idxs = tab._selected_channels[self.type_signal[0]]
         n_channels = len(selected_idxs)
 
+        conditions_dict = self.build_conditions_dict(tab)
+        events_dict = self.build_events_dict(tab)
+
         time_plot = TimeSeriesPlot(
             n_cha=n_channels,
             cha_labels=[ch_labels[i] for i in selected_idxs],
-            cha_to_show=n_channels, #TODO: AQUÍ NO SERÍA LEN(SELECTED_IDXS)?
+            cha_to_show=n_channels,
             reverse_channels=True
         )
-
-        # Build conditions dictionary based on user selection
-        conds_all = self.recording.marks.app_settings.get("conditions", {})
-        cond_labels = self.recording.marks.conditions_labels
-        cond_times = self.recording.marks.conditions_times
-
-        # Filtrar solo las seleccionadas
-        selected_conds = tab._selected_conditions
-
-        # Filtrado de condiciones
-        conds_filtered = {
-            k: v for k, v in conds_all.items()
-            if k in selected_conds
-        }
-
-        # Sólo dejamos las etiquetas que existan en conds_filtered
-        valid_labels = [conds_all[c]["label"] for c in selected_conds]
-
-        cond_labels_filtered = [
-            lbl for lbl in cond_labels if lbl in valid_labels
-        ]
-
-        # Filtrar tiempos paralelos
-        cond_times_filtered = [
-            t for lbl, t in zip(cond_labels, cond_times)
-            if lbl in valid_labels
-        ]
-
-        conditions_dict = {
-            "conditions": conds_filtered,
-            "conditions_labels": cond_labels_filtered,
-            "conditions_times": cond_times_filtered
-        } if selected_conds else None
-
-        events_all = self.recording.marks.app_settings.get("events", {})
-        event_labels = self.recording.marks.events_labels
-        event_times = self.recording.marks.events_times
-
-        selected_events = tab._selected_events
-
-        events_filtered = {
-            k: v for k, v in events_all.items()
-            if k in selected_events
-        }
-
-        valid_event_labels = [events_all[e]["label"] for e in selected_events]
-
-        event_labels_filtered = [
-            lbl for lbl in event_labels if lbl in valid_event_labels
-        ]
-
-        event_times_filtered = [
-            t for lbl, t in zip(event_labels, event_times)
-            if lbl in valid_event_labels
-        ]
-
-        events_dict = {
-            "events": events_filtered,
-            "events_labels": event_labels_filtered,
-            "events_times": event_times_filtered
-        } if selected_events else None
 
         # Add data
         time_plot.add_data(
@@ -501,9 +497,27 @@ class PlotController(QtCore.QObject):
             cha_idx=np.arange(0, n_channels),
             time_ref=None,
             conditions_dict=conditions_dict,
-            events_dict=None,
+            events_dict=events_dict,
             style_params=None
         )
+
+        # Title and labels
+        fig = time_plot.canvas.figure
+        ax = time_plot.canvas.axes  # << EL EJE REAL
+
+        # Title
+        title = params.get("title", "")
+        fig.suptitle(title, fontsize=8)
+
+        # Axis labels
+        xlabel = params.get("x_label", "")
+        ylabel = params.get("y_label", "")
+
+        ax.set_xlabel(xlabel, fontweight="normal")
+        ax.set_ylabel(ylabel, fontweight="normal")
+
+        fig.tight_layout()
+        fig.canvas.draw_idle()
 
         # Insert the plot widget into the tab's placeholder
         placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
