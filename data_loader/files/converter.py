@@ -133,7 +133,7 @@ def _convert_rcp_file(file, output_dir, worker=None):
         marks = CustomExperimentData()
         marks.events_labels = data.erpspellerdata.erp_labels.tolist() if isinstance(data.erpspellerdata.erp_labels, np.ndarray) else data.erpspellerdata.erp_labels
         marks.events_times = data.erpspellerdata.onsets.tolist() if isinstance(data.erpspellerdata.onsets, np.ndarray) else data.erpspellerdata.onsets
-        marks.app_settings = {'events': {'target': {'label': 0}, 'non_target': {'label': 1}}, 'conditions': {'no-condition': {'label': 0}}}
+        marks.app_settings = {'events': {'target': {'desc-name': 'Target','label': 0}, 'non_target': {'desc-name': 'Non target','label': 1}}, 'conditions': {'no-condition': {'desc-name': 'No condition','label': 0}}}
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
 
         # Fill the Recording object
@@ -250,14 +250,18 @@ def _convert_csv_file(file, output_dir, worker=None):
         # We should have only one annotations file
         annot_df = pd.read_csv(annotations[0], delimiter=';')
         annots = annot_df.iloc[:, [1, 2]].to_numpy()
+        # # It is not necessary to align annotations to closest timepoints in the times vector (MEDUSA functions will
+        # # handle it)
+        # idx_annots = np.abs(times[:, None] - annots).argmin(axis=0)
+        # annots = times[idx_annots]
         del annot_df
 
         # Create marks structure
         marks = CustomExperimentData()
         marks.events_labels = []
         marks.events_times = []
-        marks.conditions_labels, marks.conditions_times = [0] * annots.shape[0], annots
-        marks.app_settings = {'conditions': {'restful': {'label': 0}}, 'events': {}}
+        marks.conditions_labels, marks.conditions_times = [0] * annots.shape[0] * 2, annots.flatten().tolist()
+        marks.app_settings = {'conditions': {'restful': {'desc-name': 'Restful sleep', 'label': 0}}, 'events': {}}
 
         # Create EEG object
         eeg = EEG(times=times, signal=data, fs=fs, channel_set=channel_set)
@@ -393,6 +397,9 @@ def move_recordings(source_dir, dest_root, anat, record_pattern):
     final_files = []
     # Loop to rename each file with de BIDS name
     for file in sorted(rec_files):
+        if subj_id not in re.sub(r"[-_]", "", str(file)):
+            continue
+
         rec_match = record_pattern.search(file.name)
         run_id = rec_match.group(1).zfill(2) if rec_match else "01"
 

@@ -496,10 +496,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
     derivatives_path.mkdir(exist_ok=True)
 
     # Obtener info del sujeto y sesión desde el nombre del archivo base
-    subj_match = re.search(r"(sub-\d+)", base_name)
-    ses_match = re.search(r"(ses-\d+)", base_name)
-    subj_id = subj_match.group(1) if subj_match else "sub-" + base_name.split('.')[0]
-    ses_id = ses_match.group(1) if ses_match else None
+    parts = base_name.split('_')
+    subj_id = next((p for p in parts if p.startswith("sub-")), None)
+    ses_id = next((p for p in parts if p.startswith("ses-")), None)
     base_stem = Path(base_name).stem
     # --- Saving preprocessed signals (.rec.bson) ---
     if key == "prep" and settings_dic["save_preproc"]:
