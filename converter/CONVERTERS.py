@@ -1,15 +1,19 @@
 # Converter registry
 CONVERTERS = {
     ".rcp.bson": {
-        "converter": "_convert_rcp_file"
+            "name": "RCP Files",
+            "function": "_convert_rcp_file"
     },
-    ".mat": {
-        "converter": "_convert_mat_file"
+    ".mat":{
+            "name": "GIB Mat Files",
+            "function": "_convert_mat_file"
     },
     ".rec.bson": {
-        "converter": "_convert_rec_file"
+            "name": "REC Files",
+            "function": "_convert_rec_file"
     },
     ".csv": {
-        "converter": "_convert_csv_file"
-    }
+            "name": "CSV Sant Joan Files",
+            "function": "_convert_csv_file"
+    },
 }

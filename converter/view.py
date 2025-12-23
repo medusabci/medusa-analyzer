@@ -2,8 +2,8 @@ from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
 from converter.data_loader.view import DataLoaderWidget
 from converter.data_loader.controller import DataLoaderController
-from converter.converter.view import ConverterWidget
-from converter.converter.controller import ConverterController
+from converter.conversion.view import ConversionWidget
+from converter.conversion.controller import ConversionController
 from PySide6.QtGui import QPalette
 from utils import LoadingDialog
 
@@ -30,8 +30,8 @@ class MainConverter(QtWidgets.QMainWindow, ui_main_window):
         DataLoaderController(self.data_loader) # This instantiates the controller and links it to the view
         self.stackedWidget.insertWidget(0, self.data_loader)
         # Second widget (Converter)
-        self.converter = ConverterWidget(self)
-        ConverterController(self.converter) # This instantiates the controller and links it to the view
+        self.converter = ConversionWidget(self)
+        ConversionController(self.converter) # This instantiates the controller and links it to the view
         self.stackedWidget.insertWidget(1, self.converter)
         # Start with the data loader view
         self.stackedWidget.setCurrentIndex(0)

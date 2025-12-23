@@ -10,3 +10,6 @@ class DataLoaderWidget(QtWidgets.QWidget, ui_experiments):
         self.setupUi(self)
         self.main_window = main_window
 
+        self.converterBox.setDisabled(True)
+
+

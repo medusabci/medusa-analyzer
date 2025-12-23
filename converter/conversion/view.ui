@@ -17,14 +17,11 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="label">
        <property name="text">
-        <string>Available converters</string>
+        <string>Algo</string>
        </property>
       </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="comboBox"/>
      </item>
      <item>
       <spacer name="horizontalSpacer">
@@ -39,39 +36,8 @@
        </property>
       </spacer>
      </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Name structure assignment</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton">
+      <widget class="QPushButton" name="namehelpButton">
        <property name="text">
         <string>What is this?</string>
        </property>
@@ -80,29 +46,32 @@
     </layout>
    </item>
    <item>
-    <widget class="QTableWidget" name="tableWidget"/>
+    <widget class="QTableWidget" name="namingTable">
+     <property name="columnCount">
+      <number>2</number>
+     </property>
+     <column/>
+     <column/>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Subject name structure:*</string>
+        <string>*Subject name structure:</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QLabel" name="subjectLabel">
        <property name="text">
-        <string>sub-XXX</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
        <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
@@ -125,15 +94,12 @@
      <item>
       <widget class="QLabel" name="sessionLabel">
        <property name="text">
-        <string>ses-YYY</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
        <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
@@ -149,22 +115,19 @@
      <item>
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Recording name strucutre:*</string>
+        <string>*Recording name strucutre:</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QLabel" name="recordingLabel">
        <property name="text">
-        <string>rec-ZZZ</string>
+        <string/>
        </property>
       </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_4">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
        <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
@@ -178,8 +141,7 @@
    <item>
     <widget class="QLabel" name="label_6">
      <property name="text">
-      <string>* Mandatory fields.
-In the BIDS standard, the session field is not mandatory, so you do not need to assign any tag to it. In this case, this field will not appear in the folder structure.</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;* Mandatory fields. In the BIDS standard, the session field is not mandatory, so you do not need to assign any tag to it. In this case, this field will not appear in the folder structure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

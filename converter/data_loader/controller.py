@@ -6,12 +6,14 @@ class DataLoaderController:
     def __init__(self, ui):
         self.view = ui
         self.view.controller = self
+        self.selected_files = []
 
         # --- ELEMENT SETUP ---
         self.view.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.view.loadButton.clicked.connect(self.on_converter_click)
         self.view.deleteButton.clicked.connect(self.delete_selected)
         self.view.deleteallButton.clicked.connect(self.delete_all)
+        self.view.converterBox.currentIndexChanged.connect(lambda _: self._refresh_list())
 
         # Search line
         self.view.searchEdit.setPlaceholderText("Find recordings...")
@@ -33,7 +35,6 @@ class DataLoaderController:
         # Select the root input directory
         input_dir = str(QtWidgets.QFileDialog.getExistingDirectory(self.view,"Select Root Directory Containing Data to Convert"))
         if not input_dir:
-            QtWidgets.QMessageBox.information(self.view, "Operation cancelled", "No folder was selected.")
             return
 
         # Gather valid files recursively
@@ -49,6 +50,19 @@ class DataLoaderController:
             )
             return
 
+        # Get the selected file extensions, and the associated available converters
+        valid_files_exts = ['.' + file.split('.')[-1] for file in valid_files]
+        available_converters = list(set(valid_exts) & set(valid_files_exts))
+        available_converters_names = [
+            CONVERTERS[ext]["name"]
+            for ext in available_converters
+            if ext in CONVERTERS
+        ]
+        # Add the available converters to the combo box
+        self.view.converterBox.setDisabled(False)
+        self.view.converterBox.clear()
+        self.view.converterBox.addItems(available_converters_names)
+
         # Show files in the list
         self.selected_files = valid_files
         self._refresh_list(self.selected_files)
@@ -60,6 +74,7 @@ class DataLoaderController:
                 for item in self.view.filelistWidget.selectedItems():
                     self.view.filelistWidget.takeItem(self.view.filelistWidget.row(item))
                     self.selected_files = [x for x in self.selected_files if item.text() not in x]
+        self._refresh_list()
 
     def delete_all(self):
         """Remove all files from the list."""
@@ -67,6 +82,9 @@ class DataLoaderController:
             if self.confirm_deletion():
                 self.view.filelistWidget.clear()
                 self.selected_files = []
+        self._refresh_list()
+        self.view.converterBox.clear()
+        self.view.converterBox.setDisabled(True)
 
     def confirm_deletion(self):
         # Create the confirmation dialog
@@ -95,8 +113,14 @@ class DataLoaderController:
     def _refresh_list(self, items=None):
         """Refresh the list according to the visualization mode (paths or names)."""
         # If no items provided, use all items
-        if items is None:
+        if items is None or items == 0:
             items = self.selected_files
+
+        # Show only the files that match the selected converter
+        for ext, data in CONVERTERS.items():
+            if data["name"] == self.view.converterBox.currentText():
+                break
+        items = [item for item in items if item.endswith(ext)]
 
         # Clear current list
         self.view.filelistWidget.clear()
@@ -109,7 +133,10 @@ class DataLoaderController:
         # Add items to the list widget
         self.view.filelistWidget.addItems(display_items)
 
+        # Update the files count label
         self.view.filesLabel.setText(f"{len(display_items)}")
+        # Activate or deactivate buttons based on list content
+        self.view.main_window.nextButton.setDisabled(not len(display_items) > 0)
 
     def toggle_display_mode(self, checked):
         """Changes between showing complete paths or only the names."""
