@@ -10,4 +10,7 @@ class ConversionWidget(QtWidgets.QWidget, ui_experiments):
         self.setupUi(self)
         self.main_window = main_window
 
-
+    def _log_message(self, text):
+        self.convertLogTextBrowser.append(text)
+        self.convertLogTextBrowser.moveCursor(QTextCursor.End)
+        QApplication.processEvents()

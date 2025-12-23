@@ -1,5 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from converter.CONVERTERS import CONVERTERS
+from converter.converters import CONVERTERS
 import os
 
 class DataLoaderController:
@@ -13,7 +13,7 @@ class DataLoaderController:
         self.view.loadButton.clicked.connect(self.on_converter_click)
         self.view.deleteButton.clicked.connect(self.delete_selected)
         self.view.deleteallButton.clicked.connect(self.delete_all)
-        self.view.converterBox.currentIndexChanged.connect(lambda _: self._refresh_list())
+        self.view.converterBox.currentIndexChanged.connect(self._refresh_list)
 
         # Search line
         self.view.searchEdit.setPlaceholderText("Find recordings...")
@@ -54,9 +54,9 @@ class DataLoaderController:
         valid_files_exts = ['.' + file.split('.')[-1] for file in valid_files]
         available_converters = list(set(valid_exts) & set(valid_files_exts))
         available_converters_names = [
-            CONVERTERS[ext]["name"]
+            conv["name"]
             for ext in available_converters
-            if ext in CONVERTERS
+                for conv in CONVERTERS[ext]
         ]
         # Add the available converters to the combo box
         self.view.converterBox.setDisabled(False)
@@ -113,12 +113,22 @@ class DataLoaderController:
     def _refresh_list(self, items=None):
         """Refresh the list according to the visualization mode (paths or names)."""
         # If no items provided, use all items
-        if items is None or items == 0:
+        if items is None:
             items = self.selected_files
+        if isinstance(items, int): # If called from indexChanged signal, we have to do this
+            conv_text = self.view.converterBox.itemText(items)
+            items = self.selected_files
+        else:
+            conv_text = self.view.converterBox.currentText()
 
         # Show only the files that match the selected converter
-        for ext, data in CONVERTERS.items():
-            if data["name"] == self.view.converterBox.currentText():
+        ext_found = False
+        for ext, converters_list in CONVERTERS.items():
+            for conv in converters_list:
+                if conv["name"] == conv_text:
+                    ext_found = True
+                    break
+            if ext_found:
                 break
         items = [item for item in items if item.endswith(ext)]
 

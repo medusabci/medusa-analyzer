@@ -1,5 +1,4 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from converter.CONVERTERS import CONVERTERS
 import os, re
 
 class ConversionController:
@@ -58,7 +57,7 @@ class ConversionController:
         menu = QtWidgets.QMenu()
 
         # Add all the groups as actions in the menu
-        for group in ['Subject','Session','Recording']:
+        for group in ['Subject','Session','Recording','Task']:
             action = menu.addAction(group)
             action.triggered.connect(lambda checked, g=group: self.assign_group_to_selected(g))
 
@@ -95,7 +94,7 @@ class ConversionController:
 
     def on_cell_changed(self):
 
-        names = {"Subject": [], "Session": [], "Recording": []}
+        names = {"Subject": [], "Session": [], "Recording": [], "Task": []}
 
         for row in range(self.view.namingTable.rowCount()):
             second_col_item = self.view.namingTable.item(row, 1)
@@ -109,6 +108,8 @@ class ConversionController:
         subject_name = "".join(names["Subject"])
         session_name = "".join(names["Session"])
         recording_name = "".join(names["Recording"])
+        task_name = "".join(names["Task"])
+
 
         # Update the labels
         if subject_name:
@@ -123,6 +124,10 @@ class ConversionController:
             self.view.recordingLabel.setText(f"rec-{recording_name}")
         else:
             self.view.recordingLabel.setText("")
+        if task_name:
+            self.view.taskLabel.setText(f"task-{task_name}")
+        else:
+            self.view.taskLabel.setText("")
 
         # Store the index of the elememnts
         index_map = {element: idx for idx, element in enumerate(self.base_file_elements)}

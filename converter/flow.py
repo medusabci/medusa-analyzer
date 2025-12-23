@@ -1,6 +1,6 @@
 from PySide6 import QtWidgets
-from converter.CONVERTERS import CONVERTERS
-
+from converter.converters import CONVERTERS
+from converter.utils import do_conversion
 
 def on_next_click(controller):
     """
@@ -20,9 +20,9 @@ def on_next_click(controller):
                 "Both Subject and Recording names must be defined. Verify the naming structure table and try again.",
             )
             return
-        # data_loader.controller.selected_files
-        # converter.controller.names_idx
-        # xxxxx = [e for e in re.split(r"[\\/ _]+", file) if e]
+
+        # do_conversion(controller, data_loader.controller.selected_files, converter.converterBox.currentText(), output_path,
+        #       converter.controller.names_idx, [e for e in re.split(r"[\\/ _]+", file) if e])
 
         # Trigger the conversion process
         print('Convertidooo')
@@ -34,9 +34,9 @@ def on_next_click(controller):
     all_converters = list(CONVERTERS.keys())
     available_converters = list(set(all_converters) & set(selected_exts))
     available_converters_names = [
-        CONVERTERS[ext]["name"]
+        conv["name"]
         for ext in available_converters
-        if ext in CONVERTERS
+            for conv in CONVERTERS[ext]
     ]
 
     # Populate the table with the name structure
