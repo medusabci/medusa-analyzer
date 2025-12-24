@@ -7,6 +7,7 @@ class DataLoaderController:
         self.view = ui
         self.view.controller = self
         self.selected_files = []
+        self.all_files = []
 
         # --- ELEMENT SETUP ---
         self.view.filelistWidget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
@@ -64,8 +65,8 @@ class DataLoaderController:
         self.view.converterBox.addItems(available_converters_names)
 
         # Show files in the list
-        self.selected_files = valid_files
-        self._refresh_list(self.selected_files)
+        self.all_files = valid_files
+        self._refresh_list(self.all_files)
 
     def delete_selected(self):
         """Remove selected files from the list."""
@@ -73,7 +74,7 @@ class DataLoaderController:
             if self.confirm_deletion():
                 for item in self.view.filelistWidget.selectedItems():
                     self.view.filelistWidget.takeItem(self.view.filelistWidget.row(item))
-                    self.selected_files = [x for x in self.selected_files if item.text() not in x]
+                    self.all_files = [x for x in self.all_files if item.text() not in x]
         self._refresh_list()
 
     def delete_all(self):
@@ -81,7 +82,7 @@ class DataLoaderController:
         if self.view.filelistWidget.count():
             if self.confirm_deletion():
                 self.view.filelistWidget.clear()
-                self.selected_files = []
+                self.all_files = []
         self._refresh_list()
         self.view.converterBox.clear()
         self.view.converterBox.setDisabled(True)
@@ -104,20 +105,20 @@ class DataLoaderController:
 
     def filter_items(self, text):
         """Filter the recordings in the list."""
-        filtered = self.selected_files
+        filtered = self.all_files
         if text:
             text = text.lower()
-            filtered = [item for item in self.selected_files if text in os.path.basename(item).lower() or text in item.lower()]
+            filtered = [item for item in self.all_files if text in os.path.basename(item).lower() or text in item.lower()]
         self._refresh_list(filtered)
 
     def _refresh_list(self, items=None):
         """Refresh the list according to the visualization mode (paths or names)."""
         # If no items provided, use all items
         if items is None:
-            items = self.selected_files
+            items = self.all_files
         if isinstance(items, int): # If called from indexChanged signal, we have to do this
             conv_text = self.view.converterBox.itemText(items)
-            items = self.selected_files
+            items = self.all_files
         else:
             conv_text = self.view.converterBox.currentText()
 
@@ -142,6 +143,7 @@ class DataLoaderController:
 
         # Add items to the list widget
         self.view.filelistWidget.addItems(display_items)
+        self.selected_files = items
 
         # Update the files count label
         self.view.filesLabel.setText(f"{len(display_items)}")

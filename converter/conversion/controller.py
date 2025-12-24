@@ -25,11 +25,8 @@ class ConversionController:
     def on_name_help_button_clicked(self):
         QtWidgets.QMessageBox.information(
             self.view,
-            "Relative Power",
-            "We are currently working only with the broadband signal, since no band filtering "
-            "has been applied during preprocessing.\n\n"
-            "Please use the 'Edit bands' button to define at least one additional frequency band "
-            "in order to enable the calculation of relative power for that band."
+            "Jijij",
+            "Aún no he configurado este botón jijijiji."
         )
 
     def populate_name_structure_table(self):
@@ -38,7 +35,7 @@ class ConversionController:
 
         # Get the first file with the selected extension
         data_loader = self.view.main_window.stackedWidget.widget(0)
-        base_file = data_loader.controller.selected_files[0]
+        base_file = data_loader.controller.selected_files[0].split('.')[0] # Remove extension
         # Separate the file path into components
         self.base_file_elements = [e for e in re.split(r"[\\/ _]+", base_file) if e]
 
@@ -123,7 +120,7 @@ class ConversionController:
         if recording_name:
             self.view.recordingLabel.setText(f"rec-{recording_name}")
         else:
-            self.view.recordingLabel.setText("")
+            self.view.recordingLabel.setText("rec-01")
         if task_name:
             self.view.taskLabel.setText(f"task-{task_name}")
         else:

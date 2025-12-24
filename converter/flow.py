@@ -11,6 +11,12 @@ def on_next_click(controller):
     # Get the converter widget
     converter = controller.view.stackedWidget.widget(1)
 
+    # Close the app
+    if controller.view.nextButton.text() == "Close":
+        controller.view.close()
+        return
+
+
     # If the button text is "Run conversion", trigger the conversion process
     if controller.view.nextButton.text() == "Run conversion":
         if converter.subjectLabel.text() == '' or converter.recordingLabel.text() == '':
@@ -21,8 +27,8 @@ def on_next_click(controller):
             )
             return
 
-        # do_conversion(controller, data_loader.controller.selected_files, converter.converterBox.currentText(), output_path,
-        #       converter.controller.names_idx, [e for e in re.split(r"[\\/ _]+", file) if e])
+        do_conversion(controller, data_loader.controller.selected_files, data_loader.converterBox.currentText(),
+                      converter.controller.names_idx)
 
         # Trigger the conversion process
         print('Convertidooo')

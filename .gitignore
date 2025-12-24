@@ -2,6 +2,7 @@ data/
 caseib/
 core/
 widgets/
+.idea/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -36,6 +37,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+*.xml
 
 # Installer logs
 pip-log.txt
@@ -178,7 +180,7 @@ cython_debug/
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
+.idea/
 
 # Abstra
 # Abstra is an AI-powered process automation framework.
