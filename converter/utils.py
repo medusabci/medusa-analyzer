@@ -191,7 +191,7 @@ class ConverterWorker(QThread):
             return [], 'skipped'
 
 
-    def generate_bids_name(self, file, names_idx):
+    def generate_bids_name(self, file, names_idx, signal_name='eeg'):
         """
         Generate BIDS-compliant filenames based on user-defined elements and indices.
         """
@@ -212,7 +212,7 @@ class ConverterWorker(QThread):
         bids_name = ['sub-' + subject_name + '/']
         if names_idx["Session"]:
             bids_name.append('ses-' + session_name + '/')
-        bids_name.append('eeg/')
+        bids_name.append(signal_name + '/')
         # Set the name structure
         bids_name.append('sub-' + subject_name)
         if names_idx["Session"]:
