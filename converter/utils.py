@@ -164,19 +164,6 @@ class ConverterWorker(QThread):
         file = Path(file)
         ext = ''.join(file.suffixes)
 
-        if ext == ".rec.bson":  # Check if the rec.bson file is valid
-            """Handle existing .rec.bson files."""
-            try:
-                data = Recording.load(file)
-            except Exception as e:
-                worker.log.emit(f"❌ <b>{file}</b> → Error loading .rec.bson: {e}")
-                return [], 'skipped'
-
-            if getattr(data, "marks", None):
-                shutil.copy2(file, bids_full_path)
-                worker.log.emit(f"ℹ️ {file} → Already contains 'marks', skipped conversion.")
-                return file, 'already_correct'
-
         worker.log.emit(f"⚙️ {file} → Converting...")
         try:
             # Run the converter
@@ -184,8 +171,12 @@ class ConverterWorker(QThread):
             if not result:
                 raise ValueError("Conversion function returned None or failed.")
 
-            worker.log.emit(f"✅ {file} → Converting successful.")
-            return file, 'converted'
+            if result == 'already_correct':
+                worker.log.emit(f"ℹ️ {file} → Already contains 'marks', skipped conversion.")
+                return file, 'already_correct'
+            else:
+                worker.log.emit(f"✅ {file} → Converting successful.")
+                return file, 'converted'
         except Exception as e:
             worker.log.emit(f"❌ {file} → Error during conversion: {e}")
             return [], 'skipped'

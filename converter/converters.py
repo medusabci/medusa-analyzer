@@ -4,26 +4,29 @@ import csv
 import numpy as np
 import pandas as pd
 import scipy.io as sio
+import shutil
 
 # ----------------------------- CONVERTERS -----------------------------
 def _convert_rec_file(file, output_dir, worker=None):
     """
     Normalize REC file: ensure it always contains a 'marks' entry.
     """
-    base_name = file.name # It is not necessary to change the extension
 
     try:
         subj_id = output_dir.stem.split('.')[0]
-
         # Load the recording
         recording = Recording.load(subject_id=subj_id)
-        # Check if 'marks' attribute exists
-        if not hasattr(recording, "marks") or recording.marks is None:
-            marks = _create_empty_marks()
-            recording.add_experiment_data(marks, key="marks")
-        # Save the normalized recording
         bids_folders = output_dir.parent
         bids_folders.mkdir(parents=True, exist_ok=True)
+
+        if hasattr(recording, "marks") and recording.marks is not None:
+            shutil.copy2(file, output_dir)
+            return 'already_correct'
+        else:
+            marks = _create_empty_marks()
+            recording.add_experiment_data(marks, key="marks")
+
+        # Save the normalized recording
         recording.save(str(output_dir))
         return str(output_dir)
     except Exception as e:
@@ -36,7 +39,6 @@ def _convert_rcp_file(file, output_dir, worker=None):
     """
     Convert RCP file to REC format.
     """
-    base_name = file.name.replace(".rcp.bson", ".rec.bson")  # Replace extension from .rcp.bson to .rec.bson
 
     try:
         # Create Recording object
@@ -71,7 +73,6 @@ def _convert_rcp_file(file, output_dir, worker=None):
 def _convert_mat_file(file, output_dir, worker=None):
     """Convert MATLAB (.mat) file to REC format."""
     # Create unique output filename inside output_dir
-    base_name = file.name.replace(".mat", ".rec.bson") # Replace extension from .mat to .rec.bson
 
     try:
         subj_id = output_dir.stem.split('.')[0]
