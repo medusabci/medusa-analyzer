@@ -15,7 +15,7 @@ def _convert_rec_file(file, output_dir, worker=None):
     try:
         subj_id = output_dir.stem.split('.')[0]
         # Load the recording
-        recording = Recording.load(subject_id=subj_id)
+        recording = Recording.load(str(file))
         bids_folders = output_dir.parent
         bids_folders.mkdir(parents=True, exist_ok=True)
 

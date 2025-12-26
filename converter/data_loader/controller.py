@@ -1,6 +1,8 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from converter.converters import CONVERTERS
 import os
+from pathlib import Path
+
 
 class DataLoaderController:
     def __init__(self, ui):
@@ -52,7 +54,7 @@ class DataLoaderController:
             return
 
         # Get the selected file extensions, and the associated available converters
-        valid_files_exts = ['.' + file.split('.')[-1] for file in valid_files]
+        valid_files_exts = [''.join(Path(file).suffixes) for file in valid_files]
         available_converters = list(set(valid_exts) & set(valid_files_exts))
         available_converters_names = [
             conv["name"]

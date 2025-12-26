@@ -162,7 +162,6 @@ class ConverterWorker(QThread):
     def process_file(self, file, bids_full_path, converter_func, worker):
 
         file = Path(file)
-        ext = ''.join(file.suffixes)
 
         worker.log.emit(f"⚙️ {file} → Converting...")
         try:
@@ -186,7 +185,7 @@ class ConverterWorker(QThread):
         """
         Generate BIDS-compliant filenames based on user-defined elements and indices.
         """
-        elements = [e for e in re.split(r"[\\/ _]+", file) if e]
+        elements = [e for e in re.split(r"[\\/ _]+", file.split('.')[0]) if e]
 
         # Extract the name elements
         subject_name = ''.join([elements[idx] for idx in names_idx["Subject"]])
