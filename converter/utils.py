@@ -4,6 +4,7 @@ from converter.converters import CONVERTERS
 from PySide6 import QtWidgets
 from pathlib import Path
 import re
+
 from medusa.components import Recording, CustomExperimentData
 import shutil
 
@@ -185,7 +186,7 @@ class ConverterWorker(QThread):
         """
         Generate BIDS-compliant filenames based on user-defined elements and indices.
         """
-        elements = [e for e in re.split(r"[\\/ _]+", file.split('.')[0]) if e]
+        elements = [e for e in re.split(r"[\\/ _-]+", file.split('.')[0]) if e]
 
         # Extract the name elements
         subject_name = ''.join([elements[idx] for idx in names_idx["Subject"]])

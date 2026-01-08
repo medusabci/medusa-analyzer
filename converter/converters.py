@@ -55,9 +55,7 @@ def _convert_rcp_file(file, output_dir, worker=None):
 
         # Fill the Recording object
         for biosignal in data.biosignals.values():
-            # biosignal_type = biosignal['class_name']
-            # recording.add_biosignal(**{biosignal_type: biosignal})
-            recording.add_biosignal(biosignal=biosignal)
+            recording.add_biosignal(biosignal= getattr(data, biosignal['class_name'].lower()))
         recording.add_experiment_data(marks, key='marks')
         bids_folders = output_dir.parent
         bids_folders.mkdir(parents=True, exist_ok=True)

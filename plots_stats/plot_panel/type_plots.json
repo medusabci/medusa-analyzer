@@ -35,7 +35,10 @@
       "Relative Power",
       "Absolute Power",
       "Median Frequency",
-      "Spectral Entropy"
+      "Spectral Entropy",
+      "CTM",
+      "Sample Entropy",
+      "Lempel-Ziv Complexity"
     ],
     "Plot_params": {
       "title": {

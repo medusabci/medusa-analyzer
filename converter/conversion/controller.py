@@ -1,5 +1,8 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 import os, re
+from medusa.bci.erp_spellers import *
+from medusa.components import CustomExperimentData
+
 
 class ConversionController:
     def __init__(self, ui):
@@ -37,7 +40,7 @@ class ConversionController:
         data_loader = self.view.main_window.stackedWidget.widget(0)
         base_file = data_loader.controller.selected_files[0].split('.')[0] # Remove extension
         # Separate the file path into components
-        self.base_file_elements = [e for e in re.split(r"[\\/ _]+", base_file) if e]
+        self.base_file_elements = [e for e in re.split(r"[\\/ _-]+", base_file) if e]
 
         # Add the elements to the table as rows
         self.view.namingTable.setRowCount(len(self.base_file_elements))

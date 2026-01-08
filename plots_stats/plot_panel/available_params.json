@@ -44,6 +44,33 @@
           "x_label": "Frequency Bands",
           "y_label": "Entropy"
         }
+      },
+
+        "ctm": {
+            "Param_name": "CTM",
+            "Plot_params": {
+            "title": "Central Tendency Measure",
+            "x_label": "Groups",
+            "y_label": "CTM Values"
+            }
+        },
+
+      "sampleentropy": {
+        "Param_name": "Sample Entropy",
+        "Plot_params": {
+          "title": "Sample Entropy",
+          "x_label": "Groups",
+          "y_label": "Entropy"
+        }
+      },
+
+      "lzc": {
+        "Param_name": "Lempel-Ziv Complexity",
+        "Plot_params": {
+          "title": "Lempel-Ziv Complexity",
+          "x_label": "Groups",
+          "y_label": "Complexity"
+        }
       }
     }
   ]
