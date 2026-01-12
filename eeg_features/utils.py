@@ -87,6 +87,7 @@ class PipelineWorker(QThread):
                 signal_times = getattr(data, name_signal).times
                 signal_marks = include_no_conditions_in_marks(data.marks, signal_times)
                 fs = getattr(data, name_signal).fs
+                n_cha = getattr(data, name_signal).channel_set.n_cha
 
                 # Update the progress bar and labels
                 global_progress = (i*steps_per_file + 1) / total_steps * 100
@@ -269,6 +270,10 @@ class PipelineWorker(QThread):
                                         event_name = key
                                         break
                                 save_outputs(self, deepcopy(current_epochs), base_name, band_name, cond, event_name, 'seg', settings_dic['save'])
+
+                        if n_cha == 1:
+                            epochs = epochs[:, :, None]
+
                         ## Seventh step: Parameter computation
                         if settings_dic['segmentation']['segmentation_type'] == 'condition':
                             params = compute_parameters(epochs, fs, band, settings_dic)
