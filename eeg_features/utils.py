@@ -582,6 +582,7 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
             if freqs_val is not None:
                 save_struct['freqs'] = np.asarray(freqs_val)
 
+            # TODO: modifcar tambien esto
             mat_dict = {metric_label: save_struct}
 
             savemat(outpath, mat_dict)
@@ -615,19 +616,32 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
                         )
 
                     outpath = param_dir / outname
-                    savemat(outpath, {metric_label: val})
+                    savemat(outpath, {
+                        "param": val,
+                        "info": metric_label
+                    })
                     worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
             elif isinstance(v, dict):
                 nested = {}
                 for kk, vv in v.items():
                     nested[kk] = np.asarray(vv)
-                savemat(outpath, {metric_label: nested})
+
+                savemat(outpath, {
+                    "param": nested,
+                    "info": metric_label
+                })
             else:
                 try:
-                    savemat(outpath, {metric_label: np.asarray(v)})
+                    savemat(outpath, {
+                        "param": np.asarray(v),
+                        "info": metric_label
+                    })
                 except Exception:
-                    savemat(outpath, {'value': np.asarray(v)})
+                    savemat(outpath, {
+                        "param": np.asarray(v, dtype=object),
+                        "info": metric_label
+                    })
 
             worker.log.emit(f"✅ Parameter saved: {outpath}","")
 
