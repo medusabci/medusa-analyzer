@@ -7,40 +7,91 @@
       "controller": "PlotController"
     }
   ],
-  "parameters":
-  {
-    "eeg_features": [
-      {
-        "step": "Group Definition",
-        "path": "plots_stats/group_definition",
-        "widget": "GroupsWidget",
-        "controller": "GroupsController"
-      },
-      {
-        "step": "Group Assignment",
-        "path": "plots_stats/group_assignment",
-        "widget": "GroupAssignmentWidget",
-        "controller": "GroupAssignmentController"
-      },
-      {
-        "step": "Data Assignment",
-        "path": "plots_stats/data_assignment",
-        "widget": "DataAssignmentWidget",
-        "controller": "DataAssignmentController"
-      },
-      {
-        "step": "Parameter Selection",
-        "path": "plots_stats/param_selection",
-        "widget": "ParamSelectionWidget",
-        "controller": "ParamSelectionController"
-      },
-      {
-        "step": "Plot panel",
-        "path": "plots_stats/plot_panel",
-        "widget": "TabbedPlotWidget",
-        "controller": "TabbedPlotWidgetController"
-      }
-    ],
+
+  "parameters": {
+    "eeg_features": {
+      "within": [
+        {
+          "step": "Group Definition",
+          "path": "plots_stats/group_definition",
+          "widget": "GroupsWidget",
+          "controller": "GroupsController"
+        },
+        {
+          "step": "Group Assignment",
+          "path": "plots_stats/group_assignment",
+          "widget": "GroupAssignmentWidget",
+          "controller": "GroupAssignmentController"
+        },
+        {
+          "step": "Data Assignment",
+          "path": "plots_stats/data_assignment",
+          "widget": "DataAssignmentWidget",
+          "controller": "DataAssignmentController"
+        },
+        {
+          "step": "Parameter Selection",
+          "path": "plots_stats/param_selection",
+          "widget": "ParamSelectionWidget",
+          "controller": "ParamSelectionController"
+        },
+        {
+          "step": "Plot panel",
+          "path": "plots_stats/plot_panel",
+          "widget": "TabbedPlotWidget",
+          "controller": "TabbedPlotWidgetController"
+        }
+      ],
+
+      "between": [
+        {
+          "step": "Group Definition",
+          "path": "plots_stats/group_definition",
+          "widget": "GroupsWidget",
+          "controller": "GroupsController"
+        },
+        {
+          "step": "Group Assignment",
+          "path": "plots_stats/group_assignment",
+          "widget": "GroupAssignmentWidget",
+          "controller": "GroupAssignmentController"
+        },
+        {
+          "step": "Data Assignment",
+          "path": "plots_stats/data_assignment",
+          "widget": "DataAssignmentWidget",
+          "controller": "DataAssignmentController"
+        },
+        {
+          "step": "Parameter Selection",
+          "path": "plots_stats/param_selection",
+          "widget": "ParamSelectionWidget",
+          "controller": "ParamSelectionController"
+        },
+        {
+          "step": "Plot panel",
+          "path": "plots_stats/plot_panel",
+          "widget": "TabbedPlotWidget",
+          "controller": "TabbedPlotWidgetController"
+        }
+      ],
+
+      "nocomparison": [
+        {
+          "step": "Parameter Selection",
+          "path": "plots_stats/param_selection",
+          "widget": "ParamSelectionWidget",
+          "controller": "ParamSelectionController"
+        },
+        {
+          "step": "Plot panel",
+          "path": "plots_stats/plot_panel",
+          "widget": "TabbedPlotWidget",
+          "controller": "TabbedPlotWidgetController"
+        }
+      ]
+    },
+
     "ecg_features": [
       {
         "step": "Group definition",

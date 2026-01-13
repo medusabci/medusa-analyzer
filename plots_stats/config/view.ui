@@ -220,6 +220,34 @@ QPushButton:disabled {
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="nocomparationRButton">
+          <property name="font">
+           <font>
+            <pointsize>9</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string>No comparation </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="nocomparationDescription">
+          <property name="text">
+           <string>Text explaining what &quot;No comparations&quot; means</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
      </layout>

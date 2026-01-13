@@ -50,10 +50,21 @@ class ConfigWidget(QtWidgets.QWidget, ui_plots_init):
                 </p>
             </div>
         """)
+        self.nocomparationDescription.setText("""
+            <div style="text-align:left; font-family:'Segoe UI', Arial;">
+                <p style="font-size: 9pt; color:#666; margin:0 40px;">
+                    A no-comparison analysis focuses on the inspection of a single recording from one participant, without
+                    comparing it to other subjects or conditions. The goal is descriptive or exploratory, allowing visualization
+                    of signals, features, or metrics within an individual.
+                </p>
+            </div>
+        """)
         self.betweenDescription.setWordWrap(True)
         self.withinDescription.setWordWrap(True)
+        self.nocomparationDescription.setWordWrap(True)
         self.betweenDescription.mousePressEvent = lambda event: self.betweenRButton.setChecked(True)
         self.withinDescription.mousePressEvent = lambda event: self.withinRButton.setChecked(True)
+        self.nocomparationDescription.mousePressEvent = lambda event: self.nocomparationRButton.setChecked(True)
 
         # Default to within-subjects
         self.withinRButton.setChecked(True)

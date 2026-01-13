@@ -3,7 +3,6 @@ import json
 from PySide6 import QtWidgets, QtCore
 from pathlib import Path
 
-
 class ConfigController(QtCore.QObject):
     def __init__(self, ui):
         super().__init__()
@@ -18,6 +17,7 @@ class ConfigController(QtCore.QObject):
         self.view.browseButton.clicked.connect(self.browse_folder)
         self.view.withinRButton.clicked.connect(self.trigger_validation)
         self.view.betweenRButton.clicked.connect(self.trigger_validation)
+        self.view.nocomparationRButton.clicked.connect(self.trigger_validation)
 
     def browse_folder(self):
         """
@@ -96,7 +96,8 @@ class ConfigController(QtCore.QObject):
         # Any of the subject modes must be selected
         within_or_between = (
                 self.view.betweenRButton.isChecked() or
-                self.view.withinRButton.isChecked()
+                self.view.withinRButton.isChecked() or
+                self.view.nocomparationRButton.isChecked()
         )
 
         # If all conditions are met, enable the 'Next' button

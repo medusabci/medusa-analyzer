@@ -2,7 +2,8 @@ import json, importlib
 from pathlib import Path
 import re
 import os
-
+import colorsys
+from PySide6.QtWidgets import QInputDialog, QMessageBox
 
 def get_config_config(controller):
     """
@@ -11,8 +12,13 @@ def get_config_config(controller):
     # Configuration dict
     config = {
         "experiment_info": controller.experiment_info,
-        "analysis_mode": "within" if controller.view.withinRButton.isChecked() else "between"
+        "analysis_mode": (
+            "within" if controller.view.withinRButton.isChecked()
+            else "between" if controller.view.betweenRButton.isChecked()
+            else "nocomparison"
+        ),
     }
+
     if controller.experiment_path:
         settings_path = os.path.join(controller.experiment_path, "settings.json")
         with open(settings_path, "r", encoding="utf-8") as f:
@@ -37,6 +43,32 @@ def on_next_click(view):
     view.main_module.controller.params = get_params_from_list(view.main_module.controller.all_files)
     view.main_module.controller.bands = get_bands_from_list(view.main_module.controller.all_files)
 
+    if view.main_module.controller.config_config['analysis_mode'] == "nocomparison":
+        recordings = view.main_module.controller.recordings
+        if len(recordings) > 1:
+            recording_name, ok = QInputDialog.getItem(
+                view.main_module,
+                "Select recording",
+                "Select the recording to analyze:",
+                recordings,
+                0,
+                False
+            )
+
+            if not ok:
+                return False
+        else:
+            recording_name = recordings[0]
+
+        view.main_module.controller.groups = {
+            recording_name: "#1f77b4"
+        }
+        view.main_module.controller.group_assignment = {
+            recording_name: [recording_name]
+        }
+        view.main_module.controller.data_assignment = [recording_name]
+        view.main_module.controller.group_changed = False
+
     # If widgets were already loaded, but a new selection of experiment has been made, clear the stackedWidget
     if  view.controller.loaded_widgets and view.controller.new_selection:
         # Clear stackedWidget except for the first page
@@ -58,7 +90,8 @@ def on_next_click(view):
             modules_config = modules_config['parameters']
 
         experiment = view.main_module.controller.config_config['experiment_info']['experiment_type']
-        widgets = modules_config[experiment]
+        analysis_mode = view.main_module.controller.config_config['analysis_mode']
+        widgets = modules_config[experiment][analysis_mode]
 
         # Update loading progress
         view.main_module.loading.set_progress((1 / len(widgets)) * 100, view.main_module)
@@ -164,3 +197,16 @@ def get_bands_from_list(recordings):
     bands.sort()
 
     return bands
+
+def generate_default_groups_from_recordings(recordings):
+    """
+    Create one group per recording for no-comparison mode.
+    """
+    colors = []
+    n = len(recordings)
+    for i in range(n):
+        hue = i / max(n, 1)
+        rgb = colorsys.hsv_to_rgb(hue, 0.6, 0.95)
+        colors.append('#%02x%02x%02x' % tuple(int(c * 255) for c in rgb))
+
+    return dict(zip(recordings, colors))
