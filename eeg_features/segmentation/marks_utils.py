@@ -48,9 +48,18 @@ def recording_to_dict(rec):
 
     # Numeric matrix with the conditions
     # Detect if the last condition is not finished
-    if len(rec.marks.conditions_labels) % 2 != 0 and (rec.marks.conditions_labels[-1] != rec.marks.conditions_labels[-2]):
-        rec.marks.conditions_labels.append(rec.marks.conditions_labels[-1])
-        rec.marks.conditions_times.append(rec.eeg.times[-1])
+    if len(rec.marks.conditions_labels) % 2 != 0:
+
+        # Case 1: only one mark (only start, no end)
+        if len(rec.marks.conditions_labels) == 1:
+            rec.marks.conditions_labels.append(rec.marks.conditions_labels[-1])
+            rec.marks.conditions_times.append(rec.eeg.times[-1])
+
+        # Case 2: multiple conditions and last one not closed
+        elif rec.marks.conditions_labels[-1] != rec.marks.conditions_labels[-2]:
+            rec.marks.conditions_labels.append(rec.marks.conditions_labels[-1])
+            rec.marks.conditions_times.append(rec.eeg.times[-1])
+
     conditions_times = rec.marks.conditions_times - rec.eeg.times[0]
     conditions_times = np.reshape(conditions_times, (-1, 2))
 
