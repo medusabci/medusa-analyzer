@@ -94,9 +94,7 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,0,0">
                <item>
-                <widget class="QWidget" name="TypePlotWidget" native="true">
-                 <layout class="QVBoxLayout" name="verticalLayout_5"/>
-                </widget>
+                <widget class="QWidget" name="TypePlotWidget" native="true"/>
                </item>
                <item>
                 <widget class="QWidget" name="channelsWidget" native="true">
@@ -165,7 +163,7 @@ font-weight: 700;</string>
                    <height>16777215</height>
                   </size>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_3">
+                 <layout class="QHBoxLayout" name="horizontalLayout">
                   <item>
                    <widget class="QLabel" name="label">
                     <property name="maximumSize">
@@ -187,7 +185,7 @@ padding: 4px 10px;
 font-weight: 700;</string>
                     </property>
                     <property name="text">
-                     <string>Bands</string>
+                     <string>Band</string>
                     </property>
                     <property name="alignment">
                      <set>Qt::AlignCenter</set>
@@ -195,20 +193,7 @@ font-weight: 700;</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QListWidget" name="bandsWidget">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>16777215</width>
-                      <height>60</height>
-                     </size>
-                    </property>
-                   </widget>
+                   <widget class="QComboBox" name="bandscomboBox"/>
                   </item>
                  </layout>
                 </widget>

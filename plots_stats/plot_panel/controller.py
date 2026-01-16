@@ -8,7 +8,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from plots_stats.plot_panel.plot_classes.base_plot  import BasePlot
 from plots_stats.plot_panel.plot_classes.psd_plot import PSDPlot
 from plots_stats.plot_panel.plot_classes.linear_plot import LinearPlot
-from plots_stats.plot_panel.export_dialog import ExportDialog
+from plots_stats.plot_utils import ExportDialog, build_dynamic_controls, export_figure_generic
 from functools import partial
 import re, os, json
 import numpy as np
@@ -166,7 +166,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             # Create dynamic controls for plot parameters in the tab view
             controls_widget = tab.findChild(QtWidgets.QWidget, "TypePlotWidget")
-            self._build_dynamic_controls(controls_widget, merged_params, tab)
+            build_dynamic_controls(self, controls_widget, merged_params, tab)
 
             # Connect buttons
             prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
@@ -238,20 +238,21 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def setup_band_list(self, tab, param):
         """Configure the band list"""
-        list_widget = tab.findChild(QtWidgets.QListWidget, "bandsWidget")
-        list_widget.clear()
+
+        # Find the combo box
+        combo_box = tab.findChild(QtWidgets.QComboBox, "bandscomboBox")
+        combo_box.clear()
+        # Add bands to combo box
         for b in self.available_bands:
-            item = QtWidgets.QListWidgetItem(b)
-            list_widget.addItem(item)
-
-        if list_widget.count() > 0:
-            list_widget.setCurrentRow(0)
-
-        list_widget.currentTextChanged.connect(lambda band: self.on_band_selected(tab, param, band))
-
+            combo_box.addItem(b)
+        # First band by default
+        if combo_box.count() > 0:
+            combo_box.setCurrentIndex(0)
+        # connect signal
+        combo_box.currentTextChanged.connect(lambda band: self.on_band_selected(tab, param, band))
         # Initialize paths filtration with the default band
-        if list_widget.count() > 0:
-            default_band = list_widget.currentItem().text()
+        if combo_box.count() > 0:
+            default_band = combo_box.currentText()
             self.on_band_selected(tab, param, default_band)
 
     def filter_recordings_by_band(self, param, selected_band):
@@ -291,131 +292,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 sub = item.layout()
                 if sub is not None:
                     self._clear_layout(sub)
-
-    def _build_dynamic_controls(self, container_widget, plot_params, tab):
-        """
-        Create dynamic controls to edit plot parameters generically.
-        Adds at the top a label 'Plot type: <type>'.
-        """
-
-        # Clear old layout if exists to avoid errors
-        old_layout = container_widget.layout()
-        if old_layout is not None:
-            try:
-                self._clear_layout(old_layout)
-                dummy = QtWidgets.QWidget()
-                dummy.setLayout(old_layout)
-            except RuntimeError:
-                pass
-
-        # Scoll area
-        scroll_area = QtWidgets.QScrollArea(container_widget)
-        scroll_area.setWidgetResizable(True)
-        scroll_area.setStyleSheet("""QScrollArea {border: none; background-color: #222;} 
-        QWidget {background-color: transparent;}""")
-        scroll_content = QtWidgets.QWidget()
-        scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
-        scroll_layout.setSpacing(10)
-        scroll_layout.setContentsMargins(10, 10, 10, 10)
-
-        # Title label
-        plot_type_label = QtWidgets.QLabel(f"Plot type: {getattr(tab, '_plot_type', 'Unknown')}")
-        plot_type_label.setAlignment(QtCore.Qt.AlignCenter)
-        plot_type_label.setStyleSheet("""background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a0dad, stop:1 #ec407a);
-                color: white; padding: 6px 12px; font-weight: 700; font-size: 9pt; border-radius: 6px; """)
-        scroll_layout.addWidget(plot_type_label)
-
-        tab._param_widgets = {} # Store references to created widgets
-
-        # Loop over plot_params to create specific controls. Controls are created based on the 'type' metadata.
-        for key, meta in plot_params.items():
-            # If meta is a dict with 'type', 'default', 'label' keys, use them; else assume text type with label=key and default=meta
-            if isinstance(meta, dict) and any(k in meta for k in ("type", "default", "label")):
-                param_type = meta.get("type", "text")
-                label_text = meta.get("label", key)
-                default_value = meta.get("default", "")
-            else:
-                param_type = "text"
-                label_text = key
-                default_value = meta
-
-            # Card container
-            card = QtWidgets.QFrame()
-            card.setFrameShape(QtWidgets.QFrame.StyledPanel)
-            card.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-            if isinstance(meta, dict) and meta.get("type") == "bool":
-                card.setStyleSheet("""QFrame {background-color: #DCDCDC; border-radius: 8px;} """)
-            else:
-                card.setStyleSheet("""QFrame {background-color: transparent; border-radius: 8px;} """)
-
-            card_layout = QtWidgets.QVBoxLayout(card)
-            card_layout.setContentsMargins(0, 0, 0, 0)
-            card_layout.setSpacing(4)
-
-            # Plot parameter subtitle
-            title = QtWidgets.QLabel(label_text)
-            title.setStyleSheet("font-weight:600; color:white; font-size:9pt; background-color: #C53189;")
-            card_layout.addWidget(title)
-
-            # Create the corresponding widget
-            widget = None
-            #If the param type is text or range, create a QLineEdit
-            if param_type in ("text", "range", "number"):
-                widget = QtWidgets.QLineEdit()
-                if default_value is None and param_type == "range":
-                    display_value = "[None, None]"
-                elif default_value is None:
-                    display_value = ""
-                elif isinstance(default_value, (list, tuple, dict)):
-                    display_value = json.dumps(default_value)
-                else:
-                    display_value = str(default_value)
-                widget.setText(display_value)
-                widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
-
-            # If the param type is bool, create a QCheckBox
-            elif param_type == "bool":
-                widget = QtWidgets.QCheckBox()
-                dv = bool(default_value) if not isinstance(default_value, str) else default_value.lower() in ("1","true","yes")
-                widget.setChecked(dv)
-                widget.setStyleSheet("color:white;")
-
-            # If the param type is select, create a QComboBox
-            elif param_type == "select":
-                widget = QtWidgets.QComboBox()
-                options = meta.get("options", []) if isinstance(meta, dict) else []
-                for opt in options:
-                    widget.addItem(str(opt))
-                if default_value not in (None, "") and str(default_value) not in [str(o) for o in options]:
-                    widget.addItem(str(default_value))
-                if default_value is not None and default_value != "":
-                    idx = widget.findText(str(default_value))
-                    if idx >= 0:
-                        widget.setCurrentIndex(idx)
-                widget.setStyleSheet("""QComboBox {background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;}""")
-
-            # Add widget to card layout
-            if widget is not None:
-                widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-                card_layout.addWidget(widget)
-                tab._param_widgets[key] = (param_type, widget)
-
-            scroll_layout.addWidget(card)
-
-        scroll_content.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        scroll_content.adjustSize()
-        scroll_area.setWidget(scroll_content)
-
-        # Place scroll_area into the container widget's layout (replace existing layout)
-        main_layout = QtWidgets.QVBoxLayout()
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(scroll_area)
-        container_widget.setLayout(main_layout)
-
-        # Adjust sizes of the container widget
-        container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-        container_widget.setMinimumHeight(170)
-        container_widget.updateGeometry()
 
     def update_plot(self, tab):
         """
@@ -507,48 +383,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
             self.view.tab_widget.setCurrentIndex(current + 1)
 
     def export_figure(self, tab):
-        """Export the figure from the given tab. Open a QFileDialog to choose the path and a dialog
-        with saving options."""
-        dlg = ExportDialog(self.view)
-        if dlg.exec() != QDialog.Accepted:
-            return
-        vals = dlg.get_values()
-        fmt = vals["format"]
-        dpi = vals["dpi"]
-        width_px = vals["width"]
-        height_px = vals["height"]
-        transparent = vals["transparent"]
-        bg_color = vals["bg_color"]
-
-        # suggested_name = f"{tab.findChild(QtWidgets.QLabel, 'titleLabel').text()}.{fmt}"
-        plot_type = getattr(tab, "_plot_type", "figure")
-        suggested_name = f"{plot_type}.{fmt}"
-        fname, _ = QFileDialog.getSaveFileName(self.view, "Save image", suggested_name,
-                                              f"{fmt.upper()} (*.{fmt})")
-        if not fname:
-            return
-
-        # Asjust figure size: matplotlib uses inches so we have to convert px to inches
-        inches_width = width_px / dpi
-        inches_height = height_px / dpi
-
         fig = getattr(tab, "_figure", None)
-        if fig is None:
-            return
-
-        original_size = fig.get_size_inches()
-        try:
-            fig.set_size_inches(inches_width, inches_height)
-
-            # Si no es transparente, usar el color de fondo elegido
-            facecolor = "none" if transparent else bg_color
-            fig.savefig(fname, dpi=dpi, transparent=transparent,
-                        bbox_inches="tight", facecolor=facecolor)
-        finally:
-            # restore original sizer for avoid afecting the canvas visual representation in the widget
-            fig.set_size_inches(original_size)
-
-        QtWidgets.QMessageBox.information(self.view, "Export", f"Saved to:\n{fname}")
+        plot_type = getattr(tab, "_plot_type", "figure")
+        export_figure_generic(view=self.view, fig=fig, suggested_name=f"{plot_type}.{{fmt}}", warn_if_none=False)
 
     def filter_recordings(self):
         files = self.view.main_module.controller.filtered_files
