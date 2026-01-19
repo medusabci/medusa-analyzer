@@ -60,7 +60,8 @@
       "line_width": {
         "type": "spin",
         "label": "Line width",
-        "default": 2
+        "default": 2,
+        "min": 1
       },
       "line_style": {
         "type": "select",
@@ -144,7 +145,8 @@
       "line_width": {
         "type": "spin",
         "label": "Line width",
-        "default": 2
+        "default": 2,
+        "min": 1
       },
       "line_style": {
         "type": "select",
