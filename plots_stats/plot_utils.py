@@ -1,12 +1,12 @@
 import json
-from PySide6 import QtCore
+from PySide6 import QtCore,QtGui
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QSpinBox, QCheckBox, QColorDialog,
     QComboBox, QLabel, QDialogButtonBox, QWidget,
     QHBoxLayout, QPushButton
 )
 from PySide6.QtGui import QColor
-
+from functools import partial
 
 class ExportDialog(QDialog):
     """
@@ -135,9 +135,11 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
     )
 
     scroll_content = QtWidgets.QWidget()
-    scroll_layout = QtWidgets.QVBoxLayout(scroll_content)
-    scroll_layout.setSpacing(10)
+    scroll_layout = QtWidgets.QGridLayout(scroll_content)
+    scroll_layout.setSpacing(8)
     scroll_layout.setContentsMargins(10, 10, 10, 10)
+    scroll_layout.setColumnStretch(0, 0)  # labels
+    scroll_layout.setColumnStretch(1, 1)  # widgets
 
     # Title label
     plot_type_label = QtWidgets.QLabel(
@@ -150,7 +152,9 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
            color: white; padding: 6px 12px; font-weight: 700;
            font-size: 9pt; border-radius: 6px;"""
     )
-    scroll_layout.addWidget(plot_type_label)
+    row = 0
+    scroll_layout.addWidget(plot_type_label, row, 0, 1, 2)
+    row += 1
 
     tab._param_widgets = {}
 
@@ -168,33 +172,11 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
             label_text = key
             default_value = meta
 
-        # Card container
-        card = QtWidgets.QFrame()
-        card.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        card.setSizePolicy(
-            QtWidgets.QSizePolicy.Preferred,
-            QtWidgets.QSizePolicy.Preferred,
-        )
-
-        if isinstance(meta, dict) and meta.get("type") == "bool":
-            card.setStyleSheet(
-                "QFrame {background-color: #DCDCDC; border-radius: 8px;}"
-            )
-        else:
-            card.setStyleSheet(
-                "QFrame {background-color: transparent; border-radius: 8px;}"
-            )
-
-        card_layout = QtWidgets.QVBoxLayout(card)
-        card_layout.setContentsMargins(0, 0, 0, 0)
-        card_layout.setSpacing(4)
-
-        # Plot parameter subtitle
-        title = QtWidgets.QLabel(label_text)
-        title.setStyleSheet(
-            "font-weight:600; color:white; font-size:9pt; background-color: #C53189;"
-        )
-        card_layout.addWidget(title)
+        # Plot parameter label (left side)
+        label = QtWidgets.QLabel(label_text)
+        label.setStyleSheet("font-weight:600; color:white; font-size:9pt; background-color: #C53189;")
+        label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+        scroll_layout.addWidget(label, row, 0)
 
         widget = None
 
@@ -211,9 +193,7 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
                 display_value = str(default_value)
 
             widget.setText(display_value)
-            widget.setStyleSheet(
-                "background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;"
-            )
+            widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
         elif param_type == "bool":
             widget = QtWidgets.QCheckBox()
@@ -242,24 +222,43 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
                 if idx >= 0:
                     widget.setCurrentIndex(idx)
 
-            widget.setStyleSheet(
-                "QComboBox {background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;}"
-            )
+            widget.setStyleSheet("QComboBox {background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;}")
+
+        elif param_type == "color":
+            widget = QtWidgets.QPushButton()
+            color = default_value or "#000000"
+
+            widget.setText(color)
+            widget.setStyleSheet(f"background-color:{color}; color:white; border-radius:4px; padding:4px;")
+
+            def pick_color(btn=widget):
+                col = QtWidgets.QColorDialog.getColor(QtGui.QColor(btn.text()), container_widget)
+                if col.isValid():
+                    hex_color = col.name()
+                    btn.setText(hex_color)
+                    btn.setStyleSheet(
+                        f"background-color:{hex_color}; color:white; border-radius:4px; padding:4px;"
+                    )
+
+            widget.clicked.connect(partial(pick_color, widget))
+
+        elif param_type == "spin":
+            widget = QtWidgets.QSpinBox()
+            widget.setMinimum(meta.get("min", 0))
+            widget.setMaximum(meta.get("max", 100))
+            widget.setValue(default_value if default_value is not None else 10)
+            widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
         if widget is not None:
-            widget.setSizePolicy(
-                QtWidgets.QSizePolicy.Expanding,
-                QtWidgets.QSizePolicy.Preferred,
-            )
-            card_layout.addWidget(widget)
+            widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+            scroll_layout.addWidget(widget, row, 1)
             tab._param_widgets[key] = (param_type, widget)
 
-        scroll_layout.addWidget(card)
+        row += 1
 
-    scroll_content.setSizePolicy(
-        QtWidgets.QSizePolicy.Expanding,
-        QtWidgets.QSizePolicy.Minimum,
-    )
+    scroll_content.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+    spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+    scroll_layout.addItem(spacer, row, 0, 1, 2)
     scroll_content.adjustSize()
     scroll_area.setWidget(scroll_content)
 
@@ -268,10 +267,7 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
     main_layout.addWidget(scroll_area)
     container_widget.setLayout(main_layout)
 
-    container_widget.setSizePolicy(
-        QtWidgets.QSizePolicy.Expanding,
-        QtWidgets.QSizePolicy.Preferred,
-    )
+    container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
     container_widget.setMinimumHeight(170)
     container_widget.updateGeometry()
 

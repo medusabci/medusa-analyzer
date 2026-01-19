@@ -129,6 +129,15 @@ class PSDPlot(BasePlot):
             print("[WARN] No PSD data to plot.")
             return
 
+        line_style_raw = self.plot_params.get("line_style", "-")
+        linestyle_map = {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-."}
+        line_style = linestyle_map.get(line_style_raw, "-")
+        line_width = self.plot_params.get("line_width", 2)
+        font_size = self.plot_params.get("font_size", 9)
+        font_weight = self.plot_params.get("font_weight", "normal")
+        title_size = self.plot_params.get("title_size", 11)
+        title_weight = self.plot_params.get("title_weight", "bold")
+
         # Plot PSD
         for idx, (group_name, pxx) in enumerate(self._psd_data.items()):
             # Prefer color from draw argument
@@ -140,17 +149,18 @@ class PSDPlot(BasePlot):
             else:
                 color = None
 
-            self.ax.plot(self._freqs, pxx, label=group_name, color=color, linewidth=2.0, alpha=0.9)
+            self.ax.plot(self._freqs, pxx, label=group_name, color=color, linestyle= line_style,
+                         linewidth=line_width, alpha=0.9)
 
 
         # General settings
-        self.ax.set_xlabel(self.plot_params.get("x_label", "Frequency (Hz)"))
-        self.ax.set_ylabel(self.plot_params.get("y_label", "Power"))
+        self.ax.set_xlabel(self.plot_params.get("x_label", "Frequency (Hz)"), fontsize=font_size, fontweight=font_weight)
+        self.ax.set_ylabel(self.plot_params.get("y_label", "Power"), fontsize=font_size, fontweight=font_weight)
         title = self.plot_params.get("title", "")
         xlim = self.plot_params.get("xlim", None)
         ylim = self.plot_params.get("ylim", None)
         if title:
-            self.ax.set_title(title)
+            self.ax.set_title(title, fontsize=title_size, fontweight=title_weight)
         if xlim is not None:
             self.ax.set_xlim(xlim)
         if ylim is not None:
@@ -179,7 +189,7 @@ class PSDPlot(BasePlot):
             # )
 
         self.ax.grid(True, linestyle='--', linewidth=0.5, alpha=0.6, zorder=0)
-        self.ax.legend(frameon=False, fontsize=10)
+        self.ax.legend(frameon=False, fontsize=font_size)
         self.ax.spines['top'].set_visible(False)
         self.ax.spines['right'].set_visible(False)
         self.ax.relim()

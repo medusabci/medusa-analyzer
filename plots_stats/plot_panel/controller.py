@@ -1,4 +1,4 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtWidgets import (QFileDialog, QDialog)
 
 from PySide6.QtUiTools import loadUiType
@@ -206,11 +206,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
             print('Channels not found')
             return
 
-        # Add channels to list
         list_widget.clear()
+        # Add channels to list
         for ch in channels:
-            item = QtWidgets.QListWidgetItem(ch)
-            list_widget.addItem(item)
+            list_widget.addItem(QtWidgets.QListWidgetItem(ch))
 
         # First channel by default
         if list_widget.count() > 0:
@@ -368,6 +367,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
             return widget.isChecked()
         elif ptype == "select":
             return widget.currentText()
+        elif ptype == "color":
+            return widget.text()
+        elif ptype == "spin":
+            return widget.value()
         return None
 
     def prev_tab(self):

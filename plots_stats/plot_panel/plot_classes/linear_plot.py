@@ -85,28 +85,39 @@ class LinearPlot(BasePlot):
         y_std = np.array([self._group_stats[g]["std"] for g in group_names])
         x_values = np.arange(len(group_names))
 
+        line_color = self.plot_params.get("line_color", "#000000")
+        line_style_raw = self.plot_params.get("line_style", "-")
+        linestyle_map = {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-."}
+        line_style = linestyle_map.get(line_style_raw, "-")
+        line_width = self.plot_params.get("line_width", 2)
+
+        font_size = self.plot_params.get("font_size", 8)
+        font_weight = self.plot_params.get("font_weight", "normal")
+
+        title_size = self.plot_params.get("title_size", 10)
+        title_weight = self.plot_params.get("title_weight", "bold")
+
         if colors and len(colors) >= len(group_names):
             for i, color in enumerate(colors[:len(group_names)]):
                 self.ax.axvspan(i - 0.5, i + 0.5, color=color, alpha=0.15, zorder=0)
         elif colors:
             print(f"[WARN] Number of colors ({len(colors)}) != number of groups ({len(group_names)})")
 
-        self.ax.plot(x_values, y_mean, color = self.plot_params["line_color"], marker="o", linestyle="-",
-                     linewidth=2, markersize=8, label = "Mean")
+        self.ax.plot(x_values, y_mean, color = line_color, linestyle=line_style,
+                     linewidth=line_width, marker="o",markersize=8, label = "Mean")
         plot_std = str(self.plot_params.get("plot_std", "True")).lower() in ("1", "true", "yes")
         if plot_std:
-            self.ax.fill_between(x_values, y_mean - y_std, y_mean + y_std, color = self.plot_params["line_color"],
+            self.ax.fill_between(x_values, y_mean - y_std, y_mean + y_std, color = line_color, linestyle=line_style,
                                  alpha = 0.15, label = "±STD")
 
 
         self.ax.set_xticks(x_values)
-        self.ax.set_xticklabels(group_names, fontsize=7, rotation=45, ha="right")
-
-        self.ax.set_xlabel(self.plot_params.get("x_label", "Groups"))
-        self.ax.set_ylabel(self.plot_params.get("y_label", "Mean Value"))
+        self.ax.set_xticklabels(group_names, fontsize=font_size, rotation=45, ha="right")
+        self.ax.set_xlabel(self.plot_params.get("x_label", "Groups"), fontsize=font_size, fontweight=font_weight)
+        self.ax.set_ylabel(self.plot_params.get("y_label", "Mean Value"), fontsize=font_size, fontweight=font_weight)
         title = self.plot_params.get("title", "")
         if title:
-            self.ax.set_title(title)
+            self.ax.set_title(title, fontsize=title_size, fontweight=title_weight)
 
         self._safe_set_lim(self.ax, "set_ylim", self.plot_params.get("ylim", None))
 

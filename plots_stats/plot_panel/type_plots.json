@@ -4,28 +4,74 @@
     "Plot_params": {
       "title": {
         "type": "text",
-        "label": "Graph Title",
+        "label": "Title",
         "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+
       },
       "x_label": {
         "type": "text",
-        "label": "X axis Label",
+        "label": "X Label",
         "default": "Plot_params.x_label"
       },
       "y_label": {
         "type": "text",
-        "label": "Y axis Label",
+        "label": "Y Label",
         "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+
       },
       "xlim": {
         "type": "range",
-        "label": "X axis Limits",
+        "label": "Xlim",
         "default": [0, 60]
       },
       "ylim": {
         "type": "range",
-        "label": "Y axis Limits",
+        "label": "Ylim",
         "default": [0, 10]
+      },
+      "line_width": {
+        "type": "spin",
+        "label": "Line width",
+        "default": 2
+      },
+      "line_style": {
+        "type": "select",
+        "label": "Line style",
+        "default": "solid",
+        "options": [
+          "solid",
+          "dashed",
+          "dotted",
+          "dashdot"
+        ]
       }
     }
   },
@@ -43,27 +89,73 @@
     "Plot_params": {
       "title": {
         "type": "text",
-        "label": "Graph Title",
+        "label": "Title",
         "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+
       },
       "x_label": {
         "type": "text",
-        "label": "X axis Label",
+        "label": "X Label",
         "default": "Plot_params.x_label"
       },
       "y_label": {
         "type": "text",
-        "label": "Y axis Label",
+        "label": "Y Label",
         "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+
       },
       "ylim": {
         "type": "range",
-        "label": "Y axis Limits"
+        "label": "Ylim"
       },
       "line_color": {
-        "type": "text",
+        "type": "color",
         "label": "Line color",
         "default": "#000000"
+      },
+      "line_width": {
+        "type": "spin",
+        "label": "Line width",
+        "default": 2
+      },
+      "line_style": {
+        "type": "select",
+        "label": "Line style",
+        "default": "solid",
+        "options": [
+          "solid",
+          "dashed",
+          "dotted",
+          "dashdot"
+        ]
       },
       "plot_std": {
         "type": "bool",
