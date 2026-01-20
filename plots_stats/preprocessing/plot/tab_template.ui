@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>660</width>
+    <width>903</width>
     <height>569</height>
    </rect>
   </property>
@@ -22,7 +22,7 @@
      <widget class="QFrame" name="controlPanelArea">
       <property name="maximumSize">
        <size>
-        <width>272</width>
+        <width>320</width>
         <height>16777215</height>
        </size>
       </property>
@@ -43,7 +43,7 @@
          </property>
          <property name="maximumSize">
           <size>
-           <width>260</width>
+           <width>320</width>
            <height>16777215</height>
           </size>
          </property>
@@ -55,8 +55,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>248</width>
-            <height>449</height>
+            <width>298</width>
+            <height>466</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -76,7 +76,7 @@
              </property>
              <property name="maximumSize">
               <size>
-               <width>230</width>
+               <width>320</width>
                <height>16777215</height>
               </size>
              </property>

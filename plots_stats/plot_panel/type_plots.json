@@ -50,12 +50,11 @@
       "xlim": {
         "type": "range",
         "label": "Xlim",
-        "default": [0, 60]
+        "default": [0, 70]
       },
       "ylim": {
         "type": "range",
-        "label": "Ylim",
-        "default": [0, 10]
+        "label": "Ylim"
       },
       "line_width": {
         "type": "spin",

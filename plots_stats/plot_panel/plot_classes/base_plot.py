@@ -13,6 +13,7 @@ class BasePlot(ABC):
         self.ax = ax
         self.plot_params = plot_params or {}
         self._data_cache = {}
+        self.last_limits = {} # save info from the last draw
 
     @abstractmethod
     def load_data(self, *args, **kwargs):
@@ -32,3 +33,6 @@ class BasePlot(ABC):
         title = self.plot_params.get("title", "")
         if title:
             self.ax.set_title(title)
+
+    def get_last_limits(self):
+        return self.last_limits

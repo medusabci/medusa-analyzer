@@ -53,7 +53,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self.available_bands = self.extract_unique_bands(files)
 
         # Extract group colors
-        self.group_colors = list(self.view.main_module.controller.groups.values())
+        self.group_colors = dict(self.view.main_module.controller.groups)
 
         tab_widget = self.view.tab_widget
         while tab_widget.count() > 0:
@@ -106,15 +106,16 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     ref_key = default_value.split(".")[-1]
                     default_value = base_plot_params.get(ref_key, "")
 
-                merged_params[key] = {
-                    "type": meta.get("type", "text"),
-                    "label": meta.get("label", key),
-                    "default": default_value,
-                    "options": meta.get("options", [])
-                }
+                # merged_params[key] = {"type": meta.get("type", "text"), "label": meta.get("label", key),
+                #                       "default": default_value, "options": meta.get("options", []),
+                #                       "min": meta.get("min", 0), "max": meta.get("max", 100)}
+
+                merged_params[key] = dict(meta)
+                merged_params[key]["default"] = default_value
 
             # Create tab
             tab = self.load_ui(self.template_ui_path, parent=tab_widget)
+
             self.setup_channel_list(tab, param)
             self.setup_band_list(tab, param)
 
@@ -224,6 +225,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
         selected_indexes = [list_widget.row(item) for item in list_widget.selectedItems()]
         tab._selected_channels[param] = selected_indexes
+        tab._force_autolimits = True
         print(f"Selected channel indices for param '{param}': {selected_indexes}")
 
     def extract_unique_bands(self, param_list):
@@ -275,6 +277,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         filtered_files_bands = self.filter_recordings_by_band(param, selected_band)
         self.filtered_files_bands = filtered_files_bands
         tab._filtered_files_bands = filtered_files_bands
+        tab._force_autolimits = True
         print(tab._filtered_files_bands)
 
     def _clear_layout(self, layout):
@@ -333,14 +336,26 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 else:
                     selected_channels = [0]
 
-                # --- Delegate to PSDPlot instance ---
+                # Get plot params
                 plot_obj.plot_params = tab._plot_params_current
+                # Force autolimits if needed
+                if getattr(tab, "_force_autolimits", False):
+                    tab._plot_params_current["ylim"] = [None, None]
+                # Detect user-defined ylim
+                ylim_user = tab._plot_params_current.get("ylim", None)
+                user_defined_ylim = (
+                        not getattr(tab, "_force_autolimits", False) and
+                        isinstance(ylim_user, (list, tuple)) and
+                        len(ylim_user) == 2 and
+                        any(v is not None for v in ylim_user)
+                )
+                # Draw data
                 plot_obj.load_data(filtered, selected_channels)
-                if plot_type == 'PSDPlot':
+                if plot_type in ("PSDPlot", "LinearPlot"):
                     plot_obj.draw(colors = self.group_colors)
-                elif plot_type == 'LinearPlot':
-                    plot_obj.draw(colors = self.group_colors)
-
+                    if not user_defined_ylim:
+                        self._sync_widgets_with_plot(tab, plot_obj)
+                    tab._force_autolimits = False
             else:
                 print(f"[WARN] Unsupported plot type: {plot_type}")
 
@@ -404,6 +419,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         groups = self.view.main_module.controller.group_assignment
         separated_files = {}
         for key in separated_files_param.keys():
+            separated_files[key] = {group: [] for group in groups}
             for file in separated_files_param[key]:
                 for group in groups:
 
@@ -433,3 +449,30 @@ class TabbedPlotWidgetController(QtCore.QObject):
                         separated_files.setdefault(key, {}).setdefault(group, []).append(file)
                         break
         return separated_files
+
+    def _sync_widgets_with_plot(self, tab, plot_obj):
+        """
+        Update widget values using real plot data only when user has not defined them.
+        """
+        limits = plot_obj.get_last_limits()
+        if not limits:
+            return
+
+        for key, value in limits.items():
+            if key not in tab._param_widgets:
+                continue
+
+            current = tab._plot_params_current.get(key, None) # User-defined value
+            if current is not None and isinstance(current, (list, tuple)) and len(current) == 2 and any(v is not None for v in current):
+                # User has defined a value, skip updating
+                continue
+
+            ptype, widget = tab._param_widgets[key]
+
+            if ptype == "range" and isinstance(value, (list, tuple)) and len(value) == 2:
+                lo = round(value[0], 2)
+                hi = round(value[1], 2)
+                text = f"[{lo}, {hi}]"
+                widget.setText(text)
+
+

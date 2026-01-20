@@ -85,6 +85,10 @@ class LinearPlot(BasePlot):
         y_std = np.array([self._group_stats[g]["std"] for g in group_names])
         x_values = np.arange(len(group_names))
 
+        y_min = float(np.min(y_mean - y_std))
+        y_max = float(np.max(y_mean + y_std))
+        self.last_limits = {"ylim": [y_min, y_max]}
+
         line_color = self.plot_params.get("line_color", "#000000")
         line_style_raw = self.plot_params.get("line_style", "-")
         linestyle_map = {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-."}
@@ -97,9 +101,11 @@ class LinearPlot(BasePlot):
         title_size = self.plot_params.get("title_size", 10)
         title_weight = self.plot_params.get("title_weight", "bold")
 
-        if colors and len(colors) >= len(group_names):
-            for i, color in enumerate(colors[:len(group_names)]):
-                self.ax.axvspan(i - 0.5, i + 0.5, color=color, alpha=0.15, zorder=0)
+        if "colors" in locals():
+            for i, group in enumerate(group_names):
+                color = colors[group]
+                if color:
+                    self.ax.axvspan(i - 0.5, i + 0.5, color=color, alpha=0.15, zorder=0)
         elif colors:
             print(f"[WARN] Number of colors ({len(colors)}) != number of groups ({len(group_names)})")
 

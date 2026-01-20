@@ -139,19 +139,23 @@ class PSDPlot(BasePlot):
         title_weight = self.plot_params.get("title_weight", "bold")
 
         # Plot PSD
+        all_values = []
         for idx, (group_name, pxx) in enumerate(self._psd_data.items()):
-            # Prefer color from draw argument
-            if colors:
-                color = colors[idx]
-            # Otherwise check plot_params
-            # elif "group_colors" in self.plot_params:
-            #     color = self.plot_params["group_colors"][idx]
+            if colors and group_name in colors:
+                color = colors[group_name]
             else:
                 color = None
-
             self.ax.plot(self._freqs, pxx, label=group_name, color=color, linestyle= line_style,
                          linewidth=line_width, alpha=0.9)
+            all_values.append(pxx)
 
+        # Compute limits
+        all_values = np.concatenate(all_values)
+        y_min = float(np.nanmin(all_values))
+        y_max = float(np.nanmax(all_values))
+        x_min = float(np.nanmin(self._freqs))
+        x_max = float(np.nanmax(self._freqs))
+        self.last_limits = {"ylim": [y_min, y_max], "xlim": [x_min, x_max]}
 
         # General settings
         self.ax.set_xlabel(self.plot_params.get("x_label", "Frequency (Hz)"), fontsize=font_size, fontweight=font_weight)
@@ -161,12 +165,11 @@ class PSDPlot(BasePlot):
         ylim = self.plot_params.get("ylim", None)
         if title:
             self.ax.set_title(title, fontsize=title_size, fontweight=title_weight)
-        if xlim is not None:
-            self.ax.set_xlim(xlim)
-        if ylim is not None:
-            self.ax.set_ylim(ylim)
+        self._safe_set_lim(self.ax, "set_xlim", self.plot_params.get("xlim", None))
+        self._safe_set_lim(self.ax, "set_ylim", self.plot_params.get("ylim", None))
 
         # Add shadows of different eeg bands
+        xlim = self.ax.get_xlim()
         bands = [
             (0, 4, 'Delta', '#a6cee3'),  # light blue
             (4, 8, 'Theta', '#b2df8a'),  # light green

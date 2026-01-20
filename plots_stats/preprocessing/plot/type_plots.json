@@ -7,6 +7,20 @@
         "label": "Graph Title",
         "default": "Plot_params.title"
       },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+      },
       "x_label": {
         "type": "text",
         "label": "X axis Label",
@@ -17,6 +31,21 @@
         "label": "Y axis Label",
         "default": "Plot_params.y_label"
       }
-    }
+    },
+    "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+
+      }
   }
 }
