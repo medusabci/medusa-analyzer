@@ -15,11 +15,7 @@ class LinearPlot(BasePlot):
         super().__init__(ax, plot_params)
         self._group_stats = {}
 
-    def load_data(
-        self,
-        filtered_files: Dict[str, List[str]],
-        selected_channels: List[int],
-    ):
+    def load_data(self, filtered_files: Dict[str, List[str]], selected_channels: List[int]):
         """
         Load and average data from .mat files for each group.
 
@@ -58,7 +54,7 @@ class LinearPlot(BasePlot):
                 # Validate channels
                 valid_channels = [ch for ch in selected_channels if 0 <= ch < data.size]
                 if not valid_channels:
-                    valid_channels = [0]  # por defecto canal 0
+                    valid_channels = [0]  # by default, use first channel
 
                 # Average of selected channels
                 mean_value = np.mean(data[valid_channels])
@@ -70,10 +66,7 @@ class LinearPlot(BasePlot):
                     "std": np.std(group_values)
                 }
 
-    def draw(self, colors = None):
-        """
-        Draw a simple line connecting each group's average value.
-        """
+    def draw(self, colors=None):
         self.clear()
 
         if not self._group_stats:
@@ -81,71 +74,52 @@ class LinearPlot(BasePlot):
             return
 
         group_names = list(self._group_stats.keys())
+        x = np.arange(len(group_names))
+
         y_mean = np.array([self._group_stats[g]["mean"] for g in group_names])
         y_std = np.array([self._group_stats[g]["std"] for g in group_names])
-        x_values = np.arange(len(group_names))
 
-        y_min = float(np.min(y_mean - y_std))
-        y_max = float(np.max(y_mean + y_std))
-        self.last_limits = {"ylim": [y_min, y_max]}
+        if isinstance(colors, dict):
+            for i, g in enumerate(group_names):
+                color = colors.get(g)
+                if color:
+                    self.ax.axvspan(
+                        i - 0.5,
+                        i + 0.5,
+                        color=color,
+                        alpha=0.15,
+                        zorder=0
+                    )
 
         line_color = self.plot_params.get("line_color", "#000000")
-        line_style_raw = self.plot_params.get("line_style", "-")
-        linestyle_map = {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-."}
-        line_style = linestyle_map.get(line_style_raw, "-")
         line_width = self.plot_params.get("line_width", 2)
 
-        font_size = self.plot_params.get("font_size", 8)
-        font_weight = self.plot_params.get("font_weight", "normal")
+        linestyle_map = {
+            "solid": "-",
+            "dashed": "--",
+            "dotted": ":",
+            "dashdot": "-."
+        }
+        line_style = linestyle_map.get(self.plot_params.get("line_style", "-"), "-")
+        self.ax.plot(
+            x,
+            y_mean,
+            color=line_color,
+            linestyle=line_style,
+            linewidth=line_width,
+            marker="o",
+            markersize=8,
+            label="Mean"
+        )
 
-        title_size = self.plot_params.get("title_size", 10)
-        title_weight = self.plot_params.get("title_weight", "bold")
-
-        if "colors" in locals():
-            for i, group in enumerate(group_names):
-                color = colors[group]
-                if color:
-                    self.ax.axvspan(i - 0.5, i + 0.5, color=color, alpha=0.15, zorder=0)
-        elif colors:
-            print(f"[WARN] Number of colors ({len(colors)}) != number of groups ({len(group_names)})")
-
-        self.ax.plot(x_values, y_mean, color = line_color, linestyle=line_style,
-                     linewidth=line_width, marker="o",markersize=8, label = "Mean")
-        plot_std = str(self.plot_params.get("plot_std", "True")).lower() in ("1", "true", "yes")
+        plot_std = bool(self.plot_params.get("plot_std", True))
         if plot_std:
-            self.ax.fill_between(x_values, y_mean - y_std, y_mean + y_std, color = line_color, linestyle=line_style,
-                                 alpha = 0.15, label = "±STD")
+            self.ax.fill_between(x, y_mean - y_std, y_mean + y_std, color=line_color, alpha=0.15,
+                label="±STD")
 
+        self.ax.set_xticks(x)
+        self.ax.set_xticklabels(group_names, rotation=45, ha="right")
+        self.safe_set_lim("set_ylim", self.plot_params.get("ylim"))
+        self.apply_grid_and_spines(axis="y")
+        self.save_limits()
 
-        self.ax.set_xticks(x_values)
-        self.ax.set_xticklabels(group_names, fontsize=font_size, rotation=45, ha="right")
-        self.ax.set_xlabel(self.plot_params.get("x_label", "Groups"), fontsize=font_size, fontweight=font_weight)
-        self.ax.set_ylabel(self.plot_params.get("y_label", "Mean Value"), fontsize=font_size, fontweight=font_weight)
-        title = self.plot_params.get("title", "")
-        if title:
-            self.ax.set_title(title, fontsize=title_size, fontweight=title_weight)
-
-        self._safe_set_lim(self.ax, "set_ylim", self.plot_params.get("ylim", None))
-
-        self.ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.6)
-        self.ax.spines["top"].set_visible(False)
-        self.ax.spines["right"].set_visible(False)
-        self.ax.relim()
-        self.ax.autoscale_view()
-
-    def _safe_set_lim(self, ax, method, lim):
-        """Utility to safely set axis limits."""
-        if not isinstance(lim, (list, tuple)) or len(lim) != 2:
-            return  # ignore invalid
-        lo, hi = lim
-        if lo is None and hi is None:
-            return
-        try:
-            ax_method = getattr(ax, method)
-            current_lo, current_hi = ax_method()
-            new_lo = lo if lo is not None else current_lo
-            new_hi = hi if hi is not None else current_hi
-            ax_method([new_lo, new_hi])
-        except Exception as e:
-            print(f"[WARN] Could not apply {method}: {e}")
-            pass

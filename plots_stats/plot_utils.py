@@ -278,7 +278,7 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
                 widget.setValue(float(default_value))
             else:
                 widget.setValue(0.0)
-            widget.setDecimals(3)
+            widget.setDecimals(1)
             widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
         if widget is not None:
