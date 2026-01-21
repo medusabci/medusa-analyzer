@@ -8,6 +8,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from plots_stats.plot_panel.plot_classes.base_plot  import BasePlot
 from plots_stats.plot_panel.plot_classes.psd_plot import PSDPlot
 from plots_stats.plot_panel.plot_classes.linear_plot import LinearPlot
+from plots_stats.plot_panel.plot_classes.violin_plot import ViolinPlot
 from plots_stats.plot_utils import ExportDialog, build_dynamic_controls, export_figure_generic
 from functools import partial
 import re, os, json
@@ -29,8 +30,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def create_tabs(self):
         """ Create the tabs """
-        # if self._tabs_created: # create tabs only once
-        #     return
 
         selected_parameters = self.view.main_module.controller.param_selection
         if selected_parameters is None:
@@ -74,9 +73,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self.view.main_module.loading.set_progress((1 / len(param_iter)) * 100,
                                                    self.view.main_module)
 
-        # For each selected param, we inset one tab in de TabWidget
+        # For each selected param, we insert one tab in de TabWidget
         for param in param_iter:
-
             if param not in features_data:
                 print(f"[WARN] Parameter '{param}' not found in available_params.json. Skipping.")
                 continue
@@ -105,11 +103,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 if isinstance(default_value, str) and default_value.startswith("Plot_params."):
                     ref_key = default_value.split(".")[-1]
                     default_value = base_plot_params.get(ref_key, "")
-
-                # merged_params[key] = {"type": meta.get("type", "text"), "label": meta.get("label", key),
-                #                       "default": default_value, "options": meta.get("options", []),
-                #                       "min": meta.get("min", 0), "max": meta.get("max", 100)}
-
                 merged_params[key] = dict(meta)
                 merged_params[key]["default"] = default_value
 
@@ -139,15 +132,46 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 title_label.setText(param_name)
 
             # Create plot object based on plot_type
-            tab._plot_type = plot_type
-            if plot_type == "PSDPlot":
-                plot_obj = PSDPlot(ax, {k: v["default"] for k, v in merged_params.items()})
-            elif plot_type == "LinearPlot":
-                plot_obj = LinearPlot(ax, {k: v["default"] for k, v in merged_params.items()})
-            # elif plot_type == "TopographicPlot":
-            #     plot_obj = TopographicPlotWrapper(ax, {}, merged_params)
-            else:
-                plot_obj = None
+            tab._available_plot_types = {}
+
+            for ptype, pdata in plots_json.items():
+                if param_name not in pdata["allowed_params"]:
+                    continue
+
+                plot_params_meta = pdata["Plot_params"]
+
+                merged_params = {}
+                for key, meta in plot_params_meta.items():
+                    dv = meta.get("default", None)
+                    if isinstance(dv, str) and dv.startswith("Plot_params."):
+                        ref = dv.split(".")[-1]
+                        dv = base_plot_params.get(ref, "")
+                    merged_params[key] = dict(meta)
+                    merged_params[key]["default"] = dv
+
+                plot_class = {
+                    "PSDPlot": PSDPlot,
+                    "LinearPlot": LinearPlot,
+                    "ViolinPlot": ViolinPlot
+                }[ptype]
+
+                tab._available_plot_types[ptype] = {
+                    "plot_class": plot_class,
+                    "plot_params_meta": merged_params,
+                    "plot_params_current": {k: v["default"] for k, v in merged_params.items()},
+                    "plot_obj": None,
+                    "param_widgets": {}
+                }
+
+            # Plot activo inicial
+            tab._current_plot_type = plot_type
+            plot_info = tab._available_plot_types[tab._current_plot_type]
+            plot_class = plot_info["plot_class"]
+            plot_obj = plot_class(ax, plot_info["plot_params_current"])
+            plot_info["plot_obj"] = plot_obj
+            tab._plot = plot_obj
+            tab._plot_type = tab._current_plot_type
+            tab._plot_params_current = plot_info["plot_params_current"]
 
             # Asociate the plot objet to the tab
             if plot_obj:
@@ -157,7 +181,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 tab._plot_type = plot_type
                 tab._plot_params = merged_params
                 tab._plot_params_current = {k: v["default"] for k, v in merged_params.items()}
-
                 layout.addWidget(canvas)
                 canvas.draw()
 
@@ -167,7 +190,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             # Create dynamic controls for plot parameters in the tab view
             controls_widget = tab.findChild(QtWidgets.QWidget, "TypePlotWidget")
-            build_dynamic_controls(self, controls_widget, merged_params, tab)
+            build_dynamic_controls(self, controls_widget, plot_info["plot_params_meta"], tab)
 
             # Connect buttons
             prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
@@ -304,7 +327,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 print("[WARN] Tab has no _plot_type.")
                 return
 
-            plot_type = tab._plot_type
+            plot_type = getattr(tab, "_current_plot_type", None)
             plot_obj = getattr(tab, "_plot", None)
 
             if plot_obj is None:
@@ -319,7 +342,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 }
 
             # Delegate per-plot data loading
-            if plot_type == "PSDPlot" or plot_type=='LinearPlot':
+            if plot_type == "PSDPlot" or plot_type=='LinearPlot' or plot_type=='ViolinPlot':
                 if not hasattr(tab, "_selected_channels") or not tab._selected_channels:
                     print("[WARN] No selected channels found in tab.")
                     return
@@ -351,7 +374,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 )
                 # Draw data
                 plot_obj.load_data(filtered, selected_channels)
-                if plot_type in ("PSDPlot", "LinearPlot"):
+                if plot_type in ("PSDPlot", "LinearPlot", "ViolinPlot"):
                     plot_obj.draw(colors = self.group_colors)
                     if not user_defined_ylim:
                         self._sync_widgets_with_plot(tab, plot_obj)
@@ -386,6 +409,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             return widget.text()
         elif ptype == "spin":
             return widget.value()
+        elif ptype == "doublespin":
+            return widget.value()
         return None
 
     def prev_tab(self):
@@ -403,7 +428,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
     def export_figure(self, tab):
         fig = getattr(tab, "_figure", None)
         plot_type = getattr(tab, "_plot_type", "figure")
-        export_figure_generic(view=self.view, fig=fig, suggested_name=f"{plot_type}.{{fmt}}", warn_if_none=False)
+        export_figure_generic(view=self.view, fig=fig, suggested_name=f"{plot_type}", warn_if_none=False)
 
     def filter_recordings(self):
         files = self.view.main_module.controller.filtered_files
@@ -474,5 +499,50 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 hi = round(value[1], 2)
                 text = f"[{lo}, {hi}]"
                 widget.setText(text)
+
+    def on_plot_type_changed(self, tab, container_widget, plot_type):
+        """
+        Called when the plot type combo changes.
+        Rebuilds widgets and updates the plot automatically.
+        """
+
+        if plot_type not in tab._available_plot_types:
+            return
+
+        tab._current_plot_type = plot_type
+        plot_info = tab._available_plot_types[plot_type]
+
+        # --- Create plot object if not exists ---
+        if plot_info["plot_obj"] is None:
+            ax = tab._figure.axes[0]
+            ax.cla()
+            ax.figure.canvas.draw_idle()
+            ax = tab._figure.axes[0]
+            plot_class = plot_info["plot_class"]
+            plot_info["plot_obj"] = plot_class(
+                ax, plot_info["plot_params_current"]
+            )
+
+        tab._plot = plot_info["plot_obj"]
+        tab._plot_type = plot_type
+        tab._plot_params_current = {
+            k: v["default"]
+            for k, v in plot_info["plot_params_meta"].items()
+        }
+        plot_info["plot_params_current"] = tab._plot_params_current
+
+        # --- Rebuild dynamic controls ---
+        self._clear_layout(container_widget.layout())
+        build_dynamic_controls(
+            self,
+            container_widget,
+            plot_info["plot_params_meta"],
+            tab
+        )
+
+        # --- Force redraw ---
+        tab._force_autolimits = True
+        self.update_plot(tab)
+
 
 

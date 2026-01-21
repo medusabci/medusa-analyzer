@@ -142,18 +142,37 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
     scroll_layout.setColumnStretch(1, 1)  # widgets
 
     # Title label
-    plot_type_label = QtWidgets.QLabel(
-        f"Plot type: {getattr(tab, '_plot_type', 'Unknown')}"
-    )
-    plot_type_label.setAlignment(QtCore.Qt.AlignCenter)
-    plot_type_label.setStyleSheet(
-        """background: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-           stop:0 #6a0dad, stop:1 #ec407a);
-           color: white; padding: 6px 12px; font-weight: 700;
-           font-size: 9pt; border-radius: 6px;"""
-    )
     row = 0
-    scroll_layout.addWidget(plot_type_label, row, 0, 1, 2)
+    label_plot_type = QtWidgets.QLabel("Plot Type")
+    label_plot_type.setStyleSheet("font-weight:700; color:white; font-size:9pt; background-color: "
+                                  "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a0dad, stop:1 #ec407a);"
+                                  "padding: 4px 10px; ")
+    label_plot_type.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+    scroll_layout.addWidget(label_plot_type, row, 0, 1, 2)
+    row += 1
+
+    plot_type_combo = QtWidgets.QComboBox()
+    plot_type_combo.addItems(list(tab._available_plot_types.keys()))
+    idx = plot_type_combo.findText(tab._current_plot_type)
+    if idx >= 0:
+        plot_type_combo.setCurrentIndex(idx)
+    plot_type_combo.currentTextChanged.connect(lambda ptype: self.on_plot_type_changed(tab, container_widget, ptype))
+    plot_type_combo.setStyleSheet("""
+        QComboBox {
+            background-color: #DCDCDC; 
+            color: black; 
+            border-radius: 4px; 
+            padding: 4px;
+        }
+    """)
+    scroll_layout.addWidget(plot_type_combo, row, 0, 1, 2)
+    row += 1
+
+    line = QtWidgets.QFrame()
+    line.setFrameShape(QtWidgets.QFrame.HLine)
+    line.setFrameShadow(QtWidgets.QFrame.Sunken)
+    line.setStyleSheet("color: #555555; background-color: #555555;")  # gris oscuro
+    scroll_layout.addWidget(line, row, 0, 1, 2)  # ocupa ambas columnas
     row += 1
 
     tab._param_widgets = {}
@@ -247,6 +266,19 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
             widget.setMinimum(meta.get("min", 0))
             widget.setMaximum(meta.get("max", 100))
             widget.setValue(default_value if default_value is not None else 10)
+            widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
+
+        elif param_type == "doublespin":
+            widget = QtWidgets.QDoubleSpinBox()
+            widget.setMinimum(meta.get("min", 0.0))
+            widget.setMaximum(meta.get("max", 1.0))
+            widget.setSingleStep(meta.get("step", 0.1))
+
+            if default_value is not None:
+                widget.setValue(float(default_value))
+            else:
+                widget.setValue(0.0)
+            widget.setDecimals(3)
             widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
         if widget is not None:

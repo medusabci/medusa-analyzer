@@ -452,4 +452,4 @@ class PlotController(QtCore.QObject):
                 break
 
         fig = (time_plot_widget.canvas.figure if time_plot_widget is not None else None)
-        export_figure_generic(view=self.view, fig=fig, suggested_name="Timeplot.{fmt}", warn_if_none=True)
+        export_figure_generic(view=self.view, fig=fig, suggested_name="Timeplot", warn_if_none=True)

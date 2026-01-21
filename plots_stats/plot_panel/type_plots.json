@@ -20,7 +20,6 @@
             "normal",
             "bold"
         ]
-
       },
       "x_label": {
         "type": "text",
@@ -130,7 +129,6 @@
             "normal",
             "bold"
         ]
-
       },
       "ylim": {
         "type": "range",
@@ -166,38 +164,87 @@
     }
   },
 
-  "TopographicPlot": {
+  "ViolinPlot": {
     "allowed_params": [
+      "Relative Power",
+      "Absolute Power",
+      "Median Frequency",
+      "Spectral Entropy",
+      "CTM",
+      "Sample Entropy",
+      "Lempel-Ziv Complexity"
     ],
     "Plot_params": {
       "title": {
         "type": "text",
-        "label": "Graph Title",
+        "label": "Title",
         "default": "Plot_params.title"
       },
-      "color_map": {
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
         "type": "select",
-        "label": "Color Map",
-        "default": "magma",
+        "label": "Title Weight",
+        "default": "normal",
         "options": [
-          "magma",
-          "plasma",
-          "viridis",
-          "inferno",
-          "cividis",
-          "jet",
-          "hot"
+            "normal",
+            "bold"
+        ]
+
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
         ]
       },
-      "colorbar_min": {
-        "type": "text",
-        "label": "Colorbar Minimum",
-        "default": null
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
       },
-      "colorbar_max": {
-        "type": "text",
-        "label": "Colorbar Maximum",
-        "default": null
+      "violin_transparency": {
+        "type": "doublespin",
+        "label": "Transparency",
+        "default": 0.6,
+        "min": 0,
+        "max": 1,
+        "step": 0.1
+      },
+      "plot_mean_line": {
+      "type": "bool",
+      "default": false,
+      "label": "Show mean"
+      },
+      "plot_median_line": {
+        "type": "bool",
+        "default": true,
+        "label": "Show median"
+      },
+      "plot_boxplot": {
+        "type": "bool",
+        "label": "Plot Boxplot",
+        "default": true
       }
     }
   }
