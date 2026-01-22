@@ -1,5 +1,5 @@
 import json
-from PySide6 import QtCore,QtGui
+from PySide6 import QtWidgets, QtCore,QtGui
 from PySide6.QtWidgets import (
     QDialog, QFormLayout, QSpinBox, QCheckBox, QColorDialog,
     QComboBox, QLabel, QDialogButtonBox, QWidget,
@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QColor
 from functools import partial
+import json
 
 class ExportDialog(QDialog):
     """
@@ -105,16 +106,32 @@ class ExportDialog(QDialog):
         self.color_label.setText(self.bg_color.name().upper())
 
 
-
-import json
-from PySide6 import QtWidgets, QtCore
-
-
 def build_dynamic_controls(self, container_widget, plot_params, tab):
     """
     Create dynamic controls to edit plot parameters generically.
     Adds at the top a label 'Plot type: <type>'.
     """
+
+    # Update plot type combo box
+    type_combo = tab.findChild(QtWidgets.QComboBox, "TypePlotcomboBox")
+    if type_combo is not None:
+        type_combo.blockSignals(True)
+        type_combo.clear()
+        type_combo.addItems(list(tab._available_plot_types.keys()))
+        idx = type_combo.findText(tab._current_plot_type)
+        if idx >= 0:
+            type_combo.setCurrentIndex(idx)
+        type_combo.currentTextChanged.connect(
+            lambda ptype, cw=container_widget: self.on_plot_type_changed(tab, cw, ptype)
+        )
+        type_combo.blockSignals(False)
+
+    control_widget = tab.findChild(QtWidgets.QWidget, "controlWidget")
+    if control_widget is None:
+        return
+
+    tab_widget = tab.findChild(QtWidgets.QWidget, "tabWidget")
+    tab_widget.setCurrentIndex(0)
 
     # Clear old layout if exists to avoid errors
     old_layout = container_widget.layout()
@@ -127,62 +144,18 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
             pass
 
     # Scroll area
-    scroll_area = QtWidgets.QScrollArea(container_widget)
-    scroll_area.setWidgetResizable(True)
-    scroll_area.setStyleSheet(
-        """QScrollArea {border: none; background-color: #222;} 
-        QWidget {background-color: transparent;}"""
-    )
-
-    scroll_content = QtWidgets.QWidget()
-    scroll_layout = QtWidgets.QGridLayout(scroll_content)
-    scroll_layout.setSpacing(8)
-    scroll_layout.setContentsMargins(10, 10, 10, 10)
-    scroll_layout.setColumnStretch(0, 0)  # labels
-    scroll_layout.setColumnStretch(1, 1)  # widgets
-
-    # Title label
-    row = 0
-    label_plot_type = QtWidgets.QLabel("Plot Type")
-    label_plot_type.setStyleSheet("font-weight:700; color:white; font-size:9pt; background-color: "
-                                  "qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a0dad, stop:1 #ec407a);"
-                                  "padding: 4px 10px; ")
-    label_plot_type.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-    scroll_layout.addWidget(label_plot_type, row, 0, 1, 2)
-    row += 1
-
-    plot_type_combo = QtWidgets.QComboBox()
-    plot_type_combo.addItems(list(tab._available_plot_types.keys()))
-    idx = plot_type_combo.findText(tab._current_plot_type)
-    if idx >= 0:
-        plot_type_combo.setCurrentIndex(idx)
-    plot_type_combo.currentTextChanged.connect(lambda ptype: self.on_plot_type_changed(tab, container_widget, ptype))
-    plot_type_combo.setStyleSheet("""
-        QComboBox {
-            background-color: #DCDCDC; 
-            color: black; 
-            border-radius: 4px; 
-            padding: 4px;
-        }
-    """)
-    scroll_layout.addWidget(plot_type_combo, row, 0, 1, 2)
-    row += 1
-
-    line = QtWidgets.QFrame()
-    line.setFrameShape(QtWidgets.QFrame.HLine)
-    line.setFrameShadow(QtWidgets.QFrame.Sunken)
-    line.setStyleSheet("color: #555555; background-color: #555555;")  # gris oscuro
-    scroll_layout.addWidget(line, row, 0, 1, 2)  # ocupa ambas columnas
-    row += 1
+    grid = QtWidgets.QGridLayout(control_widget)
+    grid.setSpacing(8)
+    grid.setContentsMargins(10, 10, 10, 10)
+    grid.setColumnStretch(0, 0)  # labels
+    grid.setColumnStretch(1, 1)  # widgets
 
     tab._param_widgets = {}
+    row = 0
 
-    # Loop over plot_params to create specific controls
     for key, meta in plot_params.items():
 
-        if isinstance(meta, dict) and any(
-            k in meta for k in ("type", "default", "label")
-        ):
+        if isinstance(meta, dict):
             param_type = meta.get("type", "text")
             label_text = meta.get("label", key)
             default_value = meta.get("default", "")
@@ -190,57 +163,31 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
             param_type = "text"
             label_text = key
             default_value = meta
-
         # Plot parameter label (left side)
         label = QtWidgets.QLabel(label_text)
         label.setStyleSheet("font-weight:600; color:white; font-size:9pt; background-color: #C53189;")
         label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
-        scroll_layout.addWidget(label, row, 0)
+        grid.addWidget(label, row, 0)
 
         widget = None
 
         if param_type in ("text", "range", "number"):
             widget = QtWidgets.QLineEdit()
-
-            if default_value is None and param_type == "range":
-                display_value = "[None, None]"
-            elif default_value is None:
-                display_value = ""
-            elif isinstance(default_value, (list, tuple, dict)):
-                display_value = json.dumps(default_value)
-            else:
-                display_value = str(default_value)
-
-            widget.setText(display_value)
+            widget.setText("" if default_value is None else str(default_value))
             widget.setStyleSheet("background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;")
 
         elif param_type == "bool":
             widget = QtWidgets.QCheckBox()
-            dv = (
-                bool(default_value)
-                if not isinstance(default_value, str)
-                else default_value.lower() in ("1", "true", "yes")
-            )
-            widget.setChecked(dv)
+            widget.setChecked(bool(default_value))
             widget.setStyleSheet("color:white;")
 
         elif param_type == "select":
             widget = QtWidgets.QComboBox()
-            options = meta.get("options", []) if isinstance(meta, dict) else []
-
-            for opt in options:
-                widget.addItem(str(opt))
-
-            if default_value not in (None, "") and str(default_value) not in [
-                str(o) for o in options
-            ]:
-                widget.addItem(str(default_value))
-
-            if default_value is not None and default_value != "":
+            widget.addItems([str(o) for o in meta.get("options", [])])
+            if default_value is not None:
                 idx = widget.findText(str(default_value))
                 if idx >= 0:
                     widget.setCurrentIndex(idx)
-
             widget.setStyleSheet("QComboBox {background-color:#DCDCDC; color:black; border-radius:4px; padding:4px;}")
 
         elif param_type == "color":
@@ -283,25 +230,14 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
 
         if widget is not None:
             widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-            scroll_layout.addWidget(widget, row, 1)
+            grid.addWidget(widget, row, 1)
             tab._param_widgets[key] = (param_type, widget)
 
         row += 1
 
-    scroll_content.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-    spacer = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-    scroll_layout.addItem(spacer, row, 0, 1, 2)
-    scroll_content.adjustSize()
-    scroll_area.setWidget(scroll_content)
+    grid.setRowStretch(row, 1)
+    control_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
 
-    main_layout = QtWidgets.QVBoxLayout()
-    main_layout.setContentsMargins(0, 0, 0, 0)
-    main_layout.addWidget(scroll_area)
-    container_widget.setLayout(main_layout)
-
-    container_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
-    container_widget.setMinimumHeight(170)
-    container_widget.updateGeometry()
 
 
 def export_figure_generic(view, fig, suggested_name, warn_if_none=False):

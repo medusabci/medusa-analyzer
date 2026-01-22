@@ -189,7 +189,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             canvas.draw()
 
             # Create dynamic controls for plot parameters in the tab view
-            controls_widget = tab.findChild(QtWidgets.QWidget, "TypePlotWidget")
+            controls_widget = tab.findChild(QtWidgets.QWidget, "controlWidget")
             build_dynamic_controls(self, controls_widget, plot_info["plot_params_meta"], tab)
 
             # Connect buttons
@@ -532,7 +532,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
         plot_info["plot_params_current"] = tab._plot_params_current
 
         # --- Rebuild dynamic controls ---
-        self._clear_layout(container_widget.layout())
+        layout = container_widget.layout()
+        if layout is not None:
+            self._clear_layout(layout)
+
         build_dynamic_controls(
             self,
             container_widget,
