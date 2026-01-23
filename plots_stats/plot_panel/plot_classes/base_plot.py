@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 import matplotlib.pyplot as plt
-
+import numpy as np
+from typing import List, Optional
 
 class BasePlot(ABC):
     """
@@ -93,3 +94,57 @@ class BasePlot(ABC):
 
     def get_last_limits(self):
         return self.last_limits
+
+    def normalize_data(self, data: np.ndarray, selected_channels: Optional[List[int]] = None ) -> np.ndarray:
+        """
+        Normalize data to shape (channels,).
+
+        Accepted shapes:
+        - (channels,)
+        - (1, channels)
+        - (epochs, channels)
+
+        If epochs dimension exists, average over epochs.
+        """
+
+        if data is None:
+            return None
+
+        data = np.asarray(data)
+
+        # Case 1: already channels vector
+        if data.ndim == 1:
+            return data
+
+        # Case 2: 2D matrix
+        if data.ndim == 2:
+            # shape: 1 x channels
+            if data.shape[0] == 1:
+                return data.squeeze()
+
+            # shape: epochs x channels
+            return np.mean(data, axis=0)
+
+        raise ValueError(f"[BasePlot] Unsupported data shape: {data.shape}")
+
+    def normalize_data_psd(self, values: np.ndarray) -> np.ndarray:
+        """
+        Normalize PSD data to shape (freqs, channels).
+
+        Accepted shapes:
+        - (freqs, channels)
+        - (channels, freqs)
+        - (epochs, freqs, channels)
+        """
+
+        values = np.asarray(values)
+
+        # Case 1: freqs x channels
+        if values.ndim == 2:
+            return values
+
+        # Case 2: epochs x freqs x channels
+        if values.ndim == 3:
+            return np.mean(values, axis=0)
+
+        raise ValueError(f"[PSDPlot] Unsupported PSD shape: {values.shape}")

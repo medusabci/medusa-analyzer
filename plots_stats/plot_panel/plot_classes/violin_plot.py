@@ -30,7 +30,7 @@ class ViolinPlot(BasePlot):
                     continue
 
                 data = None
-                for key in ("data", "vector", "values", "valores"):
+                for key in ("data", "vector", "values", "valores", "param"):
                     if key in mat:
                         data = np.asarray(mat[key]).squeeze()
                         break
@@ -44,10 +44,9 @@ class ViolinPlot(BasePlot):
                 if data is None:
                     continue
 
-                valid_channels = [ch for ch in selected_channels if 0 <= ch < data.size]
-                if not valid_channels:
-                    valid_channels = [0]
-
+                data = self.normalize_data(data)
+                max_idx = data.shape[0] - 1
+                valid_channels = [ch for ch in selected_channels if 0 <= ch <= max_idx] or [0]
                 values.append(np.mean(data[valid_channels]))
 
             if values:

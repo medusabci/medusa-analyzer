@@ -33,7 +33,7 @@ class PSDPlot(BasePlot):
                     continue
 
                 psd_struct = None
-                for key in ("psd", "PSD", "psd_struct"):
+                for key in ("param", "psd", "psd_struct", "PSD", "PSD_struct"):
                     if key in mat:
                         psd_struct = mat[key]
                         break
@@ -50,9 +50,8 @@ class PSDPlot(BasePlot):
                 freqs = np.asarray(freqs).squeeze()
                 values = np.asarray(values)
 
-                if values.ndim == 1:
-                    values = values.reshape(-1, 1)
-                elif values.shape[1] == freqs.size:
+                values = self.normalize_data_psd(values)
+                if values.shape[1] == freqs.size:
                     values = values.T
 
                 max_idx = values.shape[1] - 1
