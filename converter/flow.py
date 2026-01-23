@@ -31,7 +31,6 @@ def on_next_click(controller):
                       converter.controller.names_idx)
 
         # Trigger the conversion process
-        print('Convertidooo')
         return
 
     # Get the selected file extensions, and the associated available converters

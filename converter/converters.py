@@ -1,5 +1,6 @@
 from medusa.components import Recording, CustomExperimentData
 from medusa.meeg.meeg import EEG, EEGChannelSet
+from medusa.ecg import ECG # Do not remove, it is necessary!
 import csv
 import numpy as np
 import pandas as pd
