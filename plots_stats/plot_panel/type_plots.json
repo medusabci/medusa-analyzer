@@ -85,6 +85,7 @@
       "Sample Entropy",
       "Lempel-Ziv Complexity"
     ],
+    "requires_mode": "time_series",
     "Plot_params": {
       "title": {
         "type": "text",
@@ -129,6 +130,10 @@
             "normal",
             "bold"
         ]
+      },
+      "xlim": {
+      "type": "range",
+      "label": "Xlim"
       },
       "ylim": {
         "type": "range",

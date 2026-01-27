@@ -65,6 +65,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             params_json = json.load(f)
         with open(plots_json_path, "r", encoding="utf-8") as f:
             plots_json = json.load(f)
+        self.plots_json = plots_json
 
         experiment_type = self.view.main_module.controller.experiment_type
         features_data  = params_json.get(experiment_type, [])[0]
@@ -111,6 +112,20 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             self.setup_channel_list(tab, param)
             self.setup_band_list(tab, param)
+
+            # Detect mode
+            param_key = param  # param interno
+            filtered = tab._filtered_files_bands.get(param_key, {})
+
+            sel = tab._selected_channels.get(param_key, 0)
+            if isinstance(sel, (int, float)):
+                selected_channels = [int(sel)]
+            elif isinstance(sel, (list, tuple, set)):
+                selected_channels = list(sel)
+            else:
+                selected_channels = [0]
+
+            tab._data_mode = self.detect_data_mode(filtered, selected_channels)
 
             # Create de FigureCanvas in the placeholder to insert the plot:
             placeholder = tab.findChild(QtWidgets.QWidget, "plotPlaceholder")
@@ -163,14 +178,29 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     "param_widgets": {}
                 }
 
+            if tab._available_plot_types:
+                tab._current_plot_type = list(tab._available_plot_types.keys())[0]
+            else:
+                tab._current_plot_type = None
+            self.filter_plot_types_by_mode(tab, plots_json)
+            # Ensure current plot type is valid
+            if tab._current_plot_type not in tab._available_plot_types:
+                if tab._available_plot_types:
+                    tab._current_plot_type = next(iter(tab._available_plot_types))
+                else:
+                    print(f"[WARN] No available plots for parameter {param_name}")
+                    continue
+
             # Plot activo inicial
-            tab._current_plot_type = plot_type
             plot_info = tab._available_plot_types[tab._current_plot_type]
             plot_class = plot_info["plot_class"]
             plot_obj = plot_class(ax, plot_info["plot_params_current"])
             plot_info["plot_obj"] = plot_obj
+            self.plots_json = plots_json
             tab._plot = plot_obj
-            tab._plot_type = tab._current_plot_type
+            if tab._current_plot_type is None:
+                print(f"[WARN] No available plots for parameter {param_name}")
+                continue  # skip this tab
             tab._plot_params_current = plot_info["plot_params_current"]
 
             # Asociate the plot objet to the tab
@@ -190,7 +220,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             # Create dynamic controls for plot parameters in the tab view
             controls_widget = tab.findChild(QtWidgets.QWidget, "controlWidget")
-            build_dynamic_controls(self, controls_widget, plot_info["plot_params_meta"], tab)
+            build_dynamic_controls(self, controls_widget, tab._available_plot_types[tab._current_plot_type]["plot_params_meta"], tab)
+
+            # Initial auto-update
+            tab._force_autolimits = True
+            self.update_plot(tab)
 
             # Connect buttons
             prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
@@ -358,6 +392,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     selected_channels = list(sel)
                 else:
                     selected_channels = [0]
+
+                # Detect data mode
+                tab._data_mode = self.detect_data_mode(filtered, selected_channels)
+                # Filter plot types using JSON rules
+                self.filter_plot_types_by_mode(tab, self.plots_json)
 
                 # Get plot params
                 plot_obj.plot_params = tab._plot_params_current
@@ -546,6 +585,81 @@ class TabbedPlotWidgetController(QtCore.QObject):
         # --- Force redraw ---
         tab._force_autolimits = True
         self.update_plot(tab)
+
+    def filter_plot_types_by_mode(self, tab, plots_json):
+        """
+        Remove plot types that are not compatible with current data mode.
+        """
+        mode = getattr(tab, "_data_mode", None)
+        if mode is None:
+            return
+
+        to_remove = []
+
+        for ptype, pdata in plots_json.items():
+            required = pdata.get("requires_mode", None)
+
+            if required is None:
+                continue  # no restriction
+
+            # allow list or single string
+            if isinstance(required, str):
+                required = [required]
+
+            if mode not in required:
+                if ptype in tab._available_plot_types:
+                    to_remove.append(ptype)
+
+        for ptype in to_remove:
+            del tab._available_plot_types[ptype]
+
+        # If active plot type is no longer available, switch to a valid one
+        if tab._current_plot_type not in tab._available_plot_types:
+            if tab._available_plot_types:
+                tab._current_plot_type = list(tab._available_plot_types.keys())[0]
+                tab._plot = tab._available_plot_types[tab._current_plot_type]["plot_obj"]
+
+    def detect_data_mode(self, filtered_files, selected_channels):
+        """
+        Detects whether data is vector or time_series using the first valid file.
+        """
+        import scipy.io
+        import numpy as np
+
+        for group, files in filtered_files.items():
+            for filepath in files:
+                try:
+                    mat = scipy.io.loadmat(filepath, squeeze_me=True, struct_as_record=False)
+                except Exception:
+                    continue
+
+                data = None
+                for key in ("param", "vector", "values", "valores"):
+                    if key in mat:
+                        data = np.asarray(mat[key]).squeeze()
+                        break
+
+                if data is None:
+                    for key, val in mat.items():
+                        if isinstance(val, np.ndarray):
+                            data = val
+                            break
+
+                if data is None:
+                    continue
+
+                data = np.asarray(data)
+
+                # CASE 1: vector
+                if data.ndim == 1 or (data.ndim == 2 and data.shape[0] == 1):
+                    return "vector"
+
+                # CASE 2: time series
+                if data.ndim == 2:
+                    return "time_series"
+
+        return None
+
 
 
 
