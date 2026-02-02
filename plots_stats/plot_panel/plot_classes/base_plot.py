@@ -87,10 +87,7 @@ class BasePlot(ABC):
             print(f"[WARN] Could not apply {method}: {e}")
 
     def save_limits(self):
-        self.last_limits = {
-            "xlim": list(map(float, self.ax.get_xlim())),
-            "ylim": list(map(float, self.ax.get_ylim()))
-        }
+        self.last_limits = {"xlim": list(map(float, self.ax.get_xlim())), "ylim": list(map(float, self.ax.get_ylim()))}
 
     def get_last_limits(self):
         return self.last_limits

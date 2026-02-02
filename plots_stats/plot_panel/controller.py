@@ -9,6 +9,7 @@ from plots_stats.plot_panel.plot_classes.base_plot  import BasePlot
 from plots_stats.plot_panel.plot_classes.psd_plot import PSDPlot
 from plots_stats.plot_panel.plot_classes.linear_plot import LinearPlot
 from plots_stats.plot_panel.plot_classes.violin_plot import ViolinPlot
+from plots_stats.plot_panel.plot_classes.scatter_plot import ScatterPlot
 from plots_stats.plot_utils import ExportDialog, build_dynamic_controls, export_figure_generic
 from functools import partial
 import re, os, json
@@ -68,7 +69,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self.plots_json = plots_json
 
         experiment_type = self.view.main_module.controller.experiment_type
-        features_data  = params_json.get(experiment_type, [])[0]
+        self.features_data  = params_json.get(experiment_type, [])[0]
 
         # Update loading progress
         self.view.main_module.loading.set_progress((1 / len(param_iter)) * 100,
@@ -76,12 +77,13 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         # For each selected param, we insert one tab in de TabWidget
         for param in param_iter:
-            if param not in features_data:
+            if param not in self.features_data:
                 print(f"[WARN] Parameter '{param}' not found in available_params.json. Skipping.")
                 continue
 
-            param_name = features_data[param]["Param_name"]
-            base_plot_params = features_data[param]["Plot_params"]
+            param_name = self.features_data[param]["Param_name"]
+            self.param_name_to_key = {v["Param_name"]: k for k, v in self.features_data.items()}
+            base_plot_params = self.features_data[param]["Plot_params"]
 
             # Find the associate plot type
             plot_type = None
@@ -167,7 +169,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 plot_class = {
                     "PSDPlot": PSDPlot,
                     "LinearPlot": LinearPlot,
-                    "ViolinPlot": ViolinPlot
+                    "ViolinPlot": ViolinPlot,
+                    "ScatterPlot": ScatterPlot
                 }[ptype]
 
                 tab._available_plot_types[ptype] = {
@@ -220,6 +223,39 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             # Create dynamic controls for plot parameters in the tab view
             controls_widget = tab.findChild(QtWidgets.QWidget, "controlWidget")
+
+            # --------- FIX ScatterPlot x_param options ----------
+            if "ScatterPlot" in tab._available_plot_types:
+                scatter_meta = tab._available_plot_types["ScatterPlot"]["plot_params_meta"]
+
+                if "x_param" in scatter_meta:
+
+                    # All parameters selected in the previus step of the main module
+                    selected_params = list(self.view.main_module.controller.param_selection)
+                    x_options = [] # List of options for the X parameter
+                    x_mapping = {} # Mapping from (param_key, name)
+
+                    for p in selected_params: # Iterate over selected parameters
+                        if p not in self.features_data:
+                            continue
+                        pname = self.features_data[p]["Param_name"]
+                        # Ignore parameters not allowed for the ScatterPlot.
+                        if pname not in self.plots_json["ScatterPlot"]["allowed_params"]:
+                            continue
+
+                        bands = self.extract_bands_for_param(p)
+                        short_name = self.abbreviate_param_name(pname)
+                        for band in bands:
+                            label = f"{short_name} - {band.capitalize()}"
+                            value = f"{p}|{band}"
+                            x_options.append(label)
+                            x_mapping[label] = value
+
+                    scatter_meta["x_param"]["options"] = x_options
+                    scatter_meta["x_param"]["_mapping"] = x_mapping
+                    if x_options: # Set first option as default
+                        scatter_meta["x_param"]["default"] = x_options[0]
+
             build_dynamic_controls(self, controls_widget, tab._available_plot_types[tab._current_plot_type]["plot_params_meta"], tab)
 
             # Initial auto-update
@@ -332,10 +368,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def on_band_selected(self, tab, param, selected_band):
         filtered_files_bands = self.filter_recordings_by_band(param, selected_band)
-        self.filtered_files_bands = filtered_files_bands
         tab._filtered_files_bands = filtered_files_bands
+        tab._filtered_files_y = filtered_files_bands
+        tab._current_band_y = selected_band
+        tab._current_band = selected_band
         tab._force_autolimits = True
-        print(tab._filtered_files_bands)
 
     def _clear_layout(self, layout):
         """Helper to delete all items/widgets from a layout."""
@@ -418,6 +455,69 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     if not user_defined_ylim:
                         self._sync_widgets_with_plot(tab, plot_obj)
                     tab._force_autolimits = False
+
+            elif plot_type == "ScatterPlot":
+
+                param = list(tab._selected_channels.keys())[0]
+                sel = tab._selected_channels.get(param, 0)
+
+                if isinstance(sel, (int, float)):
+                    selected_channels = [int(sel)]
+                elif isinstance(sel, (list, tuple, set)):
+                    selected_channels = list(sel)
+                else:
+                    selected_channels = [0]
+
+                x_label = tab._plot_params_current.get("x_param")
+                scatter_meta = tab._available_plot_types["ScatterPlot"]["plot_params_meta"]
+                x_mapping = scatter_meta["x_param"].get("_mapping", {})
+                encoded = x_mapping.get(x_label)
+                if not encoded:
+                    print(f"[WARN] Invalid x_param selection: {x_label}")
+                    return
+                param_x, band_x = encoded.split("|")
+                param_y = list(tab._selected_channels.keys())[0]
+                param_y_name = f"{self.features_data[param_y]['Param_name']} ({tab._current_band_y})"
+                param_x_name = f"{self.features_data[param_x]['Param_name']} ({band_x})"
+
+                tab._plot_params_current["x_label"] = param_x_name
+                tab._plot_params_current["y_label"] = param_y_name
+                tab._plot_params_current["title"] = f"{param_y_name} vs {param_x_name}"
+
+                # Sync widgets with updated labels/title
+                for key in ("x_label", "y_label", "title"):
+                    if key not in tab._param_widgets:
+                        continue
+                    ptype, widget = tab._param_widgets[key]
+                    value = tab._plot_params_current.get(key)
+                    if value is None:
+                        continue
+                    if ptype in ("text", "range", "number"):
+                        widget.setText(str(value))
+
+                if not param_x:
+                    print(f"[WARN] Cannot map X param '{param_x_name}' to internal key")
+                    return
+
+                filtered_y = tab._filtered_files_y.get(param_y, {})
+                filtered_x_all = self.filter_recordings_by_band(param_x, band_x)
+                filtered_x = filtered_x_all.get(param_x, {})
+
+                new_x_param = tab._plot_params_current.get("x_param")
+                old_x_param = getattr(tab, "_last_x_param", None)
+                if new_x_param != old_x_param:
+                    tab._force_autolimits = True
+                    tab._last_x_param = new_x_param
+
+                plot_obj.plot_params = tab._plot_params_current
+                if getattr(tab, "_force_autolimits", False):
+                    tab._plot_params_current["xlim"] = [None, None]
+                    tab._plot_params_current["ylim"] = [None, None]
+                plot_obj.load_data(filtered_y, filtered_x, selected_channels)
+                plot_obj.draw(colors=self.group_colors)
+                self._sync_widgets_with_plot(tab, plot_obj)
+                tab._force_autolimits = False
+
             else:
                 print(f"[WARN] Unsupported plot type: {plot_type}")
 
@@ -659,6 +759,33 @@ class TabbedPlotWidgetController(QtCore.QObject):
                     return "time_series"
 
         return None
+
+    def extract_bands_for_param(self, param_key):
+        """
+        Returns sorted list of bands available for a given param key.
+        """
+        bands = set()
+        param_files = self.filtered_files.get(param_key, {})
+
+        for group_files in param_files.values():
+            for f in group_files:
+                match = re.search(r"_band-([a-zA-Z0-9]+)", f)
+                if match:
+                    bands.add(match.group(1))
+
+        return sorted(bands)
+
+    def abbreviate_param_name(self, name: str) -> str:
+        """
+        If name has 2 or more words → initials (Relative Power -> RP)
+        If only 1 word → keep it (Complexity)
+        """
+        parts = name.split()
+        if len(parts) >= 2:
+            return "".join(word[0].upper() for word in parts)
+        return name
+
+
 
 
 
