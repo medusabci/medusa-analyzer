@@ -28,6 +28,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self._tabs_created = False
         self.view.shown.connect(self.create_tabs)
         self.available_bands = []
+        self.simple_plots = {"PSDPlot", "LinearPlot", "ViolinPlot"}
 
     def create_tabs(self):
         """ Create the tabs """
@@ -119,13 +120,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             param_key = param  # param interno
             filtered = tab._filtered_files_bands.get(param_key, {})
 
-            sel = tab._selected_channels.get(param_key, 0)
-            if isinstance(sel, (int, float)):
-                selected_channels = [int(sel)]
-            elif isinstance(sel, (list, tuple, set)):
-                selected_channels = list(sel)
-            else:
-                selected_channels = [0]
+            sel = tab._selected_channels.get(param, 0)
+            selected_channels = sel if isinstance(sel, (list, tuple, set)) else [int(sel)]
 
             tab._data_mode = self.detect_data_mode(filtered, selected_channels)
 
@@ -394,133 +390,123 @@ class TabbedPlotWidgetController(QtCore.QObject):
         Generic update method for plots. Delegates to the specific plot class.
         """
         try:
-            if not hasattr(tab, "_plot_type"):
-                print("[WARN] Tab has no _plot_type.")
+            # ---------- Basic checks ----------
+            if not hasattr(tab, "_current_plot_type") or not hasattr(tab, "_plot"):
+                print("[WARN] Tab not ready for plotting.")
                 return
 
-            plot_type = getattr(tab, "_current_plot_type", None)
-            plot_obj = getattr(tab, "_plot", None)
+            plot_type = tab._current_plot_type
+            plot_obj = tab._plot
 
-            if plot_obj is None:
-                print(f"[WARN] No plot object found for type {plot_type}.")
-                return
+            is_scatter = plot_type == "ScatterPlot"
+            is_simple = plot_type in self.simple_plots
 
-            # Update plot params from widgets
+            # ---------- Update plot params from widgets ----------
             if hasattr(tab, "_param_widgets"):
                 tab._plot_params_current = {
                     key: self._get_widget_value(ptype, widget)
                     for key, (ptype, widget) in tab._param_widgets.items()
                 }
 
-            # Delegate per-plot data loading
-            if plot_type == "PSDPlot" or plot_type=='LinearPlot' or plot_type=='ViolinPlot':
-                if not hasattr(tab, "_selected_channels") or not tab._selected_channels:
-                    print("[WARN] No selected channels found in tab.")
-                    return
+            # ---------- Common channel handling ----------
+            param_y = list(tab._selected_channels.keys())[0]
+            sel = tab._selected_channels.get(param_y, 0)
+            selected_channels = sel if isinstance(sel, (list, tuple, set)) else [int(sel)]
 
-                param = list(tab._selected_channels.keys())[0]
-                filtered = tab._filtered_files_bands.get(param, {})
+            # =====================================================
+            # ================= SIMPLE PLOTS ======================
+            # =====================================================
+            if is_simple:
 
-                # --- Ensure selected_channels is always a list ---
-                sel = tab._selected_channels.get(param, 0)
-                if isinstance(sel, (int, float)):
-                    selected_channels = [int(sel)]
-                elif isinstance(sel, (list, tuple, set)):
-                    selected_channels = list(sel)
-                else:
-                    selected_channels = [0]
+                filtered = tab._filtered_files_bands.get(param_y, {})
 
-                # Detect data mode
+                # Detect data mode and filter plot types
                 tab._data_mode = self.detect_data_mode(filtered, selected_channels)
-                # Filter plot types using JSON rules
                 self.filter_plot_types_by_mode(tab, self.plots_json)
 
-                # Get plot params
                 plot_obj.plot_params = tab._plot_params_current
-                # Force autolimits if needed
-                if getattr(tab, "_force_autolimits", False):
+
+                # Autolimits
+                if tab._force_autolimits:
                     tab._plot_params_current["ylim"] = [None, None]
-                # Detect user-defined ylim
+
                 ylim_user = tab._plot_params_current.get("ylim", None)
                 user_defined_ylim = (
-                        not getattr(tab, "_force_autolimits", False) and
+                        not tab._force_autolimits and
                         isinstance(ylim_user, (list, tuple)) and
                         len(ylim_user) == 2 and
                         any(v is not None for v in ylim_user)
                 )
-                # Draw data
+
                 plot_obj.load_data(filtered, selected_channels)
-                if plot_type in ("PSDPlot", "LinearPlot", "ViolinPlot"):
-                    plot_obj.draw(colors = self.group_colors)
-                    if not user_defined_ylim:
-                        self._sync_widgets_with_plot(tab, plot_obj)
-                    tab._force_autolimits = False
+                plot_obj.draw(colors=self.group_colors)
 
-            elif plot_type == "ScatterPlot":
+                if not user_defined_ylim:
+                    self._sync_widgets_with_plot(tab, plot_obj)
 
-                param = list(tab._selected_channels.keys())[0]
-                sel = tab._selected_channels.get(param, 0)
+                tab._force_autolimits = False
 
-                if isinstance(sel, (int, float)):
-                    selected_channels = [int(sel)]
-                elif isinstance(sel, (list, tuple, set)):
-                    selected_channels = list(sel)
-                else:
-                    selected_channels = [0]
+            # =====================================================
+            # ================== SCATTER ==========================
+            # =====================================================
+            elif is_scatter:
 
-                x_label = tab._plot_params_current.get("x_param")
                 scatter_meta = tab._available_plot_types["ScatterPlot"]["plot_params_meta"]
                 x_mapping = scatter_meta["x_param"].get("_mapping", {})
+
+                x_label = tab._plot_params_current.get("x_param")
                 encoded = x_mapping.get(x_label)
+
                 if not encoded:
                     print(f"[WARN] Invalid x_param selection: {x_label}")
                     return
+
                 param_x, band_x = encoded.split("|")
-                param_y = list(tab._selected_channels.keys())[0]
+
+                # ---- Labels & title ----
                 param_y_name = f"{self.features_data[param_y]['Param_name']} ({tab._current_band_y})"
                 param_x_name = f"{self.features_data[param_x]['Param_name']} ({band_x})"
 
-                tab._plot_params_current["x_label"] = param_x_name
-                tab._plot_params_current["y_label"] = param_y_name
-                tab._plot_params_current["title"] = f"{param_y_name} vs {param_x_name}"
+                tab._plot_params_current.update({
+                    "x_label": param_x_name,
+                    "y_label": param_y_name,
+                    "title": f"{param_y_name} vs {param_x_name}"
+                })
 
-                # Sync widgets with updated labels/title
+                # Sync widgets
                 for key in ("x_label", "y_label", "title"):
-                    if key not in tab._param_widgets:
-                        continue
-                    ptype, widget = tab._param_widgets[key]
-                    value = tab._plot_params_current.get(key)
-                    if value is None:
-                        continue
-                    if ptype in ("text", "range", "number"):
-                        widget.setText(str(value))
+                    if key in tab._param_widgets:
+                        ptype, widget = tab._param_widgets[key]
+                        if ptype in ("text", "range", "number"):
+                            widget.setText(str(tab._plot_params_current[key]))
 
-                if not param_x:
-                    print(f"[WARN] Cannot map X param '{param_x_name}' to internal key")
-                    return
-
+                # ---- Load data ----
                 filtered_y = tab._filtered_files_y.get(param_y, {})
                 filtered_x_all = self.filter_recordings_by_band(param_x, band_x)
                 filtered_x = filtered_x_all.get(param_x, {})
 
+                # Detect X change → reset limits
                 new_x_param = tab._plot_params_current.get("x_param")
-                old_x_param = getattr(tab, "_last_x_param", None)
-                if new_x_param != old_x_param:
+                if new_x_param != getattr(tab, "_last_x_param", None):
                     tab._force_autolimits = True
                     tab._last_x_param = new_x_param
 
                 plot_obj.plot_params = tab._plot_params_current
-                if getattr(tab, "_force_autolimits", False):
+
+                if tab._force_autolimits:
                     tab._plot_params_current["xlim"] = [None, None]
                     tab._plot_params_current["ylim"] = [None, None]
+
                 plot_obj.load_data(filtered_y, filtered_x, selected_channels)
                 plot_obj.draw(colors=self.group_colors)
+
                 self._sync_widgets_with_plot(tab, plot_obj)
                 tab._force_autolimits = False
 
             else:
                 print(f"[WARN] Unsupported plot type: {plot_type}")
 
+            # ---------- Final draw ----------
             if hasattr(tab, "_canvas"):
                 tab._canvas.draw()
 
