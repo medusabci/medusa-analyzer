@@ -117,7 +117,7 @@ class ViolinPlot(BasePlot):
                 width=0.15,
                 showcaps=True,
                 showfliers=False,
-                boxprops={"facecolor": "none", "zorder": 3},
+                boxprops={"facecolor": "none", "zorder": 20},
                 medianprops={"color": "black", "linewidth": 1.5},
                 whiskerprops={"linewidth": 1},
                 capprops={"linewidth": 1, "zorder": 20},
