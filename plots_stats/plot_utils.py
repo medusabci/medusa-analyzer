@@ -167,6 +167,8 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
         label = QtWidgets.QLabel(label_text)
         label.setStyleSheet("font-weight:600; color:white; font-size:9pt; background-color: #C53189;")
         label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignLeft)
+        # Fixed height for all widgets
+        label.setFixedHeight(25)
         grid.addWidget(label, row, 0)
 
         widget = None

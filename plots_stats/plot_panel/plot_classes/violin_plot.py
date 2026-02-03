@@ -81,10 +81,31 @@ class ViolinPlot(BasePlot):
             inner=None,
             cut=2,
             linewidth=1,
-            saturation=1
+            saturation=1,
+            zorder = 1
         )
 
-        # Boxplot overlay opcional
+        plot_strip = bool(self.plot_params.get("plot_strip", True))
+        if plot_strip:
+            # Strip
+            sns.stripplot(
+                data=df,
+                x='group',
+                y="value",
+                hue='group',
+                order=group_order,
+                ax=self.ax,
+                palette=palette,
+                edgecolor='#000000',
+                linewidth=0.3,
+                size=7,
+                jitter=True,
+                alpha=0.7,
+                zorder=10,
+                legend=False
+            )
+
+        # Boxplot overlay optional
         plot_boxplot = bool(self.plot_params.get("plot_boxplot", True))
         if plot_boxplot:
             sns.boxplot(
@@ -96,10 +117,10 @@ class ViolinPlot(BasePlot):
                 width=0.15,
                 showcaps=True,
                 showfliers=False,
-                boxprops={"facecolor": "white", "zorder": 3},
+                boxprops={"facecolor": "none", "zorder": 3},
                 medianprops={"color": "black", "linewidth": 1.5},
                 whiskerprops={"linewidth": 1},
-                capprops={"linewidth": 1, "zorder": 10},
+                capprops={"linewidth": 1, "zorder": 20},
             )
 
         # ---- Mean / Median lines (optional) ----

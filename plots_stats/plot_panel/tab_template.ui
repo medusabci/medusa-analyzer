@@ -36,7 +36,7 @@
        <item>
         <widget class="QTabWidget" name="tabWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="GeneralSettings">
           <attribute name="title">
@@ -53,7 +53,7 @@
                <rect>
                 <x>0</x>
                 <y>0</y>
-                <width>257</width>
+                <width>274</width>
                 <height>222</height>
                </rect>
               </property>
@@ -63,6 +63,18 @@
                  <layout class="QHBoxLayout" name="horizontalLayout_3">
                   <item>
                    <widget class="QLabel" name="label_2">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>20</height>
+                     </size>
+                    </property>
                     <property name="styleSheet">
                      <string notr="true">background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a0dad, stop:1 #ec407a);
 color: white;
@@ -78,7 +90,20 @@ font-weight: 700;</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QComboBox" name="TypePlotcomboBox"/>
+                   <widget class="QComboBox" name="TypePlotcomboBox">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>
@@ -101,6 +126,18 @@ font-weight: 700;</string>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
                   <item>
                    <widget class="QLabel" name="channelsLabel">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>20</height>
+                     </size>
+                    </property>
                     <property name="font">
                      <font>
                       <weight>87</weight>
@@ -175,10 +212,16 @@ font-weight: 700;</string>
                  <layout class="QHBoxLayout" name="horizontalLayout">
                   <item>
                    <widget class="QLabel" name="label">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
                     <property name="maximumSize">
                      <size>
                       <width>16777215</width>
-                      <height>30</height>
+                      <height>20</height>
                      </size>
                     </property>
                     <property name="font">
@@ -202,7 +245,20 @@ font-weight: 700;</string>
                    </widget>
                   </item>
                   <item>
-                   <widget class="QComboBox" name="bandscomboBox"/>
+                   <widget class="QComboBox" name="bandscomboBox">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                    <property name="maximumSize">
+                     <size>
+                      <width>16777215</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>

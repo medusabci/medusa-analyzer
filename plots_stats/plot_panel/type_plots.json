@@ -250,6 +250,11 @@
         "type": "bool",
         "label": "Plot Boxplot",
         "default": true
+      },
+      "plot_strip": {
+        "type": "bool",
+        "label": "Plot Strip",
+        "default": true
       }
     }
   },
