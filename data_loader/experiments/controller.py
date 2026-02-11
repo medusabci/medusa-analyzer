@@ -15,6 +15,7 @@ class ExperimentsController:
         self._set_icon(self.view.ecgIcon, "ecg_features.png", size=[165, 157])
         self._set_icon(self.view.plotparamIcon, "plot_parameters.png", size=[165, 157])
         self._set_icon(self.view.plotprepIcon, "plot_preprocessed.png", size=[165, 157])
+        self._set_icon(self.view.ploterpIcon, "plot_erps.png", size=[165, 157])
 
         self._hide_all_radiobuttons()
 
@@ -29,6 +30,7 @@ class ExperimentsController:
 
         self.view.plotparamstatsFrame.mousePressEvent = lambda event: self._open_plot_stats_module("params")
         self.view.plotprepstatsFrame.mousePressEvent = lambda event: self._open_plot_stats_module("preprocess")
+        self.view.ploterpstatsFrame.mousePressEvent = lambda event: self._open_plot_stats_module("erps")
 
 
     def _on_frame_click(self, frame, event):
@@ -104,6 +106,8 @@ class ExperimentsController:
             window_title = "Plot & Stats - Experiment Setup"
         elif module_type == "preprocess":
             window_title = "Preprocessing - Experiment Setup"
+        elif module_type == "erps":
+            window_title = "ERP Analysis - Experiment Setup"
 
         # Loading screen
         self.view.main_window.loading.set_progress(100, self.view.main_window)
@@ -116,6 +120,9 @@ class ExperimentsController:
         elif module_type == "preprocess":
             widget = PreprocessingWidget(self.plot_stats_window)
             PreprocessingController(widget)
+        elif module_type == "erps":
+            widget = ConfigWidget(self.plot_stats_window)
+            ConfigController(widget) # TODO: hay que adaptar el ConfigController
 
         # Replace the default widget in index 0
         self.plot_stats_window.stackedWidget.insertWidget(0, widget)
