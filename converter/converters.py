@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import scipy.io as sio
 import shutil
+from pathlib import Path
 
 # ----------------------------- CONVERTERS -----------------------------
 def _convert_rec_file(file, output_dir, worker=None):
@@ -26,6 +27,53 @@ def _convert_rec_file(file, output_dir, worker=None):
         else:
             marks = _create_empty_marks()
             recording.add_experiment_data(marks, key="marks")
+
+        # Save the normalized recording
+        recording.save(str(output_dir))
+        return str(output_dir)
+    except Exception as e:
+        if worker:
+            worker.log.emit(f"❌ Error converting REC file: {e}")
+        return None
+
+
+def _convert_edubiomat_file(file, output_dir, worker=None):
+    """
+    Normalize REC file: ensure it always contains a 'marks' entry.
+    """
+
+    try:
+        subj_id = output_dir.stem.split('.')[0]
+        # Load the recording
+        recording = Recording.load(str(file))
+        bids_folders = output_dir.parent
+        bids_folders.mkdir(parents=True, exist_ok=True)
+
+        # Extract ERP marks
+        marks = CustomExperimentData()
+        evt_names = []
+        evt_times = []
+        for trial in recording.exp_data.data:
+            evt_names.append('Group_ ' + Path(trial['img_path']).stem.split('-')[-1])
+            evt_times.append(trial['onset_time'])
+
+        # Convert names to labels
+        names_map = {x: i for i, x in enumerate(set(evt_names))}
+        evt_labels = [names_map[x] for x in evt_names]
+        # Create dict for app_settings
+        dict_app_settings = {}
+        for name, label in names_map.items():
+            dict_app_settings[name] = {'desc-name': name.upper().replace('_',' '), 'label': label}
+
+        # Stores the marks
+        marks.events_labels = evt_labels
+        marks.events_times = evt_times
+        # Store the app settings
+        marks.app_settings = {'events': dict_app_settings,
+                              'conditions': {'no-condition': {'desc-name': 'No condition', 'label': 0}}}
+        marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
+        # Add the marks to the recording
+        recording.add_experiment_data(marks, key="marks")
 
         # Save the normalized recording
         recording.save(str(output_dir))
@@ -195,19 +243,24 @@ def _convert_csv_file(file, output_dir, worker=None):
 # Converter registry
 CONVERTERS = {
     ".rcp.bson": [{
-            "name": "RCP Files",
+            "name": "RCP",
             "function": _convert_rcp_file
     }],
     ".mat":[{
-            "name": "GIB Mat Files",
+            "name": "GIB Mat",
             "function": _convert_mat_file
     }],
-    ".rec.bson": [{
-            "name": "REC Files",
+    ".rec.bson": [
+        {
+            "name": "Recorder REC",
             "function": _convert_rec_file
+        },
+        {
+            "name": "EDUBIOMAT",
+            "function": _convert_edubiomat_file
     }],
     ".csv": [{
-            "name": "CSV Sant Joan Files",
+            "name": "CSV Sant Joan",
             "function": _convert_csv_file
     }],
 }

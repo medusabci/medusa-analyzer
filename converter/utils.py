@@ -172,7 +172,7 @@ class ConverterWorker(QThread):
                 raise ValueError("Conversion function returned None or failed.")
 
             if result == 'already_correct':
-                worker.log.emit(f"ℹ️ {file} → Already contains 'marks', skipped conversion.")
+                worker.log.emit(f"ℹ️ {file} → Already contains 'marks'. The file will not be converted, but will be restructured into BIDS format.")
                 return file, 'already_correct'
             else:
                 worker.log.emit(f"✅ {file} → Converting successful.")
