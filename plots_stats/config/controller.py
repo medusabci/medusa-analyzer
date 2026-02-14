@@ -38,6 +38,7 @@ class ConfigController(QtCore.QObject):
         Validate the experiment directory and update the view with the results.
         """
 
+
         # If path does not exist
         if not os.path.exists(path):
             result = {
@@ -63,11 +64,23 @@ class ConfigController(QtCore.QObject):
                         "message": f"✅ Detected Experiment: {exp_type} ({signal_type})",
                         "experiment_info": {"experiment_type": exp_type, "signal_type": signal_type}
                     }
-                    self.path_correct = True
-
                     self.view.main_module.controller.all_files = [str(f) for f in Path(path).rglob('*')
-                        if f.is_file() and f.suffix == '.mat']
-                    self.view.main_module.controller.experiment_type = exp_type
+                                                                  if f.is_file() and f.suffix == '.mat']
+                    if not self.view.is_erp:
+                        self.path_correct = True
+                        self.view.main_module.controller.experiment_type = exp_type
+                    else:
+                        # If ERPs, check if there are segmented files in the path
+                        if any("segmented" in f for f in self.view.main_module.controller.all_file):
+                            # Store only the segmented files for ERPs plotting
+                            self.view.main_module.controller.all_file = [f for f in self.view.main_module.controller.all_file if "segmented" in f]
+                            self.path_correct = True
+                            self.view.main_module.controller.experiment_type = exp_type
+                        else:
+                            result = {
+                                "message": "⚠️ No segmented .mat files found in this directory for ERPs plotting.",
+                                "experiment_info": None
+                            }
 
                 # Otherwise, show an error message
                 except Exception as e:

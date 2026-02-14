@@ -121,7 +121,7 @@ class ExperimentsController:
             widget = PreprocessingWidget(self.plot_stats_window)
             PreprocessingController(widget)
         elif module_type == "erps":
-            widget = ConfigWidget(self.plot_stats_window)
+            widget = ConfigWidget(self.plot_stats_window, is_erp=True)
             ConfigController(widget) # TODO: hay que adaptar el ConfigController
 
         # Replace the default widget in index 0
