@@ -49,7 +49,7 @@ class MainModuleWindow(QtWidgets.QWidget, ui_plots_stats_window):
         # Setup UI
         self.setupUi(self)
         # Set the icon
-        self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
+        self.setWindowIcon(QtGui.QIcon("media/medusa_task_icon.png"))
 
 
         ### MAIN WINDOW HEADER ###

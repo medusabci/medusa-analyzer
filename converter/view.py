@@ -6,6 +6,7 @@ from converter.conversion.view import ConversionWidget
 from converter.conversion.controller import ConversionController
 from PySide6.QtGui import QPalette
 from utils import LoadingDialog
+import ctypes
 
 # Load UI class
 ui_main_window = loadUiType('converter/view.ui')[0]
@@ -22,8 +23,12 @@ class MainConverter(QtWidgets.QMainWindow, ui_main_window):
 
         # Setup UI
         self.setupUi(self)
-        # Set the icon
-        self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
+        # Set application name so it can have its own icon
+        medusa_id = u'gib.medusa.converter'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(medusa_id)
+        # Set icon and title
+        self.setWindowIcon(QtGui.QIcon("media/medusa_task_icon.png"))
+        self.setWindowTitle("MEDUSA© Analyzer Converter")
 
         # Base widget (Data loader)
         self.data_loader = DataLoaderWidget(self)

@@ -4,6 +4,7 @@ from data_loader.experiments.view import ExperimentWidget
 from data_loader.experiments.controller import ExperimentsController
 from PySide6.QtGui import QPalette
 from utils import LoadingDialog
+import ctypes
 
 # Load UI class
 ui_main_window = loadUiType('main_window/view.ui')[0]
@@ -49,9 +50,12 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         # Setup UI
         self.setupUi(self)
-        # Set the icon
-        self.setWindowIcon(QtGui.QIcon("media/medusa_icon.png"))
-
+        # Set application name so it can have its own icon
+        medusa_id = u'gib.medusa.analyzer'
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(medusa_id)
+        # Set icon and title
+        self.setWindowIcon(QtGui.QIcon("media/medusa_task_icon.png"))
+        self.setWindowTitle("MEDUSA© Analyzer")
 
         ### MAIN WINDOW HEADER ###
 
