@@ -4,10 +4,15 @@ from PySide6.QtUiTools import loadUiType
 ui_plots_init = loadUiType('plots_stats/config/view.ui')[0]
 
 class ConfigWidget(QtWidgets.QWidget, ui_plots_init):
-    def __init__(self, main_module):
+    def __init__(self, main_module, is_erp=False):
         super().__init__()
         self.setupUi(self)
         self.main_module = main_module
+        self.is_erp = is_erp
+
+        if is_erp:
+            self.groupBox.setVisible(False)
+            self.withinRButton.setChecked(True)
 
         self.setMinimumSize(0, 0)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)
