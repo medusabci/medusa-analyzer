@@ -146,7 +146,7 @@ class PipelineWorker(QThread):
 
                         # Get the indices of rejected epochs
                         _, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
-                            epochs, np.nanmean(original_signal, axis=0), np.std(original_signal, axis=0),
+                            epochs, np.nanmean(processed_signal, axis=0), np.std(processed_signal, axis=0),
                             k=thres_k, n_samp=thres_samples, n_cha=thres_channels)
 
                         # Store the rejected indices for the current condition

@@ -55,6 +55,16 @@ def on_next_click(view):
         QtWidgets.QMessageBox.warning(view,"Condition Selection Required", "Please select at least one condition before proceeding.")
         return False
 
+    if view.eventRButton.isChecked() and not view.eventList.selectionModel().selectedIndexes():
+        QtWidgets.QMessageBox.warning(view,"Event Selection Required", "Please select at least one event before proceeding.")
+        return False
+
+    if view.eventRButton.isChecked() and view.eventList.selectionModel().selectedIndexes() and not view.conditionList.selectionModel().selectedIndexes():
+        QtWidgets.QMessageBox.warning(view, "Condition Selection Required",
+                                      "Please select at least one condition before proceeding. "
+                                      "If no conditions are available, select 'no-condition'.")
+        return False
+
     # Check if at least 2 oscillations of the lowest frequency band are present in the trials
     # Get the trial length depending on the segmentation type
     if view.conditionRButton.isChecked():
