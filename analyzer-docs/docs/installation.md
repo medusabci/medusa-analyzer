@@ -12,14 +12,14 @@ Alternatively, if you are an advanced user, you may want to clone the main branc
 git clone -b main https://github.com/medusabci/medusa-analyzer.git
 ```
 
-## 2. Download the MEDUSA© Kernel (Analyzer branch)
-MEDUSA© Analyzer requires the `developers_analyzer` branch of the MEDUSA© Kernel. Download it from its [GitHub Repository](https://github.com/medusabci/medusa-kernel/tree/developers_analyzer) using [this link](https://github.com/medusabci/medusa-kernel/archive/refs/heads/developers_analyzer.zip). After downloading it, extract it in an empty folder. 
+## 2. Download the MEDUSA© Kernel (developers branch)
+MEDUSA© Analyzer requires the `developers` branch of the MEDUSA© Kernel. Download it from its [GitHub Repository](https://github.com/medusabci/medusa-kernel/tree/developers_analyzer) using [this link](https://github.com/medusabci/medusa-kernel/archive/refs/heads/developers_analyzer.zip). After downloading it, extract it in an empty folder. 
 Suggestion: Extract it into the following folder **C:/Users/Your_Useer/Documents/Medusa_Analyzer/Kernel**
 
 Alternatively, if you are an advanced user, you may want to clone the branch:
 
 ```bash
-git clone -b developers_analyzer https://github.com/medusabci/medusa-kernel.git
+git clone -b developers https://github.com/medusabci/medusa-kernel.git
 ```
 
 ## 3. Download and install Python **3.13**

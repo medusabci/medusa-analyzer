@@ -165,8 +165,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 self.on_band_selected(tab, param, self.available_bands[0])
 
             param_key = param
-            print("DEBUG param_key:", repr(param_key))
-            print("DEBUG keys:", tab._filtered_files_bands.keys())
             filtered = tab._filtered_files_bands.get(param_key, {})
             sel = tab._selected_channels.get(param, 0)
             selected_channels = sel if isinstance(sel, (list, tuple, set)) else [int(sel)]
@@ -317,9 +315,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
         tab._current_band_y = selected_band
         tab._current_band = selected_band
         tab._force_autolimits = True
-        print("DEBUG on_band_selected param:", param)
-        print("DEBUG on_band_selected band:", selected_band)
-        print("DEBUG on_band_selected result:", filtered_files_bands)
 
     def _clear_layout(self, layout):
         """Helper to delete all items/widgets from a layout."""
