@@ -116,20 +116,20 @@ class ExperimentTreeDialog(BaseTreeDialog):
         return path.endswith(".rec.bson")
 
 
-class GenericFileTreeDialog(BaseTreeDialog):
-    """
-    Generic file tree dialog for arbitrary file conversion.
-    Includes all detected files, regardless of extension.
-    """
-
-    def __init__(self, file_paths, parent=None):
-        super().__init__(
-            file_paths,
-            title="Select files to convert",
-            header="Detected file structure",
-            parent=parent,
-        )
-
-    def is_valid_file(self, path):
-        """All files are valid selections."""
-        return True
+# class GenericFileTreeDialog(BaseTreeDialog):
+#     """
+#     Generic file tree dialog for arbitrary file conversion.
+#     Includes all detected files, regardless of extension.
+#     """
+#
+#     def __init__(self, file_paths, parent=None):
+#         super().__init__(
+#             file_paths,
+#             title="Select files to convert",
+#             header="Detected file structure",
+#             parent=parent,
+#         )
+#
+#     def is_valid_file(self, path):
+#         """All files are valid selections."""
+#         return True

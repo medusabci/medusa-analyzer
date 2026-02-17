@@ -16,6 +16,8 @@ class ExperimentsController:
         self._set_icon(self.view.plotparamIcon, "plot_parameters.png", size=[165, 157])
         self._set_icon(self.view.plotprepIcon, "plot_preprocessed.png", size=[165, 157])
         self._set_icon(self.view.ploterpIcon, "plot_erps.png", size=[165, 157])
+        self._set_icon(self.view.convIcon, "converter.png", size=[165, 157])
+
 
         self._hide_all_radiobuttons()
 
@@ -28,9 +30,11 @@ class ExperimentsController:
             # Assign the click event
             frame.mousePressEvent = lambda event,frame=frame : self._on_frame_click(frame, event)
 
-        self.view.plotparamstatsFrame.mousePressEvent = lambda event: self._open_plot_stats_module("params")
-        self.view.plotprepstatsFrame.mousePressEvent = lambda event: self._open_plot_stats_module("preprocess")
-        self.view.ploterpstatsFrame.mousePressEvent = lambda event: self._open_plot_stats_module("erps")
+        self.view.plotparamstatsFrame.mousePressEvent = lambda event: self._open_module("params")
+        self.view.plotprepstatsFrame.mousePressEvent = lambda event: self._open_module("preprocess")
+        self.view.ploterpstatsFrame.mousePressEvent = lambda event: self._open_module("erps")
+        self.view.convFrame.mousePressEvent = lambda event: self._open_module("conv")
+
 
 
     def _on_frame_click(self, frame, event):
@@ -81,13 +85,49 @@ class ExperimentsController:
 
         label.setPixmap(pixmap)
 
-    def _open_plot_stats_module(self, module_type: str):
+    def _open_module(self, module_type: str):
         """
         Open main window of 'Plot & Stats' module depending on 'module_type'.
         """
+
         # Loading screen
         self.view.main_window.loading.show()
         self.view.main_window.loading.set_progress(50, self.view.main_window)
+
+        if module_type == "conv":
+            # Import converter
+            from converter.controller import MainConverterController
+            from converter.view import MainConverter
+
+            # Create converter window and controller
+            self.converter_window = MainConverter()
+            self.converter_controller = MainConverterController(self.converter_window)
+
+            # Title of the window
+            window_title = "Converter"
+
+            # Finish loading before opening the converter
+            self.view.main_window.loading.set_progress(100, self.view.main_window)
+            time.sleep(0.5)
+            self.view.main_window.loading.finish()
+
+            # Create and show the converter dialog, that is where the converter window will be inserted
+            self.dialog = QtWidgets.QDialog(self.view.window())
+            self.dialog.setModal(True)
+            self.dialog.setWindowTitle(window_title)
+            self.dialog.setMinimumWidth(1200)
+            self.dialog.setMinimumHeight(1000)
+            self.dialog.setWindowFlags(QtCore.Qt.Window)
+
+            # Store the reference in the controller to be able to close it at the end of the converter flow
+            self.converter_controller.dialog = self.dialog
+
+            # Insert the converter window into the dialog and run it
+            layout = QtWidgets.QVBoxLayout(self.dialog)
+            layout.addWidget(self.converter_window)
+            self.dialog.exec()
+
+            return  # Avoid running the rest of the function
 
         # Move inside the loop when preprocessing is done
         from plots_stats.main_module.view import MainModuleWindow

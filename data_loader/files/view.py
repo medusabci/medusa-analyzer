@@ -30,13 +30,6 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
                     This module allows you to <b>import biomedical recordings</b> 
                     that will be processed in the following steps.
                 </p>
-
-                <p style="font-size: 11pt; color:#666; margin:0 40px;">
-                    Please select at least one <span style="color:#007acc; font-weight:bold;">.rec</span> file. 
-                    If you don’t have compatible recordings yet, 
-                    use the <b style="color:#ec407a;">MEDUSA Converter</b> tool 
-                    to transform your data into the supported format.
-                </p>
             </div>
         """)
         # Remove background
@@ -50,11 +43,7 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
         ### ELEMENT CONFIGURATION ###
 
         # Data loading
-        self.set_button_stylesheet(self.convertButton)
         self.set_button_stylesheet(self.explorerButton)
-        self.convertProgressBar.setValue(0)
-        self.convertProgressBar.setVisible(False)
-        self.convertLogTextBrowser.setVisible(False)
 
         self.explorerButton.setVisible(False)
         self.loadButton.setEnabled(False)
@@ -81,8 +70,3 @@ class FilesWidget(QtWidgets.QWidget, ui_files):
                                 );
                             }
                         """)
-
-    def _log_message(self, text):
-        self.convertLogTextBrowser.append(text)
-        self.convertLogTextBrowser.moveCursor(QTextCursor.End)
-        QApplication.processEvents()
