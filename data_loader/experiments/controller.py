@@ -103,9 +103,6 @@ class ExperimentsController:
             self.converter_window = MainConverter()
             self.converter_controller = MainConverterController(self.converter_window)
 
-            # Title of the window
-            window_title = "Converter"
-
             # Finish loading before opening the converter
             self.view.main_window.loading.set_progress(100, self.view.main_window)
             time.sleep(0.5)
@@ -114,12 +111,12 @@ class ExperimentsController:
             # Create and show the converter dialog, that is where the converter window will be inserted
             self.dialog = QtWidgets.QDialog(self.view.window())
             self.dialog.setModal(True)
-            self.dialog.setWindowTitle(window_title)
+            self.dialog.setWindowTitle("Converter")
             self.dialog.setMinimumWidth(1200)
             self.dialog.setMinimumHeight(1000)
             self.dialog.setWindowFlags(QtCore.Qt.Window)
 
-            # Store the reference in the controller to be able to close it at the end of the converter flow
+            # Store the reference of the main QDialog to close it at the end
             self.converter_controller.dialog = self.dialog
 
             # Insert the converter window into the dialog and run it
