@@ -9,6 +9,7 @@ from plots_stats.plot_panel.plot_classes.psd_plot import PSDPlot
 from plots_stats.plot_panel.plot_classes.linear_plot import LinearPlot
 from plots_stats.plot_panel.plot_classes.violin_plot import ViolinPlot
 from plots_stats.plot_panel.plot_classes.scatter_plot import ScatterPlot
+from plots_stats.plot_panel.plot_classes.erp_plot import ERPPlot
 from plots_stats.plot_utils import ExportDialog, build_dynamic_controls, export_figure_generic
 from functools import partial
 import re, os, json
@@ -27,7 +28,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         self._tabs_created = False
         self.view.shown.connect(self.create_tabs)
         self.available_bands = []
-        self.simple_plots = {"PSDPlot", "LinearPlot", "ViolinPlot"}
+        self.simple_plots = {"PSDPlot", "LinearPlot", "ViolinPlot", "ERPPlot"}
 
     # ----------------- Helpers -----------------
     def _load_json_files(self):
@@ -54,7 +55,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             "PSDPlot": PSDPlot,
             "LinearPlot": LinearPlot,
             "ViolinPlot": ViolinPlot,
-            "ScatterPlot": ScatterPlot
+            "ScatterPlot": ScatterPlot,
+            "ERPPlot": ERPPlot
         }.get(ptype)
 
     def _create_available_plot_types(self, param_name, base_plot_params, plots_json):
@@ -114,6 +116,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
     # ----------------- Main flow -----------------
     def create_tabs(self):
         """ Create the tabs """
+        if self.view.main_module.is_erp:
+            from plots_stats.param_selection.flow import filter_files_by_selection
+            self.view.main_module.controller.filtered_files = filter_files_by_selection(self.view)
         selected_parameters = self.view.main_module.controller.param_selection
         if selected_parameters is None:
             return
@@ -156,8 +161,12 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             self.setup_channel_list(tab, param)
             self.setup_band_list(tab, param)
+            if self.available_bands:
+                self.on_band_selected(tab, param, self.available_bands[0])
 
             param_key = param
+            print("DEBUG param_key:", repr(param_key))
+            print("DEBUG keys:", tab._filtered_files_bands.keys())
             filtered = tab._filtered_files_bands.get(param_key, {})
             sel = tab._selected_channels.get(param, 0)
             selected_channels = sel if isinstance(sel, (list, tuple, set)) else [int(sel)]
@@ -293,7 +302,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
         param_files_dict = self.filtered_files.get(param, {})
         filtered_files_bands = {}
         for group, file_list in param_files_dict.items():
-            valid = [f for f in file_list if f"_band-{selected_band}" in f and f"_param-{param}" in f]
+            if self.view.main_module.is_erp:
+                valid = [f for f in file_list if f"_band-{selected_band}" in f and "segmented" in f]
+            else:
+                valid = [f for f in file_list if f"_band-{selected_band}" in f and f"_param-{param}" in f]
             if valid:
                 filtered_files_bands.setdefault(param, {})[group] = valid
         return filtered_files_bands
@@ -305,6 +317,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
         tab._current_band_y = selected_band
         tab._current_band = selected_band
         tab._force_autolimits = True
+        print("DEBUG on_band_selected param:", param)
+        print("DEBUG on_band_selected band:", selected_band)
+        print("DEBUG on_band_selected result:", filtered_files_bands)
 
     def _clear_layout(self, layout):
         """Helper to delete all items/widgets from a layout."""
@@ -469,7 +484,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def filter_recordings(self):
         files = self.view.main_module.controller.filtered_files
-        parameters = getattr(self.view.main_module.controller, "params", None)
+        parameters = getattr(self.view.main_module.controller, "param_selection", None)
         separated_files_param = {}
         for param in parameters:
             for file in files:

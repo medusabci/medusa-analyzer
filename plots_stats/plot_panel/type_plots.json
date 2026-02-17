@@ -1,4 +1,83 @@
 {
+  "ERPPlot": {
+    "allowed_params": [
+      "Event-related potentials"
+    ],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "xlim": {
+        "type": "range",
+        "label": "Xlim",
+        "default": [
+          0,
+          70
+        ]
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
+      },
+      "line_width": {
+        "type": "spin",
+        "label": "Line width",
+        "default": 2,
+        "min": 1
+      },
+      "line_style": {
+        "type": "select",
+        "label": "Line style",
+        "default": "solid",
+        "options": [
+          "solid",
+          "dashed",
+          "dotted",
+          "dashdot"
+        ]
+      }
+    }
+  },
   "PSDPlot": {
     "allowed_params": [
       "PSD"

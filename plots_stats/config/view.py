@@ -8,11 +8,9 @@ class ConfigWidget(QtWidgets.QWidget, ui_plots_init):
         super().__init__()
         self.setupUi(self)
         self.main_module = main_module
-        self.is_erp = is_erp
-
+        self.main_module.is_erp = is_erp
         if is_erp:
-            self.groupBox.setVisible(False)
-            self.withinRButton.setChecked(True)
+            self.main_module.controller.param_selection = 'segmented'
 
         self.setMinimumSize(0, 0)
         self.setSizePolicy(QtWidgets.QSizePolicy.Expanding,QtWidgets.QSizePolicy.Expanding)

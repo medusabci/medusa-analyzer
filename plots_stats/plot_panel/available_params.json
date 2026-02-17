@@ -71,6 +71,14 @@
           "x_label": "Groups",
           "y_label": "Complexity"
         }
+      },
+      "segmented": {
+        "Param_name": "Event-related potentials",
+        "Plot_params": {
+          "title": "ERPs",
+          "x_label": "Time (ms)",
+          "y_label": "Amplitude (µV)"
+        }
       }
     }
   ]

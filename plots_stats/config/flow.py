@@ -40,7 +40,12 @@ def on_next_click(view):
     # Filter the recordings based on the selected criteria (e.g., within or between subjects)
     view.main_module.controller.subjects = get_subjects_from_list(view.main_module.controller.all_files)
     view.main_module.controller.recordings = get_recordings_from_list(view.main_module.controller.all_files)
-    view.main_module.controller.params = get_params_from_list(view.main_module.controller.all_files)
+    if not view.main_module.is_erp:
+        view.main_module.controller.params = get_params_from_list(view.main_module.controller.all_files)
+    else:
+        view.main_module.controller.params = ['segmented']
+        view.main_module.controller.param_selection = ['segmented']
+
     view.main_module.controller.bands = get_bands_from_list(view.main_module.controller.all_files)
 
     if view.main_module.controller.config_config['analysis_mode'] == "nocomparison":
@@ -87,7 +92,11 @@ def on_next_click(view):
         # Read the JSON file
         with open("plots_stats/plot_stats_config.json", "r", encoding="utf-8") as f:
             modules_config = json.load(f)
-            modules_config = modules_config['parameters']
+            if view.main_module.is_erp:
+                modules_config = modules_config['erps']
+            else:
+                modules_config = modules_config['parameters']
+
 
         experiment = view.main_module.controller.config_config['experiment_info']['experiment_type']
         analysis_mode = view.main_module.controller.config_config['analysis_mode']

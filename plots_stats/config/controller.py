@@ -66,14 +66,14 @@ class ConfigController(QtCore.QObject):
                     }
                     self.view.main_module.controller.all_files = [str(f) for f in Path(path).rglob('*')
                                                                   if f.is_file() and f.suffix == '.mat']
-                    if not self.view.is_erp:
+                    if not self.view.main_module.is_erp:
                         self.path_correct = True
                         self.view.main_module.controller.experiment_type = exp_type
                     else:
                         # If ERPs, check if there are segmented files in the path
-                        if any("segmented" in f for f in self.view.main_module.controller.all_file):
+                        if any("segmented" in f for f in self.view.main_module.controller.all_files):
                             # Store only the segmented files for ERPs plotting
-                            self.view.main_module.controller.all_file = [f for f in self.view.main_module.controller.all_file if "segmented" in f]
+                            self.view.main_module.controller.all_files = [f for f in self.view.main_module.controller.all_files if "segmented" in f]
                             self.path_correct = True
                             self.view.main_module.controller.experiment_type = exp_type
                         else:
