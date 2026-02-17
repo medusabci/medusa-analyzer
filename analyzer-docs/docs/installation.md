@@ -19,7 +19,7 @@ Suggestion: Extract it into the following folder **C:/Users/Your_Useer/Documents
 Alternatively, if you are an advanced user, you may want to clone the branch:
 
 ```bash
-git clone -b developers_analyzer https://github.com/medusabci/medusa-kernel.git
+git clone -b developers https://github.com/medusabci/medusa-kernel.git
 ```
 
 ## 3. Download and install Python **3.13**
