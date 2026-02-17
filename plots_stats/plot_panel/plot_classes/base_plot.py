@@ -122,7 +122,11 @@ class BasePlot(ABC):
             # shape: epochs x channels
             return np.mean(data, axis=0)
 
-        raise ValueError(f"[BasePlot] Unsupported data shape: {data.shape}")
+        # Case 3: 3D tensor (epochs x channels x something_else)
+        if data.ndim == 3:
+            return np.mean(data, axis=0)
+        else:
+            raise ValueError(f"[BasePlot] Unsupported data shape: {data.shape}")
 
     def normalize_data_psd(self, values: np.ndarray) -> np.ndarray:
         """

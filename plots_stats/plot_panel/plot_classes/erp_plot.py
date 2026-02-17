@@ -46,13 +46,7 @@ class ERPPlot(BasePlot):
                     continue
 
                 data = np.asarray(data)
-
-                # ---- Normalización dimensional ----
-                # TODO: utilizar normalización de base_plot para esto
-                # epochs x times x channels
-                if data.ndim == 3:
-                    data = np.mean(data, axis=0)
-                # times x channels
+                data = self.normalize_data(data)  # aquí se aplican todos los casos 1D, 2D, 3D
                 if data.ndim != 2:
                     print(f"[WARN] Unsupported ERP shape {data.shape} in {filepath}")
                     continue
