@@ -99,7 +99,7 @@ def _convert_rcp_file(file, output_dir, worker=None):
         marks = CustomExperimentData()
         marks.events_labels = data.erpspellerdata.erp_labels.tolist() if isinstance(data.erpspellerdata.erp_labels, np.ndarray) else data.erpspellerdata.erp_labels
         marks.events_times = data.erpspellerdata.onsets.tolist() if isinstance(data.erpspellerdata.onsets, np.ndarray) else data.erpspellerdata.onsets
-        marks.app_settings = {'events': {'target': {'desc-name': 'Target','label': 0}, 'non_target': {'desc-name': 'Non target','label': 1}}, 'conditions': {'no-condition': {'desc-name': 'No condition','label': 0}}}
+        marks.app_settings = {'events': {'non_target': {'desc-name': 'Non target','label': 0}, 'target': {'desc-name': 'Target','label': 1}}, 'conditions': {'no-condition': {'desc-name': 'No condition','label': 0}}}
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
 
         # Fill the Recording object
