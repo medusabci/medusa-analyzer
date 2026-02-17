@@ -76,6 +76,7 @@ class ConfigController(QtCore.QObject):
                             self.view.main_module.controller.all_files = [f for f in self.view.main_module.controller.all_files if "segmented" in f]
                             self.path_correct = True
                             self.view.main_module.controller.experiment_type = exp_type
+                            self.view.main_module.controller.window = [data["segmentation"]["window_start"], data["segmentation"]["window_end"]]
                         else:
                             result = {
                                 "message": "⚠️ No segmented .mat files found in this directory for ERPs plotting.",

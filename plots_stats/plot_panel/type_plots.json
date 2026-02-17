@@ -4,6 +4,11 @@
       "Event-related potentials"
     ],
     "Plot_params": {
+      "plot_error": {
+        "type": "bool",
+        "label": "Plot error (95% CI)",
+        "default": true
+      },
       "title": {
         "type": "text",
         "label": "Title",
@@ -45,14 +50,6 @@
         "options": [
           "normal",
           "bold"
-        ]
-      },
-      "xlim": {
-        "type": "range",
-        "label": "Xlim",
-        "default": [
-          0,
-          70
         ]
       },
       "ylim": {

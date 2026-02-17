@@ -364,6 +364,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 tab._data_mode = self.detect_data_mode(filtered, selected_channels)
                 self.filter_plot_types_by_mode(tab, self.plots_json)
                 plot_obj.plot_params = tab._plot_params_current
+                if plot_type == "ERPPlot":
+                    window = getattr(self.view.main_module.controller, "window", None)
+                    if window is not None:
+                        plot_obj.plot_params["_time_window"] = window
 
                 if tab._force_autolimits:
                     tab._plot_params_current["ylim"] = [None, None]
