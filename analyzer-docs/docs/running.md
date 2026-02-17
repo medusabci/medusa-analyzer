@@ -15,7 +15,7 @@ You should see ```(venv)``` at the beginning of the command line, indicating tha
 ## 2. Launch the application
 Run de following command:
 ````bash
-python main_window.py
+python main.py
 ````
 This will launch the MEDUSA© Analyzer interface. 
 
