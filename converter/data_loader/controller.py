@@ -61,6 +61,13 @@ class DataLoaderController:
             for ext in available_converters
                 for conv in CONVERTERS[ext]
         ]
+
+        if len(available_converters_names) > 1:
+            QtWidgets.QMessageBox.warning(
+                self.view,
+                "Multiple Converters",
+                "Multiple converters are available. Please select the one you need at the top."
+            )
         # Add the available converters to the combo box
         self.view.converterBox.setDisabled(False)
         self.view.converterBox.clear()
@@ -124,6 +131,7 @@ class DataLoaderController:
         else:
             conv_text = self.view.converterBox.currentText()
 
+        # if items:
         # Show only the files that match the selected converter
         ext_found = False
         for ext, converters_list in CONVERTERS.items():

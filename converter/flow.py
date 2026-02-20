@@ -13,7 +13,7 @@ def on_next_click(controller):
 
     # Close the app
     if controller.view.nextButton.text() == "Close":
-        controller.view.close()
+        controller.dialog.accept()
         return
 
 

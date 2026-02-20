@@ -42,6 +42,13 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
     Normalize REC file: ensure it always contains a 'marks' entry.
     """
 
+    category_map = {
+        0: "Alg_Con", 1: "Alg_Pic", 2: "Alg_Abs",
+        3: "Est_Con", 4: "Est_Pic", 5: "Est_Abs",
+        6: "Geo_Con", 7: "Geo_Pic", 8: "Geo_Abs",
+        9: "Num_Con", 10: "Num_Pic", 11: "Num_Abs",
+    }
+
     try:
         subj_id = output_dir.stem.split('.')[0]
         # Load the recording
@@ -54,7 +61,9 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
         evt_names = []
         evt_times = []
         for trial in recording.exp_data.data:
-            evt_names.append('Group_ ' + Path(trial['img_path']).stem.split('-')[-1])
+            group_id = Path(trial['img_path']).stem.split('-')[-1]
+            response = '_Agr' if trial['response'] == 1 else '_DesAgr'
+            evt_names.append(category_map[int(group_id)] + response)
             evt_times.append(trial['onset_time'])
 
         # Convert names to labels
@@ -256,12 +265,16 @@ CONVERTERS = {
             "function": _convert_rec_file
         },
         {
-            "name": "EDUBIOMAT",
+            "name": "EDUBIOMAT BSON",
             "function": _convert_edubiomat_file
     }],
     ".csv": [{
             "name": "CSV Sant Joan",
             "function": _convert_csv_file
+    }],
+    ".rec.mat": [{
+            "name": "EDUBIOMAT Mat",
+            "function": _convert_edubiomat_file
     }],
 }
 
