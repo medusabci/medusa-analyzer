@@ -249,6 +249,90 @@ def _convert_csv_file(file, output_dir, worker=None):
             worker.log.emit(f"❌ Error converting CSV file: {e}")
         return None
 
+
+def _convert_mne(file, output_dir, worker=None):
+    import mne
+    """
+    Convert MNE file to REC format.
+    """
+    try:
+        subj_id = output_dir.stem
+        recording = Recording(subject_id=subj_id)
+
+        # Load data
+        mne_data = mne.io.read_raw(file, preload=False)
+
+        data = mne_data.get_data().T
+        fs = mne_data.info['sfreq']
+        times = mne_data.times
+        channels = mne_data.info['ch_names']
+
+        # Create the channel set
+        if any(t in ['mag', 'grad'] for t in mne_data.get_channel_types()): # If MEG
+            channels = [{"label": f"{ch}", "coord": "all", "reference": None}
+                        for ch in channels]
+            channel_set = EEGChannelSet(reference_method="average")
+            channel_set.set_montage(channels=channels, allow_unlocated_channels=True)
+
+        else:  # If EEG
+            channel_set = EEGChannelSet()
+            channel_set.set_standard_montage(l_cha=channels, montage='10-05')
+
+        # Extract marks from MNE
+        marks = CustomExperimentData()
+
+        # Events
+        evt_annotations = mne_data.annotations.duration < 0.01
+        evt_names = mne_data.annotations.description[evt_annotations]
+        evt_times = mne_data.annotations.onset[evt_annotations]
+        # Convert names to labels
+        names_map = {x: i for i, x in enumerate(set(evt_names))}
+        evt_labels = [names_map[x] for x in evt_names]
+        # Create dict for app_settings
+        dict_app_settings_evt = {}
+        for name, label in names_map.items():
+            dict_app_settings_evt[name] = {'desc-name': name, 'label': label}
+        # Store the marks
+        marks.events_labels = evt_labels
+        marks.events_times = evt_times
+
+        # Conditions
+        cnd_names = mne_data.annotations.description[~evt_annotations]
+        cnd_times = mne_data.annotations.onset[~evt_annotations]
+        cnd_times_off = mne_data.annotations.onset[~evt_annotations] + mne_data.annotations.duration[~evt_annotations]
+        cnd_times = np.column_stack((cnd_times, cnd_times_off)).flatten().tolist()
+        # Convert names to labels
+        names_map = {x: i for i, x in enumerate(set(cnd_names))}
+        cnd_labels = [names_map[x] for x in cnd_names]
+        # Create dict for app_settings
+        dict_app_settings_cnd = {}
+        for name, label in names_map.items():
+            dict_app_settings_cnd[name] = {'desc-name': name, 'label': label}
+        # Store the marks
+        marks.conditions_labels = cnd_labels
+        marks.conditions_times = cnd_times
+
+        # Store the app settings
+        marks.app_settings = {'events': dict_app_settings_evt,
+                              'conditions': dict_app_settings_cnd}
+
+        # Create EEG object
+        eeg = EEG(times=times, signal=data, fs=fs, channel_set=channel_set)
+
+        # Fill and save recording
+        recording.add_biosignal(biosignal=eeg)
+        recording.add_experiment_data(marks, key='marks')
+
+        bids_folders = output_dir.parent
+        bids_folders.mkdir(parents=True, exist_ok=True)
+        recording.save(str(output_dir))
+        return str(output_dir)
+
+    except Exception as e:
+        if worker:
+            worker.log.emit(f"❌ Error converting CSV file: {e}")
+        return None
+
 # Converter registry
 CONVERTERS = {
     ".rcp.bson": [{
@@ -276,8 +360,32 @@ CONVERTERS = {
             "name": "EDUBIOMAT Mat",
             "function": _convert_edubiomat_file
     }],
+    ".*": [{
+        "name": "MNE-Compatible format",
+        "function": _convert_mne
+    }]
 }
 
+MNE_FORMATS = (
+    '.fif', '.fif.gz',
+    '.set', '.fdt',            # EEGLAB
+    '.bdf',                    # Biosemi BDF
+    '.edf',                    # EDF / EDF+
+    '.vhdr', '.vmrk', '.eeg',  # BrainVision (header/markers/raw)
+    '.cnt',                    # Neuroscan CNT
+    '.mff', '.egi',            # EGI (MFF / simple binary)
+    '.gdf',                    # GDF
+    '.sqd',                    # KIT (sqd)
+    '.ds',                     # CTF directory (CTF .ds)
+    '.nedf',                   # NeuroElectrics NEDF
+    '.ns1', '.ns2', '.ns3', '.ns4', '.ns5', '.ns6',  # Blackrock NSx variants
+    '.ncs',                    # Neuralynx (.ncs files)
+    '.mat',                    # FieldTrip / MATLAB structures
+    '.fil',                    # FIL-OPMEG
+    '.lay', '.dat',            # Persyst (.lay/.dat)
+    '.asc',                    # Eyelink (.asc)
+    '.snirf',                  # SNIRF (nirs)
+)
 # ----------------------------- END OF CONVERTERS -----------------------------
 
 ## Additional utility functions and classes from utils.py for completeness

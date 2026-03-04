@@ -1,5 +1,5 @@
 from PySide6 import QtWidgets, QtGui, QtCore
-from converter.converters import CONVERTERS
+from converter.converters import CONVERTERS, MNE_FORMATS
 import os
 from pathlib import Path
 
@@ -42,7 +42,7 @@ class DataLoaderController:
 
         # Gather valid files recursively
         valid_exts = tuple(CONVERTERS.keys())
-        valid_files = [os.path.join(root, f) for root, _, files in os.walk(input_dir) for f in files if f.endswith(valid_exts)]
+        valid_files = [os.path.join(root, f) for root, _, files in os.walk(input_dir) for f in files if f.endswith(valid_exts + MNE_FORMATS)] # Also keep MNE formats
 
         if not valid_files:
             QtWidgets.QMessageBox.warning(
@@ -56,6 +56,7 @@ class DataLoaderController:
         # Get the selected file extensions, and the associated available converters
         valid_files_exts = [''.join(Path(file).suffixes) for file in valid_files]
         available_converters = list(set(valid_exts) & set(valid_files_exts))
+        available_converters.append(".*")
         available_converters_names = [
             conv["name"]
             for ext in available_converters
@@ -141,7 +142,12 @@ class DataLoaderController:
                     break
             if ext_found:
                 break
-        items = [item for item in items if item.endswith(ext)]
+
+        # If the selected converter is not ".*" (that is, all files supported), filter by the corresponding extension
+        if ext == ".*":
+            items = [item for item in items if item.endswith(MNE_FORMATS)]
+        else:
+            items = [item for item in items if item.endswith(ext)]
 
         # Clear current list
         self.view.filelistWidget.clear()
