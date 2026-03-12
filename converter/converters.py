@@ -42,7 +42,12 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
     Normalize REC file: ensure it always contains a 'marks' entry.
     """
 
-    category_map = {
+    category_map = {}
+    category_map[1] = {
+        0: "Agr", 1: "DesAgr"}
+    category_map[2] = {
+        0: "Agr", 1: "DesAgr"}
+    category_map[3] = {
         0: "Alg_Con", 1: "Alg_Pic", 2: "Alg_Abs",
         3: "Est_Con", 4: "Est_Pic", 5: "Est_Abs",
         6: "Geo_Con", 7: "Geo_Pic", 8: "Geo_Abs",
@@ -61,9 +66,13 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
         evt_names = []
         evt_times = []
         for trial in recording.exp_data.data:
-            group_id = Path(trial['img_path']).stem.split('-')[-1]
+            if '-' in  Path(trial['img_path']).stem:
+                group_id = Path(trial['img_path']).stem.split('-')[-1]
+            else:
+                continue
+            experiment = int(Path(trial['img_path']).parts[-2])
             response = '_Agr' if trial['response'] == 1 else '_DesAgr'
-            evt_names.append(category_map[int(group_id)] + response)
+            evt_names.append(category_map[experiment][int(group_id)] + response)
             evt_times.append(trial['onset_time'])
 
         # Convert names to labels
