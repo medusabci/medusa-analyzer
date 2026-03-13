@@ -3,6 +3,59 @@ import pandas as pd
 from scipy import stats
 import itertools
 import pingouin as pg
+from PySide6.QtWidgets import (QPushButton, QVBoxLayout, QHBoxLayout, QDialog,
+                               QPlainTextEdit, QFileDialog, QMessageBox)
+from PySide6.QtGui import QFont
+
+class StatsReport(QDialog):
+    def __init__(self, text_report, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Statistical Analysis Report")
+        self.resize(550, 450)
+        self.text_report = text_report
+
+        layout = QVBoxLayout(self)
+
+        # Área de texto
+        self.text_viewer = QPlainTextEdit()
+        self.text_viewer.setReadOnly(True)
+        self.text_viewer.setPlainText(self.text_report)
+
+        font = QFont("Courier")
+        font.setStyleHint(QFont.StyleHint.Monospace)
+        self.text_viewer.setFont(font)
+
+        layout.addWidget(self.text_viewer)
+
+        # Buttons
+        layout_buttons = QHBoxLayout()
+        self.btn_save = QPushButton("Save report")
+        self.btn_close = QPushButton("Close")
+
+        layout_buttons.addWidget(self.btn_save)
+        layout_buttons.addWidget(self.btn_close)
+
+        layout.addLayout(layout_buttons)
+
+        # Conexiones
+        self.btn_close.clicked.connect(self.close)
+        self.btn_save.clicked.connect(self.save_report)
+
+    def save_report(self):
+        path_file, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Report",
+            "statistical_report.txt",
+            "Text files (*.txt);All files (*)"
+        )
+
+        if path_file:
+            try:
+                with open(path_file, 'w', encoding='utf-8') as f:
+                    f.write(self.text_report)
+                QMessageBox.information(self, "Success", "Report successfully saved.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Report could not be saved:\n{str(e)}")
 
 
 def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continuous=False):

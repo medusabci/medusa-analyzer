@@ -11,7 +11,7 @@ from plots_stats.plot_panel.plot_classes.violin_plot import ViolinPlot
 from plots_stats.plot_panel.plot_classes.scatter_plot import ScatterPlot
 from plots_stats.plot_panel.plot_classes.erp_plot import ERPPlot
 from plots_stats.plot_utils import ExportDialog, build_dynamic_controls, export_figure_generic
-from plots_stats.utils import do_stats
+from plots_stats.utils import do_stats, StatsReport
 from functools import partial
 import re, os, json
 import numpy as np
@@ -661,6 +661,14 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def stats_report(self):
 
+        # Check whether the statistical comparison is paired or not
+        paired = self.view.main_module.controller.config_config['analysis_mode']
+        if paired == 'nocomparison':
+            # If no comparison, do not make the statistical analysis
+            return
+        else:
+            paired == 'within'
+
         # Create a dialog box for the correction method
         corr_window = QtWidgets.QMessageBox(self)
         corr_window.setWindowTitle("MCP Correction")
@@ -682,4 +690,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         elif btn == btn_none:
             corr_mode = None
 
-        results, report_text = do_stats(data, groups, paired=XXXX, padjust=corr_mode, is_continuous=False)
+        results, report_text = do_stats(data, groups, paired=paired, padjust=corr_mode, is_continuous=False)
+
+        report_window = StatsReport(self, report_text)
+        report_window.exec()
