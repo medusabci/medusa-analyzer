@@ -5,7 +5,7 @@ import seaborn as sns
 import matplotlib.colors as mcolors
 from typing import Dict, List
 from .base_plot import BasePlot
-
+import itertools
 
 class ViolinPlot(BasePlot):
     """
@@ -154,6 +154,61 @@ class ViolinPlot(BasePlot):
                         linewidth=1.2,
                         zorder=2
                     )
+
+        # Get whether to show the stats bars
+        stats_checkbox = False
+
+        if stats_checkbox:
+
+            # Run the statistical analysis if it has not been done yet
+            if not self.statistical_results in locals():
+                self.view.main_module.plot_panel.controller.stats_report()
+
+            # Pairs of groups
+            pairs = list(itertools.combinations(group_order, 2))
+
+            # Generate random values for testing
+            pairwise_res = {}
+            for g1, g2 in pairs:
+                pairwise_res[(g1, g2)]['p_values_corr'] = np.random.uniform(0, 0.3)
+
+            # Get the y range for establishing the y position of the horizontal bars showing the significance
+            y_max = df["value"].max()
+            if pd.isna(y_max): return
+            y_range = y_max - df["value"].min()
+            h_line = y_max + 0.02 * y_range
+            step = 0.08 * y_range
+
+            # For each comparison
+            line_count = 0
+            for g1, g2 in pairs:
+
+                # If exits the corrected p-values, use them, otherwise use the original ones
+                if pairwise_res[(g1, g2)]['p_values_corr']:
+                    p_adj = pairwise_res[(g1, g2)]['p_values_corr']
+                else:
+                    p_adj = pairwise_res[(g1, g2)]['p_values']
+
+                # Label as a function of the significance level
+                if p_adj < 0.05:
+                    if p_adj < 0.001:
+                        label = '***'
+                    elif p_adj < 0.01:
+                        label = '**'
+                    else:
+                        label = '*'
+
+                    # Get the positions of the current groups for plotting
+                    x1, x2 = group_order.index(g1), group_order.index(g2)
+                    curr_h = h_line + (line_count * step)
+
+                    # Plot the line and the label
+                    self.ax.plot([x1, x1, x2, x2], [curr_h, curr_h + step * 0.15, curr_h + step * 0.15, curr_h],
+                            lw=1.2, c='#222222')
+                    self.ax.text((x1 + x2) * .5, curr_h + step * 0.15, label, ha='center', va='bottom',
+                            color='#222222', fontsize=12)
+                    line_count += 1
+
 
         # Save final Y limits
         self.safe_set_lim("set_ylim", self.plot_params.get("ylim"))

@@ -661,36 +661,45 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def stats_report(self):
 
-        # Check whether the statistical comparison is paired or not
-        paired = self.view.main_module.controller.config_config['analysis_mode']
-        if paired == 'nocomparison':
-            # If no comparison, do not make the statistical analysis
-            return
-        else:
-            paired == 'within'
+        if not self.statistical_results in locals():
 
-        # Create a dialog box for the correction method
-        corr_window = QtWidgets.QMessageBox(self)
-        corr_window.setWindowTitle("MCP Correction")
-        corr_window.setText("Which p-value correction do you want to apply?")
-        # Add a question mark as icon
-        corr_window.setIcon(QtWidgets.QMessageBox.Icon.Question)
-        # Add the buttons
-        btn_bonferroni = corr_window.addButton("Bonferroni", QtWidgets.QMessageBox.ButtonRole.ActionRole)
-        btn_fdrbh = corr_window.addButton("FDRBH", QtWidgets.QMessageBox.ButtonRole.ActionRole)
-        btn_none = corr_window.addButton("No correction", QtWidgets.QMessageBox.ButtonRole.ActionRole)
-        # Show the window and let the user to choose
-        corr_window.exec()
-        # Get the button that was clicked
-        btn = corr_window.clickedButton()
-        if btn == btn_bonferroni:
-            corr_mode = 'bonf'
-        elif btn == btn_fdrbh:
-            corr_mode = 'fdr_bh'
-        elif btn == btn_none:
-            corr_mode = None
+            # Check whether the statistical comparison is paired or not
+            paired = self.view.main_module.controller.config_config['analysis_mode']
+            if paired == 'nocomparison':
+                # If no comparison, do not make the statistical analysis
+                return
+            else:
+                paired == 'within'
 
-        results, report_text = do_stats(data, groups, paired=paired, padjust=corr_mode, is_continuous=False)
+            # Create a dialog box for the correction method
+            corr_window = QtWidgets.QMessageBox(self)
+            corr_window.setWindowTitle("MCP Correction")
+            corr_window.setText("Which p-value correction do you want to apply?")
+            # Add a question mark as icon
+            corr_window.setIcon(QtWidgets.QMessageBox.Icon.Question)
+            # Add the buttons
+            btn_bonferroni = corr_window.addButton("Bonferroni", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+            btn_fdrbh = corr_window.addButton("FDR (Benjamini-Hochberg)", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+            btn_none = corr_window.addButton("No correction", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+            # Show the window and let the user to choose
+            corr_window.exec()
+            # Get the button that was clicked
+            btn = corr_window.clickedButton()
+            if btn == btn_bonferroni:
+                corr_mode = 'bonf'
+            elif btn == btn_fdrbh:
+                corr_mode = 'fdr_bh'
+            elif btn == btn_none:
+                corr_mode = None
 
-        report_window = StatsReport(self, report_text)
+            n = 3  # Número de grupos
+            # Si quiero meter temporales, añadir detras del n*15 un  , n_timepoints de los que quiera
+            groups = np.repeat([f"Grupo_{i + 1}" for i in range(n)], 15)
+            data = np.random.randn(n * 15)  # 15 sujetos por grupo, 50 instantes temporales
+
+            results, report_text = do_stats(data, groups, paired=paired, padjust=corr_mode, is_continuous=False)
+            self.statistical_results = results
+            self.statistical_report = report_text
+
+        report_window = StatsReport(self, self.statistical_report)
         report_window.exec()
