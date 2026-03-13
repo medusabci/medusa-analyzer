@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>724</width>
+    <width>1070</width>
     <height>571</height>
    </rect>
   </property>
@@ -54,7 +54,7 @@
                 <x>0</x>
                 <y>0</y>
                 <width>274</width>
-                <height>222</height>
+                <height>219</height>
                </rect>
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -299,8 +299,8 @@ font-weight: 700;</string>
                  <rect>
                   <x>0</x>
                   <y>0</y>
-                  <width>272</width>
-                  <height>422</height>
+                  <width>98</width>
+                  <height>36</height>
                  </rect>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -377,6 +377,13 @@ QPushButton:disabled {
         </size>
        </property>
       </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="statsButton">
+       <property name="text">
+        <string>Report stats</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="exportButton">

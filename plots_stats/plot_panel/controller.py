@@ -11,6 +11,7 @@ from plots_stats.plot_panel.plot_classes.violin_plot import ViolinPlot
 from plots_stats.plot_panel.plot_classes.scatter_plot import ScatterPlot
 from plots_stats.plot_panel.plot_classes.erp_plot import ERPPlot
 from plots_stats.plot_utils import ExportDialog, build_dynamic_controls, export_figure_generic
+from plots_stats.utils import do_stats
 from functools import partial
 import re, os, json
 import numpy as np
@@ -227,6 +228,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             export_btn.clicked.connect(lambda checked, t=tab: self.export_figure(t))
             update_btn = tab.findChild(QtWidgets.QPushButton, "updateButton")
             update_btn.clicked.connect(lambda checked, t=tab: self.update_plot(t))
+            stats_btn = tab.findChild(QtWidgets.QPushButton, "statsButton")
+            stats_btn.clicked.connect(lambda checked, t=tab: self.export_figure(t))
 
             self.view.add_tab(tab, str(param_name))
             self._tabs_created = True
@@ -655,3 +658,28 @@ class TabbedPlotWidgetController(QtCore.QObject):
         if len(parts) >= 2:
             return "".join(word[0].upper() for word in parts)
         return name
+
+    def stats_report(self):
+
+        # Create a dialog box for the correction method
+        corr_window = QtWidgets.QMessageBox(self)
+        corr_window.setWindowTitle("MCP Correction")
+        corr_window.setText("Which p-value correction do you want to apply?")
+        # Add a question mark as icon
+        corr_window.setIcon(QtWidgets.QMessageBox.Icon.Question)
+        # Add the buttons
+        btn_bonferroni = corr_window.addButton("Bonferroni", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+        btn_fdrbh = corr_window.addButton("FDRBH", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+        btn_none = corr_window.addButton("No correction", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+        # Show the window and let the user to choose
+        corr_window.exec()
+        # Get the button that was clicked
+        btn = corr_window.clickedButton()
+        if btn == btn_bonferroni:
+            corr_mode = 'bonf'
+        elif btn == btn_fdrbh:
+            corr_mode = 'fdr_bh'
+        elif btn == btn_none:
+            corr_mode = None
+
+        results, report_text = do_stats(data, groups, paired=XXXX, padjust=corr_mode, is_continuous=False)
