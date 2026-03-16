@@ -14,8 +14,8 @@ class ERPPlot(BasePlot):
     - promedia entre archivos
     """
 
-    def __init__(self, ax, plot_params=None):
-        super().__init__(ax, plot_params)
+    def __init__(self, ax, plot_params=None, main_module=None):
+        super().__init__(ax, plot_params, main_module=main_module)
         self._group_erps = {}
         self._time_vector = None
 

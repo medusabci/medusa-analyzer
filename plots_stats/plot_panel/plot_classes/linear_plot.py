@@ -11,8 +11,8 @@ class LinearPlot(BasePlot):
     averages across selected channels and files, and plots the result.
     """
 
-    def __init__(self, ax, plot_params=None):
-        super().__init__(ax, plot_params)
+    def __init__(self, ax, plot_params=None, main_module=None):
+        super().__init__(ax, plot_params, main_module=main_module)
         self._group_stats = {}
 
         self._mode = None  # "vector" | "time_series"

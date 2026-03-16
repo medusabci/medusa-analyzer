@@ -14,8 +14,8 @@ class ScatterPlot(BasePlot):
     One point per file, colored by group
     """
 
-    def __init__(self, ax, plot_params=None):
-        super().__init__(ax, plot_params)
+    def __init__(self, ax, plot_params=None, main_module=None):
+        super().__init__(ax, plot_params, main_module=main_module)
         self._points = {}  # group -> (x_vals, y_vals)
 
     def load_data(self, filtered_files_y: Dict[str, List[str]], filtered_files_x: Dict[str, List[str]],

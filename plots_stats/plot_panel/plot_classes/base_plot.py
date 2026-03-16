@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import List, Optional
 
 class BasePlot(ABC):
     """
@@ -10,10 +9,18 @@ class BasePlot(ABC):
     Provides a standard interface for updating and clearing plots.
     """
 
-    def __init__(self, ax: plt.Axes, plot_params: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        ax: plt.Axes,
+        plot_params: Optional[Dict[str, Any]] = None,
+        main_module: Any = None,
+    ):
         self.ax = ax
         self.plot_params = plot_params or {}
+        self.main_module = main_module
         self.last_limits = {} # save info from the last draw
+        self.statistical_results = None
+        self.statistical_report = ""
 
     @abstractmethod
     def load_data(self, *args, **kwargs):
@@ -91,6 +98,10 @@ class BasePlot(ABC):
 
     def get_last_limits(self):
         return self.last_limits
+
+    def get_stats_payload(self):
+        """Return the statistical payload for the current plot, if available."""
+        return None
 
     def normalize_data(self, data: np.ndarray, selected_channels: Optional[List[int]] = None ) -> np.ndarray:
         """

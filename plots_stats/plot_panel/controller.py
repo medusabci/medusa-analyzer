@@ -199,7 +199,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
             # Instantiate initial plot object
             plot_info = tab._available_plot_types[tab._current_plot_type]
             plot_class = plot_info["plot_class"]
-            plot_obj = plot_class(ax, plot_info["plot_params_current"])
+            plot_obj = plot_class(
+                ax,
+                plot_info["plot_params_current"],
+                main_module=self.view.main_module,
+            )
             plot_info["plot_obj"] = plot_obj
             tab._plot = plot_obj
             tab._figure = fig
@@ -229,7 +233,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             update_btn = tab.findChild(QtWidgets.QPushButton, "updateButton")
             update_btn.clicked.connect(lambda checked, t=tab: self.update_plot(t))
             stats_btn = tab.findChild(QtWidgets.QPushButton, "statsButton")
-            stats_btn.clicked.connect(self.stats_report)
+            stats_btn.clicked.connect(lambda checked, t=tab: self.stats_report(t))
 
             self.view.add_tab(tab, str(param_name))
             self._tabs_created = True
@@ -563,7 +567,11 @@ class TabbedPlotWidgetController(QtCore.QObject):
             ax = tab._figure.axes[0]
             ax.cla()
             ax.figure.canvas.draw_idle()
-            plot_info["plot_obj"] = plot_info["plot_class"](ax, plot_info["plot_params_current"])
+            plot_info["plot_obj"] = plot_info["plot_class"](
+                ax,
+                plot_info["plot_params_current"],
+                main_module=self.view.main_module,
+            )
 
         tab._plot = plot_info["plot_obj"]
         tab._plot_type = plot_type
@@ -665,7 +673,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
             return "".join(word[0].upper() for word in parts)
         return name
 
-    def stats_report(self):
+    def _stats_report_legacy(self):
+        """Legacy implementation kept temporarily while migrating stats flow."""
+        return
 
         if not hasattr(self.view.main_module, 'statistical_results'):
 
@@ -714,4 +724,82 @@ class TabbedPlotWidgetController(QtCore.QObject):
             self.view.main_module.statistical_report = report_text
 
         report_window = StatsReport(self.view.main_module.statistical_report)
+        report_window.exec()
+
+    def stats_report(self, tab=None):
+        tab = tab or self.view.tab_widget.currentWidget()
+        if tab is None:
+            return
+
+        plot_obj = getattr(tab, "_plot", None)
+        if plot_obj is None:
+            return
+
+        payload = plot_obj.get_stats_payload()
+        if payload is None:
+            QtWidgets.QMessageBox.warning(
+                self.view,
+                "Stats",
+                "No statistical data is available for the current plot.",
+            )
+            return
+
+        analysis_mode = self.view.main_module.controller.config_config["analysis_mode"]
+        if analysis_mode == "nocomparison":
+            QtWidgets.QMessageBox.information(
+                self.view,
+                "Stats",
+                "The selected analysis mode does not perform group comparisons.",
+            )
+            return
+
+        corr_window = QtWidgets.QMessageBox()
+        corr_window.setWindowTitle("MCP Correction")
+        corr_window.setText("Which p-value correction do you want to apply?")
+        corr_window.setIcon(QtWidgets.QMessageBox.Icon.Question)
+        btn_bonferroni = corr_window.addButton("Bonferroni", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+        btn_fdrbh = corr_window.addButton("FDR (Benjamini-Hochberg)", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+        btn_none = corr_window.addButton("No correction", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+        corr_window.exec()
+
+        btn = corr_window.clickedButton()
+        if btn == btn_bonferroni:
+            corr_mode = "bonf"
+        elif btn == btn_fdrbh:
+            corr_mode = "fdr_bh"
+        elif btn == btn_none:
+            corr_mode = None
+        else:
+            return
+
+        try:
+            results, report_text = do_stats(
+                payload["data"],
+                payload["groups"],
+                paired=analysis_mode == "within",
+                padjust=corr_mode,
+                is_continuous=False,
+            )
+        except Exception as e:
+            QtWidgets.QMessageBox.warning(
+                self.view,
+                "Stats",
+                f"Statistical analysis could not be completed:\n{e}",
+            )
+            return
+
+        plot_obj.statistical_results = results
+        plot_obj.statistical_report = report_text
+
+        if plot_obj.main_module is not None:
+            plot_obj.main_module.data_stats = payload["data"]
+            plot_obj.main_module.group_stats = payload["groups"]
+            plot_obj.main_module.statistical_results = results
+            plot_obj.main_module.statistical_report = report_text
+            plot_obj.main_module.statistical_source_plot = plot_obj
+            plot_obj.main_module.statistical_source_signature = payload["signature"]
+
+        self.update_plot(tab)
+
+        report_window = StatsReport(report_text)
         report_window.exec()
