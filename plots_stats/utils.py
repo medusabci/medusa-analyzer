@@ -11,7 +11,7 @@ class StatsReport(QDialog):
     def __init__(self, text_report, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Statistical Analysis Report")
-        self.resize(550, 450)
+        self.resize(550, 550)
         self.text_report = text_report
 
         layout = QVBoxLayout(self)
@@ -54,11 +54,12 @@ class StatsReport(QDialog):
                 with open(path_file, 'w', encoding='utf-8') as f:
                     f.write(self.text_report)
                 QMessageBox.information(self, "Success", "Report successfully saved.")
+                self.close()
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Report could not be saved:\n{str(e)}")
 
 
-def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continuous=False):
+def do_stats(data, groups, paired=True, padjust=None, is_continuous=False):
     """
     Single flow statistical analysis for both discrete and continuous data.
     padjust: str, optional. 'bonf' (Bonferroni), 'fdr_bh' (Benjamini-Hochberg FDR) or None.
@@ -153,7 +154,7 @@ def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continu
                     df_t['subject'] = df_t.groupby('group').cumcount()
                     aov = pg.rm_anova(data=df_t, dv='data', within='group', subject='subject', detailed=False)
                     omnibus_res['stats'][t] = aov['F'].values[0]
-                    omnibus_res['p_values'][t] = aov['p-unc'].values[0]
+                    omnibus_res['p_values'][t] = aov['p_unc'].values[0]
                     omnibus_res['test'] = 'Repeated Measures ANOVA'
                 else:
                     stat, p = stats.f_oneway(*group_data_t)
@@ -224,7 +225,7 @@ def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continu
                     _, p_corr_time = pg.multicomp(p_vals_time, method=method)
                     pairwise_res[pair_keys[0]]['p_values_corr'] = p_corr_time
                     output_pvalues[t] = p_corr_time
-            else:
+            elif n_groups > 2:
                 # Correct across all the group pairs
                 all_p_discrete = np.array([pairwise_res[k]['p_values'][0] for k in pair_keys])
                 _, p_corr_discrete = pg.multicomp(all_p_discrete, method=method)
@@ -233,6 +234,12 @@ def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continu
                 for idx, k in enumerate(pair_keys):
                     # Se guarda como array 1D para mantener la compatibilidad con el desempaquetado final
                     pairwise_res[k]['p_values_corr'] = np.array([p_corr_discrete[idx]])
+
+            else:
+                # Else (if correction makes no sense), store an empty value
+                for k in pairwise_res.keys():
+                    pairwise_res[k]['p_values_corr'] = ''
+                    adj_name = 'None'
         else:
             # Else (if no correction), store an empty value
             for k in pairwise_res.keys():
@@ -275,7 +282,7 @@ def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continu
     lines.append("   [PAIRWISE COMPARISONS]")
     lines.append(f"   - p-value correction method: {adj_name}")
     for k, res in pairwise_res.items():
-        lines.append(f"   --- Group {k[0]} vs Group {k[1]} ---")
+        lines.append(f"   --- Comparison: {k[0]} vs {k[1]} ---")
         lines.append(f"       Test: {res['test']}")
         lines.append(f"       Statistic: {res['stats'][0]:.4f}")
         lines.append(f"       Raw p-value: {res['p_values'][0]:.4e}")
@@ -283,16 +290,6 @@ def do_stats(data, groups, paired=True, padjust=None, save_path=None, is_continu
             lines.append(f"       Corrected p-value: {res['p_values_corr'][0]:.4e}")
 
     report_text = "\n".join(lines)
-    # print(report_text)
-    #
-    # if save_path is not None:
-    #     filename = '/StatisticalReport.txt'
-    #     try:
-    #         with open(save_path + filename, 'w', encoding='utf-8') as f:
-    #             f.write(report_text)
-    #         print(f"\n>>> Report successfully saved to: {save_path + filename}")
-    #     except Exception as e:
-    #         print(f"\n>>> Error saving the file: {e}")
 
     # 6. RETURN LOGIC
     # Unpack arrays if discrete so the user gets single floats instead of arrays of length 1

@@ -51,6 +51,7 @@ class ViolinPlot(BasePlot):
 
             if values:
                 self._group_values[group_name] = np.asarray(values)
+        # self.prepare_stats_data()
 
     def draw(self, colors=None):
         self.clear()
@@ -156,27 +157,28 @@ class ViolinPlot(BasePlot):
                     )
 
         # Get whether to show the stats bars
-        stats_checkbox = False
+        stats_checkbox = True
 
         if stats_checkbox:
 
-            # Run the statistical analysis if it has not been done yet
-            if not self.statistical_results in locals():
-                self.view.main_module.plot_panel.controller.stats_report()
+            # # Run the statistical analysis if it has not been done yet
+            # if not self.statistical_results in locals():
+            #     self.view.main_module.plot_panel.controller.stats_report()
 
             # Pairs of groups
             pairs = list(itertools.combinations(group_order, 2))
+            # pairwise_res = self.view.main_module.statistical_results['pairwise']
 
             # Generate random values for testing
             pairwise_res = {}
             for g1, g2 in pairs:
-                pairwise_res[(g1, g2)]['p_values_corr'] = np.random.uniform(0, 0.3)
+                pairwise_res[(g1, g2)] = {'p_values_corr': np.random.uniform(0, 0.013)}
 
             # Get the y range for establishing the y position of the horizontal bars showing the significance
             y_max = df["value"].max()
             if pd.isna(y_max): return
             y_range = y_max - df["value"].min()
-            h_line = y_max + 0.02 * y_range
+            h_line = y_max + 0.05 * y_range
             step = 0.08 * y_range
 
             # For each comparison
@@ -214,3 +216,13 @@ class ViolinPlot(BasePlot):
         self.safe_set_lim("set_ylim", self.plot_params.get("ylim"))
         self.apply_grid_and_spines(axis="y")
         self.save_limits()
+
+    # def prepare_stats_data(self):
+    #     groups = []
+    #     data = []
+    #     for group_name, values in self._group_values.items():
+    #         data.extend(values)
+    #         groups.extend([group_name] * len(values))
+    #
+    #     self.view.main_module.data_stats = data
+    #     self.view.main_module.group_stats = groups

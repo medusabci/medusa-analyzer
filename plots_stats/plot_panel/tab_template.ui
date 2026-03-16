@@ -380,6 +380,12 @@ QPushButton:disabled {
      </item>
      <item>
       <widget class="QPushButton" name="statsButton">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="toolTip">
+        <string>Only available for Violin Plot</string>
+       </property>
        <property name="text">
         <string>Report stats</string>
        </property>

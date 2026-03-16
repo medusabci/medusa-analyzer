@@ -229,7 +229,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             update_btn = tab.findChild(QtWidgets.QPushButton, "updateButton")
             update_btn.clicked.connect(lambda checked, t=tab: self.update_plot(t))
             stats_btn = tab.findChild(QtWidgets.QPushButton, "statsButton")
-            stats_btn.clicked.connect(lambda checked, t=tab: self.export_figure(t))
+            stats_btn.clicked.connect(self.stats_report)
 
             self.view.add_tab(tab, str(param_name))
             self._tabs_created = True
@@ -346,6 +346,12 @@ class TabbedPlotWidgetController(QtCore.QObject):
             plot_obj = tab._plot
             is_scatter = plot_type == "ScatterPlot"
             is_simple = plot_type in self.simple_plots
+
+            # Activate stats button if Violin Plot
+            if plot_type == 'ViolinPlot':
+                tab.findChild(QtWidgets.QPushButton, "statsButton").setVisible(True)
+            else:
+                tab.findChild(QtWidgets.QPushButton, "statsButton").setVisible(False)
 
             if hasattr(tab, "_param_widgets"):
                 tab._plot_params_current = {
@@ -661,7 +667,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
     def stats_report(self):
 
-        if not self.statistical_results in locals():
+        if not hasattr(self.view.main_module, 'statistical_results'):
 
             # Check whether the statistical comparison is paired or not
             paired = self.view.main_module.controller.config_config['analysis_mode']
@@ -669,10 +675,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 # If no comparison, do not make the statistical analysis
                 return
             else:
-                paired == 'within'
+                paired = paired == 'within'
 
             # Create a dialog box for the correction method
-            corr_window = QtWidgets.QMessageBox(self)
+            corr_window = QtWidgets.QMessageBox()
             corr_window.setWindowTitle("MCP Correction")
             corr_window.setText("Which p-value correction do you want to apply?")
             # Add a question mark as icon
@@ -697,9 +703,15 @@ class TabbedPlotWidgetController(QtCore.QObject):
             groups = np.repeat([f"Grupo_{i + 1}" for i in range(n)], 15)
             data = np.random.randn(n * 15)  # 15 sujetos por grupo, 50 instantes temporales
 
-            results, report_text = do_stats(data, groups, paired=paired, padjust=corr_mode, is_continuous=False)
-            self.statistical_results = results
-            self.statistical_report = report_text
+            # groups = []
+            # data = []
+            # for group_name, values in datos_dict.items():
+            #     data.extend(values)
+            #     groups.extend([group_name] * len(values))
 
-        report_window = StatsReport(self, self.statistical_report)
+            results, report_text = do_stats(data, groups, paired=paired, padjust=corr_mode, is_continuous=False)
+            self.view.main_module.statistical_results = results
+            self.view.main_module.statistical_report = report_text
+
+        report_window = StatsReport(self.view.main_module.statistical_report)
         report_window.exec()
