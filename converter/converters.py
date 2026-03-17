@@ -71,7 +71,7 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
             else:
                 continue
             experiment = int(Path(trial['img_path']).parts[-2])
-            response = '_Agr' if trial['response'] == 1 else '_DesAgr'
+            response = 'Agr' if trial['response'] == 1 else 'DesAgr'
             evt_names.append(category_map[experiment][int(group_id)] + response)
             evt_times.append(trial['onset_time'])
 
