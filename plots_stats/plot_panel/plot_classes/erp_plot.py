@@ -109,6 +109,8 @@ class ERPPlot(BasePlot):
         if self._time_vector is not None:
             if self._time_vector[0] <= 0 <= self._time_vector[-1]:
                 self.ax.axvline(0, color="gray", linestyle="--", linewidth=1, alpha=0.8)
+
+        self.safe_set_lim("set_xlim", self.plot_params.get("xlim"))
         self.safe_set_lim("set_ylim", self.plot_params.get("ylim"))
 
         self.apply_grid_and_spines(axis="both")

@@ -52,6 +52,10 @@
           "bold"
         ]
       },
+      "xlim": {
+        "type": "range",
+        "label": "Xlim"
+      },
       "ylim": {
         "type": "range",
         "label": "Ylim"
@@ -158,7 +162,7 @@
     "allowed_params": [
       "Mean",
       "Median",
-      "Standard Deviation",
+      "Variance",
       "Kurtosis",
       "Skewness",
       "Relative Power",

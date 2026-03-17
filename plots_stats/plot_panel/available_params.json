@@ -9,10 +9,10 @@
           "y_label": "Amplitude (µV)"
         }
       },
-      "std": {
-        "Param_name": "Std",
+      "variance": {
+        "Param_name": "Variance",
         "Plot_params": {
-          "title": "Standard Deviation",
+          "title": "Variance",
           "x_label": "Time (ms)",
           "y_label": "Amplitude (µV)"
         }
