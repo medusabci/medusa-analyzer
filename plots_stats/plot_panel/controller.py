@@ -199,7 +199,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             # Instantiate initial plot object
             plot_info = tab._available_plot_types[tab._current_plot_type]
             plot_class = plot_info["plot_class"]
-            plot_obj = plot_class(ax, plot_info["plot_params_current"])
+            plot_obj = plot_class(ax, plot_info["plot_params_current"], self.view.main_module)
             plot_info["plot_obj"] = plot_obj
             tab._plot = plot_obj
             tab._figure = fig
@@ -229,7 +229,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             update_btn = tab.findChild(QtWidgets.QPushButton, "updateButton")
             update_btn.clicked.connect(lambda checked, t=tab: self.update_plot(t))
             stats_btn = tab.findChild(QtWidgets.QPushButton, "statsButton")
-            stats_btn.clicked.connect(self.stats_report)
+            stats_btn.clicked.connect(lambda checked, t=tab: self.stats_report(t))
 
             self.view.add_tab(tab, str(param_name))
             self._tabs_created = True
@@ -563,7 +563,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             ax = tab._figure.axes[0]
             ax.cla()
             ax.figure.canvas.draw_idle()
-            plot_info["plot_obj"] = plot_info["plot_class"](ax, plot_info["plot_params_current"])
+            plot_info["plot_obj"] = plot_info["plot_class"](ax, plot_info["plot_params_current"], self.view)
 
         tab._plot = plot_info["plot_obj"]
         tab._plot_type = plot_type
@@ -665,9 +665,9 @@ class TabbedPlotWidgetController(QtCore.QObject):
             return "".join(word[0].upper() for word in parts)
         return name
 
-    def stats_report(self):
+    def stats_report(self, tab, skip_report = False):
 
-        if not hasattr(self.view.main_module, 'statistical_results'):
+        if not 'statistical_results' in tab.statistics.keys():
 
             # Check whether the statistical comparison is paired or not
             paired = self.view.main_module.controller.config_config['analysis_mode']
@@ -677,41 +677,40 @@ class TabbedPlotWidgetController(QtCore.QObject):
             else:
                 paired = paired == 'within'
 
-            # Create a dialog box for the correction method
-            corr_window = QtWidgets.QMessageBox()
-            corr_window.setWindowTitle("MCP Correction")
-            corr_window.setText("Which p-value correction do you want to apply?")
-            # Add a question mark as icon
-            corr_window.setIcon(QtWidgets.QMessageBox.Icon.Question)
-            # Add the buttons
-            btn_bonferroni = corr_window.addButton("Bonferroni", QtWidgets.QMessageBox.ButtonRole.ActionRole)
-            btn_fdrbh = corr_window.addButton("FDR (Benjamini-Hochberg)", QtWidgets.QMessageBox.ButtonRole.ActionRole)
-            btn_none = corr_window.addButton("No correction", QtWidgets.QMessageBox.ButtonRole.ActionRole)
-            # Show the window and let the user to choose
-            corr_window.exec()
-            # Get the button that was clicked
-            btn = corr_window.clickedButton()
-            if btn == btn_bonferroni:
-                corr_mode = 'bonf'
-            elif btn == btn_fdrbh:
-                corr_mode = 'fdr_bh'
-            elif btn == btn_none:
+            if len(set(tab.statistics['groups'])) > 2:
+                # Create a dialog box for the correction method
+                corr_window = QtWidgets.QMessageBox()
+                corr_window.setWindowTitle("MCP Correction")
+                corr_window.setText("Which p-value correction do you want to apply?")
+                # Add a question mark as icon
+                corr_window.setIcon(QtWidgets.QMessageBox.Icon.Question)
+                # Add the buttons
+                btn_bonferroni = corr_window.addButton("Bonferroni", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+                btn_fdrbh = corr_window.addButton("FDR (Benjamini-Hochberg)", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+                btn_none = corr_window.addButton("No correction", QtWidgets.QMessageBox.ButtonRole.ActionRole)
+                # Show the window and let the user to choose
+                corr_window.exec()
+                # Get the button that was clicked
+                btn = corr_window.clickedButton()
+                if btn == btn_bonferroni:
+                    corr_mode = 'bonf'
+                elif btn == btn_fdrbh:
+                    corr_mode = 'fdr_bh'
+                elif btn == btn_none:
+                    corr_mode = None
+            else:
                 corr_mode = None
 
-            n = 3  # Número de grupos
-            # Si quiero meter temporales, añadir detras del n*15 un  , n_timepoints de los que quiera
-            groups = np.repeat([f"Grupo_{i + 1}" for i in range(n)], 15)
-            data = np.random.randn(n * 15)  # 15 sujetos por grupo, 50 instantes temporales
+            # n = 3  # Número de grupos
+            # # Si quiero meter temporales, añadir detras del n*15 un  , n_timepoints de los que quiera
+            # groups = np.repeat([f"Grupo_{i + 1}" for i in range(n)], 15)
+            # data = np.random.randn(n * 15)  # 15 sujetos por grupo, 50 instantes temporales
 
-            # groups = []
-            # data = []
-            # for group_name, values in datos_dict.items():
-            #     data.extend(values)
-            #     groups.extend([group_name] * len(values))
+            results, report_text = do_stats(tab.statistics['data'], tab.statistics['groups'], paired=paired, padjust=corr_mode, is_continuous=False)
+            tab.statistics['statistical_results'] = results
+            tab.statistics['statistical_report'] = report_text
 
-            results, report_text = do_stats(data, groups, paired=paired, padjust=corr_mode, is_continuous=False)
-            self.view.main_module.statistical_results = results
-            self.view.main_module.statistical_report = report_text
 
-        report_window = StatsReport(self.view.main_module.statistical_report)
-        report_window.exec()
+        if not skip_report:
+            report_window = StatsReport(tab.statistics['statistical_report'])
+            report_window.exec()

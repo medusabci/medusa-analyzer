@@ -12,9 +12,10 @@ class ViolinPlot(BasePlot):
     Violin plot for per-group distributions (Seaborn backend).
     """
 
-    def __init__(self, ax, plot_params=None):
-        super().__init__(ax, plot_params)
+    def __init__(self, ax, plot_params=None, tabs_widget=None):
+        super().__init__(ax, plot_params, tabs_widget)
         self._group_values = {}
+        self.tabs_widget = tabs_widget
 
     def load_data(self, filtered_files: Dict[str, List[str]], selected_channels: List[int]):
 
@@ -51,7 +52,10 @@ class ViolinPlot(BasePlot):
 
             if values:
                 self._group_values[group_name] = np.asarray(values)
-        # self.prepare_stats_data()
+
+        current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
+        if not hasattr(current_tab, 'statistics'):
+            self.prepare_stats_data()
 
     def draw(self, colors=None):
         self.clear()
@@ -157,13 +161,14 @@ class ViolinPlot(BasePlot):
                     )
 
         # Get whether to show the stats bars
-        stats_checkbox = True
+        stats_checkbox = bool(self.plot_params.get("plot_stats", False))
 
         if stats_checkbox:
+            current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
 
-            # # Run the statistical analysis if it has not been done yet
-            # if not self.statistical_results in locals():
-            #     self.view.main_module.plot_panel.controller.stats_report()
+            # Run the statistical analysis if it has not been done yet
+            if not hasattr(current_tab, 'statistical_results'):
+                self.tabs_widget.controller.stats_report(current_tab, skip_report = True)
 
             # Pairs of groups
             pairs = list(itertools.combinations(group_order, 2))
@@ -217,12 +222,15 @@ class ViolinPlot(BasePlot):
         self.apply_grid_and_spines(axis="y")
         self.save_limits()
 
-    # def prepare_stats_data(self):
-    #     groups = []
-    #     data = []
-    #     for group_name, values in self._group_values.items():
-    #         data.extend(values)
-    #         groups.extend([group_name] * len(values))
-    #
-    #     self.view.main_module.data_stats = data
-    #     self.view.main_module.group_stats = groups
+    def prepare_stats_data(self):
+        groups = []
+        data = []
+        for group_name, values in self._group_values.items():
+            data.extend(values)
+            groups.extend([group_name] * len(values))
+
+        current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
+
+        current_tab.statistics = {}
+        current_tab.statistics['data'] = data
+        current_tab.statistics['groups'] = groups

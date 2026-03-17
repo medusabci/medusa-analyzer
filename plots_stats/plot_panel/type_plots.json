@@ -156,6 +156,11 @@
   },
   "LinearPlot": {
     "allowed_params": [
+      "Mean",
+      "Median",
+      "Standard Deviation",
+      "Kurtosis",
+      "Skewness",
       "Relative Power",
       "Absolute Power",
       "Median Frequency",
@@ -248,6 +253,11 @@
   },
   "ViolinPlot": {
     "allowed_params": [
+      "Mean",
+      "Median",
+      "Standard Deviation",
+      "Kurtosis",
+      "Skewness",
       "Relative Power",
       "Absolute Power",
       "Median Frequency",
@@ -312,6 +322,11 @@
         "max": 1,
         "step": 0.1
       },
+      "plot_stats": {
+        "type": "bool",
+        "default": false,
+        "label": "Show stats"
+      },
       "plot_mean_line": {
         "type": "bool",
         "default": false,
@@ -336,6 +351,11 @@
   },
   "ScatterPlot": {
     "allowed_params": [
+      "Mean",
+      "Median",
+      "Standard Deviation",
+      "Kurtosis",
+      "Skewness",
       "Relative Power",
       "Absolute Power",
       "Median Frequency",

@@ -300,7 +300,8 @@ def do_stats(data, groups, paired=True, padjust=None, is_continuous=False):
     for k in pairwise_res.keys():
         pairwise_res[k]['stats'] = pairwise_res[k]['stats'][0]
         pairwise_res[k]['p_values'] = pairwise_res[k]['p_values'][0]
-        pairwise_res[k]['p_values_corr'] = pairwise_res[k]['p_values_corr'][0]
+        if pairwise_res[k]['p_values_corr']:
+            pairwise_res[k]['p_values_corr'] = pairwise_res[k]['p_values_corr'][0]
 
     return_dict = {
         'assumptions': {

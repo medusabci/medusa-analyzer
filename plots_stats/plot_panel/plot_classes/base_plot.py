@@ -10,10 +10,11 @@ class BasePlot(ABC):
     Provides a standard interface for updating and clearing plots.
     """
 
-    def __init__(self, ax: plt.Axes, plot_params: Optional[Dict[str, Any]] = None):
+    def __init__(self, ax: plt.Axes, plot_params: Optional[Dict[str, Any]] = None, tabs_widget: Any = None):
         self.ax = ax
         self.plot_params = plot_params or {}
         self.last_limits = {} # save info from the last draw
+        self.tabs_widget = tabs_widget
 
     @abstractmethod
     def load_data(self, *args, **kwargs):

@@ -10,10 +10,11 @@ class PSDPlot(BasePlot):
     Handles loading, averaging, and plotting PSD curves for multiple groups.
     """
 
-    def __init__(self, ax, plot_params=None):
-        super().__init__(ax, plot_params)
+    def __init__(self, ax, plot_params=None,tabs_widget=None):
+        super().__init__(ax, plot_params, tabs_widget)
         self._freqs = None
         self._psd_data = {}
+        self.tabs_widget = tabs_widget
 
     def load_data(self, filtered_files: Dict[str, List[str]], selected_channels: List[int]):
         self._psd_data.clear()
