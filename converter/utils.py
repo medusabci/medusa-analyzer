@@ -28,7 +28,7 @@ def do_conversion(controller, files, converter, names_idx):
     controller.view.worker.finished.connect(controller.view.worker.deleteLater)
 
     # When the worker is finished, enable the button and change its text
-    def on_finished(converted_files, error_found):
+    def on_finished(converted_files, error_found, already_correct):
         # Set the buttons in the last state
         controller.view.backButton.setVisible(False)
         controller.view.nextButton.setDisabled(False)
@@ -43,7 +43,7 @@ def do_conversion(controller, files, converter, names_idx):
             QtWidgets.QMessageBox.information(
                 conversion,
                 "Conversion Complete",
-                f"✅ Successfully converted {len(converted_files)} file(s)."
+                f"✅ Successfully converted {len(converted_files)} file(s).\n 🛠️ Already correct {already_correct} file(s)."
             )
 
     # Connect the on_finished function
@@ -97,7 +97,7 @@ def _log_conversion_summary(counters, worker):
 # Worker class to run the converter in a separate thread
 class ConverterWorker(QThread):
     # Emit when the processing is finished
-    finished = Signal(list, bool)
+    finished = Signal(list, bool, int)
     # For updating the progress bar in the GUI
     progress = Signal(int)
     # For updating log messages in the GUI
@@ -113,14 +113,16 @@ class ConverterWorker(QThread):
     def run(self):
         """Runs run_pipeline in a separate thread and emits finished signal when done."""
         error_found = False
+        already_correct = 0
         try:
             # Call the main pipeline function
-            converted_files = self.converter_main(self.files, self.converter, self.output_dir, self.names_idx)
+            converted_files, counters = self.converter_main(self.files, self.converter, self.output_dir, self.names_idx)
+            already_correct = counters.get('already_correct', 0)
         except Exception as e: # if error
             self.log.emit(f"Error in conversion: {e}")
             converted_files = []
             error_found = True
-        self.finished.emit(converted_files, error_found)
+        self.finished.emit(converted_files, error_found, already_correct)
 
     def converter_main(self, files, converter, output_dir, names_idx):
         """
@@ -149,7 +151,7 @@ class ConverterWorker(QThread):
 
         self.progress.emit(100)
         _log_conversion_summary(counters, self)
-        return converted_files
+        return converted_files, counters
 
 
     def get_converter_function_by_name(self, name):
