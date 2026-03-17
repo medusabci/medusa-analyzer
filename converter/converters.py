@@ -8,6 +8,31 @@ import scipy.io as sio
 import shutil
 from pathlib import Path
 
+
+# ----------------------------- HELPER FUNCTIONS -----------------------------
+def _sanitize_name(name):
+    """Remove spaces, underscores and hyphens from event/condition names."""
+    return str(name).replace(' ', '').replace('_', '').replace('-', '')
+
+
+def _sanitize_app_settings(app_settings):
+    """Sanitize keys in app_settings events and conditions (does not modify desc-names)."""
+    if not isinstance(app_settings, dict):
+        return app_settings
+    
+    sanitized = {}
+    for key, value in app_settings.items():
+        if key in ['events', 'conditions'] and isinstance(value, dict):
+            sanitized[key] = {}
+            for name, val in value.items():
+                sanitized_name = _sanitize_name(name)
+                sanitized[key][sanitized_name] = val
+        else:
+            sanitized[key] = value
+            
+    return sanitized
+
+
 # ----------------------------- CONVERTERS -----------------------------
 def _convert_rec_file(file, output_dir, worker=None):
     """
@@ -22,7 +47,11 @@ def _convert_rec_file(file, output_dir, worker=None):
         bids_folders.mkdir(parents=True, exist_ok=True)
 
         if hasattr(recording, "marks") and recording.marks is not None:
-            shutil.copy2(file, output_dir)
+            if hasattr(recording.marks, 'app_settings'):
+                recording.marks.app_settings = _sanitize_app_settings(recording.marks.app_settings)
+                recording.save(str(output_dir))
+            else:
+                shutil.copy2(file, output_dir)
             return 'already_correct'
         else:
             marks = _create_empty_marks()
@@ -71,7 +100,7 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
             else:
                 continue
             experiment = int(Path(trial['img_path']).parts[-2])
-            response = '_Agr' if trial['response'] == 1 else '_DesAgr'
+            response = 'Agr' if trial['response'] == 1 else 'DesAgr'
             evt_names.append(category_map[experiment][int(group_id)] + response)
             evt_times.append(trial['onset_time'])
 
@@ -87,8 +116,10 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
         marks.events_labels = evt_labels
         marks.events_times = evt_times
         # Store the app settings
-        marks.app_settings = {'events': dict_app_settings,
-                              'conditions': {'no-condition': {'desc-name': 'No condition', 'label': 0}}}
+        marks.app_settings = _sanitize_app_settings({
+            'events': dict_app_settings,
+            'conditions': {'no-condition': {'desc-name': 'No condition', 'label': 0}}
+        })
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
         # Add the marks to the recording
         recording.add_experiment_data(marks, key="marks")
@@ -117,7 +148,10 @@ def _convert_rcp_file(file, output_dir, worker=None):
         marks = CustomExperimentData()
         marks.events_labels = data.erpspellerdata.erp_labels.tolist() if isinstance(data.erpspellerdata.erp_labels, np.ndarray) else data.erpspellerdata.erp_labels
         marks.events_times = data.erpspellerdata.onsets.tolist() if isinstance(data.erpspellerdata.onsets, np.ndarray) else data.erpspellerdata.onsets
-        marks.app_settings = {'events': {'non_target': {'desc-name': 'Non target','label': 0}, 'target': {'desc-name': 'Target','label': 1}}, 'conditions': {'no-condition': {'desc-name': 'No condition','label': 0}}}
+        marks.app_settings = _sanitize_app_settings({
+            'events': {'non_target': {'desc-name': 'Non target', 'label': 0}, 'target': {'desc-name': 'Target', 'label': 1}},
+            'conditions': {'no-condition': {'desc-name': 'No condition', 'label': 0}}
+        })
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
 
         # Fill the Recording object
@@ -239,7 +273,10 @@ def _convert_csv_file(file, output_dir, worker=None):
         marks.events_labels = []
         marks.events_times = []
         marks.conditions_labels, marks.conditions_times = [0] * annots.shape[0] * 2, annots.flatten().tolist()
-        marks.app_settings = {'conditions': {'restful': {'desc-name': 'Restful sleep', 'label': 0}}, 'events': {}}
+        marks.app_settings = _sanitize_app_settings({
+            'conditions': {'restful': {'desc-name': 'Restful sleep', 'label': 0}},
+            'events': {}
+        })
 
         # Create EEG object
         eeg = EEG(times=times, signal=data, fs=fs, channel_set=channel_set)
@@ -322,8 +359,10 @@ def _convert_mne(file, output_dir, worker=None):
         marks.conditions_times = cnd_times
 
         # Store the app settings
-        marks.app_settings = {'events': dict_app_settings_evt,
-                              'conditions': dict_app_settings_cnd}
+        marks.app_settings = _sanitize_app_settings({
+            'events': dict_app_settings_evt,
+            'conditions': dict_app_settings_cnd
+        })
 
         # Create EEG object
         eeg = EEG(times=times, signal=data, fs=fs, channel_set=channel_set)
@@ -407,5 +446,5 @@ def _create_empty_marks():
     marks.events_times = []
     marks.conditions_labels = []
     marks.conditions_times = np.empty((0, 2))
-    marks.app_settings = {'conditions': {}, 'events': {}}
+    marks.app_settings = _sanitize_app_settings({'conditions': {}, 'events': {}})
     return marks

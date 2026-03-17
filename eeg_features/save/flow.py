@@ -102,10 +102,11 @@ def on_next_click(view):
         # When the worker is finished, enable the button and change its text
         def on_finished(error_found):
             view.main_window.nextButton.setEnabled(True)
+
             # If not error found, change button text to "Close"
-            if not error_found:
-                view.main_window.nextButton.setText('Close')
-                view.controller.pipeline_completed = True
+            # if not error_found:
+            view.main_window.nextButton.setText('Close')
+            view.controller.pipeline_completed = True
         # Connect the on_finished function
         view.worker.finished.connect(on_finished)
 

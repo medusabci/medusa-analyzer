@@ -68,13 +68,17 @@ class ERPPlot(BasePlot):
                 self._group_erps[group_name] = {
                     "mean": mean_signal,
                     "std": std_signal,
-                    "n": n
+                    "n": n,
+                    "all": aligned
                 }
             if self._time_vector is None:
                 window = self.plot_params.get("_time_window", None)
                 if window is not None:
                     start, end = window
                     self._time_vector = np.linspace(start, end, min_len)
+
+        if not hasattr(self.tabs_widget, 'statistics'):
+            self.prepare_stats_data(self.tabs_widget)
 
     def draw(self, colors=None):
         self.clear()
@@ -115,3 +119,17 @@ class ERPPlot(BasePlot):
 
         self.apply_grid_and_spines(axis="both")
         self.save_limits()
+
+
+    def prepare_stats_data(self, current_tab):
+        groups = []
+        data = []
+        for group_name, values in self._group_erps.items():
+            data.extend(values['all'])
+            groups.extend([group_name] * values['all'].shape[0])
+
+        current_tab.statistics = {}
+        current_tab.statistics['data'] = data
+        current_tab.statistics['groups'] = groups
+
+        current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)

@@ -55,7 +55,7 @@ class ViolinPlot(BasePlot):
 
         current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
         if not hasattr(current_tab, 'statistics'):
-            self.prepare_stats_data()
+            self.prepare_stats_data(current_tab)
 
     def draw(self, colors=None):
         self.clear()
@@ -167,17 +167,17 @@ class ViolinPlot(BasePlot):
             current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
 
             # Run the statistical analysis if it has not been done yet
-            if not hasattr(current_tab, 'statistical_results'):
+            if not 'statistical_results' in current_tab.statistics.keys():
                 self.tabs_widget.controller.stats_report(current_tab, skip_report = True)
 
             # Pairs of groups
             pairs = list(itertools.combinations(group_order, 2))
-            # pairwise_res = self.view.main_module.statistical_results['pairwise']
+            pairwise_res = current_tab.statistics['statistical_results']['pairwise']
 
-            # Generate random values for testing
-            pairwise_res = {}
-            for g1, g2 in pairs:
-                pairwise_res[(g1, g2)] = {'p_values_corr': np.random.uniform(0, 0.013)}
+            # # Generate random values for testing
+            # pairwise_res = {}
+            # for g1, g2 in pairs:
+            #     pairwise_res[(g1, g2)] = {'p_values_corr': np.random.uniform(0, 0.013)}
 
             # Get the y range for establishing the y position of the horizontal bars showing the significance
             y_max = df["value"].max()
@@ -222,14 +222,12 @@ class ViolinPlot(BasePlot):
         self.apply_grid_and_spines(axis="y")
         self.save_limits()
 
-    def prepare_stats_data(self):
+    def prepare_stats_data(self, current_tab):
         groups = []
         data = []
         for group_name, values in self._group_values.items():
             data.extend(values)
             groups.extend([group_name] * len(values))
-
-        current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
 
         current_tab.statistics = {}
         current_tab.statistics['data'] = data

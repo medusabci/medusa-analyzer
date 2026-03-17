@@ -199,7 +199,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             # Instantiate initial plot object
             plot_info = tab._available_plot_types[tab._current_plot_type]
             plot_class = plot_info["plot_class"]
-            plot_obj = plot_class(ax, plot_info["plot_params_current"], self.view.main_module)
+            plot_obj = plot_class(ax, plot_info["plot_params_current"], self.view)
             plot_info["plot_obj"] = plot_obj
             tab._plot = plot_obj
             tab._figure = fig
@@ -665,7 +665,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             return "".join(word[0].upper() for word in parts)
         return name
 
-    def stats_report(self, tab, skip_report = False):
+    def stats_report(self, tab, skip_report = False, is_continuous = False):
 
         if not 'statistical_results' in tab.statistics.keys():
 
@@ -677,7 +677,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             else:
                 paired = paired == 'within'
 
-            if len(set(tab.statistics['groups'])) > 2:
+            if len(set(tab.statistics['groups'])) > 2 or is_continuous:
                 # Create a dialog box for the correction method
                 corr_window = QtWidgets.QMessageBox()
                 corr_window.setWindowTitle("MCP Correction")
@@ -701,12 +701,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             else:
                 corr_mode = None
 
-            # n = 3  # Número de grupos
-            # # Si quiero meter temporales, añadir detras del n*15 un  , n_timepoints de los que quiera
-            # groups = np.repeat([f"Grupo_{i + 1}" for i in range(n)], 15)
-            # data = np.random.randn(n * 15)  # 15 sujetos por grupo, 50 instantes temporales
-
-            results, report_text = do_stats(tab.statistics['data'], tab.statistics['groups'], paired=paired, padjust=corr_mode, is_continuous=False)
+            results, report_text = do_stats(tab.statistics['data'], tab.statistics['groups'], paired=paired, padjust=corr_mode, is_continuous=is_continuous)
             tab.statistics['statistical_results'] = results
             tab.statistics['statistical_report'] = report_text
 
