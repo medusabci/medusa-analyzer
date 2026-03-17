@@ -12,12 +12,13 @@ class ViolinPlot(BasePlot):
     Violin plot for per-group distributions (Seaborn backend).
     """
 
-    def __init__(self, ax, plot_params=None, main_module=None):
-        super().__init__(ax, plot_params, main_module=main_module)
+    def __init__(self, ax, plot_params=None, tabs_widget=None):
+        super().__init__(ax, plot_params, tabs_widget)
         self._group_values = {}
-        self._stats_signature = None
+        self.tabs_widget = tabs_widget
 
     def load_data(self, filtered_files: Dict[str, List[str]], selected_channels: List[int]):
+
         self._group_values.clear()
         for group_name, file_list in filtered_files.items():
             values = []
@@ -52,31 +53,9 @@ class ViolinPlot(BasePlot):
             if values:
                 self._group_values[group_name] = np.asarray(values)
 
-        new_signature = self._build_stats_signature()
-        if new_signature != self._stats_signature:
-            self.statistical_results = None
-            self.statistical_report = ""
-
-        self._stats_signature = new_signature
-        self._sync_main_module_stats_payload()
-
-    def get_stats_payload(self):
-        groups = []
-        data = []
-
-        for group_name, values in self._group_values.items():
-            curr_values = np.asarray(values, dtype=float).tolist()
-            data.extend(curr_values)
-            groups.extend([group_name] * len(curr_values))
-
-        if not data or len(set(groups)) < 2:
-            return None
-
-        return {
-            "data": np.asarray(data, dtype=float),
-            "groups": np.asarray(groups, dtype=object),
-            "signature": self._stats_signature,
-        }
+        current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
+        if not hasattr(current_tab, 'statistics'):
+            self.prepare_stats_data()
 
     def draw(self, colors=None):
         self.clear()
@@ -181,111 +160,77 @@ class ViolinPlot(BasePlot):
                         zorder=2
                     )
 
-        self._draw_stats_annotations(df, group_order)
+        # Get whether to show the stats bars
+        stats_checkbox = bool(self.plot_params.get("plot_stats", False))
+
+        if stats_checkbox:
+            current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
+
+            # Run the statistical analysis if it has not been done yet
+            if not hasattr(current_tab, 'statistical_results'):
+                self.tabs_widget.controller.stats_report(current_tab, skip_report = True)
+
+            # Pairs of groups
+            pairs = list(itertools.combinations(group_order, 2))
+            # pairwise_res = self.view.main_module.statistical_results['pairwise']
+
+            # Generate random values for testing
+            pairwise_res = {}
+            for g1, g2 in pairs:
+                pairwise_res[(g1, g2)] = {'p_values_corr': np.random.uniform(0, 0.013)}
+
+            # Get the y range for establishing the y position of the horizontal bars showing the significance
+            y_max = df["value"].max()
+            if pd.isna(y_max): return
+            y_range = y_max - df["value"].min()
+            h_line = y_max + 0.05 * y_range
+            step = 0.08 * y_range
+
+            # For each comparison
+            line_count = 0
+            for g1, g2 in pairs:
+
+                # If exits the corrected p-values, use them, otherwise use the original ones
+                if pairwise_res[(g1, g2)]['p_values_corr']:
+                    p_adj = pairwise_res[(g1, g2)]['p_values_corr']
+                else:
+                    p_adj = pairwise_res[(g1, g2)]['p_values']
+
+                # Label as a function of the significance level
+                if p_adj < 0.05:
+                    if p_adj < 0.001:
+                        label = '***'
+                    elif p_adj < 0.01:
+                        label = '**'
+                    else:
+                        label = '*'
+
+                    # Get the positions of the current groups for plotting
+                    x1, x2 = group_order.index(g1), group_order.index(g2)
+                    curr_h = h_line + (line_count * step)
+
+                    # Plot the line and the label
+                    self.ax.plot([x1, x1, x2, x2], [curr_h, curr_h + step * 0.15, curr_h + step * 0.15, curr_h],
+                            lw=1.2, c='#222222')
+                    self.ax.text((x1 + x2) * .5, curr_h + step * 0.15, label, ha='center', va='bottom',
+                            color='#222222', fontsize=12)
+                    line_count += 1
+
 
         # Save final Y limits
         self.safe_set_lim("set_ylim", self.plot_params.get("ylim"))
         self.apply_grid_and_spines(axis="y")
         self.save_limits()
 
-    def _build_stats_signature(self):
-        signature = []
-        for group_name in sorted(self._group_values):
-            values = tuple(np.round(np.asarray(self._group_values[group_name], dtype=float), 12).tolist())
-            signature.append((group_name, values))
-        return tuple(signature)
+    def prepare_stats_data(self):
+        groups = []
+        data = []
+        for group_name, values in self._group_values.items():
+            data.extend(values)
+            groups.extend([group_name] * len(values))
 
-    def _sync_main_module_stats_payload(self):
-        if self.main_module is None:
-            return
+        current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
 
-        payload = self.get_stats_payload()
-        if payload is None:
-            self.main_module.data_stats = np.array([])
-            self.main_module.group_stats = np.array([])
-            self.main_module.statistical_source_signature = None
-        else:
-            self.main_module.data_stats = payload["data"]
-            self.main_module.group_stats = payload["groups"]
-            self.main_module.statistical_source_signature = payload["signature"]
-
-        self.main_module.statistical_source_plot = self
-        self.main_module.statistical_results = self.statistical_results
-        self.main_module.statistical_report = self.statistical_report
-
-    def _draw_stats_annotations(self, df: pd.DataFrame, group_order: List[str]):
-        if not isinstance(self.statistical_results, dict):
-            return
-
-        pairwise_res = self.statistical_results.get("pairwise", {}) or {}
-        if not pairwise_res:
-            return
-
-        pairs = list(itertools.combinations(group_order, 2))
-        if not pairs:
-            return
-
-        y_max = df["value"].max()
-        y_min = df["value"].min()
-        if pd.isna(y_max) or pd.isna(y_min):
-            return
-
-        y_range = y_max - y_min
-        if y_range == 0:
-            y_range = abs(y_max) if y_max != 0 else 1.0
-
-        h_line = y_max + 0.05 * y_range
-        step = 0.08 * y_range
-        line_count = 0
-
-        for g1, g2 in pairs:
-            result = pairwise_res.get((g1, g2)) or pairwise_res.get((g2, g1))
-            if not result:
-                continue
-
-            p_adj = self._extract_p_value(result)
-            label = self._get_significance_label(p_adj)
-            if label is None:
-                continue
-
-            x1, x2 = group_order.index(g1), group_order.index(g2)
-            curr_h = h_line + (line_count * step)
-
-            self.ax.plot(
-                [x1, x1, x2, x2],
-                [curr_h, curr_h + step * 0.15, curr_h + step * 0.15, curr_h],
-                lw=1.2,
-                c="#222222",
-            )
-            self.ax.text(
-                (x1 + x2) * 0.5,
-                curr_h + step * 0.15,
-                label,
-                ha="center",
-                va="bottom",
-                color="#222222",
-                fontsize=12,
-            )
-            line_count += 1
-
-    def _extract_p_value(self, result: Dict[str, float]):
-        for key in ("p_values_corr", "p_values"):
-            value = result.get(key)
-            if value is None:
-                continue
-            if isinstance(value, str) and value == "":
-                continue
-            try:
-                return float(np.asarray(value).squeeze())
-            except (TypeError, ValueError):
-                continue
-        return None
-
-    def _get_significance_label(self, p_value):
-        if p_value is None or p_value >= 0.05:
-            return None
-        if p_value < 0.001:
-            return "***"
-        if p_value < 0.01:
-            return "**"
-        return "*"
+        current_tab.statistics = {}
+        current_tab.statistics['data'] = data
+        current_tab.statistics['groups'] = groups

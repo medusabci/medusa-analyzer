@@ -1,6 +1,46 @@
 {
   "eeg_features": [
     {
+      "mean": {
+        "Param_name": "Mean",
+        "Plot_params": {
+          "title": "Mean",
+          "x_label": "Time (ms)",
+          "y_label": "Amplitude (µV)"
+        }
+      },
+      "std": {
+        "Param_name": "Std",
+        "Plot_params": {
+          "title": "Standard Deviation",
+          "x_label": "Time (ms)",
+          "y_label": "Amplitude (µV)"
+        }
+      },
+      "median": {
+        "Param_name": "Median",
+        "Plot_params": {
+          "title": "Median",
+          "x_label": "Time (ms)",
+          "y_label": "Amplitude (µV)"
+        }
+      },
+      "kurtosis": {
+        "Param_name": "Kurtosis",
+        "Plot_params": {
+          "title": "Kurtosis",
+          "x_label": "Time (ms)",
+          "y_label": "Amplitude (µV)"
+        }
+      },
+      "skewness": {
+        "Param_name": "Skewness",
+        "Plot_params": {
+          "title": "Skewness",
+          "x_label": "Time (ms)",
+          "y_label": "Amplitude"
+        }
+      },
       "psd": {
         "Param_name": "PSD",
         "Plot_params": {

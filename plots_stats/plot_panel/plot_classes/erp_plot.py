@@ -14,10 +14,11 @@ class ERPPlot(BasePlot):
     - promedia entre archivos
     """
 
-    def __init__(self, ax, plot_params=None, main_module=None):
-        super().__init__(ax, plot_params, main_module=main_module)
+    def __init__(self, ax, plot_params=None, tabs_widget=None):
+        super().__init__(ax, plot_params, tabs_widget)
         self._group_erps = {}
         self._time_vector = None
+        self.tabs_widget = tabs_widget
 
     def load_data(self, filtered_files: Dict[str, List[str]], selected_channels: List[int]):
         self._group_erps.clear()
