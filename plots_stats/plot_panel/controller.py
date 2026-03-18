@@ -40,6 +40,20 @@ class TabbedPlotWidgetController(QtCore.QObject):
             plots_json = json.load(f)
         return params_json, plots_json
 
+    def select_all_channels(self, tab, param):
+        """Select all channels in the channel list of the current tab."""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
+        if list_widget is None:
+            return
+
+        list_widget.blockSignals(True)
+        for i in range(list_widget.count()):
+            item = list_widget.item(i)
+            item.setSelected(True)
+        list_widget.blockSignals(False)
+
+        self.on_channels_selected(tab, param)
+
     def _merge_plot_params(self, base_plot_params, plot_params_meta):
         merged = {}
         for key, meta in plot_params_meta.items():
@@ -266,6 +280,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
         tab._selected_channels = {param: 0}
         self.on_channels_selected(tab, param)
         list_widget.itemSelectionChanged.connect(lambda: self.on_channels_selected(tab, param))
+
+        avg_all_btn = tab.findChild(QtWidgets.QPushButton, "averageallpushButton")
+        if avg_all_btn is not None:
+            avg_all_btn.clicked.connect(lambda checked=False, t=tab, p=param: self.select_all_channels(t, p))
 
     def on_channels_selected(self, tab, param):
         """Read the selected channels and store its indices"""

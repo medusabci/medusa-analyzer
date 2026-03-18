@@ -67,7 +67,7 @@ def on_next_click(view):
         "Warning with PSD configuration",
                                       "You have selected at least one spectral parameter, but the Power Spectral "
                                       "Density (PSD) computation is not enabled. Default parameters (PSD length % of the"
-                                      " trial: XXXX, overlap %: YYYY, and window: ZZZZZ) will be used for the PSD "
+                                      " trial: 80%, overlap: 50%, and window: 'boxcar') will be used for the PSD "
                                       "calculation. Please ensure that these parameters are appropriate for your "
                                       "analysis."
         )

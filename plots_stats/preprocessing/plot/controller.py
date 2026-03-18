@@ -33,6 +33,19 @@ class PlotController(QtCore.QObject):
         ui.setupUi(widget)
         return widget
 
+    def select_all_channels(self, tab, sig):
+        """Select all channels in the channel list."""
+        list_widget = tab.findChild(QtWidgets.QListWidget, "channelListWidget")
+        if list_widget is None:
+            return
+
+        list_widget.blockSignals(True)
+        list_widget.selectAll()
+        list_widget.blockSignals(False)
+
+        self.on_channels_selected(tab, sig)
+        self.update_plot(tab)
+
     def create_tabs(self):
         """ Create the tabs """
 
@@ -179,6 +192,12 @@ class PlotController(QtCore.QObject):
         tab._selected_channels = {sig: list(range(list_widget.count()))}
         self.on_channels_selected(tab, sig)
         list_widget.itemSelectionChanged.connect(lambda: self.on_channels_selected(tab, sig))
+
+        avg_all_btn = tab.findChild(QtWidgets.QPushButton, "averageallpushButton")
+        if avg_all_btn is not None:
+            avg_all_btn.clicked.connect(
+                lambda checked=False, t=tab, s=sig: self.select_all_channels(t, s)
+            )
 
     def on_channels_selected(self, tab, sig):
         """Read the selected channels and store its indices"""
