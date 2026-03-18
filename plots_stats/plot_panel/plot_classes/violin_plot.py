@@ -21,7 +21,7 @@ class ViolinPlot(BasePlot):
 
         self._group_values.clear()
         for group_name, file_list in filtered_files.items():
-            values = []
+            subject_values = []
 
             for filepath in file_list:
                 try:
@@ -48,10 +48,15 @@ class ViolinPlot(BasePlot):
                 data = self.normalize_data(data)
                 max_idx = data.shape[0] - 1
                 valid_channels = [ch for ch in selected_channels if 0 <= ch <= max_idx] or [0]
-                values.append(np.mean(data[valid_channels]))
 
-            if values:
-                self._group_values[group_name] = np.asarray(values)
+                value = np.mean(data[valid_channels])
+                subject_id = self.extract_subject_id(filepath)
+                subject_values.append((subject_id, value))
+
+            if subject_values:
+                values = self.aggregate_subject_data(subject_values)
+                if values.size > 0:
+                    self._group_values[group_name] = values
 
         current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
         if not hasattr(current_tab, 'statistics'):

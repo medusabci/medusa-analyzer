@@ -6,12 +6,12 @@ from .base_plot import BasePlot
 
 class ERPPlot(BasePlot):
     """
-    Plot de Event-Related Potentials (ERP).
+    Plot of Event-Related Potentials (ERP).
 
-    Para cada grupo:
-    - promedia épocas (si existen)
-    - promedia canales seleccionados
-    - promedia entre archivos
+    For each group:
+    - Average epochs (if exists)
+    - Average selected channels
+    - Average files
     """
 
     def __init__(self, ax, plot_params=None, tabs_widget=None):
@@ -22,11 +22,13 @@ class ERPPlot(BasePlot):
 
     def load_data(self, filtered_files: Dict[str, List[str]], selected_channels: List[int]):
         self._group_erps.clear()
-
         self._time_vector = None
-        for group_name, file_list in filtered_files.items():
-            group_signals = []
 
+        # Loop to iterate through groups
+        for group_name, file_list in filtered_files.items():
+            subject_signals = []
+
+            # Loop to iterate through all files for each group
             for filepath in file_list:
                 try:
                     mat = scipy.io.loadmat(filepath, squeeze_me=True, struct_as_record=False)
@@ -35,17 +37,13 @@ class ERPPlot(BasePlot):
                     continue
 
                 data = None
-                for key in (["epochs"]):
-                    if key in mat:
-                        data = np.asarray(mat[key])
-                        break
-
+                if "epochs" in mat:
+                    data = np.asarray(mat["epochs"])
                 if data is None:
                     print(f"[WARN] No ERP data found in {filepath}")
                     continue
 
-                data = np.asarray(data)
-                data = self.normalize_data(data)  # aquí se aplican todos los casos 1D, 2D, 3D
+                data = self.normalize_data(data)
                 if data.ndim != 2:
                     print(f"[WARN] Unsupported ERP shape {data.shape} in {filepath}")
                     continue
@@ -56,26 +54,28 @@ class ERPPlot(BasePlot):
                     valid_channels = [0]
 
                 signal = np.mean(data[:, valid_channels], axis=1)
-                group_signals.append(signal)
+                subject_id = self.extract_subject_id(filepath)
+                subject_signals.append((subject_id, signal))
 
-            if group_signals:
-                min_len = min(s.shape[0] for s in group_signals)
-                aligned = np.array([s[:min_len] for s in group_signals])
-                mean_signal = np.mean(aligned, axis=0)
-                std_signal = np.std(aligned, axis=0)
-                n = aligned.shape[0]
+            if subject_signals:
+                signals = self.aggregate_subject_data(subject_signals)
+                if signals.size == 0:
+                    continue
+                mean_signal = np.mean(signals, axis=0)
+                std_signal = np.std(signals, axis=0)
+                n = signals.shape[0]
 
                 self._group_erps[group_name] = {
                     "mean": mean_signal,
                     "std": std_signal,
                     "n": n,
-                    "all": aligned
+                    "all": signals
                 }
             if self._time_vector is None:
                 window = self.plot_params.get("_time_window", None)
                 if window is not None:
                     start, end = window
-                    self._time_vector = np.linspace(start, end, min_len)
+                    self._time_vector = np.linspace(start, end, signals.shape[1])
 
         if not hasattr(self.tabs_widget, 'statistics'):
             self.prepare_stats_data(self.tabs_widget)
@@ -132,4 +132,4 @@ class ERPPlot(BasePlot):
         current_tab.statistics['data'] = data
         current_tab.statistics['groups'] = groups
 
-        current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)
+        # current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)

@@ -23,7 +23,7 @@ class PSDPlot(BasePlot):
         groups = []
 
         for group_name, file_list in filtered_files.items():
-            per_file_psds = []
+            subject_psds = []
             freqs_ref = None
 
             for filepath in file_list:
@@ -58,29 +58,29 @@ class PSDPlot(BasePlot):
                 max_idx = values.shape[1] - 1
                 valid_channels = [ch for ch in selected_channels if 0 <= ch <= max_idx] or [0]
                 mean_psd = np.mean(values[:, valid_channels], axis=1)
-                per_file_psds.append((freqs, mean_psd))
 
                 if freqs_ref is None:
                     freqs_ref = freqs
 
-            if not per_file_psds:
+                if not np.array_equal(freqs, freqs_ref):
+                    try:
+                        mean_psd = np.interp(freqs_ref, freqs, mean_psd)
+                    except Exception as e:
+                        print(f"[WARN] Interpolation failed for {filepath}: {e}")
+                        continue
+
+                subject_id = self.extract_subject_id(filepath)
+                subject_psds.append((subject_id, mean_psd))
+
+            if not subject_psds:
                 continue
 
-            freqs_common = freqs_ref
-            interpolated = []
+            subject_matrix = self.aggregate_subject_data(subject_psds)
+            if subject_matrix.size == 0:
+                continue
 
-            for fvec, pvec in per_file_psds:
-                if not np.array_equal(fvec, freqs_common):
-                    try:
-                        pvec = np.interp(freqs_common, fvec, pvec)
-                    except Exception as e:
-                        print(f"[WARN] Interpolation failed for {group_name}: {e}")
-                        continue
-                interpolated.append(pvec)
-
-            if interpolated:
-                group_mean = np.mean(np.vstack(interpolated), axis=0)
-                groups.append((group_name, freqs_common, group_mean))
+            group_mean = np.mean(subject_matrix, axis=0)
+            groups.append((group_name, freqs_ref, group_mean))
 
         if groups:
             self._freqs = groups[0][1]

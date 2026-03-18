@@ -31,8 +31,8 @@ class LinearPlot(BasePlot):
         self._mode = None
 
         for group_name, file_list in filtered_files.items():
-            group_values = []
-            group_series = []
+            subject_values = []
+            subject_series = []
 
             for filepath in file_list:
                 try:
@@ -58,7 +58,20 @@ class LinearPlot(BasePlot):
                     continue
 
                 data = np.asarray(data)
-                if data.ndim == 2:
+                subject_id = self.extract_subject_id(filepath)
+
+                if data.ndim == 1:
+                    self._mode = "vector"
+
+                    max_idx = data.shape[0] - 1
+                    valid_channels = [ch for ch in selected_channels if 0 <= ch <= max_idx]
+                    if not valid_channels:
+                        valid_channels = [0]
+
+                    value = np.mean(data[valid_channels])
+                    subject_values.append((subject_id, value))
+
+                elif data.ndim == 2:
                     self._mode = "time_series"
 
                     max_idx = data.shape[1] - 1
@@ -68,23 +81,24 @@ class LinearPlot(BasePlot):
 
                     # average over channels → signal over time
                     signal = np.mean(data[:, valid_channels], axis=1)
-                    group_series.append(signal)
+                    subject_series.append((subject_id, signal))
 
                 else:
                     print(f"[WARN] Unsupported data shape {data.shape} in {filepath}")
                     continue
 
-            if self._mode == "vector" and group_values:
+            if self._mode == "vector" and subject_values:
+                values = self.aggregate_subject_data(subject_values)
                 self._group_stats[group_name] = {
-                    "mean": np.mean(group_values),
-                    "std": np.std(group_values)
+                    "mean": np.mean(values),
+                    "std": np.std(values),
+                    "all": values
                 }
 
-            if self._mode == "time_series" and group_series:
-                min_len = min(s.shape[0] for s in group_series)
-                truncated_series = np.array([s[:min_len] for s in group_series])
-                self._group_series[group_name] = np.mean(truncated_series, axis=0)
-
+            if self._mode == "time_series" and subject_series:
+                signals = self.aggregate_subject_data(subject_series)
+                if signals.size > 0:
+                    self._group_series[group_name] = np.mean(signals, axis=0)
 
     def draw(self, colors=None):
         self.clear()

@@ -28,9 +28,7 @@ class ScatterPlot(BasePlot):
             if not files_x:
                 continue
 
-            x_vals = []
-            y_vals = []
-
+            subject_points = {}
             files_x_map = {self._base_name(f): f for f in files_x}
 
             for fy in files_y:
@@ -42,11 +40,27 @@ class ScatterPlot(BasePlot):
                 x = self._load_scalar(fx, selected_channels)
                 if x is None or y is None:
                     continue
-                x_vals.append(x)
-                y_vals.append(y)
 
-            if x_vals and y_vals:
-                self._points[group] = (np.array(x_vals), np.array(y_vals))
+                subject_id = self.extract_subject_id(fy)
+                subject_points.setdefault(subject_id, []).append((x, y))
+
+            if subject_points:
+                x_vals = []
+                y_vals = []
+
+                for subject_id, points in subject_points.items():
+                    points_arr = np.asarray(points, dtype=float)
+                    if points_arr.ndim != 2 or points_arr.shape[1] != 2:
+                        continue
+
+                    mean_x = np.mean(points_arr[:, 0])
+                    mean_y = np.mean(points_arr[:, 1])
+
+                    x_vals.append(mean_x)
+                    y_vals.append(mean_y)
+
+                if x_vals and y_vals:
+                    self._points[group] = (np.asarray(x_vals), np.asarray(y_vals))
 
     def draw(self, colors=None):
         self.clear()
