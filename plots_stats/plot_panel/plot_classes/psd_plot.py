@@ -86,6 +86,9 @@ class PSDPlot(BasePlot):
             self._freqs = groups[0][1]
             self._psd_data = {g[0]: g[2] for g in groups}
 
+        if not hasattr(self.tabs_widget, 'statistics'):
+            self.prepare_stats_data(self.tabs_widget)
+
     def _extract_psd_fields(self, psd_struct):
         freqs, values = None, None
         try:
@@ -151,3 +154,16 @@ class PSDPlot(BasePlot):
         self.apply_grid_and_spines(axis="both")
         self.ax.legend(frameon=False)
         self.save_limits()
+
+    def prepare_stats_data(self, current_tab):
+        groups = []
+        data = []
+        for group_name, values in self._group_erps.items():
+            data.extend(values['all'])
+            groups.extend([group_name] * values['all'].shape[0])
+
+        current_tab.statistics = {}
+        current_tab.statistics['data'] = data
+        current_tab.statistics['groups'] = groups
+
+        # current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)

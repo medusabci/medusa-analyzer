@@ -132,4 +132,4 @@ class ERPPlot(BasePlot):
         current_tab.statistics['data'] = data
         current_tab.statistics['groups'] = groups
 
-        current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)
+        # current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)

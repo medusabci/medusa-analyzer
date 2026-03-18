@@ -706,6 +706,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
             tab.statistics['statistical_report'] = report_text
 
 
-        if not skip_report:
+        if not (skip_report or is_continuous):
             report_window = StatsReport(tab.statistics['statistical_report'])
             report_window.exec()

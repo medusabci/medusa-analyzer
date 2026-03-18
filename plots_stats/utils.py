@@ -196,58 +196,56 @@ def do_stats(data, groups, paired=True, padjust=None, is_continuous=False):
                 pairwise_res[(g1, g2)]['p_values'][t] = p
                 pairwise_res[(g1, g2)]['test'] = test_applied
 
-        # 4. P-VALUE CORRECTION
-        adj_name = "None"
-        if is_continuous:
-            output_pvalues = np.zeros(n_timepoints)
-        if padjust is not None and padjust.lower() != 'none':
-            pair_keys = list(pairwise_res.keys())
+    # 4. P-VALUE CORRECTION
+    adj_name = "None"
+    if is_continuous:
+        output_pvalues = np.zeros(n_timepoints)
+    if padjust is not None and padjust.lower() != 'none':
+        pair_keys = list(pairwise_res.keys())
 
-            # Identify correction method
-            if padjust.lower() in ['bonf', 'bonferroni']:
-                method = 'bonf'
-                adj_name = 'Bonferroni'
-            elif padjust.lower() in ['fdr_bh', 'bh', 'fdr']:
-                method = 'fdr_bh'
-                adj_name = 'Benjamini-Hochberg FDR'
-            else:
-                raise ValueError("padjust parameter must be 'bonf', 'fdr_bh', or None")
-
-            # Apply correction
-            if is_continuous:
-                if n_groups > 2:
-                    p_vals_time = omnibus_res['p_values']
-                    _, p_corr_time = pg.multicomp(p_vals_time, method=method)
-                    omnibus_res['p_values_corr'] = p_corr_time
-                    output_pvalues[t] = p_corr_time
-                else:
-                    p_vals_time = pairwise_res[pair_keys[0]]['p_values']
-                    _, p_corr_time = pg.multicomp(p_vals_time, method=method)
-                    pairwise_res[pair_keys[0]]['p_values_corr'] = p_corr_time
-                    output_pvalues[t] = p_corr_time
-            elif n_groups > 2:
-                # Correct across all the group pairs
-                all_p_discrete = np.array([pairwise_res[k]['p_values'][0] for k in pair_keys])
-                _, p_corr_discrete = pg.multicomp(all_p_discrete, method=method)
-
-                # Store the corrected p-values in their comparison
-                for idx, k in enumerate(pair_keys):
-                    # Se guarda como array 1D para mantener la compatibilidad con el desempaquetado final
-                    pairwise_res[k]['p_values_corr'] = np.array([p_corr_discrete[idx]])
-
-            else:
-                # Else (if correction makes no sense), store an empty value
-                for k in pairwise_res.keys():
-                    pairwise_res[k]['p_values_corr'] = ''
-                    adj_name = 'None'
+        # Identify correction method
+        if padjust.lower() in ['bonf', 'bonferroni']:
+            method = 'bonf'
+            adj_name = 'Bonferroni'
+        elif padjust.lower() in ['fdr_bh', 'bh', 'fdr']:
+            method = 'fdr_bh'
+            adj_name = 'Benjamini-Hochberg FDR'
         else:
-            # Else (if no correction), store an empty value
-            for k in pairwise_res.keys():
-                if is_continuous:
-                    output_pvalues[t] = pairwise_res[k]['p_values']
-                    break
-                pairwise_res[k]['p_values_corr'] = ''
+            raise ValueError("padjust parameter must be 'bonf', 'fdr_bh', or None")
 
+        # Apply correction
+        if is_continuous:
+            if n_groups > 2:
+                p_vals_time = omnibus_res['p_values']
+                _, p_corr_time = pg.multicomp(p_vals_time, method=method)
+                omnibus_res['p_values_corr'] = p_corr_time
+                output_pvalues = p_corr_time
+            else:
+                p_vals_time = pairwise_res[pair_keys[0]]['p_values']
+                _, p_corr_time = pg.multicomp(p_vals_time, method=method)
+                pairwise_res[pair_keys[0]]['p_values_corr'] = p_corr_time
+                output_pvalues = p_corr_time
+        elif n_groups > 2:
+            # Correct across all the group pairs
+            all_p_discrete = np.array([pairwise_res[k]['p_values'][0] for k in pair_keys])
+            _, p_corr_discrete = pg.multicomp(all_p_discrete, method=method)
+
+            # Store the corrected p-values in their comparison
+            for idx, k in enumerate(pair_keys):
+                # Se guarda como array 1D para mantener la compatibilidad con el desempaquetado final
+                pairwise_res[k]['p_values_corr'] = np.array([p_corr_discrete[idx]])
+        else:
+            # Else (if correction makes no sense), store an empty value
+            for k in pairwise_res.keys():
+                pairwise_res[k]['p_values_corr'] = ''
+                adj_name = 'None'
+    else:
+        # Else (if no correction), store an empty value
+        for k in pairwise_res.keys():
+            if is_continuous:
+                output_pvalues = pairwise_res[k]['p_values']
+                break
+            pairwise_res[k]['p_values_corr'] = ''
 
     if is_continuous:
         # Skip report and return only the p-values of interest
