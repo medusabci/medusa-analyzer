@@ -62,7 +62,7 @@ def on_next_click(view):
     if view.eventRButton.isChecked() and view.eventList.selectionModel().selectedIndexes() and not view.conditionList.selectionModel().selectedIndexes():
         QtWidgets.QMessageBox.warning(view, "Condition Selection Required",
                                       "Please select at least one condition before proceeding. "
-                                      "If no conditions are available, select 'no-condition'.")
+                                      "If no conditions are available, select 'nocondition'.")
         return False
 
     # Check if at least 2 oscillations of the lowest frequency band are present in the trials

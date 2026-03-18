@@ -177,7 +177,7 @@ def include_no_conditions_in_marks(marks, times):
     else:
         new_label = 0
     # Include the no-condition condition in the app_settings
-    new_marks.app_settings['conditions']['no-condition'] = {'desc-name': 'No Condition',
+    new_marks.app_settings['conditions']['nocondition'] = {'desc-name': 'No Condition',
                                                              'label': new_label,
                                                              'shortcut': 'NA'}
 

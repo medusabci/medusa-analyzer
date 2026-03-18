@@ -77,18 +77,28 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
     category_map[2] = {
         0: "Agr", 1: "DesAgr"}
     category_map[3] = {
-        0: "Alg_Con", 1: "Alg_Pic", 2: "Alg_Abs",
-        3: "Est_Con", 4: "Est_Pic", 5: "Est_Abs",
-        6: "Geo_Con", 7: "Geo_Pic", 8: "Geo_Abs",
-        9: "Num_Con", 10: "Num_Pic", 11: "Num_Abs",
+        0: "AlgCon", 1: "AlgPic", 2: "AlgAbs",
+        3: "EstCon", 4: "EstPic", 5: "EstAbs",
+        6: "GeoCon", 7: "GeoPic", 8: "GeoAbs",
+        9: "NumCon", 10: "NumPic", 11: "NumAbs",
     }
 
     try:
+
         subj_id = output_dir.stem.split('.')[0]
         # Load the recording
         recording = Recording.load(str(file))
         bids_folders = output_dir.parent
         bids_folders.mkdir(parents=True, exist_ok=True)
+
+        # Convert names to labels
+        experiment = int(Path(recording.exp_data.data[0]['img_path']).parts[-2])
+        category_map_wresponses = {}
+        idx = 0
+        for _, value in category_map[experiment].items():
+            category_map_wresponses[idx] = value + "RAgr"
+            category_map_wresponses[idx + 1] = value + "RDesAgr"
+            idx += 2
 
         # Extract ERP marks
         marks = CustomExperimentData()
@@ -99,18 +109,18 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
                 group_id = Path(trial['img_path']).stem.split('-')[-1]
             else:
                 continue
-            experiment = int(Path(trial['img_path']).parts[-2])
-            response = 'Agr' if trial['response'] == 1 else 'DesAgr'
+            response = 'RAgr' if trial['response'] == 1 else 'RDesAgr'
             evt_names.append(category_map[experiment][int(group_id)] + response)
             evt_times.append(trial['onset_time'])
 
         # Convert names to labels
-        names_map = {x: i for i, x in enumerate(set(evt_names))}
+        names_map = {x: i for i, x in category_map_wresponses.items()}
         evt_labels = [names_map[x] for x in evt_names]
+
         # Create dict for app_settings
         dict_app_settings = {}
-        for name, label in names_map.items():
-            dict_app_settings[name] = {'desc-name': name.upper().replace('_',' '), 'label': label}
+        for label, name in category_map_wresponses.items():
+            dict_app_settings[name] = {'desc-name': name.replace('_',' '), 'label': label}
 
         # Stores the marks
         marks.events_labels = evt_labels
@@ -118,7 +128,7 @@ def _convert_edubiomat_file(file, output_dir, worker=None):
         # Store the app settings
         marks.app_settings = _sanitize_app_settings({
             'events': dict_app_settings,
-            'conditions': {'no-condition': {'desc-name': 'No condition', 'label': 0}}
+            'conditions': {'nocondition': {'desc-name': 'No condition', 'label': 0}}
         })
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
         # Add the marks to the recording
@@ -150,7 +160,7 @@ def _convert_rcp_file(file, output_dir, worker=None):
         marks.events_times = data.erpspellerdata.onsets.tolist() if isinstance(data.erpspellerdata.onsets, np.ndarray) else data.erpspellerdata.onsets
         marks.app_settings = _sanitize_app_settings({
             'events': {'non_target': {'desc-name': 'Non target', 'label': 0}, 'target': {'desc-name': 'Target', 'label': 1}},
-            'conditions': {'no-condition': {'desc-name': 'No condition', 'label': 0}}
+            'conditions': {'nocondition': {'desc-name': 'No condition', 'label': 0}}
         })
         marks.conditions_labels, marks.conditions_times = [], np.empty((0, 2))
 
