@@ -108,6 +108,7 @@ class PipelineWorker(QThread):
 
                 ## Second step: Get indices of the thresholding
                 if settings_dic['segmentation']["thresholding"]:
+
                     # Get the thresholding parameters
                     thres_k = settings_dic['segmentation']['thres_k']
                     thres_samples = settings_dic['segmentation']["thres_samples"]
@@ -148,7 +149,7 @@ class PipelineWorker(QThread):
                             continue
 
                         # Get the indices of rejected epochs
-                        _, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
+                        prc_rejected, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
                             epochs, np.nanmean(processed_signal, axis=0), np.std(processed_signal, axis=0),
                             k=thres_k, n_samp=thres_samples, n_cha=thres_channels)
 

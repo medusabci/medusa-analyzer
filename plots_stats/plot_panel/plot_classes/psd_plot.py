@@ -80,11 +80,12 @@ class PSDPlot(BasePlot):
                 continue
 
             group_mean = np.mean(subject_matrix, axis=0)
-            groups.append((group_name, freqs_ref, group_mean))
+            groups.append((group_name, freqs_ref, group_mean, subject_matrix))
 
         if groups:
             self._freqs = groups[0][1]
             self._psd_data = {g[0]: g[2] for g in groups}
+            self._psd_data_stats = {g[0]: g[3] for g in groups}
 
         if not hasattr(self.tabs_widget, 'statistics'):
             self.prepare_stats_data(self.tabs_widget)
@@ -158,9 +159,9 @@ class PSDPlot(BasePlot):
     def prepare_stats_data(self, current_tab):
         groups = []
         data = []
-        for group_name, values in self._group_erps.items():
-            data.extend(values['all'])
-            groups.extend([group_name] * values['all'].shape[0])
+        for group_name, values in self._psd_data_stats.items():
+            data.extend(values)
+            groups.extend([group_name] * values.shape[0])
 
         current_tab.statistics = {}
         current_tab.statistics['data'] = data
