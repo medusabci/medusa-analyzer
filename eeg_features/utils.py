@@ -16,6 +16,7 @@ from scipy.stats import kurtosis, skew
 from scipy.io import savemat
 import re
 import json
+import csv
 from pathlib import Path
 
 
@@ -70,6 +71,15 @@ class PipelineWorker(QThread):
         steps_per_band = 1 + steps_per_cond * len(settings_dic['segmentation']['selected_conditions'])
         steps_per_file = 3 + steps_per_band * len(bands)
         total_steps = total_files * steps_per_file # Total steps for the progress bar
+
+        # To store rejection summary and execution logs
+        rejection_summary = []
+        execution_logs = []
+
+        def _log_with_store(msg, level):
+            self.log.emit(msg, level)
+            if level in ['warning', 'error']:
+                execution_logs.append(f"[{level.upper()}] {msg}")
 
         # Loop through each selected file
         for i, file in enumerate(selected_files):
@@ -145,7 +155,7 @@ class PipelineWorker(QThread):
 
                         # If no epochs were found for this condition, skip it
                         if len(epochs) == 0:
-                            self.log.emit(f"No valid epochs for '{cond}' in file '{file}'. Skipping.",'warning')
+                            _log_with_store(f"⚠️ No valid epochs for '{cond}' in file '{file}'. Skipping.",'warning')
                             continue
 
                         # Get the indices of rejected epochs
@@ -155,6 +165,18 @@ class PipelineWorker(QThread):
 
                         # Store the rejected indices for the current condition
                         idx_threshold[cond] = idx_reject
+                        
+                        # Store rejection summary
+                        n_rejected = int((prc_rejected * epochs.shape[0])/100)
+                        parts = base_name.split('_')
+                        subj_id = next((p for p in parts if p.startswith("sub-")), base_name)
+                        rejection_summary.append({
+                            'subject': subj_id,
+                            'condition': cond,
+                            'prc_rejected': np.round(prc_rejected,2),
+                            'n_rejected': n_rejected
+                        })
+
                         del epochs  # Free memory
 
                 # Update the progress bar and labels
@@ -215,7 +237,7 @@ class PipelineWorker(QThread):
                                         event=evt)
                                 except KeyError as err:
                                     key = err.args[0]
-                                    self.log.emit(f"No valid epochs for event '{key}' in file '{file}'. Continuing...",'warning')
+                                    _log_with_store(f"⚠️ No valid epochs for event '{key}' in file '{file}'. Continuing...",'warning')
                                     continue
                                 if epochs_tmp is not None:
                                     epochs.append(epochs_tmp)
@@ -223,6 +245,9 @@ class PipelineWorker(QThread):
                                     evt_key = signal_marks.app_settings['events'][evt]['label']
                                     idx_events.append(np.full((epochs_tmp.shape[0], 1), evt_key))
                                     del epochs_tmp
+                                else:
+                                    _log_with_store(f"⚠️ No valid epochs for event '{evt}' in file '{file}'. Continuing...",'warning')
+                                    continue
                             # Stack the epochs for all the events (and their corresponding event labels)
                             if epochs:
                                 epochs = np.vstack(epochs)
@@ -230,7 +255,7 @@ class PipelineWorker(QThread):
 
                         # If no epochs were found for this condition, skip it
                         if len(epochs) == 0:
-                            self.log.emit(f"No valid epochs for '{cond}' in file '{file}'. Skipping.",'warning')
+                            _log_with_store(f"⚠️ No valid epochs for '{cond}' in file '{file}'. Skipping.",'warning')
                             continue
 
                         # Update the progress bar and labels
@@ -242,7 +267,7 @@ class PipelineWorker(QThread):
                         if settings_dic['segmentation']["thresholding"]:
                             # If all the epochs are rejected, skip this condition
                             if all(idx_threshold[cond]):
-                                self.log.emit(f"All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",'warning')
+                                _log_with_store(f"⚠️ All epochs corresponding to condition '{cond}' in file '{file}' have been rejected. Skipping.",'warning')
                                 continue
 
                             # Remove the rejected epochs from the epochs array
@@ -303,12 +328,41 @@ class PipelineWorker(QThread):
                         global_progress = (i * steps_per_file + 3 + j * steps_per_band + 1 + k * steps_per_cond + 7) / total_steps * 100
                         self.progress.emit(int(global_progress))
 
-                self.text_progress.emit("Completed")
             # Exception handling
             except Exception as e:
                 error_found = True
-                self.log.emit(f"Error preprocessing {file}: {e}",'error')
+                _log_with_store(f"Error preprocessing {file}: {e}",'error')
                 self.text_progress.emit("Error")
+
+        # Save logs and summary
+        try:
+            selected_folder = Path(settings_dic['save']["folder"])
+            derivatives_path = selected_folder / "derivatives"
+            derivatives_path.mkdir(exist_ok=True)
+            
+            # Save rejection summary to CSV
+            if rejection_summary:
+                csv_path = derivatives_path / "rejection_summary.csv"
+                with open(csv_path, mode='w', newline='') as csv_file:
+                    fieldnames = ['subject', 'condition', 'prc_rejected', 'n_rejected']
+                    writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for row in rejection_summary:
+                        writer.writerow(row)
+                self.log.emit(f"✅ Rejection summary saved to {csv_path}", "")
+
+            # Save execution warnings/errors to TXT
+            if execution_logs:
+                log_path = derivatives_path / "error_log.txt"
+                with open(log_path, mode='w', encoding='utf-8') as txt_file:
+                    for log_entry in execution_logs:
+                        txt_file.write(log_entry + "\n")
+                self.log.emit(f"✅ Execution logs saved to {log_path}", "")
+
+        except Exception as e:
+            self.log.emit(f"⚠️ Could not save logs/summary: {e}", "warning")
+
+        self.text_progress.emit("Completed")
 
         return error_found
 
@@ -522,7 +576,7 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
             preproc_dir = derivatives_path / "preprocessed" / subj_id / "EEG"
         preproc_dir.mkdir(parents=True, exist_ok=True)
 
-        output_path = preproc_dir / f"{base_stem}_band-{band_name.replace("-", "")}.rec.bson"
+        output_path = preproc_dir / f"{base_stem}_band-{band_name.replace('-', '')}.rec.bson"
         if hasattr(data, "save"):
             data.save(str(output_path))
         elif hasattr(data, "save_to_bson"):
@@ -541,9 +595,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
         seg_dir.mkdir(parents=True, exist_ok=True)
 
         if event is not None:
-            output_name = f"{base_stem}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}_event-{event.replace("-", "")}.mat"
+            output_name = f"{base_stem}_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}_event-{event.replace('-', '')}.mat"
         else:
-            output_name = f"{base_stem}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
+            output_name = f"{base_stem}_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}.mat"
         output_path = seg_dir / output_name
 
         savemat(output_path, {'epochs': data})
@@ -559,9 +613,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
 
         if not isinstance(data, dict):
             if event is not None:
-                outname = f"{subj_id}_param-unknown_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}_event-{event.replace("-", "")}.mat"
+                outname = f"{subj_id}_param-unknown_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}_event-{event.replace('-', '')}.mat"
             else:
-                outname = f"{subj_id}_param-unknown_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
+                outname = f"{subj_id}_param-unknown_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}.mat"
             outpath = param_dir / outname
             savemat(outpath, {'parameters': data})
             worker.log.emit(f"⚠️ Parameters: saved fallback file {outpath}","")
@@ -585,9 +639,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
 
             metric_label = (f"psd{b}")
             if event is not None:
-                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}_event-{event.replace("-", "")}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace('-', '')}_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}_event-{event.replace('-', '')}.mat"
             else:
-                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace('-', '')}_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}.mat"
             outpath = param_dir / outname
 
             save_struct = {}
@@ -596,7 +650,6 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
             if freqs_val is not None:
                 save_struct['freqs'] = np.asarray(freqs_val)
 
-            # TODO: modifcar tambien esto
             mat_dict = {metric_label: save_struct}
 
             savemat(outpath, mat_dict)
@@ -607,9 +660,9 @@ def save_outputs(worker, data, base_name, band_name, cond, event, key, settings_
             metric_label = k.replace('_', '-')
 
             if event is not None:
-                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name}_cond-{cond}_event-{event.replace("-", "")}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace('-', '')}_band-{band_name}_cond-{cond}_event-{event.replace('-', '')}.mat"
             else:
-                outname = f"{base_stem}_param-{metric_label.replace("-", "")}_band-{band_name.replace("-", "")}_cond-{cond.replace("-", "")}.mat"
+                outname = f"{base_stem}_param-{metric_label.replace('-', '')}_band-{band_name.replace('-', '')}_cond-{cond.replace('-', '')}.mat"
             outpath = param_dir / outname
 
             if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict) and 'band' in v[0]:

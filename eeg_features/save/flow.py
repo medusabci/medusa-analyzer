@@ -1,6 +1,7 @@
 from eeg_features.utils import PipelineWorker
 from PySide6.QtCore import Qt
 from PySide6 import QtWidgets
+from pathlib import Path
 
 def handle_exceptions(func):
     """
@@ -101,6 +102,17 @@ def on_next_click(view):
 
         # When the worker is finished, enable the button and change its text
         def on_finished(error_found):
+            # Save the full log to a txt file
+            try:
+                selected_folder = Path(view.selected_folder)
+                derivatives_path = selected_folder / "derivatives"
+                derivatives_path.mkdir(exist_ok=True)
+                full_log_path = derivatives_path / "full_log.txt"
+                with open(full_log_path, mode='w', encoding='utf-8') as f:
+                    f.write(view.logtextBrowser.toPlainText())
+            except Exception as e:
+                view._log_message(f"Could not save full log: {e}", "warning")
+
             view.main_window.nextButton.setEnabled(True)
 
             # If not error found, change button text to "Close"
