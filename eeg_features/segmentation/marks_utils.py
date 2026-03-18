@@ -7,8 +7,6 @@ def extract_condition_events(files):
     Extract conditions and events from a list of files.
     """
 
-
-
     conditions = []
     events = []
     events_condition = []
@@ -26,6 +24,10 @@ def extract_condition_events(files):
             rec.marks.app_settings = {}
             rec.marks.app_settings['conditions'] = {}
             rec.marks.app_settings['events'] = {}
+
+        # Events and conditions in app settings
+        events.extend(list(rec.marks.app_settings['events'].keys()))
+        conditions.extend(list(rec.marks.app_settings['conditions'].keys()))
 
         # Standard dict
         _, conditions_tmp, events_tmp = recording_to_dict(rec)
@@ -68,7 +70,7 @@ def recording_to_dict(rec):
     if null_times.size > 0:
         if null_times.ndim == 1:
             null_times = null_times.reshape(1, -1)
-        conditions_names.extend(['no-condition'] * len(null_times))
+        conditions_names.extend(['nocondition'] * len(null_times))
         conditions_times = np.concatenate((conditions_times, null_times), axis=0)
     sort_idx = np.argsort(conditions_times[:, 0])
     conditions_times = conditions_times[sort_idx]
@@ -90,7 +92,7 @@ def recording_to_dict(rec):
     condition_event_str = []
     for event in condition_event.T:
         if not np.any(event):
-            condition_event_str.append('no-condition')
+            condition_event_str.append('nocondition')
         else:
             condition_event_str.append(np.array(conditions['conditions_names'])[event].item())
     condition_event = condition_event_str

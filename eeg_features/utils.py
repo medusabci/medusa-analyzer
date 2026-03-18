@@ -128,9 +128,12 @@ class PipelineWorker(QThread):
                             # Get all the selected events for this condition
                             epochs = []
                             for evt in settings_dic['segmentation']['selected_events']:
-                                epochs_tmp = get_epochs_from_condition(
-                                    processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
-                                    event=evt)
+                                try:
+                                    epochs_tmp = get_epochs_from_condition(
+                                        processed_signal, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
+                                        event=evt)
+                                except KeyError:
+                                    continue
                                 if epochs_tmp is not None:
                                     epochs.append(epochs_tmp)
                                     del epochs_tmp
@@ -205,9 +208,14 @@ class PipelineWorker(QThread):
                             epochs = []
                             idx_events = []
                             for evt in settings_dic['segmentation']['selected_events']:
-                                epochs_tmp = get_epochs_from_condition(
-                                    processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
-                                    event=evt)
+                                try:
+                                    epochs_tmp = get_epochs_from_condition(
+                                        processed_signal_band, cond, signal_marks, signal_times, fs, settings_dic['segmentation'],
+                                        event=evt)
+                                except KeyError as err:
+                                    key = err.args[0]
+                                    self.log.emit(f"No valid epochs for event '{key}' in file '{file}'. Continuing...",'warning')
+                                    continue
                                 if epochs_tmp is not None:
                                     epochs.append(epochs_tmp)
                                     # Store the event label for each epoch
@@ -315,7 +323,7 @@ def include_no_conditions_in_marks(marks, times):
     else:
         new_label = 0
     # Include the no-condition condition in the app_settings
-    new_marks.app_settings['conditions']['no-condition'] = {'desc-name': 'No Condition',
+    new_marks.app_settings['conditions']['nocondition'] = {'desc-name': 'No Condition',
                                                              'label': new_label,
                                                              'shortcut': 'NA'}
 
