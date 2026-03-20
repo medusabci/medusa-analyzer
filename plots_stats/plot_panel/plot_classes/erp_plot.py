@@ -107,12 +107,37 @@ class ERPPlot(BasePlot):
                 ci = 1.96 * (std / np.sqrt(n))
                 self.ax.fill_between(t, mean - ci, mean + ci, color=color, alpha=0.25)
 
-        self.ax.legend(frameon=False)
+        # self.ax.legend(frameon=False)
 
         # Vertical zero-line
         if self._time_vector is not None:
             if self._time_vector[0] <= 0 <= self._time_vector[-1]:
                 self.ax.axvline(0, color="gray", linestyle="--", linewidth=1, alpha=0.8)
+
+        # Get whether to show the stats bars
+        stats_checkbox = bool(self.plot_params.get("plot_stats", False))
+
+        if stats_checkbox:
+
+            # Run the statistical analysis if it has not been done yet
+            if not 'statistical_results' in self.tabs_widget.statistics.keys():
+                self.tabs_widget.controller.stats_report(self.tabs_widget, is_continuous=True)
+
+            # p_values_for_test = np.random.uniform(low=0.0, high=0.1, size=len(self._time_vector))
+            p_vals = self.tabs_widget.statistics['statistical_results']
+            # Shading for p-values
+            self.ax.fill_between(
+                self._time_vector,
+                0, 1,
+                where=(p_vals < 0.05),
+                color="gray",
+                alpha=0.3,
+                transform=self.ax.get_xaxis_transform(),
+                zorder=0,
+                label="p < 0.05"
+            )
+
+        self.ax.legend(frameon=False)
 
         self.safe_set_lim("set_xlim", self.plot_params.get("xlim"))
         self.safe_set_lim("set_ylim", self.plot_params.get("ylim"))
@@ -131,5 +156,3 @@ class ERPPlot(BasePlot):
         current_tab.statistics = {}
         current_tab.statistics['data'] = data
         current_tab.statistics['groups'] = groups
-
-        # current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)

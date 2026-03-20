@@ -75,6 +75,7 @@ class ParametersWidget(QtWidgets.QWidget, ui_parameters_widget):
         self.defaults = {
             "psdsegment": self.segmentpsdBox.value(),
             "psdoverlap": self.overlappsdBox.value(),
+            "psdwindow": self.psdcomboBox.currentIndex(),
             "ctmradius": self.ctmrBox.value(),
             "sampm": self.sampenmBox.value(),
             "sampradius": self.sampenrBox.value(),

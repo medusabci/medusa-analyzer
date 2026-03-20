@@ -28,6 +28,7 @@ class ConfigController(QtCore.QObject):
             "Select Experiment Folder",
             QtCore.QDir.currentPath()
         )
+
         if folder and self.validate_path(folder):
             self.experiment_path = folder
             self.trigger_validation()
@@ -71,7 +72,7 @@ class ConfigController(QtCore.QObject):
                         self.view.main_module.controller.experiment_type = exp_type
                     else:
                         # If ERPs, check if there are segmented files in the path
-                        if any("segmented" in f for f in self.view.main_module.controller.all_files):
+                        if data['segmentation']['segmentation_type'] == 'event' and any("segmented" in f for f in self.view.main_module.controller.all_files):
                             # Store only the segmented files for ERPs plotting
                             self.view.main_module.controller.all_files = [f for f in self.view.main_module.controller.all_files if "segmented" in f]
                             self.path_correct = True

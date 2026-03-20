@@ -28,6 +28,11 @@
           "bold"
         ]
       },
+      "plot_stats": {
+        "type": "bool",
+        "default": false,
+        "label": "Show stats"
+      },
       "x_label": {
         "type": "text",
         "label": "X Label",
@@ -102,6 +107,11 @@
           "normal",
           "bold"
         ]
+      },
+      "plot_stats": {
+        "type": "bool",
+        "default": false,
+        "label": "Show stats"
       },
       "x_label": {
         "type": "text",

@@ -159,9 +159,13 @@ class PipelineWorker(QThread):
                             continue
 
                         # Get the indices of rejected epochs
+                        # thres_mean = np.nanmean(processed_signal, axis=0)
+                        # thres_std = np.nanstd(processed_signal, axis=0)
+                        thres_mean = np.nanmean(np.nanmean(epochs, axis=1), axis=0)
+                        thres_std = np.nanmean(np.nanstd(epochs, axis=1), axis=0)
+
                         prc_rejected, _, idx_reject = medusa.artifact_removal.reject_noisy_epochs(
-                            epochs, np.nanmean(processed_signal, axis=0), np.std(processed_signal, axis=0),
-                            k=thres_k, n_samp=thres_samples, n_cha=thres_channels)
+                            epochs, thres_mean, thres_std, k=thres_k, n_samp=thres_samples, n_cha=thres_channels)
 
                         # Store the rejected indices for the current condition
                         idx_threshold[cond] = idx_reject
@@ -349,6 +353,12 @@ class PipelineWorker(QThread):
                     writer.writeheader()
                     for row in rejection_summary:
                         writer.writerow(row)
+                    row = {
+                        'subject': f"K STDs: {settings_dic['segmentation']['thres_k']}",
+                        'condition': f"Samples: {settings_dic['segmentation']['thres_samples']}",
+                        'prc_rejected': f"N Channels: {settings_dic['segmentation']['thres_channels']}"
+                    }
+                    writer.writerow(row)
                 self.log.emit(f"✅ Rejection summary saved to {csv_path}", "")
 
             # Save execution warnings/errors to TXT
@@ -782,18 +792,13 @@ def compute_parameters(epochs, fs, band, cfg):
     require_psd = explicit_psd or params_require_psd
 
     if require_psd:
-        # If PSD is explicitly enabled...
-        if explicit_psd:
-            # Use user-defined parameters for segmenting and windowing
-            segment_psd = cfg['parameters']['psd_segment_pct']
-            overlap_psd = cfg['parameters']['psd_overlap_pct']
-            window_psd = cfg['parameters']['psd_window']
+        # Use user-defined parameters for segmenting and windowing
+        segment_psd = cfg['parameters']['psd_segment_pct']
+        overlap_psd = cfg['parameters']['psd_overlap_pct']
+        window_psd = cfg['parameters']['psd_window']
 
-            # Compute PSD using specified segment and window settings
-            fxx, psd = medusa.transforms.power_spectral_density(epochs, fs, segment_psd, overlap_psd, window_psd)
-        else:
-            # Compute PSD with default settings
-            fxx, psd = medusa.transforms.power_spectral_density(epochs, fs)
+        # Compute PSD using specified segment and window settings
+        fxx, psd = medusa.transforms.power_spectral_density(epochs, fs, segment_psd, overlap_psd, window_psd)
 
         # Store PSD values: average across trials if averaging is enabled
         try:

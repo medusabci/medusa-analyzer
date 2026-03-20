@@ -87,8 +87,9 @@ class PSDPlot(BasePlot):
             self._psd_data = {g[0]: g[2] for g in groups}
             self._psd_data_stats = {g[0]: g[3] for g in groups}
 
-        if not hasattr(self.tabs_widget, 'statistics'):
-            self.prepare_stats_data(self.tabs_widget)
+        current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
+        if not hasattr(current_tab, 'statistics'):
+            self.prepare_stats_data(current_tab)
 
     def _extract_psd_fields(self, psd_struct):
         freqs, values = None, None
@@ -146,7 +147,34 @@ class PSDPlot(BasePlot):
                 end if end is not None else x_max,
                 color=color,
                 alpha=0.2,
-                zorder=0
+                zorder=0,
+                linewidth=0
+            )
+
+        # Get whether to show the stats bars
+        stats_checkbox = bool(self.plot_params.get("plot_stats", False))
+
+        if stats_checkbox:
+            current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
+
+            # Run the statistical analysis if it has not been done yet
+            if not 'statistical_results' in current_tab.statistics.keys():
+                self.tabs_widget.controller.stats_report(current_tab, is_continuous=True)
+
+            p_vals = current_tab.statistics['statistical_results']
+            # p_vals = np.random.uniform(low=0.0, high=0.1, size=len(self._freqs))
+            # Shading for p-values
+            self.ax.fill_between(
+                self._freqs,
+                0, 1,
+                where=(p_vals < 0.05),
+                facecolor="gray",
+                edgecolor="black",
+                linewidth=1.5,
+                alpha=0.1,
+                transform=self.ax.get_xaxis_transform(),
+                zorder=0,
+                label="p < 0.05"
             )
 
         # Límites y estilo desde BasePlot
@@ -166,5 +194,3 @@ class PSDPlot(BasePlot):
         current_tab.statistics = {}
         current_tab.statistics['data'] = data
         current_tab.statistics['groups'] = groups
-
-        # current_tab.controller.stats_report(current_tab, skip_report=True, is_continuous=True)

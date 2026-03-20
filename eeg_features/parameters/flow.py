@@ -13,9 +13,9 @@ def get_parameters_config(controller):
         "kurtosis": True if controller.view.kurtosisCBox.isChecked() else None,
         "skewness": True if controller.view.skewnessCBox.isChecked() else None,
         "psd": True if controller.view.psdCBox.isChecked() else None,
-        "psd_segment_pct": controller.view.segmentpsdBox.value() if controller.view.psdCBox.isChecked() else None,
-        "psd_overlap_pct": controller.view.overlappsdBox.value() if controller.view.psdCBox.isChecked() else None,
-        'psd_window': controller.view.psdcomboBox.currentText() if controller.view.psdCBox.isChecked() else None,
+        "psd_segment_pct": controller.view.segmentpsdBox.value(),
+        "psd_overlap_pct": controller.view.overlappsdBox.value(),
+        'psd_window': controller.view.psdcomboBox.currentText(),
         "relative_power": True if controller.view.rpCBox.isChecked() else None,
         "selected_rp_bands": controller.selected_bands_by_type["rp"] if controller.view.rpCBox.isChecked() else None,
         "absolute_power": True if controller.view.apCBox.isChecked() else None,
@@ -66,10 +66,11 @@ def on_next_click(view):
         QtWidgets.QMessageBox.warning(view,
         "Warning with PSD configuration",
                                       "You have selected at least one spectral parameter, but the Power Spectral "
-                                      "Density (PSD) computation is not enabled. Default parameters (PSD length % of the"
-                                      " trial: 80%, overlap: 50%, and window: 'boxcar') will be used for the PSD "
-                                      "calculation. Please ensure that these parameters are appropriate for your "
-                                      "analysis."
+                                      "Density (PSD) computation is not enabled. Default parameters (PSD length: "
+                                      f"{view.segmentpsdBox.value()}% of the trial length, overlap: "
+                                      f"{view.overlappsdBox.value()}%, and window: '{view.psdcomboBox.currentText()}') "
+                                      "will be used for the PSD calculation. Please ensure that these parameters are "
+                                      "appropriate for your analysis."
         )
 
     # Save config

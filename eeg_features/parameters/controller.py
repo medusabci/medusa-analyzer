@@ -108,6 +108,7 @@ class ParametersController:
         # Default values
         self.view.segmentpsdBox.setValue(self.view.defaults["psdsegment"])
         self.view.overlappsdBox.setValue(self.view.defaults["psdoverlap"])
+        self.view.psdcomboBox.setCurrentIndex(self.view.defaults["psdwindow"])
         self.view.psdcomboBox.setCurrentIndex(6) # Default window
 
 
