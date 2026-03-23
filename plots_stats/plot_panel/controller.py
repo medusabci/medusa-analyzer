@@ -296,7 +296,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
         tab._force_autolimits = True
         print(f"Selected channel indices for param '{param}': {selected_indexes}")
 
-    def extract_unique_bands_by_param(self, param_list):
+    def extract_unique_bands_by_param(self, path_list):
         """
         Extract unique bands grouped by parameter.
 
@@ -304,20 +304,33 @@ class TabbedPlotWidgetController(QtCore.QObject):
             dict -> {param: [band1, band2, ...]}
         """
         bands_by_param = {}
-        for p in param_list:
-            param_match = re.search(r"_param-([a-zA-Z0-9]+)", p)
-            band_match  = re.search(r"_band-([a-zA-Z0-9]+)", p)
-            if not param_match or not band_match:
-                continue
 
-            param = param_match.group(1)
-            band = band_match.group(1)
+        if self.view.main_module.is_erp:
+            all_bands = set()
 
-            if param not in bands_by_param:
-                bands_by_param[param] = set()
-            bands_by_param[param].add(band)
+            for p in path_list:
+                band_match = re.search(r"_band-([a-zA-Z0-9]+)", p)
+                if band_match:
+                    all_bands.add(band_match.group(1))
 
-        return {param: sorted(list(bands)) for param, bands in bands_by_param.items()}
+            selected_parameters = getattr(self.view.main_module.controller, "param_selection", []) or []
+            for param in selected_parameters:
+                bands_by_param[param] = set(all_bands)
+
+        else:
+            for p in path_list:
+                param_match = re.search(r"_param-([a-zA-Z0-9]+)", p)
+                band_match = re.search(r"_band-([a-zA-Z0-9]+)", p)
+
+                if not param_match or not band_match:
+                    continue
+
+                param = param_match.group(1)
+                band = band_match.group(1)
+
+                bands_by_param.setdefault(param, set()).add(band)
+
+        return {param: sorted(bands) for param, bands in bands_by_param.items()}
 
     def setup_band_list(self, tab, param):
         """Configure the band list for a given parameter"""
