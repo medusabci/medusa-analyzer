@@ -28,7 +28,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         self._tabs_created = False
         self.view.shown.connect(self.create_tabs)
-        self.available_bands = []
+        self.available_bands = {}
         self.simple_plots = {"PSDPlot", "LinearPlot", "ViolinPlot", "ERPPlot"}
 
     # ----------------- Helpers -----------------
@@ -148,7 +148,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
         files = self.view.main_module.controller.filtered_files
         self.filtered_files = self.filter_recordings()
-        self.available_bands = self.extract_unique_bands(files)
+        self.available_bands = self.extract_unique_bands_by_param(files)
         self.group_colors = dict(self.view.main_module.controller.groups)
 
         tab_widget = self.view.tab_widget
@@ -176,8 +176,10 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             self.setup_channel_list(tab, param)
             self.setup_band_list(tab, param)
-            if self.available_bands:
-                self.on_band_selected(tab, param, self.available_bands[0])
+
+            param_bands = self.available_bands.get(param, [])
+            if param_bands:
+                self.on_band_selected(tab, param, param_bands[0])
 
             param_key = param
             filtered = tab._filtered_files_bands.get(param_key, {})
@@ -293,24 +295,45 @@ class TabbedPlotWidgetController(QtCore.QObject):
         tab._force_autolimits = True
         print(f"Selected channel indices for param '{param}': {selected_indexes}")
 
-    def extract_unique_bands(self, param_list):
-        """ Extract unique bands from all files"""
-        bands = set()
+    def extract_unique_bands_by_param(self, param_list):
+        """
+        Extract unique bands grouped by parameter.
+
+        Returns:
+            dict -> {param: [band1, band2, ...]}
+        """
+        bands_by_param = {}
         for p in param_list:
-            match = re.search(r"_band-([a-zA-Z0-9]+)", p)
-            if match:
-                bands.add(match.group(1))
-        return sorted(list(bands))
+            param_match = re.search(r"_param-([a-zA-Z0-9]+)", p)
+            band_match  = re.search(r"_band-([a-zA-Z0-9]+)", p)
+            if not param_match or not band_match:
+                continue
+
+            param = param_match.group(1)
+            band = band_match.group(1)
+
+            if param not in bands_by_param:
+                bands_by_param[param] = set()
+            bands_by_param[param].add(band)
+
+        return {param: sorted(list(bands)) for param, bands in bands_by_param.items()}
 
     def setup_band_list(self, tab, param):
-        """Configure the band list"""
+        """Configure the band list for a given parameter"""
         combo_box = tab.findChild(QtWidgets.QComboBox, "bandscomboBox")
+
+        try:
+            combo_box.currentTextChanged.disconnect()
+        except TypeError:
+            pass
+
         combo_box.clear()
-        for b in self.available_bands:
+
+        for b in self.available_bands.get(param, []):
             combo_box.addItem(b)
         if combo_box.count() > 0:
             combo_box.setCurrentIndex(0)
-        combo_box.currentTextChanged.connect(lambda band: self.on_band_selected(tab, param, band))
+        combo_box.currentTextChanged.connect(lambda band, t=tab, p=param: self.on_band_selected(t, p, band))
         if combo_box.count() > 0:
             self.on_band_selected(tab, param, combo_box.currentText())
 
