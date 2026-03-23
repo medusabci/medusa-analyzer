@@ -234,7 +234,8 @@ class TabbedPlotWidgetController(QtCore.QObject):
             build_dynamic_controls(self, controls_widget, tab._available_plot_types[tab._current_plot_type]["plot_params_meta"], tab)
 
             tab._force_autolimits = True
-            self.update_plot(tab)
+            self.view.add_tab(tab, str(param_name)) # First, add the tab to the view
+            self.update_plot(tab) # Then update the plot, once the tab is part of the widget hierarchy
 
             prev_btn = tab.findChild(QtWidgets.QPushButton, "prevButton")
             prev_btn.clicked.connect(self.prev_tab)
@@ -247,7 +248,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
             stats_btn = tab.findChild(QtWidgets.QPushButton, "statsButton")
             stats_btn.clicked.connect(lambda checked, t=tab: self.stats_report(t))
 
-            self.view.add_tab(tab, str(param_name))
+            # self.view.add_tab(tab, str(param_name))
             self._tabs_created = True
 
             progress = ((idx + 1) / total) * 100
