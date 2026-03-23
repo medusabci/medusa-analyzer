@@ -269,7 +269,7 @@
     "allowed_params": [
       "Mean",
       "Median",
-      "Standard Deviation",
+      "Variance",
       "Kurtosis",
       "Skewness",
       "Relative Power",
@@ -367,7 +367,7 @@
     "allowed_params": [
       "Mean",
       "Median",
-      "Standard Deviation",
+      "Variance",
       "Kurtosis",
       "Skewness",
       "Relative Power",

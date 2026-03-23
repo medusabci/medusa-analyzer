@@ -45,7 +45,7 @@ class ERPPlot(BasePlot):
 
                 data = self.normalize_data(data)
                 if data.ndim != 2:
-                    print(f"[WARN] Unsupported ERP shape {data.shape} in {filepath}")
+                    print(f"Only one trial available in {filepath}. Skipping")
                     continue
 
                 times, n_channels = data.shape
