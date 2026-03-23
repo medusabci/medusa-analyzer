@@ -89,6 +89,11 @@
       "PSD"
     ],
     "Plot_params": {
+      "plot_error": {
+        "type": "bool",
+        "label": "Plot error (95% CI)",
+        "default": true
+      },
       "title": {
         "type": "text",
         "label": "Title",

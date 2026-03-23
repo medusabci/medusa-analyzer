@@ -80,11 +80,15 @@ class PSDPlot(BasePlot):
                 continue
 
             group_mean = np.mean(subject_matrix, axis=0)
-            groups.append((group_name, freqs_ref, group_mean, subject_matrix))
+            group_std = np.std(subject_matrix, axis=0)
+            n_subjects = subject_matrix.shape[0]
+            
+            groups.append((group_name, freqs_ref, group_mean, subject_matrix, group_std, n_subjects))
 
         if groups:
             self._freqs = groups[0][1]
-            self._psd_data = {g[0]: g[2] for g in groups}
+            # Ahora guardamos un dict con mean, std, n
+            self._psd_data = {g[0]: {"mean": g[2], "std": g[4], "n": g[5]} for g in groups}
             self._psd_data_stats = {g[0]: g[3] for g in groups}
 
         current_tab = next((tab for tab in self.tabs_widget.tab_widgets if tab._plot is self), None)
@@ -114,22 +118,38 @@ class PSDPlot(BasePlot):
         line_width = self.plot_params.get("line_width", 2)
         linestyle_map = {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-." }
         line_style = linestyle_map.get(self.plot_params.get("line_style", "-"), "-")
+        plot_error = self.plot_params.get("plot_error", False)
 
         all_values = []
 
-        for group_name, pxx in self._psd_data.items():
+        for group_name, data in self._psd_data.items():
             color = colors.get(group_name) if isinstance(colors, dict) else None
+            
+            mean_psd = data["mean"]
+            std_psd = data["std"]
+            n_subjects = data["n"]
 
             self.ax.plot(
                 self._freqs,
-                pxx,
+                mean_psd,
                 label=group_name,
                 color=color,
                 linestyle=line_style,
                 linewidth=line_width,
                 alpha=0.9
             )
-            all_values.append(pxx)
+            
+            if plot_error and n_subjects > 1:
+                ci = 1.96 * (std_psd / np.sqrt(n_subjects))
+                self.ax.fill_between(
+                    self._freqs, 
+                    mean_psd - ci, 
+                    mean_psd + ci, 
+                    color=color, 
+                    alpha=0.25
+                )
+                
+            all_values.append(mean_psd)
 
         bands = [
             (0, 4, "Delta", "#a6cee3"),
