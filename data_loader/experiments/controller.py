@@ -129,10 +129,10 @@ class ExperimentsController:
         # Move inside the loop when preprocessing is done
         from plots_stats.main_module.view import MainModuleWindow
         from plots_stats.main_module.controller import MainModuleWindowController
-        from plots_stats.config.view import ConfigWidget
-        from plots_stats.config.controller import ConfigController
-        from plots_stats.preprocessing.loading.view import PreprocessingWidget
-        from plots_stats.preprocessing.loading.controller import PreprocessingController
+        from plots_stats.features.config.view import ConfigWidget
+        from plots_stats.features.config.controller import ConfigController
+        from plots_stats.timeplot.loading.view import PreprocessingWidget
+        from plots_stats.timeplot.loading.controller import PreprocessingController
 
         # Main Module
         self.plot_stats_window = MainModuleWindow()

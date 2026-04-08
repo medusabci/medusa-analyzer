@@ -1,7 +1,7 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from plots_stats.config.view import ConfigWidget
-from plots_stats.config.controller import ConfigController
+from plots_stats.features.config.view import ConfigWidget
+from plots_stats.features.config.controller import ConfigController
 from PySide6.QtGui import QPalette
 from utils import LoadingDialog
 
