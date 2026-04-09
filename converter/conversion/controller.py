@@ -37,7 +37,8 @@ class ConversionController:
         self.view.namingTable.clear()
 
         # Get the first file with the selected extension
-        data_loader = self.view.main_window.stackedWidget.widget(0)
+        idx_dataloader_widget = 0
+        data_loader = self.view.main_window.stackedWidget.widget(idx_dataloader_widget)
         base_file = data_loader.controller.selected_files[0].split('.')[0] # Remove extension
         # Separate the file path into components
         self.base_file_elements = [e for e in re.split(r"[\\/ _-]+", base_file) if e]

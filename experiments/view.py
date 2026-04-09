@@ -1,13 +1,11 @@
 from PySide6 import QtWidgets, QtGui, QtCore
 from PySide6.QtUiTools import loadUiType
-from data_loader.experiments.view import ExperimentWidget
-from data_loader.experiments.controller import ExperimentsController
 from PySide6.QtGui import QPalette
 from utils import LoadingDialog
 import ctypes
 
 # Load UI class
-ui_main_window = loadUiType('main_window/view.ui')[0]
+ui_main_window = loadUiType('experiments/view.ui')[0]
 
 class GradientTitleWidget(QtWidgets.QWidget):
     """
@@ -39,7 +37,7 @@ class GradientTitleWidget(QtWidgets.QWidget):
         painter.drawText(x, y, text)
 
 
-class MainWindow(QtWidgets.QMainWindow, ui_main_window):
+class MainExperiment(QtWidgets.QMainWindow, ui_main_window):
     """
         Main application window. Manages navigation through the main stages of the workflow:
         preprocessing, segmentation, Signal Analysis, and Downloads.
@@ -56,6 +54,8 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
         # Set icon and title
         self.setWindowIcon(QtGui.QIcon("media/medusa_task_icon.png"))
         self.setWindowTitle("MEDUSA© Analyzer")
+
+        self.backButton.setDisabled(True)
 
         ### MAIN WINDOW HEADER ###
 
@@ -79,15 +79,13 @@ class MainWindow(QtWidgets.QMainWindow, ui_main_window):
 
         ### INSERT WORKFLOW WIDGETS INTO STACKEDWIDGET ###
 
-        # Base widget (Data loader)
-        self.experiments = ExperimentWidget(self)
-        ExperimentsController(self.experiments) # This instantiates the controller and links it to the view
-        self.stackedWidget.insertWidget(0, self.experiments)
-
         ### ADD THE LOADING WINDOW (BUT DO NOT SHOW IT)
+
         # Waits until the main window is shown to create the loading dialog, so it can be centered over the main window properly
         QtCore.QTimer.singleShot(0, self.show_loading)
 
     def show_loading(self):
         # Create loading dialog
         self.loading = LoadingDialog(self)
+
+

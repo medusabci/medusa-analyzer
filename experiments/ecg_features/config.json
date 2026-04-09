@@ -1,0 +1,39 @@
+{
+  "name": "RCG Feature Extraction",
+  "experiment_path": "ecg_params",
+  "biosignals": ["ECG"],
+  "biosignal_information": ["fs", "n_chan","chan_name"],
+  "pipeline":
+  [
+    {
+      "step": "Files",
+      "path": "data_loader/files",
+      "widget": "FilesWidget",
+      "controller": "FilesController"
+    },
+    {
+      "step": "Leads",
+      "path": "experiments/ecg_features/leads",
+      "widget": "LeadsWidget",
+      "controller": "LeadsController"
+    },
+    {
+      "step": "Preprocessing",
+      "path": "experiments/ecg_features/preprocessing",
+      "widget": "PreprocessingWidget",
+      "controller": "PreprocessingController"
+    },
+    {
+      "step": "Parameters",
+      "path": "experiments/ecg_features/parameters",
+      "widget": "ParametersWidget",
+      "controller": "ParametersController"
+    },
+    {
+      "step": "Save",
+      "path": "experiments/ecg_features/save",
+      "widget": "SaveWidget",
+      "controller": "SaveController"
+    }
+  ]
+}

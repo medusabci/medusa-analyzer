@@ -7,9 +7,11 @@ def on_next_click(controller):
     Controls the next (and finish) button behaviour
     """
     # idx is the index of the previous widget
-    data_loader = controller.view.stackedWidget.widget(0)
+    idx_dataloader_widget = 0
+    data_loader = controller.view.stackedWidget.widget(idx_dataloader_widget)
     # Get the converter widget
-    converter = controller.view.stackedWidget.widget(1)
+    idx_conversion_widget = idx_dataloader_widget + 1
+    converter = controller.view.stackedWidget.widget(idx_conversion_widget)
 
     # Close the app
     if controller.view.nextButton.text() == "Close":

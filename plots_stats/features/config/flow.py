@@ -77,8 +77,8 @@ def on_next_click(view):
     # If widgets were already loaded, but a new selection of experiment has been made, clear the stackedWidget
     if  view.controller.loaded_widgets and view.controller.new_selection:
         # Clear stackedWidget except for the first page
-        for i in range(view.main_module.stackedWidget.count() - 1, 0, -1):
-            widget_to_remove = view.main_module.stackedWidget.widget(i)
+        for idx in range(view.main_module.stackedWidget.count() - 1, 0, -1):
+            widget_to_remove = view.main_module.stackedWidget.widget(idx)
             view.main_module.stackedWidget.removeWidget(widget_to_remove)
             widget_to_remove.deleteLater()
         view.controller.loaded_widgets = False
