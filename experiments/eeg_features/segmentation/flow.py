@@ -73,8 +73,10 @@ def on_next_click(view):
         trl_len = abs(view.winBox_1.value()) + abs(view.winBox_2.value())
     trl_len = trl_len/1000  # To seconds
     # Get the lowest frequency based on whether band segmentation is selected or not
-    current_idx = view.main_window.stackedWidget.currentIndex()
-    preprocessing = view.main_window.stackedWidget.widget(current_idx)
+    idx_preprocessing_widget = next(
+        (i for i, d in enumerate(view.main_window.controller.experiment['pipeline']) if
+         d.get('widget') == "PreprocessingWidget"))
+    preprocessing = view.main_window.stackedWidget.widget(idx_preprocessing_widget)
     if not preprocessing.bandCBox.isChecked():
         min_freq = preprocessing.minbroadBox.value()
     else:

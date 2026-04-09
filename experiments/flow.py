@@ -23,7 +23,7 @@ def on_next_click(controller):
     # Update the buttons, the progressbar, and the stacked widget
     controller.update_progressbar(current_idx)
     controller.view.stackedWidget.setCurrentIndex(current_idx)
-    controller.view.backButton.setVisible(current_idx > 0)
+    controller.view.backButton.setDisabled(current_idx == 0)
     controller.view.nextButton.setVisible(current_idx > 0)
     # Go the next widget, set text to "Next"
     if current_idx < controller.view.total_steps:
@@ -32,7 +32,7 @@ def on_next_click(controller):
     elif current_idx == controller.view.total_steps:
         controller.view.nextButton.setText("Run pipeline")
     # If in the last widget, close the app
-    elif current_idx == controller.view.total_steps + 1:
+    elif current_idx == controller.view.total_steps:
         controller.view.close()
 
 
@@ -69,7 +69,5 @@ def on_back_click(controller):
     # Update the buttons, the progressbar, and the stacked widget
     controller.update_progressbar(current_idx)
     controller.view.stackedWidget.setCurrentIndex(current_idx)
-    controller.view.backButton.setVisible(current_idx > 0)
     controller.view.nextButton.setDisabled(False)
     controller.view.nextButton.setText("Run pipeline" if current_idx == controller.view.total_steps else "Next")
-    controller.view.nextButton.setVisible(current_idx > 0)

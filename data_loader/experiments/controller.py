@@ -100,22 +100,22 @@ class ExperimentsController:
             from experiments.controller import MainExperimentController
             from experiments.view import MainExperiment
 
-            self.holis_window = MainExperiment()
-            self.holis_controller = MainExperimentController(self.holis_window)
+            self.experiment_window = MainExperiment()
+            self.experiment_controller = MainExperimentController(self.experiment_window)
 
             # Read the corresponding config file
             with open('experiments/' + module_type + "/config.json", "r") as f:
                 experiment_data = json.load(f)
-                self.holis_controller.experiment = experiment_data
+                self.experiment_controller.experiment = experiment_data
 
-            self.view.main_window.total_steps = len(self.holis_controller.experiment['pipeline'])
-            self.holis_window.total_steps = self.view.main_window.total_steps
+            self.view.main_window.total_steps = len(self.experiment_controller.experiment['pipeline'])
+            self.experiment_window.total_steps = self.view.main_window.total_steps
 
             # Loading
             self.view.main_window.loading.set_progress((1 / self.view.main_window.total_steps) * 100, self.view.main_window)
 
             # Load the widgets, instantiate their controllers and add them to the stackedWidget
-            for idx, widget_info in enumerate(self.holis_controller.experiment['pipeline']):
+            for idx, widget_info in enumerate(self.experiment_controller.experiment['pipeline']):
                 # Take the path
                 print(f"→ Loading widget {idx}: {widget_info}")
                 widget_path = widget_info['path'].replace('/', '.')  # use dots instead of slashes
@@ -130,12 +130,12 @@ class ExperimentsController:
                 widget_controller_class = getattr(ctrl_module, widget_info['controller'])
 
                 # Instantiate the widget
-                widget = widget_class(self.holis_window)
+                widget = widget_class(self.experiment_window)
                 # Instantiate the controller, passing the widget and the main window
                 widget_controller_class(widget)
 
                 # Optionally, add the widget to a stackedWidget
-                self.holis_window.stackedWidget.insertWidget(idx + 1, widget)
+                self.experiment_window.stackedWidget.insertWidget(idx + 1, widget)
 
                 # Update loading progress
                 self.view.main_window.loading.set_progress(((idx + 2) / self.view.main_window.total_steps) * 100,
@@ -145,10 +145,10 @@ class ExperimentsController:
             self.view.main_window.loading.finish()
 
             # Store the experiment id
-            self.holis_window.selected_experiment = module_type
+            self.experiment_window.selected_experiment = module_type
             # Update total steps and progress bar in the main window
-            self.holis_window.nextButton.setDisabled(True)
-            self.holis_window.controller.set_progressbar()
+            self.experiment_window.nextButton.setDisabled(True)
+            self.experiment_window.controller.set_progressbar()
 
             # Create and show the converter dialog, that is where the converter window will be inserted
             self.dialog = QtWidgets.QDialog(self.view.window())
@@ -159,11 +159,11 @@ class ExperimentsController:
             self.dialog.setWindowFlags(QtCore.Qt.Window)
 
             # Store the reference of the main QDialog to close it at the end
-            self.holis_controller.dialog = self.dialog
+            self.experiment_controller.dialog = self.dialog
 
             # Insert the converter window into the dialog and run it
             layout = QtWidgets.QVBoxLayout(self.dialog)
-            layout.addWidget(self.holis_window)
+            layout.addWidget(self.experiment_window)
             self.dialog.exec()
 
             return True

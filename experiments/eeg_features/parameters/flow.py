@@ -81,7 +81,7 @@ def on_next_click(view):
 
     idx_save_widget = next(
         (i for i, d in enumerate(view.main_window.controller.experiment['pipeline']) if
-         d.get('widget') == "PreprocessingWidget"))
+         d.get('widget') == "SaveWidget"))
     save_widget = view.main_window.stackedWidget.widget(idx_save_widget)
 
     # If no preprocessing is selected, disable the option to save preprocessed signals
