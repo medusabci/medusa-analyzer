@@ -2,7 +2,6 @@ import time, json, importlib
 
 from PySide6 import QtGui, QtCore, QtWidgets
 from experiments import flow as main_flow
-from data_loader.experiments.flow import on_next_click
 import os
 
 class ExperimentsController:
@@ -150,7 +149,6 @@ class ExperimentsController:
             # Update total steps and progress bar in the main window
             self.holis_window.nextButton.setDisabled(True)
             self.holis_window.controller.set_progressbar()
-            # main_flow.on_next_click(view.main_window.controller) # simulate a click
 
             # Create and show the converter dialog, that is where the converter window will be inserted
             self.dialog = QtWidgets.QDialog(self.view.window())
