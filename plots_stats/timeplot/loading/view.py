@@ -3,7 +3,7 @@ from PySide6.QtUiTools import loadUiType
 
 ui_plots_preproc_init = loadUiType('plots_stats/timeplot/loading/view.ui')[0]
 
-class PreprocessingWidget(QtWidgets.QWidget, ui_plots_preproc_init):
+class LoadingTimePlotWidget(QtWidgets.QWidget, ui_plots_preproc_init):
     def __init__(self, main_module):
         super().__init__()
         self.setupUi(self)

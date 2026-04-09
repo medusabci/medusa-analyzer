@@ -131,8 +131,8 @@ class ExperimentsController:
         from plots_stats.main_module.controller import MainModuleWindowController
         from plots_stats.features.config.view import ConfigWidget
         from plots_stats.features.config.controller import ConfigController
-        from plots_stats.timeplot.loading.view import PreprocessingWidget
-        from plots_stats.timeplot.loading.controller import PreprocessingController
+        from plots_stats.timeplot.loading.view import LoadingTimePlotWidget
+        from plots_stats.timeplot.loading.controller import LoadingTimePlotController
 
         # Main Module
         self.plot_stats_window = MainModuleWindow()
@@ -155,8 +155,8 @@ class ExperimentsController:
             widget = ConfigWidget(self.plot_stats_window)
             ConfigController(widget)
         elif module_type == "preprocess":
-            widget = PreprocessingWidget(self.plot_stats_window)
-            PreprocessingController(widget)
+            widget = LoadingTimePlotWidget(self.plot_stats_window)
+            LoadingTimePlotController(widget)
         elif module_type == "erps":
             widget = ConfigWidget(self.plot_stats_window, is_erp=True)
             ConfigController(widget)

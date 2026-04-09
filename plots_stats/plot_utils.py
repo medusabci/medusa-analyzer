@@ -101,87 +101,41 @@ class ExportDialog(QDialog):
         self.color_label.setPalette(palette)
         self.color_label.setText(self.bg_color.name().upper())
 
+def setup_marks_listwidget(tab, widget_name, items_dict, used_labels, selected_attr, on_change):
+    """Configure a QListWidget for conditions/events with multi-selection."""
+    list_widget = tab.findChild(QtWidgets.QListWidget, widget_name)
 
+    if list_widget is None:
+        print(f"{widget_name} not found.")
+        setattr(tab, selected_attr, [])
+        return
 
-class CheckableComboBox(QtWidgets.QComboBox):
-    checkedItemsChanged = QtCore.Signal(list)
+    if not items_dict or not used_labels:
+        list_widget.clear()
+        list_widget.setVisible(False)
+        setattr(tab, selected_attr, [])
+        return
 
-    def __init__(self, parent=None, placeholder="Select items"):
-        super().__init__(parent)
-        self._placeholder = placeholder
-        self.setModel(QtGui.QStandardItemModel(self))
-        self.setEditable(True)
-        self.lineEdit().setReadOnly(True)
-        self.lineEdit().setPlaceholderText(placeholder)
-        self.view().pressed.connect(self._handle_item_pressed)
-        self.update_text()
+    used_labels = set(int(l) for l in used_labels)
+    filtered_names = [ name for name, data in items_dict.items() if data.get("label", None) in used_labels]
+    list_widget.clear()
+    if not filtered_names:
+        list_widget.setVisible(False)
+        setattr(tab, selected_attr, [])
+        return
+    list_widget.setVisible(True)
+    list_widget.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+    for name in filtered_names:
+        list_widget.addItem(QtWidgets.QListWidgetItem(name))
+    list_widget.selectAll()
+    setattr(tab, selected_attr, filtered_names)
 
-    def add_checkable_item(self, text, checked=True, user_data=None):
-        item = QtGui.QStandardItem(text)
-        item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
-        item.setData(
-            QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked,
-            QtCore.Qt.CheckStateRole
-        )
-        if user_data is not None:
-            item.setData(user_data, QtCore.Qt.UserRole)
-        self.model().appendRow(item)
+    try:
+        list_widget.itemSelectionChanged.disconnect()
+    except (TypeError, RuntimeError):
+        pass
 
-    def add_checkable_items(self, items, checked=True):
-        for text in items:
-            self.add_checkable_item(text, checked=checked)
-
-    def clear_items(self):
-        self.model().clear()
-        self.update_text()
-
-    def checked_items(self):
-        selected = []
-        for i in range(self.model().rowCount()):
-            item = self.model().item(i)
-            if item.checkState() == QtCore.Qt.Checked:
-                selected.append(item.text())
-        return selected
-
-    def set_checked_items(self, items_to_check):
-        items_to_check = set(items_to_check)
-        for i in range(self.model().rowCount()):
-            item = self.model().item(i)
-            state = QtCore.Qt.Checked if item.text() in items_to_check else QtCore.Qt.Unchecked
-            item.setCheckState(state)
-        self.update_text()
-        self.checkedItemsChanged.emit(self.checked_items())
-
-    def update_text(self):
-        all_items = [self.model().item(i).text() for i in range(self.model().rowCount())]
-        checked = self.checked_items()
-
-        if not checked:
-            text = self._placeholder
-        elif len(checked) == len(all_items):
-            text = "All"
-        else:
-            text = ", ".join(checked)
-
-        self.lineEdit().setText(text)
-
-    def _handle_item_pressed(self, index):
-        item = self.model().itemFromIndex(index)
-        if item is None:
-            return
-
-        if item.checkState() == QtCore.Qt.Checked:
-            item.setCheckState(QtCore.Qt.Unchecked)
-        else:
-            item.setCheckState(QtCore.Qt.Checked)
-
-        self.update_text()
-        self.checkedItemsChanged.emit(self.checked_items())
-
-    def hidePopup(self):
-        if self.view().underMouse():
-            return
-        super().hidePopup()
+    list_widget.itemSelectionChanged.connect(lambda t=tab: on_change(t))
 
 def build_dynamic_controls(self, container_widget, plot_params, tab):
     """
@@ -317,6 +271,33 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
     grid.setRowStretch(row, 1)
     control_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
 
+def get_widget_value(ptype, widget):
+    """Extract typed value from a Qt widget."""
+    import json
+
+    if ptype in ("text", "range", "number"):
+        text = widget.text().strip()
+        try:
+            return json.loads(text)
+        except Exception:
+            return text
+
+    elif ptype == "bool":
+        return widget.isChecked()
+
+    elif ptype == "select":
+        return widget.currentText()
+
+    elif ptype == "color":
+        return widget.text()
+
+    elif ptype == "spin":
+        return widget.value()
+
+    elif ptype == "doublespin":
+        return widget.value()
+
+    return None
 
 def load_plot_json_files(base_path):
     with open(os.path.join(base_path, "available_data.json"), "r", encoding="utf-8") as f:
@@ -366,34 +347,3 @@ def export_figure_generic(view, fig, suggested_name, warn_if_none=False):
         fig.set_size_inches(original_size)
 
     QtWidgets.QMessageBox.information(view, "Export", f"Saved to:\n{fname}")
-
-def replace_with_checkable_combobox(tab, object_name, placeholder="Select items"):
-    old_combo = tab.findChild(QtWidgets.QComboBox, object_name)
-    if old_combo is None:
-        return None
-
-    parent = old_combo.parent()
-    layout = parent.layout()
-    if layout is None:
-        return None
-
-    index = -1
-    for i in range(layout.count()):
-        if layout.itemAt(i).widget() is old_combo:
-            index = i
-            break
-
-    if index == -1:
-        return None
-
-    new_combo = CheckableComboBox(parent=parent, placeholder=placeholder)
-    new_combo.setObjectName(object_name)
-    new_combo.setSizePolicy(old_combo.sizePolicy())
-    new_combo.setMinimumSize(old_combo.minimumSize())
-    new_combo.setMaximumSize(old_combo.maximumSize())
-
-    layout.removeWidget(old_combo)
-    old_combo.deleteLater()
-    layout.insertWidget(index, new_combo)
-
-    return new_combo

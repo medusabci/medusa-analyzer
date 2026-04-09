@@ -189,13 +189,13 @@ class TabbedPlotWidgetController(QtCore.QObject):
             if title_label:
                 title_label.setText(param_name)
 
-            tab._available_plot_types = self._create_available_plot_types(param_name, base_plot_params, plots_json)
+            tab._available_plot_types = self._create_available_plot_types(param_name, base_plot_params, self.plots_json)
             if tab._available_plot_types:
                 tab._current_plot_type = next(iter(tab._available_plot_types))
             else:
                 tab._current_plot_type = None
 
-            self.filter_plot_types_by_mode(tab, plots_json)
+            self.filter_plot_types_by_mode(tab, self.plots_json)
             if tab._current_plot_type not in tab._available_plot_types:
                 if tab._available_plot_types:
                     tab._current_plot_type = next(iter(tab._available_plot_types))
@@ -401,7 +401,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             if hasattr(tab, "_param_widgets"):
                 tab._plot_params_current = {
-                    key: self._get_widget_value(ptype, widget)
+                    key: self.get_widget_value(ptype, widget)
                     for key, (ptype, widget) in tab._param_widgets.items()
                 }
 
@@ -497,27 +497,6 @@ class TabbedPlotWidgetController(QtCore.QObject):
                 tab._plot.clear()
             if hasattr(tab, "_canvas"):
                 tab._canvas.draw()
-
-    def _get_widget_value(self, ptype, widget):
-        """Helper to extract a typed value from a widget."""
-        import json
-        if ptype in ("text", "range", "number"):
-            text = widget.text().strip()
-            try:
-                return json.loads(text)
-            except Exception:
-                return text
-        elif ptype == "bool":
-            return widget.isChecked()
-        elif ptype == "select":
-            return widget.currentText()
-        elif ptype == "color":
-            return widget.text()
-        elif ptype == "spin":
-            return widget.value()
-        elif ptype == "doublespin":
-            return widget.value()
-        return None
 
     def prev_tab(self):
         """Go back to the previous tab."""

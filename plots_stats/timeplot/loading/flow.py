@@ -69,9 +69,7 @@ def on_next_click(view):
             view.main_module.loading.set_progress(((idx + 1) / len(widgets)) * 100, view.main_module)
 
         # Finish loading
-        view.main_module.controller.experiment_type = "timeplot"
         view.main_module.loading.finish()
-
         view.controller.loaded_widgets = True
 
     return True

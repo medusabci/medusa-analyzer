@@ -239,7 +239,11 @@ QPushButton:disabled {
        </layout>
       </item>
       <item>
-       <widget class="QListWidget" name="filelistWidget"/>
+       <widget class="QListWidget" name="filelistWidget">
+        <property name="selectionMode">
+         <enum>QAbstractItemView::MultiSelection</enum>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_3">

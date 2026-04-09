@@ -4,7 +4,7 @@ from PySide6 import QtWidgets, QtCore
 from pathlib import Path
 
 
-class PreprocessingController(QtCore.QObject):
+class LoadingTimePlotController(QtCore.QObject):
     def __init__(self, ui):
         super().__init__()
         self.view = ui
@@ -204,17 +204,25 @@ class PreprocessingController(QtCore.QObject):
         subject_selected_items = self.view.subjectlistWidget.selectedItems()
         file_selected_items = self.view.filelistWidget.selectedItems()
 
-        if path_ok and len(subject_selected_items) > 0 and len(file_selected_items) > 0:
+        valid_file_paths = []
+
+        if path_ok and len(subject_selected_items) == 1 and len(file_selected_items) > 0:
             subject = subject_selected_items[0].text()
-            file_name = file_selected_items[0].text()
+            selected_files = [item.text() for item in file_selected_items]
 
-            full_file_name = f"{subject}_{file_name}.bson"
+            for file_name in selected_files:
+                full_file_name = f"{subject}_{file_name}.bson"
+                file_path = os.path.join(self.preprocessing_path, subject, self.signal_type, full_file_name)
 
-            file_path = os.path.join(self.preprocessing_path, subject, self.signal_type, full_file_name)
-            self.view.main_module.controller.file_path_to_plot = file_path
+                if os.path.isfile(file_path):
+                    valid_file_paths.append(file_path)
+                else:
+                    print(f"[WARN] File not found: {file_path}")
+
+            self.view.main_module.controller.file_path_to_plot = valid_file_paths
             self.view.main_module.controller.channel_list = self.channel_list
             self.view.main_module.controller.fs = self.fs
-            self.view.main_module.controller.plot_option = "preprocess"
+            self.view.main_module.controller.plot_option = "timeplot"
             self.view.main_module.controller.signal_type = [self.signal_type]
 
         # If all conditions are met, enable the 'Next' button
