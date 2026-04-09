@@ -1,0 +1,14 @@
+{
+  "timeplot": [
+    {
+      "EEG": {
+        "Signal": "EEG",
+        "Plot_params": {
+          "title": "EEG Time Plot",
+          "x_label": "Time (s)",
+          "y_label": "Amplitude (µV)"
+        }
+      }
+    }
+  ]
+}

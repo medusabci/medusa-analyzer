@@ -1,13 +1,9 @@
-import json
-from PySide6 import QtWidgets, QtCore,QtGui
-from PySide6.QtWidgets import (
-    QDialog, QFormLayout, QSpinBox, QCheckBox, QColorDialog,
-    QComboBox, QLabel, QDialogButtonBox, QWidget,
-    QHBoxLayout, QPushButton
-)
+import json, os
+from PySide6.QtWidgets import (QDialog, QFormLayout, QSpinBox, QCheckBox, QColorDialog, QComboBox, QLabel,
+    QDialogButtonBox, QWidget, QHBoxLayout, QPushButton)
+from PySide6 import QtWidgets, QtCore, QtGui
 from PySide6.QtGui import QColor
 from functools import partial
-import json
 
 class ExportDialog(QDialog):
     """
@@ -105,6 +101,87 @@ class ExportDialog(QDialog):
         self.color_label.setPalette(palette)
         self.color_label.setText(self.bg_color.name().upper())
 
+
+
+class CheckableComboBox(QtWidgets.QComboBox):
+    checkedItemsChanged = QtCore.Signal(list)
+
+    def __init__(self, parent=None, placeholder="Select items"):
+        super().__init__(parent)
+        self._placeholder = placeholder
+        self.setModel(QtGui.QStandardItemModel(self))
+        self.setEditable(True)
+        self.lineEdit().setReadOnly(True)
+        self.lineEdit().setPlaceholderText(placeholder)
+        self.view().pressed.connect(self._handle_item_pressed)
+        self.update_text()
+
+    def add_checkable_item(self, text, checked=True, user_data=None):
+        item = QtGui.QStandardItem(text)
+        item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
+        item.setData(
+            QtCore.Qt.Checked if checked else QtCore.Qt.Unchecked,
+            QtCore.Qt.CheckStateRole
+        )
+        if user_data is not None:
+            item.setData(user_data, QtCore.Qt.UserRole)
+        self.model().appendRow(item)
+
+    def add_checkable_items(self, items, checked=True):
+        for text in items:
+            self.add_checkable_item(text, checked=checked)
+
+    def clear_items(self):
+        self.model().clear()
+        self.update_text()
+
+    def checked_items(self):
+        selected = []
+        for i in range(self.model().rowCount()):
+            item = self.model().item(i)
+            if item.checkState() == QtCore.Qt.Checked:
+                selected.append(item.text())
+        return selected
+
+    def set_checked_items(self, items_to_check):
+        items_to_check = set(items_to_check)
+        for i in range(self.model().rowCount()):
+            item = self.model().item(i)
+            state = QtCore.Qt.Checked if item.text() in items_to_check else QtCore.Qt.Unchecked
+            item.setCheckState(state)
+        self.update_text()
+        self.checkedItemsChanged.emit(self.checked_items())
+
+    def update_text(self):
+        all_items = [self.model().item(i).text() for i in range(self.model().rowCount())]
+        checked = self.checked_items()
+
+        if not checked:
+            text = self._placeholder
+        elif len(checked) == len(all_items):
+            text = "All"
+        else:
+            text = ", ".join(checked)
+
+        self.lineEdit().setText(text)
+
+    def _handle_item_pressed(self, index):
+        item = self.model().itemFromIndex(index)
+        if item is None:
+            return
+
+        if item.checkState() == QtCore.Qt.Checked:
+            item.setCheckState(QtCore.Qt.Unchecked)
+        else:
+            item.setCheckState(QtCore.Qt.Checked)
+
+        self.update_text()
+        self.checkedItemsChanged.emit(self.checked_items())
+
+    def hidePopup(self):
+        if self.view().underMouse():
+            return
+        super().hidePopup()
 
 def build_dynamic_controls(self, container_widget, plot_params, tab):
     """
@@ -241,6 +318,12 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
     control_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
 
 
+def load_plot_json_files(base_path):
+    with open(os.path.join(base_path, "available_data.json"), "r", encoding="utf-8") as f:
+        params_json = json.load(f)
+    with open(os.path.join(base_path, "type_plots.json"), "r", encoding="utf-8") as f:
+        plots_json = json.load(f)
+    return params_json, plots_json
 
 def export_figure_generic(view, fig, suggested_name, warn_if_none=False):
     """
@@ -283,3 +366,34 @@ def export_figure_generic(view, fig, suggested_name, warn_if_none=False):
         fig.set_size_inches(original_size)
 
     QtWidgets.QMessageBox.information(view, "Export", f"Saved to:\n{fname}")
+
+def replace_with_checkable_combobox(tab, object_name, placeholder="Select items"):
+    old_combo = tab.findChild(QtWidgets.QComboBox, object_name)
+    if old_combo is None:
+        return None
+
+    parent = old_combo.parent()
+    layout = parent.layout()
+    if layout is None:
+        return None
+
+    index = -1
+    for i in range(layout.count()):
+        if layout.itemAt(i).widget() is old_combo:
+            index = i
+            break
+
+    if index == -1:
+        return None
+
+    new_combo = CheckableComboBox(parent=parent, placeholder=placeholder)
+    new_combo.setObjectName(object_name)
+    new_combo.setSizePolicy(old_combo.sizePolicy())
+    new_combo.setMinimumSize(old_combo.minimumSize())
+    new_combo.setMaximumSize(old_combo.maximumSize())
+
+    layout.removeWidget(old_combo)
+    old_combo.deleteLater()
+    layout.insertWidget(index, new_combo)
+
+    return new_combo

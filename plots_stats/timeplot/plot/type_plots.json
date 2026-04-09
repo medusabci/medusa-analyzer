@@ -1,0 +1,36 @@
+{
+  "TimePlot": {
+    "allowed_signals": ["EEG"],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Graph Title",
+        "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+            "normal",
+            "bold"
+        ]
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X axis Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y axis Label",
+        "default": "Plot_params.y_label"
+      }
+    }
+  }
+}

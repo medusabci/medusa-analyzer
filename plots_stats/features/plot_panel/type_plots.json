@@ -1,0 +1,441 @@
+{
+  "ERPPlot": {
+    "allowed_params": [
+      "Event-related potentials"
+    ],
+    "Plot_params": {
+      "plot_error": {
+        "type": "bool",
+        "label": "Plot error (95% CI)",
+        "default": true
+      },
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "plot_stats": {
+        "type": "bool",
+        "default": false,
+        "label": "Show stats"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "xlim": {
+        "type": "range",
+        "label": "Xlim"
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
+      },
+      "line_width": {
+        "type": "spin",
+        "label": "Line width",
+        "default": 2,
+        "min": 1
+      },
+      "line_style": {
+        "type": "select",
+        "label": "Line style",
+        "default": "solid",
+        "options": [
+          "solid",
+          "dashed",
+          "dotted",
+          "dashdot"
+        ]
+      }
+    }
+  },
+  "PSDPlot": {
+    "allowed_params": [
+      "PSD"
+    ],
+    "Plot_params": {
+      "plot_error": {
+        "type": "bool",
+        "label": "Plot error (95% CI)",
+        "default": true
+      },
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "plot_stats": {
+        "type": "bool",
+        "default": false,
+        "label": "Show stats"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "xlim": {
+        "type": "range",
+        "label": "Xlim",
+        "default": [
+          0,
+          70
+        ]
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
+      },
+      "line_width": {
+        "type": "spin",
+        "label": "Line width",
+        "default": 2,
+        "min": 1
+      },
+      "line_style": {
+        "type": "select",
+        "label": "Line style",
+        "default": "solid",
+        "options": [
+          "solid",
+          "dashed",
+          "dotted",
+          "dashdot"
+        ]
+      }
+    }
+  },
+  "LinearPlot": {
+    "allowed_params": [
+      "Mean",
+      "Median",
+      "Variance",
+      "Kurtosis",
+      "Skewness",
+      "Relative Power",
+      "Absolute Power",
+      "Median Frequency",
+      "Spectral Entropy",
+      "CTM",
+      "Sample Entropy",
+      "Lempel-Ziv Complexity"
+    ],
+    "requires_mode": "time_series",
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "xlim": {
+        "type": "range",
+        "label": "Xlim"
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
+      },
+      "line_color": {
+        "type": "color",
+        "label": "Line color",
+        "default": "#000000"
+      },
+      "line_width": {
+        "type": "spin",
+        "label": "Line width",
+        "default": 2,
+        "min": 1
+      },
+      "line_style": {
+        "type": "select",
+        "label": "Line style",
+        "default": "solid",
+        "options": [
+          "solid",
+          "dashed",
+          "dotted",
+          "dashdot"
+        ]
+      },
+      "plot_std": {
+        "type": "bool",
+        "label": "Plot std",
+        "default": true
+      }
+    }
+  },
+  "ViolinPlot": {
+    "allowed_params": [
+      "Mean",
+      "Median",
+      "Variance",
+      "Kurtosis",
+      "Skewness",
+      "Relative Power",
+      "Absolute Power",
+      "Median Frequency",
+      "Spectral Entropy",
+      "CTM",
+      "Sample Entropy",
+      "Lempel-Ziv Complexity"
+    ],
+    "Plot_params": {
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Plot_params.title"
+      },
+      "title_size": {
+        "type": "spin",
+        "label": "Title Size",
+        "default": 14
+      },
+      "title_weight": {
+        "type": "select",
+        "label": "Title Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Axis font Size",
+        "default": 10
+      },
+      "font_weight": {
+        "type": "select",
+        "label": "Axis font Weight",
+        "default": "normal",
+        "options": [
+          "normal",
+          "bold"
+        ]
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
+      },
+      "violin_transparency": {
+        "type": "doublespin",
+        "label": "Transparency",
+        "default": 0.6,
+        "min": 0,
+        "max": 1,
+        "step": 0.1
+      },
+      "plot_stats": {
+        "type": "bool",
+        "default": false,
+        "label": "Show stats"
+      },
+      "plot_mean_line": {
+        "type": "bool",
+        "default": false,
+        "label": "Show mean"
+      },
+      "plot_median_line": {
+        "type": "bool",
+        "default": true,
+        "label": "Show median"
+      },
+      "plot_boxplot": {
+        "type": "bool",
+        "label": "Plot Boxplot",
+        "default": true
+      },
+      "plot_strip": {
+        "type": "bool",
+        "label": "Plot Strip",
+        "default": true
+      }
+    }
+  },
+  "ScatterPlot": {
+    "allowed_params": [
+      "Mean",
+      "Median",
+      "Variance",
+      "Kurtosis",
+      "Skewness",
+      "Relative Power",
+      "Absolute Power",
+      "Median Frequency",
+      "Spectral Entropy",
+      "CTM",
+      "Sample Entropy",
+      "Lempel-Ziv Complexity"
+    ],
+    "Plot_params": {
+      "x_param": {
+        "type": "select",
+        "label": "X Parameter",
+        "options": []
+      },
+      "show_line": {
+      "type": "bool",
+      "label": "Show regression line",
+      "default": false
+      },
+      "title": {
+        "type": "text",
+        "label": "Title",
+        "default": "Plot_params.title"
+      },
+      "x_label": {
+        "type": "text",
+        "label": "X Label",
+        "default": "Plot_params.x_label"
+      },
+      "y_label": {
+        "type": "text",
+        "label": "Y Label",
+        "default": "Plot_params.y_label"
+      },
+      "font_size": {
+        "type": "spin",
+        "label": "Font size",
+        "default": 10
+      },
+      "marker_size": {
+        "type": "spin",
+        "label": "Marker size",
+        "default": 60,
+        "min": 10
+      },
+      "alpha": {
+        "type": "doublespin",
+        "label": "Transparency",
+        "default": 0.8,
+        "min": 0,
+        "max": 1,
+        "step": 0.1
+      },
+      "xlim": {
+        "type": "range",
+        "label": "Xlim"
+      },
+      "ylim": {
+        "type": "range",
+        "label": "Ylim"
+      }
+    }
+  }
+}
