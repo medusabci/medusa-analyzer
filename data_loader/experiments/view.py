@@ -9,7 +9,6 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
         super().__init__()
         self.setupUi(self)
         self.main_window = main_window
-        self.main_window.nextButton.setVisible(False)
 
         ### EXPERIMENTS HEADER ###
         layout = QtWidgets.QVBoxLayout()
@@ -52,16 +51,13 @@ class ExperimentWidget(QtWidgets.QWidget, ui_experiments):
 
 
         ### ELEMENT CONFIGURATION ###
-        # Create radioButton group
-        self.button_group = QtWidgets.QButtonGroup(self)
-        self.button_group.addButton(self.featureseegRButton)
-        self.button_group.addButton(self.featuresecgRButton)
-        self.button_group.setExclusive(True)
-        # self.featureseegRButton.setChecked(True)
+        # # Create radioButton group
+        # self.button_group = QtWidgets.QButtonGroup(self)
+        # # self.button_group.addButton(self.featureseegRButton)
+        # # self.button_group.addButton(self.featuresecgRButton)
+        # self.button_group.setExclusive(True)
+        # # self.featureseegRButton.setChecked(True)
 
-        # Experiment and plot button configuration
-        self.featureseegRButton.setProperty("experiment_id", "eeg_features")
-        self.featuresecgRButton.setProperty("experiment_id", "ecg_features")
-
-        # Next button configuration
-        self.main_window.nextButton.setDisabled(False)
+        # # Experiment and plot button configuration
+        # self.featureseegRButton.setProperty("experiment_id", "eeg_features")
+        # self.featuresecgRButton.setProperty("experiment_id", "ecg_features")

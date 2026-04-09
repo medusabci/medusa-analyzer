@@ -57,8 +57,8 @@ class FilesController:
 
                 # Only consider the biosignals in the experiment
                 idx = self.view.main_window.stackedWidget.currentIndex()
-                experiment_widget = self.view.main_window.stackedWidget.widget(idx - 1).controller
-                if value['class_name'] not in experiment_widget.experiment['biosignals']:
+                experiment_info = self.view.main_window.controller.experiment
+                if value['class_name'] not in experiment_info['biosignals']:
                     continue
 
                 # Get de channel list
@@ -67,18 +67,18 @@ class FilesController:
                                    channel_set.get('l_cha') if isinstance(channel_set, dict) else None)
 
                 # Get the fs (if required)
-                if 'fs' in experiment_widget.experiment['biosignal_information']:
+                if 'fs' in experiment_info['biosignal_information']:
                     self.biosignals[key]['fs'] = getattr(recording, key).fs
 
                 # Get the number of channels (if required), considering ChannelSet as object or dict
-                if 'n_chan' in experiment_widget.experiment['biosignal_information']:
+                if 'n_chan' in experiment_info['biosignal_information']:
                     try:
                         self.biosignals[key]['n_chan'] = len(getattr(recording, key).channel_set.l_cha)
                     except:
                         self.biosignals[key]['n_chan'] = getattr(recording, key).channel_set['n_cha']
 
                 # Get the number of channels (if required), considering ChannelSet as object or dict
-                if 'chan_name' in experiment_widget.experiment['biosignal_information']:
+                if 'chan_name' in experiment_info['biosignal_information']:
                     try:
                         self.biosignals[key]['chan_name'] = getattr(recording, key).channel_set.l_cha
                     except:
@@ -145,7 +145,9 @@ class FilesController:
         mod = importlib.import_module(module_name) # import de module
 
         # Desactivate warnings in preprocessing controller while loading config
-        preprocessing_controller = self.view.main_window.stackedWidget.widget(2).controller # widget(2) is the preprocessing widget
+        idx_preprocessing_widget = next((i for i, d in enumerate(self.view.main_window.controller.experiment['pipeline']) if
+                                 d.get('widget') == "PreprocessingWidget"))
+        preprocessing_controller = self.view.main_window.stackedWidget.widget(idx_preprocessing_widget).controller
         preprocessing_controller.loading_config = True
 
         try:

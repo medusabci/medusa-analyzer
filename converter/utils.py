@@ -10,7 +10,8 @@ import shutil
 
 def do_conversion(controller, files, converter, names_idx):
 
-    conversion = controller.view.stackedWidget.widget(1)
+    idx_conversion_widget = 1
+    conversion = controller.view.stackedWidget.widget(idx_conversion_widget)
     conversion.convertProgressBar.setVisible(True)
     conversion.convertLogTextBrowser.setVisible(True)
 
@@ -67,7 +68,8 @@ def _select_output_directory(controller):
     )
     msg.exec()
 
-    conversion = controller.view.stackedWidget.widget(1)
+    idx_conversion_widget = 1
+    conversion = controller.view.stackedWidget.widget(idx_conversion_widget)
     output_path = QtWidgets.QFileDialog.getExistingDirectory(
         None,
         "Select destination folder for converted files (BIDS root)"
