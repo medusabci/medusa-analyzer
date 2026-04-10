@@ -401,7 +401,7 @@ class TabbedPlotWidgetController(QtCore.QObject):
 
             if hasattr(tab, "_param_widgets"):
                 tab._plot_params_current = {
-                    key: self.get_widget_value(ptype, widget)
+                    key: get_widget_value(ptype, widget)
                     for key, (ptype, widget) in tab._param_widgets.items()
                 }
 

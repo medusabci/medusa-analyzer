@@ -93,6 +93,10 @@ class ExperimentsController:
 
         if module_type in ("eeg_features", "ecg_features"):
 
+            if module_type == "ecg_features":
+                QtWidgets.QMessageBox.critical(None, "Error", "ECG Featrues module is not ready yet.")
+                return
+
             # Loading screen
             self.view.main_window.loading.show()
             self.view.main_window.loading.set_progress(0, self.view.main_window)
