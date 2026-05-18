@@ -1,0 +1,1324 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Official user manual for MEDUSA© Analyzer — the graphical interface for biosignal preprocessing and analysis">
+      
+      
+      
+        <link rel="canonical" href="https://medusabci.github.io/medusa-analyzer/plots-parameters/">
+      
+      
+        <link rel="prev" href="../plots-preprocessed/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../media/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Parameters - MEDUSA© Analyzer User Manual</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#plot-parameters" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="MEDUSA© Analyzer User Manual" class="md-header__button md-logo" aria-label="MEDUSA© Analyzer User Manual" data-md-component="logo">
+      
+  <img src="../media/logo_vert.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MEDUSA© Analyzer User Manual
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Parameters
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_1">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="MEDUSA© Analyzer User Manual" class="md-nav__button md-logo" aria-label="MEDUSA© Analyzer User Manual" data-md-component="logo">
+      
+  <img src="../media/logo_vert.png" alt="logo">
+
+    </a>
+    MEDUSA© Analyzer User Manual
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../what-is-medusa-analyzer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What is MEDUSA© Analyzer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../running/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running the Analyzer
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../formats/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Supported Data Formats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../interface-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Main Interface Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Experiments
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Experiments
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../eeg/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EEG Feature Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ecg.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ECG Feature Extraction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plots and Statistics Module
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plots and Statistics Module
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plots-preprocessed/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preprocessed signals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-loading-processed-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Loading Processed Data
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#between-subject-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Between-Subject Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Between-Subject Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 - Define Groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-assign-subjects-to-groups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 - Assign Subjects to Groups
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-select-recordings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 — Select Recordings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-select-parameters-to-analyze" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Select Parameters to Analyze
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#within-subject-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Within-Subject Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Within-Subject Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-define-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1 — Define Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-assign-recordings-to-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2 - Assign Recordings to Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-select-subjects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3 - Select Subjects
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-select-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4 — Select Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#visualization-window-common-to-both-analyses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Visualization Window (Common to Both Analyses)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Visualization Window (Common to Both Analyses)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#parameter-tabs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameter Tabs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plot Types
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plot Types">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#psdplot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PSDPlot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linearplot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LinearPlot
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plot-configuration-panel-left-side" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Plot Configuration Panel (Left Side)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Plot Configuration Panel (Left Side)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general-settings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General settings
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#channel-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Channel selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#band-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Band selection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-the-figure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting the Figure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../problems.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting & FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="plot-parameters">Plot Parameters<a class="headerlink" href="#plot-parameters" title="Permanent link">&para;</a></h1>
+<p>The Plot Parameters module allows users to visualize and compare the parameters previously computed with MEDUSA© Analyzer.
+This module supports two types of analyses:</p>
+<ul>
+<li>Within-subject analysis (paired)</li>
+<li>Between-subject analysis (unpaired)</li>
+</ul>
+<p>A <strong>within-subject analysis</strong> compares the same participants across different conditions or sessions, 
+whereas a <strong>between-subject</strong> analysis compares different groups of participants (e.g., males vs. females, 
+control vs. Alzheimer’s disease, younger vs. older adults).</p>
+<hr />
+<h2 id="1-loading-processed-data">1. Loading Processed Data<a class="headerlink" href="#1-loading-processed-data" title="Permanent link">&para;</a></h2>
+<p>The first window of this module asks for the path to the processed experiment directory.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+</div>
+<p>The selected folder must come from MEDUSA© Analyzer, after finishing an experiment and saving results.</p>
+<p>Your folder must contain:</p>
+<p><div class="highlight"><pre><span></span><code>data/
+├── settings.json
+└── derivatives/
+    └── parameters/
+</code></pre></div>
+- <code>setttings.json</code> = experiment configuration
+- <code>derivatives/parameters/</code> = all computed parameters files (<code>.mat</code>)</p>
+<p>After the folfer is loaded, select one of the analysis (within-subject or between-subject) 
+and click <code>Next</code> button. </p>
+<hr />
+<h2 id="between-subject-analysis">Between-Subject Analysis<a class="headerlink" href="#between-subject-analysis" title="Permanent link">&para;</a></h2>
+<p>This section explains how to configure a between-subjects comparison.
+To illustrate the workflow, we will use the example <strong>Males vs. Females</strong>, although you 
+may create any groups (e.g., control vs. Alzheimer’s, normal aging vs. MCI, athletes vs. non-athletes, etc.).</p>
+<hr />
+<h3 id="step-1-define-groups">Step 1 - Define Groups<a class="headerlink" href="#step-1-define-groups" title="Permanent link">&para;</a></h3>
+<p>In this window, you define:</p>
+<ul>
+<li>Number of groups </li>
+<li>Name of each group </li>
+<li>Color assigned to each group (used in all plots)</li>
+</ul>
+<p>Procedure:
+- Enter the number of groups (e.g., 2 for Males and Females). 
+- Click <code>Generate Table</code>. 
+- A table appears with default group names and colors. 
+- Modify group names to <strong>Males</strong> and <strong>Females</strong>. 
+- Click on the color cell to choose the color used in plots.</p>
+<p><img alt="Between plot 1" src="../media/between_step_1.png" width="1000px" /></p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+</div>
+<p>Choose colors that contrast well to improve figure readability.
+Colors assigned here will be used automatically across all visualizations.</p>
+<p>Click <code>Next</code>.</p>
+<hr />
+<h3 id="step-2-assign-subjects-to-groups">Step 2 - Assign Subjects to Groups<a class="headerlink" href="#step-2-assign-subjects-to-groups" title="Permanent link">&para;</a></h3>
+<p>The interface now displays the list of all available subjects. To assign subjects:</p>
+<ul>
+<li>Select one or multiple subjects. </li>
+<li>Right-click and choose one of the defined groups.</li>
+</ul>
+<p><img alt="Between plot 2" src="../media/between_step_2.png" width="1000px" /></p>
+<p>Click <code>Next</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+</div>
+<ul>
+<li>If any group is left empty, the software will prevent advancing to the next step.</li>
+<li>A subject cannot belong to more than one group.</li>
+<li>Subjects may remain unassigned if not needed for comparison</li>
+</ul>
+<hr />
+<h3 id="step-3-select-recordings">Step 3 — Select Recordings<a class="headerlink" href="#step-3-select-recordings" title="Permanent link">&para;</a></h3>
+<p>You now see all available recordings for the selected subjects. Here, you must choose 
+the <strong>recording(s) to be averaged</strong> for each subject.
+If a subject has multiple recordings, you may select one or several. Selected recordings 
+are averaged per subject before visualization. Across subjects, group averages are computed afterward.</p>
+<p><img alt="Between plot 3" src="../media/between_step_3.png" width="1000px" /></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+</div>
+<p>Even if recordings differ in length or number of segments, the Analyzer handles averaging internally.</p>
+<p>Select the desired recordings and click <code>Next</code>.</p>
+<hr />
+<h3 id="step-4-select-parameters-to-analyze">Step 4 — Select Parameters to Analyze<a class="headerlink" href="#step-4-select-parameters-to-analyze" title="Permanent link">&para;</a></h3>
+<p>The next window lists all parameters computed previously using MEDUSA© Analyzer. For 
+this example, select:</p>
+<ul>
+<li>Median Frequency </li>
+<li>PSD </li>
+<li>Relative Power</li>
+</ul>
+<p><img alt="Between plot 4" src="../media/between_step_4.png" width="1000px" /></p>
+<p>Click <code>Next</code> to reach the visualization window.</p>
+<p><img alt="Between plot 5" src="../media/between_step_5.png" width="1000px" /></p>
+<hr />
+<h2 id="within-subject-analysis">Within-Subject Analysis<a class="headerlink" href="#within-subject-analysis" title="Permanent link">&para;</a></h2>
+<p>This mode compares different conditions within the same subjects.
+We will illustrate it using an example with different levels of cognitive load (CL):</p>
+<ul>
+<li>No CL </li>
+<li>Low CL </li>
+<li>Medium CL </li>
+<li>High CL</li>
+</ul>
+<hr />
+<h3 id="step-1-define-conditions">Step 1 — Define Conditions<a class="headerlink" href="#step-1-define-conditions" title="Permanent link">&para;</a></h3>
+<p>As before, define:</p>
+<ul>
+<li>Number of groups (here: 4 conditions)</li>
+<li>Group names (the four CL levels)</li>
+<li>Colors (one per condition)</li>
+</ul>
+<p>Procedure:</p>
+<ul>
+<li>Enter 4 groups. </li>
+<li>Click Generate Table. </li>
+<li>Rename groups to No CL, Low CL, Medium CL, High CL. </li>
+<li>Assign a color to each condition.</li>
+</ul>
+<p><img alt="Within plot 1" src="../media/within_step_1.png" width="1000px" /></p>
+<p>Click <code>Next</code>.</p>
+<hr />
+<h3 id="step-2-assign-recordings-to-conditions">Step 2 - Assign Recordings to Conditions<a class="headerlink" href="#step-2-assign-recordings-to-conditions" title="Permanent link">&para;</a></h3>
+<p>You now see a list of all recordings in the experiment. Here, you must assign each recording to one condition.</p>
+<ul>
+<li>Select a recording (or several). </li>
+<li>Right-click and assign to a condition.</li>
+</ul>
+<p><img alt="Within plot 2" src="../media/within_step_2.png" width="1000px" /></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+</div>
+<ul>
+<li>A recording cannot belong to multiple conditions.</li>
+<li>Conditions cannot be empty.</li>
+<li>Unused recordings may remain unassigned.</li>
+</ul>
+<p>Click <code>Next</code> after assigning recordings.</p>
+<hr />
+<h3 id="step-3-select-subjects">Step 3 - Select Subjects<a class="headerlink" href="#step-3-select-subjects" title="Permanent link">&para;</a></h3>
+<p>You will now see all subjects that contain at least one recording assigned to a condition.
+Here, you must select the <strong>subjects to include</strong>.</p>
+<ul>
+<li>If multiple subjects are selected, the Analyzer <strong>averages across subjects</strong> within each condition.</li>
+<li>If only one subject is selected, plots correspond to that subject only.</li>
+</ul>
+<p><img alt="Within plot 3" src="../media/within_step_3.png" width="1000px" /></p>
+<p>For the example, select all subjects to analyze average group behavior.</p>
+<p>Click <code>Next</code>.</p>
+<hr />
+<h3 id="step-4-select-parameters">Step 4 — Select Parameters<a class="headerlink" href="#step-4-select-parameters" title="Permanent link">&para;</a></h3>
+<p>Select the parameters you want to analyze (e.g., PSD, relative power, median frequency).</p>
+<p>Click <code>Next</code> to reach the visualization window.</p>
+<p><img alt="Within plot 4" src="../media/within_step_4.png" width="1000px" /></p>
+<hr />
+<h2 id="visualization-window-common-to-both-analyses">Visualization Window (Common to Both Analyses)<a class="headerlink" href="#visualization-window-common-to-both-analyses" title="Permanent link">&para;</a></h2>
+<p>The visualization interface is identical for within- and between-subjects.</p>
+<p><img alt="General" src="../media/general.png" width="1000px" /></p>
+<h3 id="parameter-tabs">Parameter Tabs<a class="headerlink" href="#parameter-tabs" title="Permanent link">&para;</a></h3>
+<p>At the top-left, you will find one tab per selected parameter:</p>
+<ul>
+<li>Switching tabs changes the plot to the selected parameter. </li>
+<li>Only parameters supported by the module currently produce plots.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+</div>
+<p>At the moment, plots are available <strong>only for EEG spectral parameters</strong>.</p>
+<p>Available visualizations:</p>
+<ul>
+<li><strong>PSD</strong> → PSDPlot </li>
+<li><strong>Relative Power</strong> → LinearPlot </li>
+<li><strong>Absolute Power</strong> → LinearPlot </li>
+<li><strong>Median Frequency</strong> → LinearPlot </li>
+<li><strong>Spectral Entropy</strong> → LinearPlot</li>
+</ul>
+<hr />
+<h3 id="plot-types">Plot Types<a class="headerlink" href="#plot-types" title="Permanent link">&para;</a></h3>
+<h4 id="psdplot">PSDPlot<a class="headerlink" href="#psdplot" title="Permanent link">&para;</a></h4>
+<p>Characteristics:</p>
+<ul>
+<li>Frequency range: <strong>0–60 Hz</strong> (default)</li>
+<li>Power range: <strong>0–10 μV²/Hz</strong> (default)</li>
+<li>Shaded frequency bands automatically displayed:</li>
+<li>Delta (0–4 Hz)</li>
+<li>Theta (4–8 Hz)</li>
+<li>Alpha (8–13 Hz)</li>
+<li>Beta (13–30 Hz)</li>
+<li>Gamma (&gt;30 Hz)</li>
+</ul>
+<p>These ranges can be modified in the <strong>Plot Configuration Panel</strong>.</p>
+<hr />
+<h4 id="linearplot">LinearPlot<a class="headerlink" href="#linearplot" title="Permanent link">&para;</a></h4>
+<p>Characteristics:</p>
+<ul>
+<li>One point per group (condition or subject group)</li>
+<li>Points are connected forming a curve </li>
+<li>Optional dispersion (standard deviation) can be displayed </li>
+<li>Background is shaded according to group colors </li>
+<li>Curve color can be customized in the configuration panel</li>
+</ul>
+<p>This plot is used for:</p>
+<ul>
+<li>Median frequency </li>
+<li>Relative/absolute power </li>
+<li>Spectral entropy</li>
+</ul>
+<hr />
+<h3 id="plot-configuration-panel-left-side">Plot Configuration Panel (Left Side)<a class="headerlink" href="#plot-configuration-panel-left-side" title="Permanent link">&para;</a></h3>
+<p>This panel allows you to customize:</p>
+<h4 id="general-settings">General settings<a class="headerlink" href="#general-settings" title="Permanent link">&para;</a></h4>
+<ul>
+<li>Plot title </li>
+<li>X-axis label </li>
+<li>Y-axis label </li>
+<li>Curve color (LinearPlot)</li>
+<li>Frequency and power limits (PSDPlot)</li>
+<li>Show/hide dispersion (LinearPlot)</li>
+</ul>
+<h4 id="channel-selection">Channel selection<a class="headerlink" href="#channel-selection" title="Permanent link">&para;</a></h4>
+<p>A list containing all signal channels.</p>
+<ul>
+<li>Supports <strong>multiple</strong> channel selection. </li>
+<li>If multiple channels are selected → <strong>automatic averaging</strong> across them. </li>
+<li>You can select:</li>
+<li>A single channel </li>
+<li>A subset of channels </li>
+<li>All channels</li>
+</ul>
+<h4 id="band-selection">Band selection<a class="headerlink" href="#band-selection" title="Permanent link">&para;</a></h4>
+<p>Contains all frequency bands extracted during preprocessing.</p>
+<ul>
+<li>Only <strong>one band</strong> can be selected at a time. </li>
+<li>Changing the band updates the visualization for supported parameters.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+</div>
+<p>Changes are <strong>not applied</strong> automatically.
+You must click <strong><code>Update Plot</code></strong> to refresh the figure.</p>
+<hr />
+<h3 id="exporting-the-figure">Exporting the Figure<a class="headerlink" href="#exporting-the-figure" title="Permanent link">&para;</a></h3>
+<p>At the bottom of the window, the <strong><code>Export</code></strong> button allows saving the current plot. 
+You may configure:</p>
+<ul>
+<li>Output format</li>
+<li>Image size</li>
+<li>DPI</li>
+<li>Background color </li>
+<li>Destination directory </li>
+<li>File name</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+</div>
+<p>For best-quality exports, use:
+<strong>2800 × 2200 px</strong>
+Smaller images may cause slight overlap of labels or shaded zones.</p>
+<p>Always inspect the exported figure before including it in reports or publications.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "toc.integrate", "content.code.copy", "header.autohide"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
