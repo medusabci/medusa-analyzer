@@ -24,16 +24,16 @@ def on_next_click(controller):
     if next_validation is False:
         return False
 
-    idx += 1 # Now is the index of the next widget
+    current_idx += 1 # Now is the index of the next widget
 
     # Update the buttons, if going to the next widget, set text to "Next"
-    if idx < (controller.view.stackedWidget.count()-1):
-        controller.view.stackedWidget.setCurrentIndex(idx)
+    if current_idx < (controller.view.stackedWidget.count()-1):
+        controller.view.stackedWidget.setCurrentIndex(current_idx)
         controller.view.backButton.setVisible(True)
         controller.view.nextButton.setText("Next")
     # If going to the last widget
-    elif idx == (controller.view.stackedWidget.count()-1):
-        controller.view.stackedWidget.setCurrentIndex(idx)
+    elif current_idx == (controller.view.stackedWidget.count()-1):
+        controller.view.stackedWidget.setCurrentIndex(current_idx)
         controller.view.backButton.setVisible(True)
         controller.view.nextButton.setText("Close")
 
