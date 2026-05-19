@@ -145,11 +145,7 @@ class PlotController(QtCore.QObject):
             self.setup_events_list(tab)
 
             # Needed by build_dynamic_controls
-            tab._available_plot_types = {
-                plot_type: {
-                    "plot_params_meta": merged_params
-                }
-            }
+            tab._available_plot_types = {plot_type: {"plot_params_meta": merged_params}}
             tab._current_plot_type = plot_type
             tab._plot_type = plot_type
 

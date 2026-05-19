@@ -152,9 +152,7 @@ def build_dynamic_controls(self, container_widget, plot_params, tab):
         idx = type_combo.findText(tab._current_plot_type)
         if idx >= 0:
             type_combo.setCurrentIndex(idx)
-        type_combo.currentTextChanged.connect(
-            lambda ptype, cw=container_widget: self.on_plot_type_changed(tab, cw, ptype)
-        )
+        type_combo.currentTextChanged.connect(lambda ptype, cw=container_widget: self.on_plot_type_changed(tab, cw, ptype))
         type_combo.blockSignals(False)
 
     control_widget = tab.findChild(QtWidgets.QWidget, "controlWidget")
