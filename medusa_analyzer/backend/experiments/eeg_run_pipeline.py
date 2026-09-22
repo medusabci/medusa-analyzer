@@ -371,7 +371,6 @@ def segment_signal(signal, times, fs, events, state,
     if state['segmentation_strategy'] == 'window-based':
         segment_length = state['epoch_parameters']['duration_events']['duration_epoch_length_ms']
         duration_normalization = state['normalization'].get('duration', {})
-        norm = duration_normalization.get('mode') if duration_normalization.get('enabled') else None
         n_samples = int(np.round((segment_length / 1000.0) * fs))
         times_epochs_ms = (np.arange(n_samples) / fs) * 1000
         stride = state['epoch_parameters']['duration_events']['stride_percent']
@@ -383,13 +382,13 @@ def segment_signal(signal, times, fs, events, state,
         baseline = [state['epoch_parameters']['instant_events']['baseline_start'],
                     state['epoch_parameters']['instant_events']['baseline_end']]
         segment_length = epoch_window[1] - epoch_window[0]
-        instant_normalization = state['normalization'].get('instant', {})
-        norm = instant_normalization.get('mode') if instant_normalization.get('enabled') else None
         n_samples = int(np.round((segment_length / 1000.0) * fs))
         medusa_times_epochs = np.linspace(epoch_window[0], epoch_window[1], n_samples) / 1000
         times_epochs_ms = np.linspace(epoch_window[0], epoch_window[1], n_samples)
-    if norm is not None:
-        norm = 'z' if norm == 'mean_std' else 'dc'
+
+    norm = state['normalization']
+    if norm['enabled']:
+        norm = 'z' if norm['mode'] == 'mean_std' else 'dc'
 
     epochs = dict()
     for base_evt in state['event_groups']:
