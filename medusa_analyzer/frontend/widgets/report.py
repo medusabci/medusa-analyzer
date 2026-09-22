@@ -249,9 +249,9 @@ class ReportWidget(QScrollArea):
             output_path = self.state[self._output_path_state_key()]
             config_path = Path(output_path) / "config.json"
             self.state["pipeline_config_path"] = str(config_path)
-            save_pipeline_config(self.state, output_path)
             if mark_completed:
                 self.state["completion_status"] = "completed"
+            save_pipeline_config(self.state, output_path)
             return True
         except Exception as exc:
             if mark_completed:

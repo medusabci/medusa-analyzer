@@ -73,13 +73,9 @@ def _segmentation_state(selection_mode: str, event_groups: list[dict] | None = N
         "baseline_start": -50,
         "baseline_end": 0,
     }
-    duration_normalization = {
+    normalization = {
         "enabled": True,
-        "mode": "mean_std" if selection_mode == "duration" else "mean",
-    }
-    instant_normalization = {
-        "enabled": True,
-        "mode": "mean_std",
+        "mode": "mean" if selection_mode == "nested" and has_duration and not has_instant else "mean_std",
     }
     return {
         "segmentation_mode": "nested" if selection_mode == "nested" else "independent",
@@ -93,10 +89,7 @@ def _segmentation_state(selection_mode: str, event_groups: list[dict] | None = N
             "duration_events": duration_epoch if has_duration and strategy == "window-based" else {},
             "instant_events": onset_epoch if has_instant or strategy == "onset-based" else {},
         },
-        "normalization": {
-            "duration": duration_normalization if has_duration else {},
-            "instant": instant_normalization if has_instant else {},
-        },
+        "normalization": normalization,
         "thresholding": {"enabled": False},
         "resampling": {"enabled": False},
     }
@@ -133,6 +126,18 @@ class ReportWidgetTests(unittest.TestCase):
         self.assertIn("Metadata", texts)
         self.assertIn("Dummy pre-processing", texts)
         self.assertIn("Dummy features", texts)
+
+    def test_eeg_report_rejects_legacy_normalization_shape(self):
+        defaults = _eeg_defaults()
+        state = _loaded_state()
+        state["segmentation"] = _segmentation_state("duration")
+        state["segmentation"]["normalization"] = {
+            "duration": {"enabled": True, "mode": "mean_std"},
+            "instant": {},
+        }
+
+        with self.assertRaisesRegex(ValueError, "must not be stored per event type"):
+            EEGReportWidget({}, defaults, state)
 
     def test_report_widget_defaults_output_to_input_parent_derivatives(self):
         with TemporaryDirectory() as temp_dir:
@@ -178,7 +183,7 @@ class ReportWidgetTests(unittest.TestCase):
                 "segmentation": {
                     "segmentation_mode": "nested",
                     "epoch_parameters": {"duration_events": {}, "instant_events": {}},
-                    "normalization": {"duration": {"enabled": True, "mode": "mean"}, "instant": {}},
+                    "normalization": {"enabled": True, "mode": "mean"},
                 },
                 "selected_recordings": [
                     {
@@ -213,6 +218,9 @@ class ReportWidgetTests(unittest.TestCase):
             )
             self.assertEqual(saved["feature_params"]["psd"], {"segment_percent": 60})
             self.assertIn("normalization", saved["segmentation"])
+            self.assertEqual(saved["segmentation"]["normalization"], {"enabled": True, "mode": "mean"})
+            self.assertNotIn("duration", saved["segmentation"]["normalization"])
+            self.assertNotIn("instant", saved["segmentation"]["normalization"])
             self.assertNotIn("nested_normalization", saved["segmentation"])
             self.assertEqual(
                 saved["selected_recordings"],
@@ -273,7 +281,9 @@ class ReportWidgetTests(unittest.TestCase):
                 },
             )
             self.assertIn("normalization", saved["segmentation"])
-            self.assertNotIn("baseline_window_ms", saved["segmentation"]["normalization"]["instant"])
+            self.assertNotIn("baseline_window_ms", saved["segmentation"]["normalization"])
+            self.assertNotIn("duration", saved["segmentation"]["normalization"])
+            self.assertNotIn("instant", saved["segmentation"]["normalization"])
             self.assertNotIn("selected_duration_events", saved["segmentation"])
             self.assertNotIn("selected_instant_events", saved["segmentation"])
             self.assertNotIn("nested_groups", saved["segmentation"])

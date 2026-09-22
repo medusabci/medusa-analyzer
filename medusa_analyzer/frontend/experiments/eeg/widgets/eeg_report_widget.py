@@ -219,9 +219,15 @@ class EEGReportWidget(ReportWidget):
 
         mode = segmentation.get("segmentation_mode", "independent")
         epoch_parameters = segmentation.get("epoch_parameters") or {}
-        normalization_parameters = segmentation.get("normalization") or {}
-        duration_normalization = normalization_parameters.get("duration") or {}
-        instant_normalization = normalization_parameters.get("instant") or {}
+        normalization_parameters = segmentation.get("normalization")
+        if normalization_parameters is None:
+            normalization_parameters = {}
+        if not isinstance(normalization_parameters, dict):
+            raise ValueError("Segmentation normalization must be a dictionary with 'enabled' and 'mode'.")
+        if "duration" in normalization_parameters or "instant" in normalization_parameters:
+            raise ValueError("Segmentation normalization must not be stored per event type.")
+        duration_normalization = normalization_parameters
+        instant_normalization = normalization_parameters
 
         thresholding = segmentation.get("thresholding", {})
         resampling = segmentation.get("resampling", {})

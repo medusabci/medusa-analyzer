@@ -86,6 +86,12 @@ class EEGLoadDataWidgetTests(unittest.TestCase):
                 ],
             )
 
+    def test_group_label_shows_channel_count_instead_of_reference(self):
+        label = EEGLoadDataWidget._group_label(_group())
+
+        self.assertIn("2 ch", label)
+        self.assertNotIn("average", label)
+
 
 if __name__ == "__main__":
     unittest.main()

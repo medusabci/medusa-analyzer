@@ -38,7 +38,7 @@ from medusa.core.legacy.convert import (EDUBIOMAT_TASK_LABELS,
                                         recorder_recording_to_v2)
 from medusa.core.legacy.recording import Recording as LegacyRecording
 
-SRC = Path(r"X:\Temps\alfonso-raw\Tranquilo")
+SRC = Path(r"\\10.0.106.93\public\Temps\alfonso-raw\Tranquilo")
 DST = SRC / "converted"
 FORMAT = "h5"          # any Recording.save format: h5 / bson / json / mat
 

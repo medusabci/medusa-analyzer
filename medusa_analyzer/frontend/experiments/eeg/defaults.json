@@ -102,14 +102,8 @@
       }
     },
     "normalization": {
-      "duration": {
-        "enabled": false,
-        "mode": "mean_std"
-      },
-      "instant": {
-        "enabled": false,
-        "mode": "mean_std"
-      }
+      "enabled": false,
+      "mode": "mean_std"
     },
     "thresholding": {
       "enabled": false,

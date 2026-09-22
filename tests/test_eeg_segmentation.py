@@ -61,6 +61,18 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
     def setUpClass(cls):
         cls.app = QApplication.instance() or QApplication([])
 
+    def test_segmentation_widget_rejects_legacy_normalization_shape(self):
+        state = _loaded_state()
+        state["segmentation"] = {
+            "normalization": {
+                "duration": {"enabled": True, "mode": "mean"},
+                "instant": {},
+            }
+        }
+
+        with self.assertRaisesRegex(ValueError, "must not be stored per event type"):
+            EEGSegmentationWidget({}, _eeg_defaults(), state)
+
     def test_nested_mode_uses_single_child_type_without_dual_parameter_selectors(self):
         state = _loaded_state_with_events(["full_recording", "trial"], ["stimulus", "response"])
         widget = EEGSegmentationWidget({}, _eeg_defaults(), state)
@@ -70,7 +82,7 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.assertFalse(hasattr(widget, "_epoch_parameters"))
         self.assertFalse(hasattr(widget, "_normalization_parameters"))
         self.assertEqual(state["segmentation"]["epoch_parameters"], {"duration_events": {}, "instant_events": {}})
-        self.assertEqual(state["segmentation"]["normalization"], {"duration": {}, "instant": {}})
+        self.assertEqual(state["segmentation"]["normalization"], {"enabled": False, "mode": "mean_std"})
         self.assertEqual(widget.independent_mode_button.property("role"), "segmentation-mode-button")
         self.assertFalse(hasattr(widget, "epoch_target_panel"))
         self.assertFalse(hasattr(widget, "epoch_start"))
@@ -186,14 +198,15 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.assertTrue(widget.normalization_baseline_hint.isVisible())
 
         segmentation = state["segmentation"]
-        self.assertEqual(segmentation["normalization"]["duration"], {})
         self.assertEqual(
-            segmentation["normalization"]["instant"],
+            segmentation["normalization"],
             {
                 "enabled": True,
                 "mode": "mean_std",
             },
         )
+        self.assertNotIn("duration", segmentation["normalization"])
+        self.assertNotIn("instant", segmentation["normalization"])
         self.assertEqual(
             segmentation["epoch_parameters"]["instant_events"],
             {"start": -120, "end": 380, "baseline_start": -50, "baseline_end": 0},
@@ -234,6 +247,9 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
             segmentation_defaults["epoch_parameters"]["instant_events"],
             {"start": -300, "end": 700, "baseline_start": -300, "baseline_end": 0},
         )
+        self.assertEqual(segmentation_defaults["normalization"], {"enabled": False, "mode": "mean_std"})
+        self.assertNotIn("duration", segmentation_defaults["normalization"])
+        self.assertNotIn("instant", segmentation_defaults["normalization"])
         self.assertNotIn("duration", segmentation_defaults["epoch_parameters"])
         self.assertNotIn("instant", segmentation_defaults["epoch_parameters"])
 
@@ -352,9 +368,11 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         )
         self.assertEqual(state["segmentation"]["epoch_parameters"]["duration_events"], {})
         self.assertEqual(
-            state["segmentation"]["normalization"]["duration"],
+            state["segmentation"]["normalization"],
             {"enabled": True, "mode": "mean_std"},
         )
+        self.assertNotIn("duration", state["segmentation"]["normalization"])
+        self.assertNotIn("instant", state["segmentation"]["normalization"])
         self.assertEqual(widget.onset_segmentation_widget.window_start_slider.value(), -200)
         self.assertEqual(widget.onset_segmentation_widget.window_end_slider.value(), 600)
         self.assertEqual(widget.onset_segmentation_widget.baseline_start_slider.value(), -100)
@@ -378,7 +396,7 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
             state["segmentation"]["epoch_parameters"]["instant_events"],
             {"start": -150, "end": 500, "baseline_start": -125, "baseline_end": -25},
         )
-        self.assertNotIn("baseline_window_ms", state["segmentation"]["normalization"]["duration"])
+        self.assertNotIn("baseline_window_ms", state["segmentation"]["normalization"])
         self.assertTrue(widget.normalization_baseline_hint.isVisible())
         self.assertTrue(widget.can_continue())
         self.assertEqual(
@@ -722,7 +740,8 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.assertEqual(duration_widget._epoch_target, "duration")
         self.assertEqual(duration_widget._normalization_target, "duration")
         self.assertEqual(duration_state["segmentation"]["epoch_parameters"]["instant_events"], {})
-        self.assertEqual(duration_state["segmentation"]["normalization"]["instant"], {})
+        self.assertNotIn("duration", duration_state["segmentation"]["normalization"])
+        self.assertNotIn("instant", duration_state["segmentation"]["normalization"])
 
         instant_events = [f"instant_child_{index}" for index in range(7)]
         instant_state = _loaded_state_with_events([f"base_{index}" for index in range(7)], instant_events)
@@ -755,7 +774,8 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.assertEqual(instant_widget._epoch_target, "instant")
         self.assertEqual(instant_widget._normalization_target, "instant")
         self.assertEqual(instant_state["segmentation"]["epoch_parameters"]["duration_events"], {})
-        self.assertEqual(instant_state["segmentation"]["normalization"]["duration"], {})
+        self.assertNotIn("duration", instant_state["segmentation"]["normalization"])
+        self.assertNotIn("instant", instant_state["segmentation"]["normalization"])
 
     def test_nested_mode_rejects_mixed_child_event_types(self):
         state = _loaded_state()

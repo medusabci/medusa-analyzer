@@ -1036,25 +1036,19 @@ class EEGSegmentationWidget(QScrollArea):
         if not isinstance(epoch_parameters, dict):
             epoch_parameters = {}
         normalization = current.get("normalization")
-        if not isinstance(normalization, dict) or not (
-            "duration" in normalization or "instant" in normalization
-        ):
-            normalization = {}
+        event_groups = self._initial_event_groups(current, mode)
 
         return {
             "segmentation_mode": mode,
             "segmentation_strategy": self._strategy_or_default(
                 current.get("segmentation_strategy", self.config.get("segmentation_strategy", "window-based"))
             ),
-            "event_groups": self._initial_event_groups(current, mode),
+            "event_groups": event_groups,
             "epoch_parameters": {
                 "duration_events": deepcopy(epoch_parameters.get("duration_events") or {}),
                 "instant_events": deepcopy(epoch_parameters.get("instant_events") or {}),
             },
-            "normalization": {
-                "duration": deepcopy(normalization.get("duration") or {}),
-                "instant": deepcopy(normalization.get("instant") or {}),
-            },
+            "normalization": self._normalized_normalization_state(normalization),
             "thresholding": {
                 **deepcopy(self.config.get("thresholding", {})),
                 **deepcopy(current.get("thresholding") or {}),
@@ -1258,22 +1252,28 @@ class EEGSegmentationWidget(QScrollArea):
         state["stride_percent"] = int(value.get("stride_percent", state["stride_percent"]))
         return state
 
-    def _default_normalization_state(self, target: str) -> dict[str, Any]:
-        target = self._target_or_default(target)
-        defaults = ((self.config.get("normalization") or {}).get(target) or {})
+    def _default_normalization_state(self) -> dict[str, Any]:
+        defaults = self.config.get("normalization") or {}
         state = {
             "enabled": bool(defaults.get("enabled", False)),
             "mode": str(defaults.get("mode", "mean_std")),
         }
         return state
 
-    def _normalized_normalization_state(self, target: str, value: Any | None = None) -> dict[str, Any]:
-        target = self._target_or_default(target)
-        state = self._default_normalization_state(target)
-        if not isinstance(value, dict):
+    def _normalized_normalization_state(self, value: Any | None = None) -> dict[str, Any]:
+        state = self._default_normalization_state()
+        if value is None or value == {}:
             return state
-        state["enabled"] = bool(value.get("enabled", state["enabled"]))
-        state["mode"] = str(value.get("mode", state["mode"]))
+        if not isinstance(value, dict):
+            raise ValueError("Segmentation normalization must be a dictionary with 'enabled' and 'mode'.")
+        if "duration" in value or "instant" in value:
+            raise ValueError("Segmentation normalization must not be stored per event type.")
+        missing_keys = {"enabled", "mode"} - set(value)
+        if missing_keys:
+            missing = ", ".join(sorted(missing_keys))
+            raise ValueError(f"Segmentation normalization is missing required key(s): {missing}.")
+        state["enabled"] = bool(value["enabled"])
+        state["mode"] = str(value["mode"])
         return state
 
     def _active_event_types_from_state(self) -> tuple[bool, bool]:
@@ -1289,7 +1289,7 @@ class EEGSegmentationWidget(QScrollArea):
 
         segmentation = self.state["segmentation"]
         epoch_parameters = segmentation.get("epoch_parameters") if isinstance(segmentation.get("epoch_parameters"), dict) else {}
-        normalization = segmentation.get("normalization") if isinstance(segmentation.get("normalization"), dict) else {}
+        normalization = segmentation.get("normalization")
         strategy = self._strategy_for_active_types(
             bool(has_duration),
             bool(has_instant),
@@ -1310,10 +1310,7 @@ class EEGSegmentationWidget(QScrollArea):
                 }
         else:
             segmentation["epoch_parameters"] = {"duration_events": {}, "instant_events": {}}
-        segmentation["normalization"] = {
-            "duration": self._normalized_normalization_state("duration", normalization.get("duration")) if has_duration else {},
-            "instant": self._normalized_normalization_state("instant", normalization.get("instant")) if has_instant else {},
-        }
+        segmentation["normalization"] = self._normalized_normalization_state(normalization)
 
     def _epoch_state(self, target: str, create: bool = True) -> dict[str, Any]:
         target = self._target_or_default(target)
@@ -1330,13 +1327,12 @@ class EEGSegmentationWidget(QScrollArea):
         return current if isinstance(current, dict) and current else self._default_epoch_state(target)
 
     def _normalization_state(self, target: str, create: bool = True) -> dict[str, Any]:
-        target = self._target_or_default(target)
-        normalization = self.state["segmentation"].setdefault("normalization", {"duration": {}, "instant": {}})
-        current = normalization.get(target)
+        del target
+        normalization = self.state["segmentation"].get("normalization")
+        current = self._normalized_normalization_state(normalization)
         if create:
-            current = self._normalized_normalization_state(target, current)
-            normalization[target] = current
-        return current if isinstance(current, dict) and current else self._default_normalization_state(target)
+            self.state["segmentation"]["normalization"] = current
+        return current
 
     def _set_normalization_target_buttons(self) -> None:
         self._set_button_checked(self.normalization_duration_target_button, self._normalization_target == "duration")
@@ -1364,7 +1360,7 @@ class EEGSegmentationWidget(QScrollArea):
 
     def _set_normalization_controls_from_state(self, target: str) -> None:
         state = self._normalization_state(target, create=False)
-        default = self._default_normalization_state(target)
+        default = self._default_normalization_state()
         previous = self._syncing_parameter_controls
         self._syncing_parameter_controls = True
         try:
@@ -2141,10 +2137,7 @@ class EEGSegmentationWidget(QScrollArea):
                 "duration_events": deepcopy(previous_epoch_parameters.get("duration_events") or {}),
                 "instant_events": deepcopy(previous_epoch_parameters.get("instant_events") or {}),
             },
-            "normalization": {
-                "duration": deepcopy(previous_normalization.get("duration") or {}),
-                "instant": deepcopy(previous_normalization.get("instant") or {}),
-            },
+            "normalization": self._normalized_normalization_state(previous_normalization),
             "thresholding": {"enabled": self.threshold_enabled.isChecked(),
                 "sigma": self.threshold_sigma.value(),
                 "samples": self.threshold_samples.value(),
@@ -2160,10 +2153,8 @@ class EEGSegmentationWidget(QScrollArea):
         elif self._epoch_target == "instant" and has_instant_epochs:
             self._store_epoch_controls("instant")
 
-        if self._normalization_target == "duration" and has_duration_epochs:
-            self._store_normalization_controls("duration")
-        elif self._normalization_target == "instant" and has_instant_epochs:
-            self._store_normalization_controls("instant")
+        if has_duration_epochs or has_instant_epochs:
+            self._store_normalization_controls(self._normalization_target)
 
         self._ensure_parameter_state(has_duration_epochs, has_instant_epochs)
         self._align_parameter_targets(mode, selection_mode)
@@ -2229,8 +2220,7 @@ class EEGSegmentationWidget(QScrollArea):
         self._ensure_parameter_state()
         duration_epoch = self._epoch_state("duration", create=False)
         onset_epoch = self._epoch_state("instant", create=False)
-        duration_normalization = self._normalization_state("duration", create=False)
-        instant_normalization = self._normalization_state("instant", create=False)
+        normalization = self._normalization_state(self._normalization_target, create=False)
 
         has_duration_epochs, has_instant_epochs = self._active_event_types(mode, selection_mode)
         strategy = self._current_state_strategy()
@@ -2288,7 +2278,11 @@ class EEGSegmentationWidget(QScrollArea):
         def validate_normalization(normalization: dict[str, Any], target: str, epoch_config: dict[str, int] | None) -> None:
             if not normalization.get("enabled", False):
                 return
-            prefix = f"{target.title()} normalization" if mode == "nested" else "Normalization"
+            prefix = (
+                f"{target.title()} normalization"
+                if mode == "nested" and target in {"duration", "instant"}
+                else "Normalization"
+            )
             errors.extend(self.validation.validate_many(normalization.get("mode"),
                     [("one_of", {"options": ["mean", "mean_std"]})], label=f"{prefix} mode"))
             if epoch_config is None:
@@ -2315,17 +2309,17 @@ class EEGSegmentationWidget(QScrollArea):
                 epoch_lengths_ms.append(epoch_length)
 
         if mode == "nested":
-            if has_duration_epochs:
-                validate_normalization(duration_normalization, "duration",
-                    onset_epoch if strategy == "onset-based" else None)
-            if has_instant_epochs:
-                validate_normalization(instant_normalization, "instant", onset_epoch)
+            if has_duration_epochs and not has_instant_epochs:
+                validate_normalization(normalization, "duration", onset_epoch if strategy == "onset-based" else None)
+            elif has_instant_epochs and not has_duration_epochs:
+                validate_normalization(normalization, "instant", onset_epoch)
+            elif has_duration_epochs or has_instant_epochs:
+                validate_normalization(normalization, "normalization", None)
         else:
             if selection_mode == "duration":
-                validate_normalization(duration_normalization, "duration",
-                    onset_epoch if strategy == "onset-based" else None)
+                validate_normalization(normalization, "duration", onset_epoch if strategy == "onset-based" else None)
             elif selection_mode == "instant":
-                validate_normalization(instant_normalization, "instant", onset_epoch)
+                validate_normalization(normalization, "instant", onset_epoch)
 
         smallest_epoch_ms = min(epoch_lengths_ms) if epoch_lengths_ms else 0
         epoch_samples = (int(smallest_epoch_ms * float(self.source_sampling_frequency or 0)/ 1000) if smallest_epoch_ms > 0

@@ -364,13 +364,24 @@ def build_output_dict(signal, times, ch_names, fs, time_unit="s"):
     }
     return output_dic
 
+def _normalization_config(state):
+    normalization = state.get('normalization') or {}
+    if not isinstance(normalization, dict):
+        raise ValueError("Segmentation normalization must be a dictionary with 'enabled' and 'mode'.")
+    if 'duration' in normalization or 'instant' in normalization:
+        raise ValueError("Segmentation normalization must not be stored per event type.")
+    missing_keys = {'enabled', 'mode'} - set(normalization)
+    if missing_keys:
+        missing = ', '.join(sorted(missing_keys))
+        raise ValueError(f"Segmentation normalization is missing required key(s): {missing}.")
+    return normalization
+
 def segment_signal(signal, times, fs, events, state,
                    log_callback = None, execution_logs = None, subj_id = None):
 
     # Get segmentation params, time vector and normalization type in a medusa-compatible format
     if state['segmentation_strategy'] == 'window-based':
         segment_length = state['epoch_parameters']['duration_events']['duration_epoch_length_ms']
-        duration_normalization = state['normalization'].get('duration', {})
         n_samples = int(np.round((segment_length / 1000.0) * fs))
         times_epochs_ms = (np.arange(n_samples) / fs) * 1000
         stride = state['epoch_parameters']['duration_events']['stride_percent']
@@ -386,9 +397,10 @@ def segment_signal(signal, times, fs, events, state,
         medusa_times_epochs = np.linspace(epoch_window[0], epoch_window[1], n_samples) / 1000
         times_epochs_ms = np.linspace(epoch_window[0], epoch_window[1], n_samples)
 
-    norm = state['normalization']
-    if norm['enabled']:
-        norm = 'z' if norm['mode'] == 'mean_std' else 'dc'
+    normalization = _normalization_config(state)
+    norm = None
+    if normalization.get('enabled'):
+        norm = 'z' if normalization.get('mode') == 'mean_std' else 'dc'
 
     epochs = dict()
     for base_evt in state['event_groups']:
