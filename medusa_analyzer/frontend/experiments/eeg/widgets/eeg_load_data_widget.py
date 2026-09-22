@@ -148,8 +148,9 @@ class EEGLoadDataWidget(LoadDataWidget):
     @staticmethod
     def _group_label(group: dict[str, Any]) -> str:
         sessions = ",".join(group["sessions"]) if group["sessions"] else "no-session"
+        n_channels = group.get("n_channels", len(group.get("channel_set", [])))
         return (f"{group['id']} | {group['n_recordings']} rec | {group['sampling_frequency']:g} Hz | "
-            f"{group['reference']} | task {group['task']} | ses {sessions}")
+            f"{n_channels} ch | task {group['task']} | ses {sessions}")
 
     @staticmethod
     def _recording_state(recording: dict[str, Any]) -> dict[str, Any]:
