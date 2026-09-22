@@ -117,7 +117,7 @@ def run_eeg_feature_extraction(state,
             msg = f"[{subj_id}] File successfully preprocessed."
             log_callback(msg, "")
             execution_logs.append(msg)
-            msg = f"[{subj_id}] Continuing process..."
+            msg = f"[{subj_id}] Continuing with file processing..."
             log_callback(msg, "")
             execution_logs.append(msg)
 
@@ -394,7 +394,7 @@ def segment_signal(signal, times, fs, events, state,
                     state['epoch_parameters']['instant_events']['baseline_end']]
         segment_length = epoch_window[1] - epoch_window[0]
         n_samples = int(np.round((segment_length / 1000.0) * fs))
-        medusa_times_epochs = np.linspace(epoch_window[0], epoch_window[1], n_samples) / 1000
+        # medusa_times_epochs = np.linspace(epoch_window[0], epoch_window[1], n_samples) / 1000
         times_epochs_ms = np.linspace(epoch_window[0], epoch_window[1], n_samples)
 
     normalization = _normalization_config(state)
@@ -461,7 +461,7 @@ def segment_signal(signal, times, fs, events, state,
                     except KeyError:
                         continue
 
-                    if epochs_tmp:
+                    if epochs_tmp is not None:
                         epochs[base_evt['base_event']][evt]= epochs_tmp
                         del epochs_tmp
                     elif log_callback is not None:
