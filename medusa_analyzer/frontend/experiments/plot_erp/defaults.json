@@ -46,13 +46,13 @@
   "plots": {
     "available_plot_types": [
       {
-        "id": "epoch_average",
-        "title": "Epoch average",
-        "plot_class": "EpochAveragePlot",
+        "id": "plot_erp",
+        "title": "Plot ERP",
+        "plot_class": "ERPPlot",
         "compatible_experiments": ["eeg"],
         "default_params": {
           "visualization": [
-            {"id": "title", "title": "Title", "type": "text", "default": "Epoch average"},
+            {"id": "title", "title": "Title", "type": "text", "default": "Plot ERP"},
             {"id": "title_size", "title": "Title size", "type": "int", "default": 14, "min": 6, "max": 36},
             {"id": "title_weight", "title": "Title weight", "type": "combo", "default": "normal", "options": [
               {"id": "normal", "title": "Normal"},

@@ -3,13 +3,14 @@ import logging
 import os
 from pathlib import Path
 
-from PySide6.QtGui import QFont, QIcon, QPixmap
-from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget, QSplashScreen
+from PySide6.QtGui import QFont, QIcon
+from PySide6.QtWidgets import QApplication, QMainWindow, QStackedWidget
 from PySide6.QtCore import Qt # Importar Qt para los modificadores de escalado
 
 from medusa_analyzer.frontend.dashboard import DashboardPage, build_dashboard_catalog
 from medusa_analyzer.frontend.experiments import create_experiment_page, discover_experiments
 from medusa_analyzer.frontend.router import Router
+from medusa_analyzer.frontend.splash import SplashScreen
 try:
     import pyi_splash
 except ImportError:
@@ -68,12 +69,15 @@ def _application_icon() -> QIcon:
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, splash: SplashScreen = None):
         super().__init__()
         self.setWindowTitle("Medusa Analyzer")
         self.setWindowIcon(_application_icon())
         self.resize(1200, 800)
         self.setMinimumSize(1020, 700)
+
+        if splash is not None:
+            splash.set_state(15, "Preparing interface...")
 
         stack = QStackedWidget() # Creamos el stackWidget, que es el contenedor principal de páginas
         self.setCentralWidget(stack)
@@ -82,8 +86,14 @@ class MainWindow(QMainWindow):
 
         self.experiments = [] # aquí se guardan los experimentos que hay definidos
         self.pages = {} # diccionario para guardas las páginas de cada experimento
+        experiment_definitions = discover_experiments()
+        total_experiments = max(1, len(experiment_definitions))
         # Buscamos todos los experimentos disponibles y los recorremos uno a uno
-        for definition in discover_experiments():
+        for index, definition in enumerate(experiment_definitions, start=1):
+            if splash is not None:
+                title = definition.info.get("title", definition.id.upper())
+                progress = 20 + (50 * (index - 1) / total_experiments)
+                splash.set_state(progress, f"Loading {title}...")
             logger.info("Loading experiment '%s' from %s", definition.id, definition.root)
             try:
                 # Creamos el WorkflowShell con los widget del experimento
@@ -93,6 +103,9 @@ class MainWindow(QMainWindow):
                 continue
             self.experiments.append(definition)
             self.pages[definition.route] = page # Guardamos todas las páginas de experimentos bajo la key de la ruta
+
+        if splash is not None:
+            splash.set_state(75, "Building dashboard...")
 
         categories, items = build_dashboard_catalog(self.experiments)
         # Creamos el dashboard con las categorías y los items detectados
@@ -106,12 +119,17 @@ class MainWindow(QMainWindow):
         #'self.router.navigate("dashboard")'
         self.router.register("dashboard", self.dashboard)
 
+        if splash is not None:
+            splash.set_state(85, "Registering routes...")
+
         for route, page in self.pages.items():
             self.router.register(route, page) # Registramos cada página del experimento en el router
             # Conectamos la señal de dashboard_dequested de cada página del workflow con volver al dashboard
             page.dashboard_requested.connect(lambda: self.router.navigate("dashboard"))
         logger.info("Registered routes: %s", sorted(self.router.routes))
         self.router.navigate("dashboard") # Navegamos al dashboard para empezar ahí
+        if splash is not None:
+            splash.set_state(100, "Ready")
 
 
 def _load_stylesheet() -> str:
@@ -137,24 +155,21 @@ def run() -> int:
     app.setFont(QFont("Segoe UI", 10))
     app.setStyleSheet(_load_stylesheet()) # Carga el QSS y se lo aplicamos a toda la aplicación
 
-    # 1. Crear y mostrar el Splash Screen
-    pixmap = QPixmap(str(_style_asset_path("splash.png")))
-    splash = QSplashScreen(pixmap)
-    splash.setWindowIcon(icon)
-    splash.show()
-    # 2. Forzar a Qt a procesar eventos (dibujar el splash) antes del trabajo pesado
-    app.processEvents()
+    splash = SplashScreen()
+    splash.splash_screen.setWindowIcon(icon)
+    splash.set_state(5, "Starting MEDUSA Analyzer...")
 
     # # Ya puedes cerrar el splash de PyInstaller
     if pyi_splash is not None and pyi_splash.is_alive():
+        splash.set_state(10, "Closing bootstrap splash...")
         pyi_splash.close()
 
     # Ejecutamos toodo el constructor de la MainWidow (crear el stack, router, descubrir experimentos, crear páginas,
     # registrar rutas y navegar al dashboard.
-    window = MainWindow()
+    window = MainWindow(splash=splash)
     window.show()
 
     # 4. Cerrar el splash screen transicionando a la ventana principal
-    splash.finish(window)
+    splash.hide(window)
 
     return app.exec()

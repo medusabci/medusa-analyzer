@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 app_icon = "medusa_analyzer/frontend/styles/medusa_task_icon.png"
-splash_image = "medusa_analyzer/frontend/styles/splash.png"
+splash_image = "medusa_analyzer/frontend/styles/medusa_splash_v2026 copia.png"
 
 
 data_patterns = [

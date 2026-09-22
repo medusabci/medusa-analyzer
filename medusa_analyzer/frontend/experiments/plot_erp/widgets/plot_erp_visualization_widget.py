@@ -33,13 +33,13 @@ from PySide6.QtWidgets import (
 )
 
 from medusa_analyzer.frontend.widgets.plots import (
-    EpochAveragePlot,
+    ERPPlot,
     EpochDataIndex,
     prepare_grouped_epoch_data,
 )
 
 
-class EpochAverageVisualizationWidget(QScrollArea):
+class PlotERPVisualizationWidget(QScrollArea):
     changed = Signal()
 
     def __init__(self, experiment_info: dict, defaults: dict, state: dict):
@@ -66,7 +66,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
 
         title = QLabel("Plot visualization")
         title.setObjectName("pageTitle")
-        description = QLabel("Configure the average of aligned epochs for the selected groups.")
+        description = QLabel("Configure ERP waveforms for the selected groups.")
         description.setObjectName("muted")
         description.setWordWrap(True)
         root.addWidget(title)
@@ -274,7 +274,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
             self.band_combo.blockSignals(False)
 
     def _restore_general_config(self) -> None:
-        stored = self.state.get("epoch_average_plot_config", {})
+        stored = self.state.get("plot_erp_plot_config", {})
         if not isinstance(stored, dict):
             stored = {}
 
@@ -311,7 +311,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
         plot_info = self._plot_info()
         params = list(plot_info.get("default_params", {}).get("visualization", [])) if plot_info else []
         current_plot_id = str(self.plot_combo.currentData() or "")
-        stored_config = self.state.get("epoch_average_plot_config", {})
+        stored_config = self.state.get("plot_erp_plot_config", {})
         stored_params = stored_config.get("visualization", {}) if isinstance(stored_config, dict) else {}
         if not isinstance(stored_params, dict) or stored_config.get("plot_type") != current_plot_id:
             stored_params = {}
@@ -416,7 +416,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
             else:
                 visualization[param_id] = control.text()
 
-        self.state["epoch_average_plot_config"] = {
+        self.state["plot_erp_plot_config"] = {
             "plot_type": plot_id,
             "selected_channels": selected_channels,
             "selected_band": selected_band,
@@ -438,7 +438,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
             if not plot_id:
                 self._draw_empty_plot(ax, visualization, "No compatible plot selected.")
                 return
-            if plot_id != "epoch_average":
+            if plot_id != "plot_erp":
                 self._draw_empty_plot(ax, visualization, f"{plot_id} plotting is not available.")
                 return
             if not band_id:
@@ -454,7 +454,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
                 self._draw_empty_plot(ax, visualization, "No epochs found for this band and selection.")
                 return
 
-            plot = EpochAveragePlot(ax, visualization)
+            plot = ERPPlot(ax, visualization)
             plot.load_prepared_data(prepared_data)
             plot.draw(prepared_data.colors_by_name())
         except Exception as error:
@@ -481,7 +481,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
         elif not selected_channels:
             text, status = "Select at least one channel before plotting.", "error"
         else:
-            text, status = "Epoch-average plot ready.", "ready"
+            text, status = "ERP plot ready.", "ready"
         self.status_label.setText(text)
         self.status_label.setProperty("status", status)
         self.status_label.style().unpolish(self.status_label)
@@ -531,7 +531,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
             band_id = str(band.get("id") or band.get("title") or "").strip()
             if not band_id:
                 continue
-            normalized.append({"id": band_id, "title": str(band.get("title") or EpochAverageVisualizationWidget._band_title(band_id))})
+            normalized.append({"id": band_id, "title": str(band.get("title") or PlotERPVisualizationWidget._band_title(band_id))})
         return sorted(normalized, key=lambda band: 0 if band["id"].lower() == "broadband" else 1)
 
     @staticmethod
@@ -598,7 +598,7 @@ class EpochAverageVisualizationWidget(QScrollArea):
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
         def browse_path() -> None:
-            current_path = path_input.text().strip() or "epoch_average.png"
+            current_path = path_input.text().strip() or "plot_erp.png"
             selected_path, _ = QFileDialog.getSaveFileName(dialog, "Export plot", current_path, "PNG image (*.png)")
             if selected_path:
                 path_input.setText(selected_path)
@@ -649,11 +649,11 @@ class EpochAverageVisualizationWidget(QScrollArea):
         self._refresh_from_state()
 
     def can_continue(self) -> bool:
-        config = self.state.get("epoch_average_plot_config", {})
+        config = self.state.get("plot_erp_plot_config", {})
         return (isinstance(config, dict)
             and bool(config.get("plot_type"))
             and bool(config.get("selected_band"))
             and bool(config.get("selected_channels")))
 
 
-__all__ = ["EpochAverageVisualizationWidget"]
+__all__ = ["PlotERPVisualizationWidget"]

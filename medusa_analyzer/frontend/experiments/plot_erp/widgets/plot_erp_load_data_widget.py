@@ -6,7 +6,7 @@ from typing import Any
 from medusa_analyzer.frontend.widgets.plot_workflow.load_data_widget import PlotWorkflowLoadDataWidget
 
 
-class EpochAverageLoadDataWidget(PlotWorkflowLoadDataWidget):
+class PlotERPLoadDataWidget(PlotWorkflowLoadDataWidget):
     @classmethod
     def page_title(cls) -> str:
         return "Load segmented epochs"
@@ -53,4 +53,4 @@ class EpochAverageLoadDataWidget(PlotWorkflowLoadDataWidget):
             and bool(self.state.get("plot_features_recordings")))
 
 
-__all__ = ["EpochAverageLoadDataWidget"]
+__all__ = ["PlotERPLoadDataWidget"]

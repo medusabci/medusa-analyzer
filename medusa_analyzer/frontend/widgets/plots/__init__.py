@@ -8,7 +8,7 @@ from .base_plot import (
     PreparedPlotData,
     PreparedValue,
 )
-from .epoch_average_plot import EpochAveragePlot
+from .erp_plot import ERPPlot
 from .epoch_data import (
     EpochDataIndex,
     PreparedEpochData,
@@ -24,7 +24,7 @@ from .violin_plot import ViolinPlot
 
 __all__ = [
     "BasePlot",
-    "EpochAveragePlot",
+    "ERPPlot",
     "EpochDataIndex",
     "LinePlot",
     "PlotDataIndex",

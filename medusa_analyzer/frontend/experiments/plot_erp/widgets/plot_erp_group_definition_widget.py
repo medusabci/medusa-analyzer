@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from medusa_analyzer.frontend.widgets.plot_workflow.group_definition_widget import (
-    PlotGroupDefinitionWidget as EpochAverageGroupDefinitionWidget,
+    PlotGroupDefinitionWidget as PlotERPGroupDefinitionWidget,
 )
 
-__all__ = ["EpochAverageGroupDefinitionWidget"]
+__all__ = ["PlotERPGroupDefinitionWidget"]

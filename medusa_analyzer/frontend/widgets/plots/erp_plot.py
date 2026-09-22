@@ -6,8 +6,8 @@ from .base_plot import BasePlot
 from .epoch_data import PreparedEpochData
 
 
-class EpochAveragePlot(BasePlot):
-    """Plot aligned epoch averages for one or more groups."""
+class ERPPlot(BasePlot):
+    """Plot ERP waveforms for one or more groups."""
 
     def __init__(self, ax, plot_params=None, tabs_widget=None):
         super().__init__(ax, plot_params, tabs_widget)
@@ -15,7 +15,7 @@ class EpochAveragePlot(BasePlot):
         self._time_vector: np.ndarray | None = None
 
     def load_data(self, *args, **kwargs) -> None:
-        raise NotImplementedError("EpochAveragePlot expects prepared epoch data.")
+        raise NotImplementedError("ERPPlot expects prepared epoch data.")
 
     def load_prepared_data(self, prepared_data: PreparedEpochData) -> None:
         self._group_epochs.clear()
@@ -85,4 +85,4 @@ class EpochAveragePlot(BasePlot):
         self.save_limits()
 
 
-__all__ = ["EpochAveragePlot"]
+__all__ = ["ERPPlot"]
