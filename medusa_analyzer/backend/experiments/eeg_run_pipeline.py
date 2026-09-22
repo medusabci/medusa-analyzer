@@ -443,7 +443,7 @@ def segment_signal(signal, times, fs, events, state,
                 else:
                     try:
                         epochs_tmp = segmentation.segment_signal_around_events(
-                            medusa_times_epochs, signal_base, current_evts.onset, fs,
+                            times_base*1000, signal_base, current_evts.onset*1000, fs,
                             [epoch_window[0], epoch_window[1]],
                             [baseline[0], baseline[1]],
                             norm=norm)
