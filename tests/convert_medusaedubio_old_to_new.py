@@ -37,10 +37,12 @@ from medusa.core.legacy.convert import (EDUBIOMAT_TASK_LABELS,
                                         edubiomat_recording_to_v2,
                                         recorder_recording_to_v2)
 from medusa.core.legacy.recording import Recording as LegacyRecording
+import unicodedata
 
-SRC = Path(r"\\10.0.106.93\public\Temps\alfonso-raw\Tranquilo")
+SRC = Path(r"X:\Temps\BBDD ALFONSO")
 DST = SRC / "converted"
 FORMAT = "h5"          # any Recording.save format: h5 / bson / json / mat
+texto = "áéíóú ÁÉÍÓÚ ñ Ñ ç"
 
 # Mark arrays written by the Recorder app; any one of them identifies its experiment.
 MARK_ATTRS = ("conditions_times", "conditions_labels",
@@ -87,7 +89,7 @@ def bids_entities(subject, task):
     return entities
 
 
-def convert(path, rel=None):
+def convert(path, sub, task):
     """Load one legacy file, convert it, and return the 2.0 recording (or ``None``)."""
     # Legacy files predate several module renames, and their custom streams have no
     # channel metadata; the reader warns about both on every load.
@@ -99,9 +101,7 @@ def convert(path, rel=None):
     if app is None:
         return None, None
 
-    task = rel.name.split('.rec.')[0].lower().replace('-', '').replace('_', '')
-
-    entities = bids_entities('01', task)
+    entities = bids_entities(sub, task)
     converter = {"edubiomat": edubiomat_recording_to_v2,
                  "recorder": recorder_recording_to_v2}[app]
     return app, converter(legacy, **entities)
@@ -116,14 +116,25 @@ print(f"{len(sources)} legacy recordings under {SRC}\n")
 converted, skipped = 0, []
 for path in sources:
     rel = path.relative_to(SRC)
-    app, recording = convert(path,rel)
+    sub = rel.parts[0].lower().replace('-', '').replace('_', '').replace(' ', '')
+    sub = ''.join(
+        c for c in unicodedata.normalize('NFD', sub)
+        if unicodedata.category(c) != 'Mn'
+    )
+
+    task = rel.name.split('.rec.')[0].lower().replace('-', '').replace('_', '').replace(' ', '')
+    task = ''.join(
+        c for c in unicodedata.normalize('NFD', task)
+        if unicodedata.category(c) != 'Mn'
+    )
+    app, recording = convert(path, sub, task)
     if recording is None:
         skipped.append(rel)
         print(f"[skip] {rel}  (no edubiomat or recorder experiment)")
         continue
 
-    task = rel.name.split('.rec.')[0].lower().replace('-', '').replace('_', '')
-    out = DST / f"sub-01_task-{task}.{FORMAT}"
+
+    out = DST / f"sub-{sub}_task-{task}.{FORMAT}"
     out.parent.mkdir(parents=True, exist_ok=True)
     recording.save(str(out))
     converted += 1
