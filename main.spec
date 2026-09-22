@@ -4,7 +4,7 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 app_icon = "medusa_analyzer/frontend/styles/medusa_task_icon.png"
-# splash_image = "medusa_analyzer/frontend/styles/splash.png"
+splash_image = "medusa_analyzer/frontend/styles/medusa_splash_v2026 copia.png"
 
 
 data_patterns = [
@@ -51,22 +51,22 @@ a = Analysis(
 pyz = PYZ(a.pure)
 
 # 1. Instanciar el objeto Splash
-# splash = Splash(
-#     splash_image,
-#     binaries=a.binaries,
-#     datas=a.datas,
-#     text_pos=None,
-#     text_size=12,
-#     minify_script=True
-# )
+splash = Splash(
+    splash_image,
+    binaries=a.binaries,
+    datas=a.datas,
+    text_pos=None,
+    text_size=12,
+    minify_script=True
+)
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
     a.datas,
-    # splash,              # Referencia al objeto Splash instanciado previamente
-    # splash.binaries,     # Referencia a los binarios requeridos por Splash
+    splash,              # Referencia al objeto Splash instanciado previamente
+    splash.binaries,     # Referencia a los binarios requeridos por Splash
     [],
     name="MedusaAnalyzer",
     debug=False,

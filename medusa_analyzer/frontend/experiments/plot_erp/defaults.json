@@ -1,0 +1,83 @@
+{
+  "load_features": {
+    "allowed_extensions": [
+      ".json",
+      ".csv",
+      ".tsv",
+      ".mat",
+      ".mpl"
+    ],
+    "required_folder_name": "derivatives",
+    "required_config_file": "config.json",
+    "default_analysis_mode": "within",
+    "analysis_modes": [
+      {
+        "id": "within",
+        "title": "Within subject",
+        "description": "Compare repeated conditions or sessions from the same participants. Each participant acts as their own control."
+      },
+      {
+        "id": "between",
+        "title": "Between subjects",
+        "description": "Compare independent participant groups. Differences reflect variation between groups."
+      },
+      {
+        "id": "nocomparison",
+        "title": "Single file",
+        "description": "Inspect the content of a single file."
+      }
+    ]
+  },
+  "group_definition": {
+    "min_groups": 1,
+    "max_groups": 20,
+    "default_group_count": 2,
+    "default_color_saturation": 220,
+    "default_color_value": 225
+  },
+  "group_assignment": {
+    "within_target": "recordings",
+    "between_target": "subjects"
+  },
+  "data_assignment": {
+    "within_target": "subjects",
+    "between_target": "recordings"
+  },
+  "plots": {
+    "available_plot_types": [
+      {
+        "id": "plot_erp",
+        "title": "Plot ERP",
+        "plot_class": "ERPPlot",
+        "compatible_experiments": ["eeg"],
+        "default_params": {
+          "visualization": [
+            {"id": "title", "title": "Title", "type": "text", "default": "Plot ERP"},
+            {"id": "title_size", "title": "Title size", "type": "int", "default": 14, "min": 6, "max": 36},
+            {"id": "title_weight", "title": "Title weight", "type": "combo", "default": "normal", "options": [
+              {"id": "normal", "title": "Normal"},
+              {"id": "bold", "title": "Bold"}
+            ]},
+            {"id": "x_label", "title": "X label", "type": "text", "default": "Time (ms)"},
+            {"id": "y_label", "title": "Y label", "type": "text", "default": "Amplitude (\u00b5V)"},
+            {"id": "font_size", "title": "Axis font size", "type": "int", "default": 10, "min": 6, "max": 28},
+            {"id": "font_weight", "title": "Axis font weight", "type": "combo", "default": "normal", "options": [
+              {"id": "normal", "title": "Normal"},
+              {"id": "bold", "title": "Bold"}
+            ]},
+            {"id": "xlim", "title": "X limits", "type": "range", "default": [null, null]},
+            {"id": "ylim", "title": "Y limits", "type": "range", "default": [null, null]},
+            {"id": "line_width", "title": "Line width", "type": "float", "default": 2.0, "min": 0.1, "max": 10.0, "step": 0.1},
+            {"id": "line_style", "title": "Line style", "type": "combo", "default": "solid", "options": [
+              {"id": "solid", "title": "Solid"},
+              {"id": "dashed", "title": "Dashed"},
+              {"id": "dotted", "title": "Dotted"},
+              {"id": "dashdot", "title": "Dash-dot"}
+            ]},
+            {"id": "plot_error", "title": "Plot error (95% CI)", "type": "checkbox", "default": false}
+          ]
+        }
+      }
+    ]
+  }
+}

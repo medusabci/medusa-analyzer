@@ -205,13 +205,15 @@ def run_eeg_feature_extraction(state,
                         current_times_epochs = times_epochs.copy()
                         if epochs[base_evt][evt] is not None and state['segmentation']['resampling']['enabled']:
                             resample_fs = state['segmentation']['resampling']['target_sampling_frequency']
-                            window = [0, (epochs[base_evt][evt].shape[1] / fs) * 1000]  # Window in ms
+                            time_start_ms = float(current_times_epochs[0]) if len(current_times_epochs) else 0.0
+                            window = [time_start_ms, time_start_ms + (epochs[base_evt][evt].shape[1] / fs) * 1000]
                             epochs[base_evt][evt] = segmentation.resample_segments(
                                 epochs[base_evt][evt], window, resample_fs)
                             current_fs = resample_fs
 
                             # Recalcular el vector de tiempos para que coincida con las nuevas dimensiones de las épocas
-                            current_times_epochs = (np.arange(epochs[base_evt][evt].shape[1]) / current_fs) * 1000
+                            current_times_epochs = time_start_ms + (
+                                np.arange(epochs[base_evt][evt].shape[1]) / current_fs) * 1000
 
                         # Logs
                         # progress = int((idx_file * steps_per_file) + offset_file + (idx_band * steps_per_band) + offset_band + (evt_counter * steps_per_event) + offset_event_a / total_steps * 100)
@@ -228,7 +230,8 @@ def run_eeg_feature_extraction(state,
 
                         # Save the segmented signals (if required), separately for each event
                         save_outputs(
-                            build_output_dict(_convert(epochs[base_evt][evt]), _convert(current_times_epochs), channs, current_fs),
+                            build_output_dict(_convert(epochs[base_evt][evt]), _convert(current_times_epochs), channs,
+                                current_fs, time_unit="ms"),
                             file, band_name, base_evt + evt, 'segmented', state
                         )
 
@@ -350,12 +353,13 @@ def _convert(obj):
         return [_convert(v) for v in obj]
     return obj
 
-def build_output_dict(signal, times, ch_names, fs):
+def build_output_dict(signal, times, ch_names, fs, time_unit="s"):
 
     output_dic = {
         "fs": fs,
         "channels": ch_names,
         "times": times,
+        "time_unit": time_unit,
         "signal": _convert(signal)
     }
     return output_dic
@@ -366,9 +370,10 @@ def segment_signal(signal, times, fs, events, state,
     # Get segmentation params, time vector and normalization type in a medusa-compatible format
     if state['segmentation_strategy'] == 'window-based':
         segment_length = state['epoch_parameters']['duration_events']['duration_epoch_length_ms']
-        norm = state['normalization']['duration_events']['mode'] if state['normalization']['duration']['enabled'] else None
+        duration_normalization = state['normalization'].get('duration', {})
+        norm = duration_normalization.get('mode') if duration_normalization.get('enabled') else None
         n_samples = int(np.round((segment_length / 1000.0) * fs))
-        times_epochs = (np.arange(n_samples) / fs)
+        times_epochs_ms = (np.arange(n_samples) / fs) * 1000
         stride = state['epoch_parameters']['duration_events']['stride_percent']
         stride = None if stride == 0 else int((stride/100) * n_samples)
 
@@ -378,9 +383,11 @@ def segment_signal(signal, times, fs, events, state,
         baseline = [state['epoch_parameters']['instant_events']['baseline_start'],
                     state['epoch_parameters']['instant_events']['baseline_end']]
         segment_length = epoch_window[1] - epoch_window[0]
-        norm = state['normalization']['instant']['mode'] if state['normalization']['instant']['enabled'] else None
+        instant_normalization = state['normalization'].get('instant', {})
+        norm = instant_normalization.get('mode') if instant_normalization.get('enabled') else None
         n_samples = int(np.round((segment_length / 1000.0) * fs))
-        times_epochs = np.linspace(epoch_window[0], epoch_window[1], n_samples) / 1000
+        medusa_times_epochs = np.linspace(epoch_window[0], epoch_window[1], n_samples) / 1000
+        times_epochs_ms = np.linspace(epoch_window[0], epoch_window[1], n_samples)
     if norm is not None:
         norm = 'z' if norm == 'mean_std' else 'dc'
 
@@ -436,7 +443,7 @@ def segment_signal(signal, times, fs, events, state,
                 else:
                     try:
                         epochs_tmp = segmentation.segment_signal_around_events(
-                            times_epochs, signal_base, current_evts.onset, fs,
+                            medusa_times_epochs, signal_base, current_evts.onset, fs,
                             [epoch_window[0], epoch_window[1]],
                             [baseline[0], baseline[1]],
                             norm=norm)
@@ -451,7 +458,7 @@ def segment_signal(signal, times, fs, events, state,
                         log_callback(msg, "warning")
                         execution_logs.append(msg)
 
-    return epochs, times_epochs
+    return epochs, times_epochs_ms
 
 
 def save_outputs(data, file, band_name, evt, key, state):
