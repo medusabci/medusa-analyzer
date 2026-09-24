@@ -39,7 +39,7 @@ from medusa.core.legacy.convert import (EDUBIOMAT_TASK_LABELS,
 from medusa.core.legacy.recording import Recording as LegacyRecording
 import unicodedata
 
-SRC = Path(r"X:\Temps\BBDD ALFONSO")
+SRC = Path(r"X:\Temps\alphonso\raw")
 DST = SRC / "converted"
 FORMAT = "h5"          # any Recording.save format: h5 / bson / json / mat
 texto = "áéíóú ÁÉÍÓÚ ñ Ñ ç"

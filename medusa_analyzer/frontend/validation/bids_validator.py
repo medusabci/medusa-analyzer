@@ -70,15 +70,24 @@ def validate_bids_dataset(root: str | Path, allowed_datatypes: list[str] | None 
     # Recolección de archivos
     # Buscamos recursivamente todos los archivos dentro de root y filtramos los json y los tsv. Vamos a descartar los
     # ficheros que no estén en el root o en carpeta que empiecen por sub
-    files = [
-        path for path in root.rglob("*")
+    all_paths = list(root.rglob("*"))
+    files = []
+
+    for index, path in enumerate(all_paths):
         if path.is_file() and (
-            path.parent == root or
-            path.relative_to(root).parts[0].startswith("sub")
-        )
-    ]
+                path.parent == root or
+                path.relative_to(root).parts[0].startswith("sub")
+        ):
+            files.append(path)
+
+        if progress_callback:
+            progress_callback(
+                5 + int((index + 1) / max(len(all_paths), 1) * 10)
+            )
+
     json_files = [path for path in files if path.suffix.lower() == ".json"]
     tsv_files = [path for path in files if path.suffix.lower() == ".tsv"]
+
     # Creamos una lista para guardar los registros raw encontrados
     recordings: list[dict[str, Any]] = []
     if log_callback:
@@ -162,9 +171,9 @@ def validate_bids_dataset(root: str | Path, allowed_datatypes: list[str] | None 
             "tables": tables, # tablas TSV leídas
         })
 
-        # Cada 20 archivos procesados, si existe callback de progreso, actualiza el progreso
-        if progress_callback and index % 20 == 0:
-            progress_callback(min(90, 5 + int(index / max(len(files), 1) * 85)))
+        # Si existe callback de progreso, actualiza el progreso
+        if progress_callback:
+            progress_callback(min(95, 15 + int(index / max(len(files), 1) * 80)))
 
     # Comprueba si no se encontró ningún registro raw compatible
     if not recordings:
