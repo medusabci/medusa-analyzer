@@ -13,6 +13,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from medusa_analyzer.frontend.widgets.log_text import append_log_line
+
 class ProgressOverlay(QFrame):
     def __init__(self, parent: QWidget, show_log: bool = True):
         super().__init__(parent)
@@ -96,15 +98,11 @@ class ProgressOverlay(QFrame):
 
         color = None
         if role == "error":
-            color = self.errorColor.name()
+            color = self.errorColor
         elif role == "warning":
-            color = self.warningColor.name()
+            color = self.warningColor
 
-        if color:
-            self.log_area.append(f'<font color="{color}">{message}</font>')
-        else:
-            self.log_area.append(message)
-        self.log_area.verticalScrollBar().setValue(self.log_area.verticalScrollBar().maximum())
+        append_log_line(self.log_area, message, color)
 
     def start_process(self, text: str) -> None:
         self.label.setText(text)

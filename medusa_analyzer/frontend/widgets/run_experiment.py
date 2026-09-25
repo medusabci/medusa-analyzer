@@ -4,6 +4,7 @@ from PySide6.QtCore import Property, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QLabel, QProgressBar, QTextEdit, QVBoxLayout, QWidget
 
+from medusa_analyzer.frontend.widgets.log_text import append_log_line
 from medusa_analyzer.frontend.worker import TaskRunner, Worker
 
 
@@ -93,14 +94,10 @@ class RunExperimentWidget(QWidget):
         """Append a message to the inline conversion log."""
         color = None
         if role == "error":
-            color = self.log_colors.errorColor.name()
+            color = self.log_colors.errorColor
         elif role == "warning":
-            color = self.log_colors.warningColor.name()
-        if color:
-            self.log_area.append(f'<font color="{color}">{message}</font>')
-        else:
-            self.log_area.append(message)
-        self.log_area.verticalScrollBar().setValue(self.log_area.verticalScrollBar().maximum())
+            color = self.log_colors.warningColor
+        append_log_line(self.log_area, message, color)
 
     def set_progress(self, value: int):
         """Set the inline progress value."""
