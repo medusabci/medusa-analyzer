@@ -121,7 +121,6 @@ def run_eeg_feature_extraction(state,
             log_callback(msg, "")
             execution_logs.append(msg)
 
-
             ## Second step: Get indices of the thresholding
             if state['segmentation']["thresholding"]['enabled']:
 
@@ -423,7 +422,7 @@ def segment_signal(signal, times, fs, events, state,
     if normalization.get('enabled'):
         norm = 'z' if normalization.get('mode') == 'mean_std' else 'dc'
     else:
-        baseline = [None, None]
+        baseline = None
 
     epochs = dict()
     for base_evt in state['event_groups']:
@@ -479,16 +478,16 @@ def segment_signal(signal, times, fs, events, state,
                         epochs_tmp = segmentation.segment_signal_around_events(
                             times_base*1000, signal_base, current_evts.onset*1000, fs,
                             [epoch_window[0], epoch_window[1]],
-                            [baseline[0], baseline[1]],
+                            baseline,
                             norm=norm)
                     except KeyError:
                         continue
 
-                    if epochs_tmp is not None:
+                    if epochs_tmp.size != 0:
                         epochs[base_evt['base_event']][evt_name]= epochs_tmp
                         del epochs_tmp
                     elif log_callback is not None:
-                        msg = f"[{subj_id}] No epochs were found for event combination '{base_evt}' and '{evt_name}'. Skipping."
+                        msg = f"[{subj_id}] No epochs were found for event combination '{base_evt['base_event']}' and '{evt_name}'. Skipping."
                         log_callback(msg, "warning")
                         execution_logs.append(msg)
 
