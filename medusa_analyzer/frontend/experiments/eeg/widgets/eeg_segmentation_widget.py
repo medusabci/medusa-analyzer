@@ -5,8 +5,8 @@ from typing import Any
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPolygonF
 from PySide6.QtWidgets import (QAbstractItemView, QButtonGroup, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-    QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QListWidget, QPushButton, QScrollArea, QSizePolicy,
-    QSlider, QSpinBox, QVBoxLayout, QWidget)
+    QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QScrollArea,
+    QSizePolicy, QSlider, QSpinBox, QVBoxLayout, QWidget)
 from medusa_analyzer.frontend.validation import Validation
 
 
@@ -717,6 +717,7 @@ class EEGSegmentationWidget(QScrollArea):
         self._epoch_target = "instant"
         self._normalization_target = "instant"
         self._last_event_signature: tuple[tuple[str, ...], tuple[str, ...]] | None = None
+        self._event_specs_by_label: dict[str, Any] = {}
 
         self.state["segmentation"] = self._initial_segmentation_state(self.state.get("segmentation") or {})
         self._ensure_parameter_state()
@@ -767,6 +768,9 @@ class EEGSegmentationWidget(QScrollArea):
         self.mode_help.setObjectName("muted")
         self.mode_help.setWordWrap(True)
         events_panel.layout().addWidget(self.mode_help)
+
+        self.segment_by_response_checkbox = QCheckBox("Segment by response")
+        events_panel.layout().addWidget(self.segment_by_response_checkbox)
 
         self.events_message = QLabel("Load and select a BIDS configuration first.")
         self.events_message.setObjectName("muted")
@@ -958,6 +962,7 @@ class EEGSegmentationWidget(QScrollArea):
         self.onset_segmentation_widget.values_changed.connect(self._onset_preview_values_changed)
         self.normalization_duration_target_button.toggled.connect(lambda checked: self._normalization_target_changed("duration") if checked else None)
         self.normalization_instant_target_button.toggled.connect(lambda checked: self._normalization_target_changed("instant") if checked else None)
+        self.segment_by_response_checkbox.toggled.connect(self._segment_by_response_changed)
         self.duration_events_list.itemSelectionChanged.connect(lambda group="duration": self._independent_event_changed(group))
         self.instant_events_list.itemSelectionChanged.connect(lambda group="instant": self._independent_event_changed(group))
         self.add_base_event_button.clicked.connect(self._add_base_events)
@@ -1036,13 +1041,15 @@ class EEGSegmentationWidget(QScrollArea):
         if not isinstance(epoch_parameters, dict):
             epoch_parameters = {}
         normalization = current.get("normalization")
-        event_groups = self._initial_event_groups(current, mode)
+        segment_by_response = bool(current.get("segment_by_response", False))
+        event_groups = self._initial_event_groups(current, mode, segment_by_response)
 
         return {
             "segmentation_mode": mode,
             "segmentation_strategy": self._strategy_or_default(
                 current.get("segmentation_strategy", self.config.get("segmentation_strategy", "window-based"))
             ),
+            "segment_by_response": segment_by_response,
             "event_groups": event_groups,
             "epoch_parameters": {
                 "duration_events": deepcopy(epoch_parameters.get("duration_events") or {}),
@@ -1060,20 +1067,77 @@ class EEGSegmentationWidget(QScrollArea):
         }
 
     @staticmethod
-    def _event_group(base_event: Any | None, duration_events: list[Any] | None,
-        instant_events: list[Any] | None) -> dict[str, Any]:
+    def _event_has_response(event: Any) -> bool:
+        if not isinstance(event, dict) or "response" not in event:
+            return False
+        response = event.get("response")
+        if response is None:
+            return False
+        try:
+            if response != response:
+                return False
+        except TypeError:
+            pass
+        return str(response).strip().lower() not in {"", "n/a", "na", "nan", "none", "null"}
+
+    @staticmethod
+    def _event_trial_type(event: Any) -> str:
+        if isinstance(event, dict):
+            return str(event.get("trial_type") or "").strip()
+        return str(event)
+
+    @classmethod
+    def _event_label(cls, event: Any) -> str:
+        trial_type = cls._event_trial_type(event)
+        if isinstance(event, dict) and cls._event_has_response(event):
+            return f"{trial_type}_{event.get('response')}"
+        return trial_type
+
+    def _event_label_for_current_mode(self, event: Any) -> str:
+        if self._segment_by_response_enabled():
+            return self._event_label(event)
+        return self._event_trial_type(event)
+
+    def _segment_by_response_enabled(self) -> bool:
+        if hasattr(self, "segment_by_response_checkbox"):
+            return self.segment_by_response_checkbox.isChecked()
+        return bool((self.state.get("segmentation") or {}).get("segment_by_response", False))
+
+    def _event_for_storage(self, event: Any, segment_by_response: bool | None = None) -> Any:
+        if segment_by_response is None:
+            segment_by_response = self._segment_by_response_enabled()
+
+        if isinstance(event, dict):
+            trial_type = self._event_trial_type(event)
+            if segment_by_response and trial_type and self._event_has_response(event):
+                return {"trial_type": trial_type, "response": event.get("response")}
+            return trial_type
+
+        label = str(event)
+        if segment_by_response:
+            spec = self._event_specs_by_label.get(label)
+            if isinstance(spec, dict) and self._event_has_response(spec):
+                return {"trial_type": self._event_trial_type(spec), "response": spec.get("response")}
+        return label
+
+    def _events_for_storage(self, events: list[Any] | None, segment_by_response: bool | None = None) -> list[Any]:
+        return [self._event_for_storage(event, segment_by_response) for event in (events or [])]
+
+    def _event_group(self, base_event: Any | None, duration_events: list[Any] | None,
+        instant_events: list[Any] | None, segment_by_response: bool | None = None) -> dict[str, Any]:
         return {
-            "base_event": str(base_event) if base_event else None,
-            "duration_events": [str(event) for event in (duration_events or [])],
-            "instant_events": [str(event) for event in (instant_events or [])],
+            "base_event": self._event_for_storage(base_event, segment_by_response) if base_event else None,
+            "duration_events": self._events_for_storage(duration_events, segment_by_response),
+            "instant_events": self._events_for_storage(instant_events, segment_by_response),
         }
 
-    def _initial_event_groups(self, current: dict[str, Any], mode: str) -> list[dict[str, Any]]:
+    def _initial_event_groups(self, current: dict[str, Any], mode: str,
+        segment_by_response: bool) -> list[dict[str, Any]]:
         del mode
         event_groups = current.get("event_groups")
         if isinstance(event_groups, list):
             return [self._event_group(group.get("base_event"), group.get("duration_events"),
-                group.get("instant_events")) for group in event_groups if isinstance(group, dict)]
+                group.get("instant_events"), segment_by_response) for group in event_groups if isinstance(group, dict)]
         return []
 
     @staticmethod
@@ -1218,6 +1282,8 @@ class EEGSegmentationWidget(QScrollArea):
         return state
 
     def _current_state_strategy(self) -> str:
+        if self._segment_by_response_enabled():
+            return "onset-based"
         segmentation = self.state.get("segmentation") or {}
         return self._strategy_or_default(segmentation.get("segmentation_strategy"), "window-based")
 
@@ -1399,9 +1465,13 @@ class EEGSegmentationWidget(QScrollArea):
         return "instant"
 
     def _current_segmentation_strategy(self) -> str:
+        if self._segment_by_response_enabled():
+            return "onset-based"
         return "window-based" if self.window_strategy_button.isChecked() else "onset-based"
 
     def _strategy_for_active_types(self, has_duration: bool, has_instant: bool, current_strategy: str) -> str:
+        if self._segment_by_response_enabled():
+            return "onset-based"
         if has_instant and not has_duration:
             return "onset-based"
         if has_duration and not has_instant:
@@ -1438,6 +1508,10 @@ class EEGSegmentationWidget(QScrollArea):
 
     def _segmentation_strategy_changed(self, strategy: str) -> None:
         if self._updating_strategy:
+            return
+        if self._segment_by_response_enabled():
+            self._set_strategy_buttons("onset-based")
+            self.state["segmentation"]["segmentation_strategy"] = "onset-based"
             return
         strategy = self._strategy_or_default(strategy)
         if strategy == self.state["segmentation"].get("segmentation_strategy"):
@@ -1496,6 +1570,15 @@ class EEGSegmentationWidget(QScrollArea):
         self._set_normalization_controls_from_state(target)
         self._sync()
 
+    def _segment_by_response_changed(self, checked: bool) -> None:
+        self.state["segmentation"]["segment_by_response"] = bool(checked)
+        if checked:
+            self.state["segmentation"]["segmentation_strategy"] = "onset-based"
+            self._set_strategy_buttons("onset-based")
+        self._last_event_signature = None
+        self._refresh_events()
+        self._sync()
+
     def _load_state(self) -> None:
         segmentation = self.state["segmentation"]
         thresholding = segmentation.get("thresholding", {})
@@ -1508,6 +1591,7 @@ class EEGSegmentationWidget(QScrollArea):
         self.resampling_enabled.setChecked(bool(resampling.get("enabled", self.config["resampling"]["enabled"])))
         self.target_sampling_frequency.setValue(int(resampling.get("target_sampling_frequency",
                     self.config["resampling"]["target_sampling_frequency"])))
+        self.segment_by_response_checkbox.setChecked(bool(segmentation.get("segment_by_response", False)))
 
         requested_mode = segmentation.get("segmentation_mode")
         if requested_mode not in {"independent", "nested"}:
@@ -1534,11 +1618,58 @@ class EEGSegmentationWidget(QScrollArea):
         self._set_normalization_controls_from_state(self._normalization_target)
         self._sync_strategy_preview()
 
+    @staticmethod
+    def _valid_response_value(response: Any) -> bool:
+        if response is None:
+            return False
+        try:
+            if response != response:
+                return False
+        except TypeError:
+            pass
+        return str(response).strip().lower() not in {"", "n/a", "na", "nan", "none", "null"}
+
+    def _responses_for_event(self, event_name: str) -> list[Any]:
+        event_responses = self.state.get("event_responses")
+        if not isinstance(event_responses, dict):
+            return []
+        responses = event_responses.get(event_name) or []
+        if not isinstance(responses, list):
+            return []
+        return [response for response in responses if self._valid_response_value(response)]
+
+    def _expand_events_by_response(self, event_names: list[str]) -> list[str]:
+        expanded_events: list[str] = []
+        for event_name in event_names:
+            responses = self._responses_for_event(event_name)
+            if not responses:
+                self._event_specs_by_label[event_name] = event_name
+                expanded_events.append(event_name)
+                continue
+
+            for response in responses:
+                event_spec = {"trial_type": event_name, "response": response}
+                event_label = self._event_label(event_spec)
+                self._event_specs_by_label[event_label] = event_spec
+                expanded_events.append(event_label)
+        return expanded_events
+
     def _event_names(self) -> tuple[list[str], list[str]]:
         duration_events = list(self.state.get("duration_events") or [])
         instant_events = list(self.state.get("instant_events") or [])
         if not duration_events and not instant_events:
             instant_events = list(self.state.get("event_types") or [])
+        duration_events = [str(event) for event in duration_events]
+        instant_events = [str(event) for event in instant_events]
+
+        self._event_specs_by_label = {}
+        if not self._segment_by_response_enabled():
+            for event_name in duration_events + instant_events:
+                self._event_specs_by_label[event_name] = event_name
+            return duration_events, instant_events
+
+        duration_events = self._expand_events_by_response(duration_events)
+        instant_events = self._expand_events_by_response(instant_events)
         return duration_events, instant_events
 
     def _current_segmentation_mode(self) -> str:
@@ -1572,8 +1703,8 @@ class EEGSegmentationWidget(QScrollArea):
         for group in self.state["segmentation"].get("event_groups") or []:
             if group.get("base_event"):
                 continue
-            duration_events.extend(str(event) for event in group.get("duration_events") or [])
-            instant_events.extend(str(event) for event in group.get("instant_events") or [])
+            duration_events.extend(self._event_label_for_current_mode(event) for event in group.get("duration_events") or [])
+            instant_events.extend(self._event_label_for_current_mode(event) for event in group.get("instant_events") or [])
         return list(dict.fromkeys(duration_events)), list(dict.fromkeys(instant_events))
 
     def _refresh_events(self) -> None:
@@ -1599,14 +1730,22 @@ class EEGSegmentationWidget(QScrollArea):
                     if saved_duration or saved_instant:
                         valid_event_groups.append(self._event_group(None, list(saved_duration), list(saved_instant)))
                     continue
-                if base_event not in duration_events:
+                base_event_label = self._event_label_for_current_mode(base_event)
+                if base_event_label not in duration_events:
                     continue
 
-                nested_duration = [event for event in group.get("duration_events") or []
-                    if event in duration_events and event != base_event]
-                nested_instant = [event for event in group.get("instant_events") or []
-                    if event in instant_events]
-                valid_event_groups.append(self._event_group(base_event, list(dict.fromkeys(nested_duration)),
+                nested_duration = [
+                    self._event_label_for_current_mode(event)
+                    for event in group.get("duration_events") or []
+                    if self._event_label_for_current_mode(event) in duration_events
+                    and self._event_label_for_current_mode(event) != base_event_label
+                ]
+                nested_instant = [
+                    self._event_label_for_current_mode(event)
+                    for event in group.get("instant_events") or []
+                    if self._event_label_for_current_mode(event) in instant_events
+                ]
+                valid_event_groups.append(self._event_group(base_event_label, list(dict.fromkeys(nested_duration)),
                     list(dict.fromkeys(nested_instant))))
             segmentation["event_groups"] = valid_event_groups
 
@@ -1620,12 +1759,16 @@ class EEGSegmentationWidget(QScrollArea):
         self.events_message.setVisible(not (duration_events or instant_events))
 
         for event_name in duration_events:
-            self.duration_events_list.addItem(str(event_name))
-            self.duration_events_list.item(self.duration_events_list.count() - 1).setSelected(event_name in saved_duration)
+            item = QListWidgetItem(str(event_name))
+            item.setData(Qt.ItemDataRole.UserRole, self._event_specs_by_label.get(event_name, event_name))
+            self.duration_events_list.addItem(item)
+            item.setSelected(event_name in saved_duration)
 
         for event_name in instant_events:
-            self.instant_events_list.addItem(str(event_name))
-            self.instant_events_list.item(self.instant_events_list.count() - 1).setSelected(event_name in saved_instant)
+            item = QListWidgetItem(str(event_name))
+            item.setData(Qt.ItemDataRole.UserRole, self._event_specs_by_label.get(event_name, event_name))
+            self.instant_events_list.addItem(item)
+            item.setSelected(event_name in saved_instant)
 
         self.duration_events_list.blockSignals(False)
         self.instant_events_list.blockSignals(False)
@@ -1689,11 +1832,13 @@ class EEGSegmentationWidget(QScrollArea):
 
     def _available_base_events(self) -> list[str]:
         duration_events, _ = self._event_names()
-        existing_bases = {group.get("base_event") for group in self._nested_groups()}
+        existing_bases = {self._event_label_for_current_mode(group.get("base_event"))
+            for group in self._nested_groups()}
         return [event for event in duration_events if event not in existing_bases]
 
     def _nested_group_for(self, base_event: str) -> dict[str, Any] | None:
-        return next((nested_group for nested_group in self._nested_groups() if nested_group.get("base_event") == base_event), None)
+        return next((nested_group for nested_group in self._nested_groups()
+            if self._event_label_for_current_mode(nested_group.get("base_event")) == base_event), None)
 
     def _available_nested_events(self, group: dict[str, Any], kind: str) -> list[str]:
         nested_child_type = self._nested_child_type()
@@ -1703,9 +1848,9 @@ class EEGSegmentationWidget(QScrollArea):
             return []
 
         duration_events, instant_events = self._event_names()
-        base_event = str(group.get("base_event", ""))
+        base_event = self._event_label_for_current_mode(group.get("base_event"))
         state_key = ("duration_events" if kind == "duration" else "instant_events")
-        already_selected = set(group.get(state_key) or [])
+        already_selected = {self._event_label_for_current_mode(event) for event in group.get(state_key) or []}
 
         if kind == "duration":
             return [event for event in duration_events if event != base_event and event not in already_selected]
@@ -1761,18 +1906,21 @@ class EEGSegmentationWidget(QScrollArea):
             kind=kind)
         if not selected_events:
             return
-        group[state_key] = list(dict.fromkeys([*(group.get(state_key) or []), *selected_events]))
+        existing_events = [self._event_label_for_current_mode(event) for event in group.get(state_key) or []]
+        group[state_key] = self._events_for_storage(list(dict.fromkeys([*existing_events, *selected_events])))
         self._sync()
 
     def _remove_base_event(self, base_event: str) -> None:
-        self.state["segmentation"]["event_groups"] = [group for group in self._nested_groups() if group.get("base_event") != base_event]
+        self.state["segmentation"]["event_groups"] = [group for group in self._nested_groups()
+            if self._event_label_for_current_mode(group.get("base_event")) != base_event]
         self._sync()
 
     def _remove_nested_event(self, base_event: str, event_name: str, kind: str) -> None:
         state_key = ("duration_events" if kind == "duration" else "instant_events")
         for group in self._nested_groups():
-            if group.get("base_event") == base_event:
-                group[state_key] = [event for event in group.get(state_key) or [] if event != event_name]
+            if self._event_label_for_current_mode(group.get("base_event")) == base_event:
+                group[state_key] = [event for event in group.get(state_key) or []
+                    if self._event_label_for_current_mode(event) != event_name]
                 break
         self._sync()
 
@@ -1824,7 +1972,7 @@ class EEGSegmentationWidget(QScrollArea):
             return
 
         for group in nested_groups:
-            base_event = str(group.get("base_event", ""))
+            base_event = self._event_label_for_current_mode(group.get("base_event"))
             group_container = QFrame()
             group_container.setProperty("role", "nested-group-editor")
             group_layout = QVBoxLayout(group_container)
@@ -1857,8 +2005,10 @@ class EEGSegmentationWidget(QScrollArea):
             children_row = QHBoxLayout(children_container)
             children_row.setContentsMargins(10, 8, 10, 8)
             children_row.setSpacing(6)
-            nested_duration = list(group.get("duration_events") or [])
-            nested_instant = list(group.get("instant_events") or [])
+            nested_duration = [self._event_label_for_current_mode(event)
+                for event in group.get("duration_events") or []]
+            nested_instant = [self._event_label_for_current_mode(event)
+                for event in group.get("instant_events") or []]
 
             for event_name in nested_duration:
                 children_row.addWidget(self._summary_chip(event_name, "duration", removable=True,
@@ -1957,7 +2107,8 @@ class EEGSegmentationWidget(QScrollArea):
 
         strategy = self._strategy_for_active_types(has_duration_epochs, has_instant_epochs, self._current_state_strategy())
         has_active_events = has_duration_epochs or has_instant_epochs
-        duration_strategy_available = has_duration_epochs and not has_instant_epochs
+        segment_by_response = self._segment_by_response_enabled()
+        duration_strategy_available = has_duration_epochs and not has_instant_epochs and not segment_by_response
         self.strategy_panel.setVisible(has_active_events)
         self.window_strategy_button.setVisible(duration_strategy_available)
         self.window_strategy_button.setEnabled(duration_strategy_available)
@@ -2132,6 +2283,7 @@ class EEGSegmentationWidget(QScrollArea):
         self.state["segmentation"] = {
             "segmentation_mode": mode,
             "segmentation_strategy": segmentation_strategy,
+            "segment_by_response": self.segment_by_response_checkbox.isChecked(),
             "event_groups": event_groups,
             "epoch_parameters": {
                 "duration_events": deepcopy(previous_epoch_parameters.get("duration_events") or {}),
@@ -2192,15 +2344,17 @@ class EEGSegmentationWidget(QScrollArea):
 
                 seen_bases: set[str] = set()
                 for group in nested_groups:
-                    base_event = group.get("base_event")
+                    base_event = self._event_label_for_current_mode(group.get("base_event"))
                     if not base_event:
                         errors.append("Nested group: base duration event is missing.")
                         continue
                     if base_event in seen_bases:
                         errors.append(f"Nested groups: base event '{base_event}' is duplicated.")
                     seen_bases.add(base_event)
-                    nested_duration = list(group.get("duration_events") or [])
-                    nested_instant = list(group.get("instant_events") or [])
+                    nested_duration = [self._event_label_for_current_mode(event)
+                        for event in group.get("duration_events") or []]
+                    nested_instant = [self._event_label_for_current_mode(event)
+                        for event in group.get("instant_events") or []]
 
                     if base_event in nested_duration:
                         errors.append(f"{base_event}: a base event cannot contain itself.")

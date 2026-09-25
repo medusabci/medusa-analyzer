@@ -283,6 +283,39 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.assertNotIn("selected_instant_events", segmentation)
         self.assertNotIn("nested_groups", segmentation)
 
+    def test_segment_by_response_forces_onset_strategy(self):
+        state = _loaded_state_with_events(["baseline", "imgaa"], [])
+        state["event_responses"] = {"imgaa": [1, -1]}
+        widget = EEGSegmentationWidget({}, _eeg_defaults(), state)
+        widget.show()
+        self.app.processEvents()
+
+        widget.duration_events_list.item(1).setSelected(True)
+        self.app.processEvents()
+        self.assertEqual(state["segmentation"]["segmentation_strategy"], "window-based")
+        self.assertTrue(widget.window_strategy_button.isVisible())
+
+        widget.segment_by_response_checkbox.setChecked(True)
+        self.app.processEvents()
+        for index in range(widget.duration_events_list.count()):
+            item = widget.duration_events_list.item(index)
+            item.setSelected(item.text() == "imgaa_1")
+        self.app.processEvents()
+
+        self.assertEqual(state["segmentation"]["segmentation_strategy"], "onset-based")
+        self.assertFalse(widget.window_strategy_button.isVisible())
+        self.assertFalse(widget.window_strategy_button.isEnabled())
+        self.assertTrue(widget.onset_strategy_button.isChecked())
+        self.assertTrue(widget.onset_segmentation_widget.isVisible())
+        self.assertEqual(
+            state["segmentation"]["event_groups"],
+            [{
+                "base_event": None,
+                "duration_events": [{"trial_type": "imgaa", "response": 1}],
+                "instant_events": [],
+            }],
+        )
+
     def test_duration_strategy_switches_controls_and_window_preview_stays_in_sync(self):
         state = _loaded_state()
         widget = EEGSegmentationWidget({}, _eeg_defaults(), state)

@@ -44,6 +44,23 @@ class EEGReportWidget(ReportWidget):
             return "None"
         return ", ".join(cls._describe_band(band) for band in bands)
 
+    @staticmethod
+    def _event_label(event: Any) -> str:
+        if not isinstance(event, dict):
+            return str(event)
+        trial_type = str(event.get("trial_type") or "").strip()
+        response = event.get("response")
+        if response is None:
+            return trial_type
+        try:
+            if response != response:
+                return trial_type
+        except TypeError:
+            pass
+        if str(response).strip().lower() in {"", "n/a", "na", "nan", "none", "null"}:
+            return trial_type
+        return f"{trial_type}_{response}"
+
     def _get_state_value(self, path: str, default: Any = None) -> Any:
         value: Any = self.state
         for part in path.split("."):
@@ -233,13 +250,13 @@ class EEGReportWidget(ReportWidget):
         resampling = segmentation.get("resampling", {})
         event_groups = segmentation.get("event_groups") or []
         selected_duration = [
-            event
+            self._event_label(event)
             for group in event_groups
             if not group.get("base_event")
             for event in (group.get("duration_events") or [])
         ]
         selected_instant = [
-            event
+            self._event_label(event)
             for group in event_groups
             if not group.get("base_event")
             for event in (group.get("instant_events") or [])
@@ -295,8 +312,8 @@ class EEGReportWidget(ReportWidget):
             has_duration = any(group.get("duration_events") for group in nested_groups)
             has_instant = any(group.get("instant_events") for group in nested_groups)
             events_text = "; ".join(
-                f"{group.get('base_event')}: "
-                f"{', '.join((group.get('duration_events') or []) + (group.get('instant_events') or [])) or 'None'}"
+                f"{self._event_label(group.get('base_event'))}: "
+                f"{', '.join(self._event_label(event) for event in (group.get('duration_events') or []) + (group.get('instant_events') or [])) or 'None'}"
                 for group in nested_groups
             ) or "None"
             mode_text = "Nested events"

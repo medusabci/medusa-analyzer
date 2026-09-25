@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -129,6 +130,7 @@ class EEGLoadDataWidget(LoadDataWidget):
         self.state["selected_recordings"] = selected_recordings
         self.state["duration_events"] = duration_events
         self.state["instant_events"] = instant_events
+        self.state["event_responses"] = deepcopy(group.get("event_responses") or {})
 
         nyquist = float(metadata["sampling_frequency"]) / 2
         self.state["broadband"] = {"id": "broadband", "title": "Broadband", "enabled": True,
@@ -158,13 +160,13 @@ class EEGLoadDataWidget(LoadDataWidget):
 
     def _clear_selected_configuration_state(self) -> None:
         for key in ("metadata", "selected_bids_group", "selected_recordings", "duration_events",
-                    "instant_events", "broadband"):
+                    "instant_events", "event_responses", "broadband"):
             self.state.pop(key, None)
 
     def _clear_loaded_state(self) -> None:
         super()._clear_loaded_state()
         for key in ("bids_root", "bids_groups", "selected_bids_group", "selected_recordings",
-                    "duration_events", "instant_events"):
+                    "duration_events", "instant_events", "event_responses"):
             self.state.pop(key, None)
         self._configuration_groups = []
         if hasattr(self, "group_combo"):

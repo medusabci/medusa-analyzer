@@ -4,7 +4,56 @@ from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 
 app_icon = "medusa_analyzer/frontend/styles/medusa_task_icon.png"
-splash_image = "medusa_analyzer/frontend/styles/medusa_splash_v2026 copia.png"
+
+
+test_path_markers = (
+    "/tests/",
+    "\\tests\\",
+)
+
+excluded_modules = [
+    "h5py.tests",
+    "medusa_analyzer.frontend.splash",
+    "numpy._pytesttester",
+    "numpy.testing",
+    "pandas._testing",
+    "pandas.testing",
+    "pandas.util._tester",
+    "patsy.test_splines_bs_data",
+    "patsy.test_splines_crs_data",
+    "patsy.test_state",
+    "pytest",
+    "pyparsing.testing",
+    "pywt._pytesttester",
+    "scipy._lib._testutils",
+    "sklearn.utils._testing",
+    "statsmodels.tools._test_runner",
+]
+
+startup_artifact_markers = (
+    "medusa_analyzer/frontend/splash.py",
+    "medusa_analyzer\\frontend\\splash.py",
+    "medusa_analyzer/frontend/styles/medusa_splash",
+    "medusa_analyzer\\frontend\\styles\\medusa_splash",
+    "medusa_analyzer/frontend/styles/splash.png",
+    "medusa_analyzer\\frontend\\styles\\splash.png",
+)
+
+
+def without_test_artifacts(items):
+    return [
+        item
+        for item in items
+        if not any(marker in str(part).lower() for marker in test_path_markers for part in item[:2])
+    ]
+
+
+def without_startup_artifacts(items):
+    return [
+        item
+        for item in items
+        if not any(marker in str(part).lower() for marker in startup_artifact_markers for part in item[:2])
+    ]
 
 
 data_patterns = [
@@ -25,6 +74,7 @@ datas = (
     + collect_data_files("medusa")
     + collect_data_files("medusa_style")
 )
+datas = without_startup_artifacts(without_test_artifacts(datas))
 
 
 # Include all package submodules.
@@ -32,6 +82,10 @@ hiddenimports = (
     collect_submodules("medusa_analyzer")
     + collect_submodules("medusa_style")
 )
+hiddenimports = [
+    module for module in hiddenimports
+    if module not in excluded_modules
+]
 
 
 a = Analysis(
@@ -43,30 +97,19 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=excluded_modules,
     noarchive=False,
     optimize=0,
 )
+a.datas = without_startup_artifacts(without_test_artifacts(a.datas))
 
 pyz = PYZ(a.pure)
-
-# 1. Instanciar el objeto Splash
-splash = Splash(
-    splash_image,
-    binaries=a.binaries,
-    datas=a.datas,
-    text_pos=None,
-    text_size=12,
-    minify_script=True
-)
 
 exe = EXE(
     pyz,
     a.scripts,
     a.binaries,
     a.datas,
-    splash,              # Referencia al objeto Splash instanciado previamente
-    splash.binaries,     # Referencia a los binarios requeridos por Splash
     [],
     name="MedusaAnalyzer",
     debug=False,

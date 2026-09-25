@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import isfinite
 from pathlib import Path
 from typing import Any, Callable
 
@@ -10,6 +11,34 @@ y luego los agrupa por configuración común: tarea, frecuencia de muestreo, ref
 
 # TODO: las deafault_raw_extensions tienen que ir al defaults.json
 DEFAULT_RAW_EXTENSIONS = [".edf", ".vhdr", ".vmrk", ".eeg", ".set", ".fdt", ".bdf", ".mpl"]
+NULL_RESPONSE_VALUES = {"", "n/a", "na", "nan", "none", "null"}
+
+
+def _response_value(value: Any) -> Any | None:
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    if text.lower() in NULL_RESPONSE_VALUES:
+        return None
+
+    numeric_text = text.replace(",", ".")
+    try:
+        number = float(numeric_text)
+    except ValueError:
+        return text
+
+    if not isfinite(number):
+        return None
+    if number.is_integer():
+        return int(number)
+    return number
+
+
+def _add_response(event_responses: dict[str, list[Any]], event_name: str, response: Any) -> None:
+    responses = event_responses.setdefault(event_name, [])
+    if response not in responses:
+        responses.append(response)
 
 
 def load_eeg_bids_dataset(root: str | Path, config: dict[str, Any] | None = None,
@@ -76,10 +105,15 @@ def load_eeg_bids_dataset(root: str | Path, config: dict[str, Any] | None = None
         # Creamos dos conjuntos de eventos
         duration_events: set[str] = set()
         instant_events: set[str] = set()
+        event_responses: dict[str, list[Any]] = {}
         for row in events:
             event_name = str(row.get("trial_type") or "").strip()
             if not event_name:
                 continue
+            if "response" in row:
+                response = _response_value(row.get("response"))
+                if response is not None:
+                    _add_response(event_responses, event_name, response)
             try:
                 duration = float(str(row.get("duration") or "0").replace(",", "."))
             except ValueError:
@@ -112,9 +146,14 @@ def load_eeg_bids_dataset(root: str | Path, config: dict[str, Any] | None = None
             "event_types": list(event_types),
             "duration_events": list(duration_event_types),
             "instant_events": list(instant_event_types),
+            "event_responses": {},
             "raw_extensions": set(),
             "recordings": [],
         })
+
+        for event_name, responses in event_responses.items():
+            for response in responses:
+                _add_response(group["event_responses"], event_name, response)
 
         group["raw_extensions"].add(recording["extension"])
         group["recordings"].append({
