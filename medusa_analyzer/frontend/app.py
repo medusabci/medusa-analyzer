@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt # Importar Qt para los modificadores de escalado
 from medusa_analyzer.frontend.dashboard import DashboardPage, build_dashboard_catalog
 from medusa_analyzer.frontend.experiments import create_experiment_page, discover_experiments
 from medusa_analyzer.frontend.router import Router
+from medusa_analyzer.frontend.splash import SplashScreen
 
 logger = logging.getLogger(__name__) # logger para que cuando haya un error sea vea de dónde viene
 
@@ -191,9 +192,15 @@ def run() -> int:
     app.setFont(QFont("Segoe UI", 10))
     app.setStyleSheet(_load_stylesheet()) # Carga el QSS y se lo aplicamos a toda la aplicación
 
+    splash = SplashScreen()
+    splash.set_state(20, "Loading MEDUSA Analyzer...")
+
     # Ejecutamos toodo el constructor de la MainWidow (crear el stack, router, descubrir experimentos, crear páginas,
     # registrar rutas y navegar al dashboard.
+    splash.set_state(45, "Loading experiments...")
     window = MainWindow()
+    splash.set_state(90, "Opening dashboard...")
     window.show()
+    splash.hide(window)
 
     return app.exec()

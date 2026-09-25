@@ -914,8 +914,8 @@ class EEGSegmentationWidget(QScrollArea):
         self.threshold_sigma.setDecimals(2)
         self.threshold_sigma.setSingleStep(0.1)
 
-        self.threshold_samples = self._spin(1, 100000, int(self.config["thresholding"]["samples"]))
-        self.threshold_channels = self._spin(1, 100000, int(self.config["thresholding"]["channels"]))
+        self.threshold_samples = self._spin(1, 100000, int(self.config["thresholding"]["samples"]), suffix="")
+        self.threshold_channels = self._spin(1, 100000, int(self.config["thresholding"]["channels"]), suffix="")
 
         threshold_grid.addWidget(self.threshold_enabled, 0, 0, 1, 2)
         threshold_grid.addWidget(threshold_note, 1, 0, 1, 2)

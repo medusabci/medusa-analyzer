@@ -512,6 +512,15 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.assertEqual(relative_broadband["high_cut"], 500.0)
         self.assertTrue(widget.can_continue())
 
+    def test_threshold_counts_have_no_time_suffix(self):
+        state = _loaded_state()
+        widget = EEGSegmentationWidget({}, _eeg_defaults(), state)
+        widget.show()
+        self.app.processEvents()
+
+        self.assertEqual(widget.threshold_samples.suffix(), "")
+        self.assertEqual(widget.threshold_channels.suffix(), "")
+
     def test_resampling_clamps_filters_and_removes_out_of_range_bands(self):
         state = _loaded_state()
         state["broadband"] = {

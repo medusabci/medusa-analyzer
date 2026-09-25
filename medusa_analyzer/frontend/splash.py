@@ -73,7 +73,11 @@ class SplashScreen:
         QApplication.processEvents()
 
     def hide(self, parent=None):
-        self.splash_screen.finish(parent)
+        if parent is None:
+            self.splash_screen.close()
+        else:
+            self.splash_screen.finish(parent)
+        QApplication.processEvents()
 
 
 def _style_asset_path(filename: str) -> Path:

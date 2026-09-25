@@ -13,7 +13,6 @@ test_path_markers = (
 
 excluded_modules = [
     "h5py.tests",
-    "medusa_analyzer.frontend.splash",
     "numpy._pytesttester",
     "numpy.testing",
     "pandas._testing",
@@ -30,13 +29,9 @@ excluded_modules = [
     "statsmodels.tools._test_runner",
 ]
 
-startup_artifact_markers = (
-    "medusa_analyzer/frontend/splash.py",
-    "medusa_analyzer\\frontend\\splash.py",
-    "medusa_analyzer/frontend/styles/medusa_splash",
-    "medusa_analyzer\\frontend\\styles\\medusa_splash",
-    "medusa_analyzer/frontend/styles/splash.png",
-    "medusa_analyzer\\frontend\\styles\\splash.png",
+non_runtime_asset_markers = (
+    "medusa_analyzer/frontend/styles/medusa_splash_v2026.psd",
+    "medusa_analyzer\\frontend\\styles\\medusa_splash_v2026.psd",
 )
 
 
@@ -48,11 +43,11 @@ def without_test_artifacts(items):
     ]
 
 
-def without_startup_artifacts(items):
+def without_non_runtime_assets(items):
     return [
         item
         for item in items
-        if not any(marker in str(part).lower() for marker in startup_artifact_markers for part in item[:2])
+        if not any(marker in str(part).lower() for marker in non_runtime_asset_markers for part in item[:2])
     ]
 
 
@@ -74,7 +69,7 @@ datas = (
     + collect_data_files("medusa")
     + collect_data_files("medusa_style")
 )
-datas = without_startup_artifacts(without_test_artifacts(datas))
+datas = without_non_runtime_assets(without_test_artifacts(datas))
 
 
 # Include all package submodules.
@@ -101,7 +96,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-a.datas = without_startup_artifacts(without_test_artifacts(a.datas))
+a.datas = without_non_runtime_assets(without_test_artifacts(a.datas))
 
 pyz = PYZ(a.pure)
 
