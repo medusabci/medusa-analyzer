@@ -87,10 +87,10 @@ def run_eeg_feature_extraction(state,
                 error_found = True
                 msg = f"[{subj_id}] Does not have the sampling frequency of the selected pipeline."
                 log_callback(msg, "error")
-                execution_logs.append(msg)
+                execution_logs.append("[ERROR] " + msg)
                 msg = f"[{subj_id}] Expected {state['metadata']['sampling_frequency']}, but got {fs}."
                 log_callback(msg, "error")
-                execution_logs.append(msg)
+                execution_logs.append("[ERROR] " + msg)
                 continue
 
             # Logs
@@ -120,7 +120,6 @@ def run_eeg_feature_extraction(state,
             msg = f"[{subj_id}] Continuing with file processing..."
             log_callback(msg, "")
             execution_logs.append(msg)
-
 
             ## Second step: Get indices of the thresholding
             if state['segmentation']["thresholding"]['enabled']:
@@ -196,7 +195,7 @@ def run_eeg_feature_extraction(state,
                                 # Logs
                                 msg = f"[{subj_id}] All epochs corresponding to event combination '{base_evt}' and '{evt}' have been rejected. Skipping."
                                 log_callback(msg, "warning")
-                                execution_logs.append(msg)
+                                execution_logs.append("[WARNING] " + msg)
                                 continue
 
                             # Remove the rejected epochs from the epochs array
@@ -259,7 +258,7 @@ def run_eeg_feature_extraction(state,
             error_found = True
             msg = f"[{subj_id}] Error found during processing: {e}."
             log_callback(msg, "error")
-            execution_logs.append(msg)
+            execution_logs.append("[ERROR] " + msg)
     # Save logs and summary
     try:
         msg = f"Saving logs..."
@@ -305,7 +304,7 @@ def run_eeg_feature_extraction(state,
     except Exception as e:
         msg = f"Error saving logs: {e}"
         log_callback(msg, "warning")
-        execution_logs.append(msg)
+        execution_logs.append("[WARNING] " + msg)
 
     msg = f"MEDUSA EEG FEATURES EXTRACTION successfully finished"
     log_callback(msg, "")
@@ -315,7 +314,7 @@ def run_eeg_feature_extraction(state,
     if error_found:
         msg = f"Error(s) found during processing, please check logs"
         log_callback(msg, "warning")
-        execution_logs.append(msg)
+        execution_logs.append("[WARNING] " + msg)
 
     return
 
@@ -423,7 +422,7 @@ def segment_signal(signal, times, fs, events, state,
     if normalization.get('enabled'):
         norm = 'z' if normalization.get('mode') == 'mean_std' else 'dc'
     else:
-        baseline = [None, None]
+        baseline = None
 
     epochs = dict()
     for base_evt in state['event_groups']:
@@ -479,18 +478,18 @@ def segment_signal(signal, times, fs, events, state,
                         epochs_tmp = segmentation.segment_signal_around_events(
                             times_base*1000, signal_base, current_evts.onset*1000, fs,
                             [epoch_window[0], epoch_window[1]],
-                            [baseline[0], baseline[1]],
+                            baseline,
                             norm=norm)
                     except KeyError:
                         continue
 
-                    if epochs_tmp is not None:
+                    if epochs_tmp.size != 0:
                         epochs[base_evt['base_event']][evt_name]= epochs_tmp
                         del epochs_tmp
                     elif log_callback is not None:
-                        msg = f"[{subj_id}] No epochs were found for event combination '{base_evt}' and '{evt_name}'. Skipping."
+                        msg = f"[{subj_id}] No epochs were found for event combination '{base_evt['base_event']}' and '{evt_name}'. Skipping."
                         log_callback(msg, "warning")
-                        execution_logs.append(msg)
+                        execution_logs.append("[WARNING] " + msg)
 
     return epochs, times_epochs_ms
 
