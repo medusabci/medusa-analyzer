@@ -388,7 +388,7 @@ def _resolve_event(events, evt):
             (events['response'] == response)
         ]
 
-        evt_name = f"{trial_type}_{response}"
+        evt_name = f"{trial_type}_resp{response}"
     else:
         current_evts = events[events['trial_type'] == evt]
         evt_name = evt

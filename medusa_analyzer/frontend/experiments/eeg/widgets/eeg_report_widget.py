@@ -59,7 +59,7 @@ class EEGReportWidget(ReportWidget):
             pass
         if str(response).strip().lower() in {"", "n/a", "na", "nan", "none", "null"}:
             return trial_type
-        return f"{trial_type}_{response}"
+        return f"{trial_type}_resp{response}"
 
     def _get_state_value(self, path: str, default: Any = None) -> Any:
         value: Any = self.state

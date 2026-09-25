@@ -4,7 +4,7 @@ from PySide6.QtCore import Property, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFrame, QLabel, QProgressBar, QTextEdit, QVBoxLayout, QWidget
 
-from medusa_analyzer.frontend.widgets.log_text import append_log_line
+from medusa_analyzer.frontend.utils import append_log_line
 from medusa_analyzer.frontend.worker import TaskRunner, Worker
 
 

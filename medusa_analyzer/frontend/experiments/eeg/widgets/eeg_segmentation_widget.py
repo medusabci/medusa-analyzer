@@ -892,7 +892,8 @@ class EEGSegmentationWidget(QScrollArea):
         self.normalization_baseline_hint.setWordWrap(True)
 
         normalization_grid.addWidget(self.normalization_enabled, 0, 0, 1, 2)
-        normalization_grid.addWidget(QLabel("Mode"), 1, 0)
+        self.normalization_mode_label = QLabel("Mode")
+        normalization_grid.addWidget(self.normalization_mode_label, 1, 0)
         normalization_grid.addWidget(self.normalization_mode, 1, 1)
         normalization_grid.addWidget(self.normalization_baseline_hint, 2, 0, 1, 2)
         root.addWidget(normalization_panel)
@@ -905,9 +906,9 @@ class EEGSegmentationWidget(QScrollArea):
         threshold_panel.layout().addLayout(threshold_grid)
 
         self.threshold_enabled = QCheckBox("Discard epochs exceeding threshold")
-        threshold_note = QLabel("Reject epochs when enough samples/channels exceed the sigma threshold.")
-        threshold_note.setObjectName("muted")
-        threshold_note.setWordWrap(True)
+        self.threshold_note = QLabel("Reject epochs when enough samples/channels exceed the sigma threshold.")
+        self.threshold_note.setObjectName("muted")
+        self.threshold_note.setWordWrap(True)
 
         self.threshold_sigma = QDoubleSpinBox()
         self.threshold_sigma.setRange(0.1, 1000.0)
@@ -918,13 +919,25 @@ class EEGSegmentationWidget(QScrollArea):
         self.threshold_channels = self._spin(1, 100000, int(self.config["thresholding"]["channels"]), suffix="")
 
         threshold_grid.addWidget(self.threshold_enabled, 0, 0, 1, 2)
-        threshold_grid.addWidget(threshold_note, 1, 0, 1, 2)
-        threshold_grid.addWidget(QLabel("Sigma"), 2, 0)
+        threshold_grid.addWidget(self.threshold_note, 1, 0, 1, 2)
+        self.threshold_sigma_label = QLabel("Sigma")
+        self.threshold_samples_label = QLabel("Samples")
+        self.threshold_channels_label = QLabel("Channels")
+        threshold_grid.addWidget(self.threshold_sigma_label, 2, 0)
         threshold_grid.addWidget(self.threshold_sigma, 2, 1)
-        threshold_grid.addWidget(QLabel("Samples"), 3, 0)
+        threshold_grid.addWidget(self.threshold_samples_label, 3, 0)
         threshold_grid.addWidget(self.threshold_samples, 3, 1)
-        threshold_grid.addWidget(QLabel("Channels"), 4, 0)
+        threshold_grid.addWidget(self.threshold_channels_label, 4, 0)
         threshold_grid.addWidget(self.threshold_channels, 4, 1)
+        self.threshold_parameter_widgets = [
+            self.threshold_note,
+            self.threshold_sigma_label,
+            self.threshold_sigma,
+            self.threshold_samples_label,
+            self.threshold_samples,
+            self.threshold_channels_label,
+            self.threshold_channels,
+        ]
         root.addWidget(threshold_panel)
 
         # ------------------------------------------------------------------
@@ -938,8 +951,13 @@ class EEGSegmentationWidget(QScrollArea):
         self.target_sampling_frequency = self._spin(1, self.MAX_TARGET_SAMPLING_FREQUENCY_HZ,
             int(self.config["resampling"]["target_sampling_frequency"]), suffix=" Hz")
         resampling_grid.addWidget(self.resampling_enabled, 0, 0, 1, 2)
-        resampling_grid.addWidget(QLabel("Target sample frequency"), 1, 0)
+        self.target_sampling_frequency_label = QLabel("Target sample frequency")
+        resampling_grid.addWidget(self.target_sampling_frequency_label, 1, 0)
         resampling_grid.addWidget(self.target_sampling_frequency, 1, 1)
+        self.resampling_parameter_widgets = [
+            self.target_sampling_frequency_label,
+            self.target_sampling_frequency,
+        ]
         root.addWidget(resampling_panel)
         root.addStretch()
         self.setWidget(content)
@@ -1090,7 +1108,7 @@ class EEGSegmentationWidget(QScrollArea):
     def _event_label(cls, event: Any) -> str:
         trial_type = cls._event_trial_type(event)
         if isinstance(event, dict) and cls._event_has_response(event):
-            return f"{trial_type}_{event.get('response')}"
+            return f"{trial_type}_resp{event.get('response')}"
         return trial_type
 
     def _event_label_for_current_mode(self, event: Any) -> str:
@@ -2123,16 +2141,21 @@ class EEGSegmentationWidget(QScrollArea):
         normalization_target = self._target_or_default(self._normalization_target)
 
         normalization = self.normalization_enabled.isChecked()
+        self._set_visible([self.normalization_mode_label, self.normalization_mode], normalization)
         self.normalization_mode.setEnabled(normalization)
         self.normalization_baseline_hint.setVisible(
-            has_instant_epochs and normalization_target == "instant"
-            or has_duration_epochs and normalization_target == "duration" and strategy == "onset-based"
+            normalization and (
+                has_instant_epochs and normalization_target == "instant"
+                or has_duration_epochs and normalization_target == "duration" and strategy == "onset-based"
+            )
         )
 
         for widget in (self.threshold_sigma, self.threshold_samples, self.threshold_channels):
             widget.setEnabled(thresholding)
+        self._set_visible(self.threshold_parameter_widgets, thresholding)
 
         self.target_sampling_frequency.setEnabled(resampling)
+        self._set_visible(self.resampling_parameter_widgets, resampling)
 
         if independent:
             self.mode_help.setText("Select either duration events or instant events. The two lists are mutually exclusive.")

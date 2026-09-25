@@ -299,7 +299,7 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
         self.app.processEvents()
         for index in range(widget.duration_events_list.count()):
             item = widget.duration_events_list.item(index)
-            item.setSelected(item.text() == "imgaa_1")
+            item.setSelected(item.text() == "imgaa_resp1")
         self.app.processEvents()
 
         self.assertEqual(state["segmentation"]["segmentation_strategy"], "onset-based")
@@ -520,6 +520,54 @@ class EEGSegmentationWidgetTests(unittest.TestCase):
 
         self.assertEqual(widget.threshold_samples.suffix(), "")
         self.assertEqual(widget.threshold_channels.suffix(), "")
+
+    def test_optional_parameter_rows_follow_checkboxes(self):
+        state = _loaded_state()
+        widget = EEGSegmentationWidget({}, _eeg_defaults(), state)
+        widget.show()
+        self.app.processEvents()
+
+        hidden_when_disabled = [
+            widget.normalization_mode_label,
+            widget.normalization_mode,
+            widget.threshold_note,
+            widget.threshold_sigma_label,
+            widget.threshold_sigma,
+            widget.threshold_samples_label,
+            widget.threshold_samples,
+            widget.threshold_channels_label,
+            widget.threshold_channels,
+            widget.target_sampling_frequency_label,
+            widget.target_sampling_frequency,
+        ]
+        self.assertTrue(all(not item.isVisible() for item in hidden_when_disabled))
+
+        widget.normalization_enabled.setChecked(True)
+        widget.threshold_enabled.setChecked(True)
+        widget.resampling_enabled.setChecked(True)
+        self.app.processEvents()
+
+        visible_when_enabled = [
+            widget.normalization_mode_label,
+            widget.normalization_mode,
+            widget.threshold_note,
+            widget.threshold_sigma_label,
+            widget.threshold_sigma,
+            widget.threshold_samples_label,
+            widget.threshold_samples,
+            widget.threshold_channels_label,
+            widget.threshold_channels,
+            widget.target_sampling_frequency_label,
+            widget.target_sampling_frequency,
+        ]
+        self.assertTrue(all(item.isVisible() for item in visible_when_enabled))
+
+        widget.normalization_enabled.setChecked(False)
+        widget.threshold_enabled.setChecked(False)
+        widget.resampling_enabled.setChecked(False)
+        self.app.processEvents()
+
+        self.assertTrue(all(not item.isVisible() for item in hidden_when_disabled))
 
     def test_resampling_clamps_filters_and_removes_out_of_range_bands(self):
         state = _loaded_state()

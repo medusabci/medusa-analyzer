@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from medusa_analyzer.frontend.widgets.log_text import append_log_line
+from medusa_analyzer.frontend.utils import append_log_line
 
 class ProgressOverlay(QFrame):
     def __init__(self, parent: QWidget, show_log: bool = True):
