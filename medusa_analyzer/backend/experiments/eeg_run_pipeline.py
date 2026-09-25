@@ -32,7 +32,7 @@ def run_eeg_feature_extraction(state,
     msg = f"MEDUSA EEG FEATURES EXTRACTION started"
     log_callback(msg, "")
     execution_logs.append(msg)
-    msg = f"{total_files} will be processed..."
+    msg = f"{total_files} files will be processed..."
     log_callback(msg, "")
     execution_logs.append(msg)
 
@@ -125,12 +125,14 @@ def run_eeg_feature_extraction(state,
             ## Second step: Get indices of the thresholding
             if state['segmentation']["thresholding"]['enabled']:
 
+
+
                 epochs,_ = segment_signal(processed_signal, times, fs, events, state['segmentation'])
 
                 # Get the thresholding parameters
-                thres_k = state['segmentation']['sigma']
-                thres_samples = state['segmentation']["samples"]
-                thres_channels = state['segmentation']["channels"]
+                thres_k = state['segmentation']['thresholding']['sigma']
+                thres_samples = state['segmentation']['thresholding']["samples"]
+                thres_channels = state['segmentation']['thresholding']["channels"]
                 idx_reject = dict()
                 for base_evt, epochs_base in epochs.items():
                     idx_reject[base_evt] = {}
@@ -269,7 +271,7 @@ def run_eeg_feature_extraction(state,
 
         # Save rejection summary to CSV
         if rejection_summary:
-            csv_path = derivatives_path / "rejection_summary.csv"
+            csv_path = get_unique_file_path(derivatives_path / "rejection_summary.csv")
             with open(csv_path, mode='w', newline='') as csv_file:
                 fieldnames = ['subject', 'base_event', 'event', 'prc_rejected', 'n_rejected']
                 writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
@@ -277,9 +279,9 @@ def run_eeg_feature_extraction(state,
                 for row in rejection_summary:
                     writer.writerow(row)
                 row = {
-                    'subject': f"K STDs: {state['segmentation']['sigma']}",
-                    'base_event': f"Samples: {state['segmentation']['samples']}",
-                    'event': f"N Channels: {state['segmentation']['channels']}"
+                    'subject': f"K STDs: {state['segmentation']['thresholding']['sigma']}",
+                    'base_event': f"Samples: {state['segmentation']['thresholding']['samples']}",
+                    'event': f"N Channels: {state['segmentation']['thresholding']['channels']}"
                 }
                 writer.writerow(row)
             msg = f"Rejection summary saved to {csv_path}."
@@ -288,7 +290,7 @@ def run_eeg_feature_extraction(state,
 
         # Save execution warnings/errors to TXT
         if execution_logs:
-            log_path = derivatives_path / "error_log.txt"
+            log_path = get_unique_file_path(derivatives_path / "error_log.txt")
             with open(log_path, mode='w', encoding='utf-8') as txt_file:
                 for log_entry in execution_logs:
                     txt_file.write(log_entry + "\n")
@@ -376,6 +378,25 @@ def _normalization_config(state):
         raise ValueError(f"Segmentation normalization is missing required key(s): {missing}.")
     return normalization
 
+
+def _resolve_event(events, evt):
+    if isinstance(evt, dict):
+        trial_type = evt['trial_type']
+        response = evt['response']
+
+        current_evts = events[
+            (events['trial_type'] == trial_type) &
+            (events['response'] == response)
+        ]
+
+        evt_name = f"{trial_type}_{response}"
+    else:
+        current_evts = events[events['trial_type'] == evt]
+        evt_name = evt
+
+    return current_evts, evt_name
+
+
 def segment_signal(signal, times, fs, events, state,
                    log_callback = None, execution_logs = None, subj_id = None):
 
@@ -401,6 +422,8 @@ def segment_signal(signal, times, fs, events, state,
     norm = None
     if normalization.get('enabled'):
         norm = 'z' if normalization.get('mode') == 'mean_std' else 'dc'
+    else:
+        baseline = [None, None]
 
     epochs = dict()
     for base_evt in state['event_groups']:
@@ -426,7 +449,7 @@ def segment_signal(signal, times, fs, events, state,
             # If segmentation type is 'condition'
             all_events = base_evt['duration_events'] + base_evt['instant_events']
             for evt in all_events:
-                current_evts = events[events['trial_type'] == evt]
+                current_evts, evt_name = _resolve_event(events, evt)
 
                 if state['segmentation_strategy'] == 'window-based':
 
@@ -445,10 +468,10 @@ def segment_signal(signal, times, fs, events, state,
 
                         if epochs_tmp is not None:
                             if evt in epochs[base_evt['base_event']]:
-                                epochs[base_evt['base_event']][evt] = np.concatenate(
-                                    (epochs[base_evt['base_event']][evt], epochs_tmp), axis=0)
+                                epochs[base_evt['base_event']][evt_name] = np.concatenate(
+                                    (epochs[base_evt['base_event']][evt_name], epochs_tmp), axis=0)
                             else:
-                                epochs[base_evt['base_event']][evt] = epochs_tmp
+                                epochs[base_evt['base_event']][evt_name] = epochs_tmp
                             del epochs_tmp
 
                 else:
@@ -462,14 +485,30 @@ def segment_signal(signal, times, fs, events, state,
                         continue
 
                     if epochs_tmp is not None:
-                        epochs[base_evt['base_event']][evt]= epochs_tmp
+                        epochs[base_evt['base_event']][evt_name]= epochs_tmp
                         del epochs_tmp
                     elif log_callback is not None:
-                        msg = f"[{subj_id}] No epochs were found for event combination '{base_evt}' and '{evt}' have been rejected. Skipping."
+                        msg = f"[{subj_id}] No epochs were found for event combination '{base_evt}' and '{evt_name}'. Skipping."
                         log_callback(msg, "warning")
                         execution_logs.append(msg)
 
     return epochs, times_epochs_ms
+
+
+def get_unique_file_path(path: Path) -> Path:
+    """
+    Comprueba si la ruta existe. Si es así, añade un sufijo _1, _2...
+    antes de la extensión hasta encontrar un nombre disponible.
+    """
+    if not path.exists():
+        return path
+
+    counter = 1
+    while True:
+        new_path = path.with_name(f"{path.stem}_{counter}{path.suffix}")
+        if not new_path.exists():
+            return new_path
+        counter += 1
 
 
 def save_outputs(data, file, band_name, evt, key, state):
@@ -487,7 +526,7 @@ def save_outputs(data, file, band_name, evt, key, state):
     selected_folder.mkdir(exist_ok=True)
 
     if evt is not None:
-        evt = evt.replace('-', '').replace('_', '').replace('fullrecording','')
+        evt = evt.replace('-', 'm').replace('_', '').replace('fullrecording','')
 
     # Obtener info del sujeto y sesión desde el nombre del archivo base
     filename = file['relative_path']
