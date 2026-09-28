@@ -1,8 +1,8 @@
 {
   "id": "converter",
   "title": "Converter",
-  "subtitle": "Convert your MEDUSA Studio to the BIDS standard.",
-  "description": "To use MEDUSA Analyzer, you need a BIDS dataset. This tool converts your MEDUSA Studio database to BIDS.",
+  "subtitle": "Convert your database to the BIDS standard.",
+  "description": "To use MEDUSA Analyzer, you need a BIDS dataset. This tool converts your database to BIDS.",
   "status": "Ready",
   "accent": "burgundy",
   "enabled": true,

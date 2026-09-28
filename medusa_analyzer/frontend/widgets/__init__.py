@@ -6,6 +6,7 @@ from .load_data import LoadDataAction, LoadDataWidget, WorkerCall, load_files
 from .plots import BasePlot, ERPPlot, LinePlot, PlotSeries, PSDPlot, ScatterPlot, ViolinPlot
 from .report import ReportWidget
 from .table import EditableTable, TableColumn
+from .tutorial_overlay import TutorialExample, TutorialOverlay, TutorialStep
 from .workflow_shell import WorkflowShell
 
 __all__ = [
@@ -25,6 +26,9 @@ __all__ = [
     "ReportWidget",
     "ScatterPlot",
     "TableColumn",
+    "TutorialExample",
+    "TutorialOverlay",
+    "TutorialStep",
     "ViolinPlot",
     "WorkerCall",
     "WorkflowShell",

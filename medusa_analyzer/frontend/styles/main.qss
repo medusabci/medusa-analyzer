@@ -220,6 +220,76 @@ QFrame#progressOverlay {
     background: rgba(8, 5, 7, 176);
 }
 
+QFrame#tutorialOverlay {
+    background: rgba(8, 5, 7, 184);
+}
+
+QFrame#tutorialPanel {
+    background: #22181D;
+    border: 1px solid #7A4055;
+    border-radius: 14px;
+}
+
+QLabel#tutorialTitle {
+    color: #FF8FAE;
+    font-size: 12px;
+    font-weight: 750;
+}
+
+QLabel#tutorialCounter {
+    min-height: 24px;
+    padding: 0 10px;
+    color: #9BE7E8;
+    background: #173A3F;
+    border: 1px solid #2E747A;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+QLabel#tutorialStepTitle {
+    color: #FFF7FA;
+    font-size: 22px;
+    font-weight: 730;
+}
+
+QLabel#tutorialBody,
+QLabel#tutorialBullet {
+    color: #D8C9D0;
+}
+
+QLabel#tutorialBullet {
+    background: transparent;
+    font-weight: 600;
+}
+
+QFrame[role="tutorial-example"] {
+    background: #1F171B;
+    border: 1px solid #3E3036;
+    border-radius: 9px;
+}
+
+QFrame[role="tutorial-example"][tone="positive"] {
+    background: rgba(14, 124, 134, 24);
+    border-color: rgba(94, 205, 214, 78);
+}
+
+QFrame[role="tutorial-example"][tone="warning"] {
+    background: rgba(246, 193, 119, 18);
+    border-color: rgba(246, 193, 119, 86);
+}
+
+QLabel#tutorialExampleTitle {
+    color: #FFF7FA;
+    font-weight: 700;
+}
+
+QLabel#tutorialExampleText {
+    color: #CDBCC4;
+    font-family: "Consolas";
+    font-size: 12px;
+}
+
 QFrame#progressWindow {
     background: #261B21;
     border: 1px solid #7A4055;
@@ -914,6 +984,125 @@ QListWidget#instantEventsList::item:selected {
     color: #9BE7E8;
     background: rgba(14, 124, 134, 24);
     border: 1px solid rgba(94, 205, 214, 78);
+}
+
+QWidget[role="token-chip-area"],
+QWidget[role="entity-chip-area"] {
+    background: transparent;
+    border: none;
+}
+
+QFrame[role="mapping-token-chip"] {
+    background: #1F171B;
+    border: 1px solid #3E3036;
+    border-radius: 9px;
+}
+
+QFrame[role="mapping-token-chip"][assigned="true"] {
+    background: rgba(14, 124, 134, 24);
+    border-color: rgba(94, 205, 214, 94);
+}
+
+QFrame[role="mapping-token-chip"][custom="true"] {
+    background: rgba(227, 90, 130, 24);
+    border-color: rgba(227, 90, 130, 84);
+}
+
+QFrame[role="mapping-token-chip"]:hover,
+QFrame[role="mapping-token-chip"]:focus {
+    background: #2A1D23;
+    border: 1px solid #39B8C1;
+}
+
+QFrame[role="mapping-token-chip"] QLabel,
+QFrame[role="mapping-assignment-chip"] QLabel {
+    background: transparent;
+}
+
+QLabel[role="token-prefix"] {
+    color: #B8A7AF;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+QLabel[role="token-text"] {
+    color: #FFF7FA;
+    font-weight: 650;
+}
+
+QLabel[role="token-state"] {
+    color: #81767B;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+QLabel[role="token-state"][assigned="true"] {
+    color: #9BE7E8;
+}
+
+QFrame[role="mapping-entity-row"] {
+    background: #1F171B;
+    border: 1px solid #3E3036;
+    border-radius: 9px;
+}
+
+QLabel#mappingEntityName {
+    color: #FFF7FA;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+QLabel[role="entity-badge"] {
+    min-height: 22px;
+    padding: 0 9px;
+    border-radius: 11px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+QLabel[role="entity-badge"][required="true"] {
+    color: #FFD6E1;
+    background: rgba(227, 90, 130, 28);
+    border: 1px solid rgba(227, 90, 130, 92);
+}
+
+QLabel[role="entity-badge"][required="false"] {
+    color: #9BE7E8;
+    background: rgba(14, 124, 134, 24);
+    border: 1px solid rgba(94, 205, 214, 78);
+}
+
+QFrame[role="mapping-assignment-chip"] {
+    background: #241A1F;
+    border: 1px solid #4A3A42;
+    border-radius: 8px;
+}
+
+QFrame[role="mapping-assignment-chip"]:hover,
+QFrame[role="mapping-assignment-chip"]:focus {
+    border: 1px solid #39B8C1;
+}
+
+QFrame[role="mapping-assignment-chip"] QLabel {
+    color: #F8EEF2;
+    font-weight: 600;
+}
+
+QFrame[role="conversion-summary"] {
+    background: #1F171B;
+    border: 1px solid #3E3036;
+    border-radius: 9px;
+}
+
+QLabel[role="conversion-step-title"] {
+    color: #B8A7AF;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+QLabel[role="conversion-step-value"] {
+    color: #F8EEF2;
+    font-weight: 600;
 }
 
 QFrame#summaryDurationChip {

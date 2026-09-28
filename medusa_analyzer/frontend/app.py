@@ -11,17 +11,13 @@ from medusa_analyzer.frontend.dashboard import DashboardPage, build_dashboard_ca
 from medusa_analyzer.frontend.experiments import create_experiment_page, discover_experiments
 from medusa_analyzer.frontend.router import Router
 from medusa_analyzer.frontend.splash import SplashScreen
+from medusa_analyzer.frontend.window_theme import apply_windows_title_bar_theme
 
 logger = logging.getLogger(__name__) # logger para que cuando haya un error sea vea de dónde viene
 
 # Punto de entrada visual de tu aplicación: crea la ventana principal, carga los experimentos disponibles,
 # monta el dashboard, registra rutas y arranca Qt. NOTA IMPORTANTE: el addWidget al stackWidget se hace dentro
 # del router
-TITLE_BAR_COLOR = "#181215"
-TITLE_BAR_TEXT_COLOR = "#F7F1F3"
-TITLE_BAR_BORDER_COLOR = "#3A2931"
-
-
 def _log_file_path() -> Path:
     base = os.environ.get("LOCALAPPDATA")
     root = Path(base) if base else Path.home() / "AppData" / "Local"
@@ -63,55 +59,6 @@ def _configure_windows_app_id() -> None:
         )
     except Exception:
         logger.debug("Could not set Windows application ID", exc_info=True)
-
-
-def _colorref(hex_color: str) -> int:
-    color = hex_color.strip().lstrip("#")
-    if len(color) != 6:
-        raise ValueError(f"Invalid color: {hex_color}")
-    red = int(color[0:2], 16)
-    green = int(color[2:4], 16)
-    blue = int(color[4:6], 16)
-    return red | (green << 8) | (blue << 16)
-
-
-def _apply_windows_title_bar_theme(window: QMainWindow) -> None:
-    if sys.platform != "win32":
-        return
-
-    try:
-        import ctypes
-
-        hwnd = ctypes.c_void_p(int(window.winId()))
-        dark_mode = ctypes.c_int(1)
-        caption_color = ctypes.c_int(_colorref(TITLE_BAR_COLOR))
-        text_color = ctypes.c_int(_colorref(TITLE_BAR_TEXT_COLOR))
-        border_color = ctypes.c_int(_colorref(TITLE_BAR_BORDER_COLOR))
-
-        dwm = ctypes.windll.dwmapi
-        for attribute in (20, 19):
-            result = dwm.DwmSetWindowAttribute(
-                hwnd,
-                attribute,
-                ctypes.byref(dark_mode),
-                ctypes.sizeof(dark_mode),
-            )
-            if result == 0:
-                break
-
-        for attribute, value in (
-            (35, caption_color),
-            (36, text_color),
-            (34, border_color),
-        ):
-            dwm.DwmSetWindowAttribute(
-                hwnd,
-                attribute,
-                ctypes.byref(value),
-                ctypes.sizeof(value),
-            )
-    except Exception:
-        logger.debug("Could not apply Windows title bar theme", exc_info=True)
 
 
 def _application_icon() -> QIcon:
@@ -166,7 +113,7 @@ class MainWindow(QMainWindow):
         self.router.navigate("dashboard") # Navegamos al dashboard para empezar ahí
     def showEvent(self, event):
         super().showEvent(event)
-        _apply_windows_title_bar_theme(self)
+        apply_windows_title_bar_theme(self)
 
 
 def _load_stylesheet() -> str:
