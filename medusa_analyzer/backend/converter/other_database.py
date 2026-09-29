@@ -179,7 +179,7 @@ def preview_other_database_mapping(scan: dict[str, Any], mapping: dict[str, Any]
 
     for target_path, source_paths in target_sources.items():
         if len(source_paths) > 1:
-            errors.append(
+            warnings.append(
                 f"Collision: {target_path} would be created from {', '.join(source_paths[:4])}."
             )
 
@@ -227,6 +227,7 @@ def build_other_database_bids(scan: dict[str, Any], mapping: dict[str, Any], out
     rows = []
     target_sources: dict[str, list[str]] = defaultdict(list)
     validation_errors = []
+    collision_warnings = []
     for record in files:
         row = _build_preview_row(record, normalized_mapping)
         rows.append((record, row))
@@ -236,17 +237,34 @@ def build_other_database_bids(scan: dict[str, Any], mapping: dict[str, Any], out
             target_sources[row["target_relative_path"]].append(record["relative_path"])
     for target_path, source_paths in target_sources.items():
         if len(source_paths) > 1:
-            validation_errors.append(
+            collision_warnings.append(
                 f"Collision: {target_path} would be created from {', '.join(source_paths[:4])}."
             )
     if validation_errors:
         raise ValueError("Other DB mapping is not valid:\n" + "\n".join(validation_errors[:12]))
+    for warning in collision_warnings:
+        _log(log_callback, warning, "warning")
 
+    copied_targets: set[str] = set()
+    skipped_collisions = 0
     for index, (record, row) in enumerate(rows):
+        target_relative_path = row["target_relative_path"]
+        if target_relative_path in copied_targets:
+            skipped_collisions += 1
+            _log(
+                log_callback,
+                f"[{record['relative_path']}] skipped because it collides with {target_relative_path}",
+                "warning",
+            )
+            if files:
+                _progress(progress_callback, int(5 + 90 * ((index + 1) / len(files))))
+            continue
+
         source = Path(record["source_path"])
-        destination = output_root / row["target_relative_path"]
+        destination = output_root / target_relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
+        copied_targets.add(target_relative_path)
         copied += 1
 
         for companion in _companion_files(source):
@@ -271,7 +289,12 @@ def build_other_database_bids(scan: dict[str, Any], mapping: dict[str, Any], out
 
     _progress(progress_callback, 100)
     _log(log_callback, f"Other DB BIDS build finished: {copied} file(s) copied.", "")
-    return {"valid": True, "copied_files": copied, "output_path": str(output_root)}
+    return {
+        "valid": True,
+        "copied_files": copied,
+        "skipped_collisions": skipped_collisions,
+        "output_path": str(output_root),
+    }
 
 
 def _records_for_build(scan: dict[str, Any]) -> list[dict[str, Any]]:

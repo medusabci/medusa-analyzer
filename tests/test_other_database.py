@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from medusa_analyzer.backend.converter.other_database import (
+    build_other_database_bids,
     preview_other_database_mapping,
     scan_other_database,
     tokenize_relative_path,
@@ -103,6 +104,60 @@ class OtherDatabaseMappingTests(unittest.TestCase):
         row = result["rows"][0]
         self.assertEqual(row["entities"], {"sub": "S01", "task": "eyesopen"})
         self.assertEqual(row["target_relative_path"], "sub-S01/eeg/sub-S01_task-eyesopen_eeg.edf")
+
+    def test_collisions_are_warnings_not_errors(self):
+        scan = {
+            "files": [
+                {
+                    "source_path": "root/S01/a.edf",
+                    "relative_path": "S01/a.edf",
+                    "extension": ".edf",
+                    "datatype": "eeg",
+                    "tokens": ["S01", "a"],
+                },
+                {
+                    "source_path": "root/S02/b.edf",
+                    "relative_path": "S02/b.edf",
+                    "extension": ".edf",
+                    "datatype": "eeg",
+                    "tokens": ["S02", "b"],
+                },
+            ],
+        }
+        mapping = {
+            "sub": {"value": "same"},
+            "task": {"value": "rest"},
+        }
+
+        result = preview_other_database_mapping(scan, mapping)
+
+        self.assertTrue(result["valid"])
+        self.assertEqual(result["errors"], [])
+        self.assertTrue(any(warning.startswith("Collision:") for warning in result["warnings"]))
+
+    def test_build_skips_later_colliding_files_without_overwriting(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder) / "root"
+            output = Path(folder) / "out"
+            (root / "S01").mkdir(parents=True)
+            (root / "S02").mkdir(parents=True)
+            first = root / "S01" / "a.edf"
+            second = root / "S02" / "b.edf"
+            first.write_text("first", encoding="utf-8")
+            second.write_text("second", encoding="utf-8")
+            scan = scan_other_database(root, first)
+            mapping = {
+                "sub": {"value": "same"},
+                "task": {"value": "rest"},
+            }
+
+            result = build_other_database_bids(scan, mapping, output)
+
+            copied_edfs = sorted(output.rglob("*.edf"))
+            self.assertEqual(result["copied_files"], 1)
+            self.assertEqual(result["skipped_collisions"], 1)
+            self.assertEqual(len(copied_edfs), 1)
+            self.assertEqual(copied_edfs[0].read_text(encoding="utf-8"), "first")
 
 
 if __name__ == "__main__":

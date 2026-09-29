@@ -65,6 +65,7 @@ class ConverterLoadDataWidget(LoadDataWidget):
                 "File types": "File types",
                 "Sample record": "Sample record",
                 "Layout warnings": "Layout warnings",
+                "Mapping warnings": "Mapping warnings",
                 "Mapping status": "Mapping status",
             },
         )
@@ -145,6 +146,9 @@ class ConverterLoadDataWidget(LoadDataWidget):
         layout_warnings = scan.get("layout_warnings") or []
         if layout_warnings:
             summary["Layout warnings"] = " ".join(str(warning) for warning in layout_warnings)
+        mapping_warnings = validation.get("warnings") or []
+        if mapping_warnings:
+            summary["Mapping warnings"] = " ".join(str(warning) for warning in mapping_warnings)
         summary["Mapping status"] = "Validated"
 
         self.files.clear()
