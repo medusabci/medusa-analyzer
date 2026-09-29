@@ -8,8 +8,8 @@ from PySide6.QtWidgets import (QDialog, QFileDialog, QFrame, QGridLayout, QHBoxL
     QLabel, QLayout, QLineEdit, QMenu, QMessageBox, QPushButton, QScrollArea, QSizePolicy, QTableWidget,
     QTableWidgetItem, QVBoxLayout, QWidget)
 
-from medusa_analyzer.backend.converter.other_database import (BIDS_ENTITY_ORDER, SUPPORTED_EXTENSIONS,
-    preview_other_database_mapping, scan_other_database)
+from medusa_analyzer.backend.converter.other_database import (BIDS_ENTITY_ORDER, ConversionContext,
+    SUPPORTED_EXTENSIONS, apply_other_database_mapping, preview_other_database_mapping, scan_other_database)
 from medusa_analyzer.frontend.window_theme import apply_windows_title_bar_theme
 from medusa_analyzer.frontend.worker import TaskRunner, Worker
 from medusa_analyzer.frontend.widgets.progress_overlay import ProgressOverlay
@@ -98,7 +98,8 @@ class OtherDatabaseMappingDialog(QDialog):
 
         self.root_path: str = ""
         self.sample_record_path: str = ""
-        self.scan_result: dict[str, Any] | None = None
+        self.scan_result: ConversionContext | None = None
+        self.conversion_context: ConversionContext | None = None
         self.validation_result: dict[str, Any] | None = None
         self.accepted_payload: dict[str, Any] | None = None
         self.tokens: list[dict[str, Any]] = []
@@ -368,6 +369,7 @@ class OtherDatabaseMappingDialog(QDialog):
         self.sample_record_path = ""
         self.record_display.clear()
         self.scan_result = None
+        self.conversion_context = None
         self.validation_result = None
         self._reset_tokens()
         self.preview_table.setRowCount(0)
@@ -398,6 +400,7 @@ class OtherDatabaseMappingDialog(QDialog):
         self.scan_running = True
         self._set_scan_controls_enabled(False)
         self.scan_result = None
+        self.conversion_context = None
         self.validation_result = None
         self._reset_tokens()
         self.preview_table.setRowCount(0)
@@ -438,8 +441,9 @@ class OtherDatabaseMappingDialog(QDialog):
         patterns = " ".join(f"*{extension}" for extension in SUPPORTED_EXTENSIONS)
         return f"Known recordings ({patterns});;All files (*.*)"
 
-    def _scan_loaded(self, scan_result: dict[str, Any]) -> None:
+    def _scan_loaded(self, scan_result: ConversionContext) -> None:
         self.scan_result = scan_result
+        self.conversion_context = None
         self.validation_result = None
         self._populate_scan(scan_result)
         self.inspect_panel.setEnabled(True)
@@ -447,15 +451,15 @@ class OtherDatabaseMappingDialog(QDialog):
         self.preview_panel.setEnabled(True)
         self._refresh_preview()
 
-    def _populate_scan(self, scan_result: dict[str, Any]) -> None:
-        sample = scan_result.get("sample_record", {})
+    def _populate_scan(self, scan_result: ConversionContext) -> None:
+        sample = scan_result.sample_record
         self.scan_summary.setText(
-            f"Only files with extension '{scan_result.get('target_extension', '')}' will be processed.\n"
-            f"Representative record: {sample.get('relative_path', '')}"
+            f"Only files with extension '{scan_result.target_extension}' will be processed.\n"
+            f"Representative record: {sample.source_relative_path if sample else ''}"
         )
 
         self._reset_tokens()
-        for token_index, token in enumerate(sample.get("tokens", [])):
+        for token_index, token in enumerate(sample.tokens if sample else []):
             self.tokens.append({
                 "id": f"path_{token_index}",
                 "text": str(token),
@@ -492,20 +496,21 @@ class OtherDatabaseMappingDialog(QDialog):
             self.preview_table.setRowCount(0)
             self._populate_conversion_summary(None)
             self.apply_button.setEnabled(False)
+            self.conversion_context = None
             return
 
         mapping = self._current_mapping()
         if mapping is None:
             return
 
-        self.validation_result = preview_other_database_mapping(self.scan_result, mapping, limit=40)
+        self.conversion_context = apply_other_database_mapping(self.scan_result, mapping)
+        self.validation_result = preview_other_database_mapping(self.conversion_context, limit=40)
         self._populate_preview_table(self.validation_result["rows"])
         first_row = self.validation_result["rows"][0] if self.validation_result["rows"] else None
         self._populate_conversion_summary(first_row)
 
         if self.validation_result["valid"]:
-            warnings = list(self.scan_result.get("layout_warnings") or [])
-            warnings.extend(self.validation_result.get("warnings", []))
+            warnings = list(self.conversion_context.warnings if self.conversion_context else [])
             text = "Mapping valid."
             if warnings:
                 text += " " + warnings[0]
@@ -778,14 +783,9 @@ class OtherDatabaseMappingDialog(QDialog):
 
     def _accept_mapping(self) -> None:
         self._refresh_preview()
-        if not self.scan_result or not self.validation_result or not self.validation_result["valid"]:
-            return
-        mapping = self._current_mapping()
-        if mapping is None:
+        if not self.scan_result or not self.conversion_context or not self.validation_result or not self.validation_result["valid"]:
             return
         self.accepted_payload = {
-            "scan": self.scan_result,
-            "mapping": mapping,
-            "validation": self.validation_result,
+            "context": self.conversion_context,
         }
         self.accept()

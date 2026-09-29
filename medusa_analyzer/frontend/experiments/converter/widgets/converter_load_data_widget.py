@@ -6,6 +6,7 @@ from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QHBoxLayout,QLabel,QLineEdit,QFrame,QFileDialog,QPushButton,QDialog
 
 from medusa_analyzer.backend.converter.inspect_source import load_converter_source
+from medusa_analyzer.backend.converter.other_database import preview_other_database_mapping
 from medusa_analyzer.frontend.widgets import LoadDataAction, LoadDataWidget, WorkerCall
 from medusa_analyzer.frontend.experiments.converter.widgets.other_database_dialog import OtherDatabaseMappingDialog
 from medusa_analyzer.frontend.experiments.converter.widgets.other_database_tutorial import (
@@ -126,42 +127,37 @@ class ConverterLoadDataWidget(LoadDataWidget):
     def _apply_other_database_payload(self, payload: dict[str, Any]) -> None:
         self._clear_loaded_state()
 
-        scan = payload["scan"]
-        mapping = payload["mapping"]
-        validation = payload["validation"]
-        validation_summary = dict(validation.get("summary", {}))
+        context = payload["context"]
+        preview = payload.get("preview") or {}
+        if not preview:
+            preview = preview_other_database_mapping(context, limit=40)
+        validation_summary = dict(preview.get("summary", {}))
         summary = {}
         if "Total files" in validation_summary:
             summary["Total files"] = validation_summary["Total files"]
-        elif scan.get("file_count") is not None:
-            summary["Total files"] = scan["file_count"]
-        target_extension = scan.get("target_extension", "")
+        else:
+            summary["Total files"] = context.file_count
+        target_extension = context.target_extension
         if target_extension:
             summary["File types"] = target_extension
         for key in ("Number of subjects", "Number of tasks", "Task list"):
             if key in validation_summary:
                 summary[key] = validation_summary[key]
-        sample_record = scan.get("sample_record", {})
-        summary["Sample record"] = sample_record.get("relative_path", "")
-        layout_warnings = scan.get("layout_warnings") or []
-        if layout_warnings:
-            summary["Layout warnings"] = " ".join(str(warning) for warning in layout_warnings)
-        mapping_warnings = validation.get("warnings") or []
-        if mapping_warnings:
-            summary["Mapping warnings"] = " ".join(str(warning) for warning in mapping_warnings)
+        sample_record = context.sample_record
+        summary["Sample record"] = sample_record.source_relative_path if sample_record else ""
+        if context.warnings:
+            summary["Mapping warnings"] = " ".join(str(warning) for warning in context.warnings)
         summary["Mapping status"] = "Validated"
 
         self.files.clear()
-        found_files = scan.get("files", [])
-        self.files.addItems([record["relative_path"] for record in found_files])
+        found_files = context.records
+        self.files.addItems([record.source_relative_path for record in found_files])
 
-        self._selected_source = scan.get("root_path")
+        self._selected_source = context.source_root
         self.state["source_type"] = "other_database"
-        self.state["input_data"] = [scan.get("root_path", "")]
+        self.state["input_data"] = [context.source_root]
         self.state["metadata"] = summary
-        self.state["other_db_scan"] = scan
-        self.state["other_db_mapping"] = mapping
-        self.state["other_db_validation"] = validation
+        self.state["other_db_conversion"] = context
         self.state["completion_status"] = "incompleted"
 
         total_files = len(found_files)
@@ -207,13 +203,15 @@ class ConverterLoadDataWidget(LoadDataWidget):
         self.state.pop("output_path", None)
         self.state.pop("dataset_name", None)
         self.state.pop("source_type", None)
-        self.state.pop("other_db_scan", None)
-        self.state.pop("other_db_mapping", None)
-        self.state.pop("other_db_validation", None)
+        self.state.pop("other_db_conversion", None)
 
     def _update_state(self):
-        self.state["output_path"] = self.output_path_display.text().strip()
+        output_path = self.output_path_display.text().strip()
+        self.state["output_path"] = output_path
         self.state["dataset_name"] = self.dataset_name_input.text().strip()
+        context = self.state.get("other_db_conversion")
+        if context is not None:
+            context.output_root = output_path
 
     def can_continue(self) -> bool:
         dataset_name = self.dataset_name_input.text().strip()

@@ -26,16 +26,15 @@ class ConverterRunExperimentWidget(RunExperimentWidget):
         self.set_progress(0)
 
         if self.state.get("source_type") == "other_database":
-            scan = self.state.get("other_db_scan")
-            mapping = self.state.get("other_db_mapping")
-            if scan is None or mapping is None:
-                self._mark_pipeline_failed("Other DB scan or mapping is missing. Load the database again.")
+            context = self.state.get("other_db_conversion")
+            if context is None:
+                self._mark_pipeline_failed("Other DB conversion context is missing. Load the database again.")
                 self.pipeline_running = False
                 self.changed.emit()
                 return
+            context.output_root = self.state["output_path"]
             kwargs = {
-                "scan": scan,
-                "mapping": mapping,
+                "context": context,
                 "output_path": self.state["output_path"],
                 "dataset_name": self.state.get("dataset_name"),
                 "progress_callback": self.set_progress,

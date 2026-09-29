@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import re
 import shutil
 from collections import defaultdict
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable
 
@@ -19,6 +21,55 @@ MEG_EXTENSIONS = {".fif", ".ds"}
 SUPPORTED_EXTENSIONS = tuple(sorted(EEG_EXTENSIONS | MEG_EXTENSIONS))
 
 
+@dataclass(slots=True)
+class ConversionRecord:
+    """One source recording and its resolved BIDS target."""
+
+    id: str
+    source_path: str
+    source_relative_path: str
+    extension: str
+    datatype: str
+    tokens: list[str] = field(default_factory=list)
+    entities: dict[str, str] = field(default_factory=dict)
+    bids_name: str = ""
+    target_relative_path: str = ""
+    status: str = "pending"
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class ConversionContext:
+    """Canonical state for an Other DB conversion."""
+
+    source_root: str
+    output_root: str = ""
+    records: list[ConversionRecord] = field(default_factory=list)
+    sample_record_id: str = ""
+    target_extension: str = ""
+    record_name_suffix: str | None = None
+    mapping_rules: dict[str, dict[str, Any]] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+
+    @property
+    def valid(self) -> bool:
+        return not self.errors and all(not record.errors for record in self.records)
+
+    @property
+    def file_count(self) -> int:
+        return len(self.records)
+
+    @property
+    def sample_record(self) -> ConversionRecord | None:
+        for record in self.records:
+            if record.id == self.sample_record_id:
+                return record
+        return self.records[0] if self.records else None
+
+
 def tokenize_relative_path(relative_path: str | Path) -> list[str]:
     """Split a relative recording path into path/name tokens."""
     path = Path(relative_path)
@@ -29,7 +80,7 @@ def tokenize_relative_path(relative_path: str | Path) -> list[str]:
 def scan_other_database(root_path: str | Path, sample_record_path: str | Path | None = None,
     extensions: tuple[str, ...] | None = None,
     progress_callback: Callable[[int], None] | None = None,
-    log_callback: Callable[[str, str], None] | None = None) -> dict[str, Any]:
+    log_callback: Callable[[str, str], None] | None = None) -> ConversionContext:
     """Inspect one representative record from a homogeneous non-BIDS EEG/MEG database."""
     del extensions
     root = Path(root_path)
@@ -47,40 +98,33 @@ def scan_other_database(root_path: str | Path, sample_record_path: str | Path | 
     if not sample_path.exists() or not sample_path.is_file():
         raise ValueError(f"Selected record does not exist: {sample_path}")
 
-    tokens = tokenize_relative_path(sample_relative_path)
     sample_extension = sample_path.suffix.lower()
-    sample_record = {
-        "id": "sample",
-        "source_path": str(sample_path),
-        "relative_path": sample_relative_path.as_posix(),
-        "extension": sample_extension,
-        "datatype": _datatype_from_extension(sample_extension),
-        "tokens": tokens,
-        "token_count": len(tokens),
-    }
+    sample_tokens = tokenize_relative_path(sample_relative_path)
     _progress(progress_callback, 5)
     record_name_suffix = _record_name_suffix(sample_path.name, sample_extension)
     records, scan_stats = _records_for_scan_filter(
         root,
         sample_extension,
         record_name_suffix=record_name_suffix,
-        representative_token_count=len(tokens),
+        representative_token_count=len(sample_tokens),
         progress_callback=progress_callback,
     )
     _progress(progress_callback, 90)
     layout_warnings = _scan_warnings(scan_stats, sample_extension, record_name_suffix)
 
-    result = {
-        "root_path": str(root),
-        "sample_record": sample_record,
-        "files": records,
-        "file_count": len(records),
-        "target_extension": sample_extension,
-        "extension_counts": {sample_extension: len(records)},
-        "supported_extensions": sorted(set(SUPPORTED_EXTENSIONS) | {sample_extension}),
-        "record_name_suffix": record_name_suffix,
-        "layout_warnings": layout_warnings,
-    }
+    result = ConversionContext(
+        source_root=str(root),
+        records=records,
+        sample_record_id=_record_id(sample_relative_path),
+        target_extension=sample_extension,
+        record_name_suffix=record_name_suffix,
+        metadata={
+            "extension_counts": {sample_extension: len(records)},
+            "supported_extensions": sorted(set(SUPPORTED_EXTENSIONS) | {sample_extension}),
+            "scan_stats": scan_stats,
+        },
+        warnings=layout_warnings,
+    )
     _log(log_callback, f"Representative record selected: {sample_relative_path.as_posix()}", "")
     _log(log_callback, f"Found {len(records)} matching recording file(s) with extension '{sample_extension}'.", "")
     for warning in layout_warnings:
@@ -154,12 +198,11 @@ def _normalize_mapping_parts(raw_parts: Any) -> list[dict[str, Any]]:
     return parts
 
 
-def preview_other_database_mapping(scan: dict[str, Any], mapping: dict[str, Any],
-    limit: int = 25) -> dict[str, Any]:
-    """Validate one homogeneous token mapping and return mapped rows for preview."""
+def apply_other_database_mapping(context: ConversionContext, mapping: dict[str, Any]) -> ConversionContext:
+    """Resolve BIDS entities and targets once for every record in a context."""
     normalized_mapping = normalize_mapping(mapping)
     errors: list[str] = []
-    warnings: list[str] = []
+    warnings: list[str] = list(context.warnings)
 
     for entity in REQUIRED_BIDS_ENTITIES:
         rule = normalized_mapping.get(entity, {})
@@ -167,121 +210,125 @@ def preview_other_database_mapping(scan: dict[str, Any], mapping: dict[str, Any]
             errors.append(f"Mapping for '{entity}' is required.")
 
     target_sources: dict[str, list[str]] = defaultdict(list)
-    all_rows = []
-    for record in scan.get("files", []):
-        row = _build_preview_row(record, normalized_mapping)
-        all_rows.append(row)
-        if row["issues"]:
-            for issue in row["issues"]:
-                errors.append(f"{record['relative_path']}: {issue}")
+    mapped_records = [_map_record(record, normalized_mapping) for record in context.records]
+    for record in mapped_records:
+        if record.errors:
+            for issue in record.errors:
+                errors.append(f"{record.source_relative_path}: {issue}")
         else:
-            target_sources[row["target_relative_path"]].append(record["relative_path"])
+            target_sources[record.target_relative_path].append(record.source_relative_path)
 
+    collision_targets: set[str] = set()
     for target_path, source_paths in target_sources.items():
         if len(source_paths) > 1:
+            collision_targets.add(target_path)
             warnings.append(
                 f"Collision: {target_path} would be created from {', '.join(source_paths[:4])}."
             )
 
-    task_values = {row["entities"].get("task") for row in all_rows if row["entities"].get("task")}
-    if len(task_values) == 1 and len(all_rows) > 1:
+    if collision_targets:
+        for record in mapped_records:
+            if record.target_relative_path in collision_targets:
+                record.warnings.append(f"Target path collides with another source: {record.target_relative_path}")
+
+    task_values = {record.entities.get("task") for record in mapped_records if record.entities.get("task")}
+    if len(task_values) == 1 and len(mapped_records) > 1:
         warnings.append("All files resolve to the same task value.")
 
-    summary = _summary_from_rows(all_rows)
+    return ConversionContext(
+        source_root=context.source_root,
+        output_root=context.output_root,
+        records=mapped_records,
+        sample_record_id=context.sample_record_id,
+        target_extension=context.target_extension,
+        record_name_suffix=context.record_name_suffix,
+        mapping_rules=normalized_mapping,
+        metadata=dict(context.metadata),
+        warnings=_unique(warnings),
+        errors=_unique(errors),
+    )
+
+
+def preview_other_database_mapping(context: ConversionContext, limit: int = 25) -> dict[str, Any]:
+    """Return UI preview rows from already mapped records."""
+    rows = [record_to_preview_row(record) for record in context.records[:max(limit, 0)]]
     return {
-        "valid": not errors,
-        "errors": _unique(errors),
-        "warnings": _unique(warnings),
-        "rows": all_rows[:max(limit, 0)],
-        "summary": summary,
+        "valid": context.valid,
+        "errors": list(context.errors),
+        "warnings": list(context.warnings),
+        "rows": rows,
+        "summary": _summary_from_records(context.records),
     }
 
 
-def build_other_database_bids(scan: dict[str, Any], mapping: dict[str, Any], output_path: str | Path,
+def build_other_database_bids(context: ConversionContext, output_path: str | Path | None = None,
     dataset_name: str | None = None,
     progress_callback: Callable[[int], None] | None = None,
     log_callback: Callable[[str, str], None] | None = None) -> dict[str, Any]:
     """Build a BIDS-like dataset by copying original EEG/MEG files unchanged."""
-    output_root = Path(output_path)
-    validation = preview_other_database_mapping(scan, mapping, limit=0)
-    if not validation["valid"]:
-        message = "Other DB mapping is not valid:\n" + "\n".join(validation["errors"][:12])
+    if not context.valid:
+        message = "Other DB mapping is not valid:\n" + "\n".join(context.errors[:12])
         _log(log_callback, message, "error")
         raise ValueError(message)
+
+    if not context.records:
+        raise ValueError(f"No files with extension '{context.target_extension}' were found in the selected database.")
+
+    target_output = output_path if output_path is not None else context.output_root
+    if not target_output:
+        raise ValueError("Output path is required.")
+    output_root = Path(target_output)
+    context.output_root = str(output_root)
 
     output_root.mkdir(parents=True, exist_ok=True)
     _progress(progress_callback, 0)
     _log(log_callback, "Building BIDS structure from mapped Other DB files...", "")
+    for warning in context.warnings:
+        _log(log_callback, warning, "warning")
     _write_dataset_description(output_root, dataset_name or output_root.name)
     _write_readme(output_root)
 
-    normalized_mapping = normalize_mapping(mapping)
     participants: set[str] = set()
     scans_by_folder: dict[Path, list[dict[str, str]]] = defaultdict(list)
     copied = 0
-    files = _records_for_build(scan)
-    if not files:
-        extension = scan.get("target_extension", "")
-        raise ValueError(f"No files with extension '{extension}' were found in the selected database.")
-
-    rows = []
-    target_sources: dict[str, list[str]] = defaultdict(list)
-    validation_errors = []
-    collision_warnings = []
-    for record in files:
-        row = _build_preview_row(record, normalized_mapping)
-        rows.append((record, row))
-        if row["issues"]:
-            validation_errors.append(f"{record['relative_path']}: {'; '.join(row['issues'])}")
-        else:
-            target_sources[row["target_relative_path"]].append(record["relative_path"])
-    for target_path, source_paths in target_sources.items():
-        if len(source_paths) > 1:
-            collision_warnings.append(
-                f"Collision: {target_path} would be created from {', '.join(source_paths[:4])}."
-            )
-    if validation_errors:
-        raise ValueError("Other DB mapping is not valid:\n" + "\n".join(validation_errors[:12]))
-    for warning in collision_warnings:
-        _log(log_callback, warning, "warning")
 
     copied_targets: set[str] = set()
     skipped_collisions = 0
-    for index, (record, row) in enumerate(rows):
-        target_relative_path = row["target_relative_path"]
+    for index, record in enumerate(context.records):
+        target_relative_path = record.target_relative_path
         if target_relative_path in copied_targets:
             skipped_collisions += 1
+            record.status = "skipped_collision"
             _log(
                 log_callback,
-                f"[{record['relative_path']}] skipped because it collides with {target_relative_path}",
+                f"[{record.source_relative_path}] skipped because it collides with {target_relative_path}",
                 "warning",
             )
-            if files:
-                _progress(progress_callback, int(5 + 90 * ((index + 1) / len(files))))
+            _progress(progress_callback, int(5 + 90 * ((index + 1) / len(context.records))))
             continue
 
-        source = Path(record["source_path"])
+        source = Path(record.source_path)
         destination = output_root / target_relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
         copied_targets.add(target_relative_path)
         copied += 1
+        record.status = "copied"
 
         for companion in _companion_files(source):
             companion_destination = destination.with_suffix(companion.suffix)
             shutil.copy2(companion, companion_destination)
 
-        participants.add(f"sub-{row['entities']['sub']}")
+        participants.add(f"sub-{record.entities['sub']}")
         scans_folder = destination.parent.parent
         scans_by_folder[scans_folder].append({
             "filename": destination.relative_to(scans_folder).as_posix(),
             "acq_time": "n/a",
         })
-        _write_recording_sidecar(destination, row["entities"], record["datatype"])
+        _write_recording_sidecar(destination, record.entities, record.datatype)
 
-        if files:
-            _progress(progress_callback, int(5 + 90 * ((index + 1) / len(files))))
-        _log(log_callback, f"[{record['relative_path']}] copied to {row['target_relative_path']}", "")
+        _progress(progress_callback, int(5 + 90 * ((index + 1) / len(context.records))))
+        _log(log_callback, f"[{record.source_relative_path}] copied to {record.target_relative_path}", "")
 
     _write_participants(output_root, participants)
     for folder, rows in scans_by_folder.items():
@@ -297,20 +344,9 @@ def build_other_database_bids(scan: dict[str, Any], mapping: dict[str, Any], out
     }
 
 
-def _records_for_build(scan: dict[str, Any]) -> list[dict[str, Any]]:
-    root = Path(scan["root_path"])
-    target_extension = str(scan.get("target_extension", "")).lower()
-    return _records_for_scan_filter(
-        root,
-        target_extension,
-        record_name_suffix=scan.get("record_name_suffix"),
-        representative_token_count=None,
-    )[0]
-
-
 def _records_for_scan_filter(root: Path, target_extension: str, record_name_suffix: str | None = None,
     representative_token_count: int | None = None,
-    progress_callback: Callable[[int], None] | None = None) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    progress_callback: Callable[[int], None] | None = None) -> tuple[list[ConversionRecord], dict[str, int]]:
     files = []
     scanned = 0
     for file in root.rglob("*"):
@@ -331,23 +367,22 @@ def _records_for_scan_filter(root: Path, target_extension: str, record_name_suff
     pattern_file_count = len(files)
 
     records = []
-    for index, file in enumerate(files):
+    for file in files:
         relative_path = file.relative_to(root)
         tokens = tokenize_relative_path(relative_path)
         extension = file.suffix.lower()
-        records.append({
-            "id": f"file_{index + 1:05d}",
-            "source_path": str(file),
-            "relative_path": relative_path.as_posix(),
-            "extension": extension,
-            "datatype": _datatype_from_extension(extension),
-            "tokens": tokens,
-            "token_count": len(tokens),
-        })
+        records.append(ConversionRecord(
+            id=_record_id(relative_path),
+            source_path=str(file),
+            source_relative_path=relative_path.as_posix(),
+            extension=extension,
+            datatype=_datatype_from_extension(extension),
+            tokens=tokens,
+        ))
     token_layout_warning_count = 0
     if representative_token_count is not None:
         token_layout_warning_count = sum(
-            1 for record in records if record["token_count"] != representative_token_count
+            1 for record in records if len(record.tokens) != representative_token_count
         )
 
     stats = {
@@ -376,8 +411,8 @@ def _scan_warnings(stats: dict[str, int], extension: str, record_name_suffix: st
     return warnings
 
 
-def _build_preview_row(record: dict[str, Any], mapping: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    tokens = list(record.get("tokens", []))
+def _map_record(record: ConversionRecord, mapping: dict[str, dict[str, Any]]) -> ConversionRecord:
+    tokens = list(record.tokens)
     issues = []
     entities: dict[str, str] = {}
 
@@ -425,17 +460,36 @@ def _build_preview_row(record: dict[str, Any], mapping: dict[str, dict[str, Any]
     bids_name = ""
     if not issues:
         bids_name = bids_basename(entities)
-        target_relative_path = bids_relative_path(entities, record.get("datatype", "eeg"),
-            record.get("extension", ""))
+        target_relative_path = bids_relative_path(entities, record.datatype, record.extension)
 
+    return ConversionRecord(
+        id=record.id,
+        source_path=record.source_path,
+        source_relative_path=record.source_relative_path,
+        extension=record.extension,
+        datatype=record.datatype,
+        tokens=tokens,
+        entities=entities,
+        bids_name=bids_name,
+        target_relative_path=target_relative_path,
+        status="invalid" if issues else "mapped",
+        warnings=list(record.warnings),
+        errors=_unique(issues),
+    )
+
+
+def record_to_preview_row(record: ConversionRecord) -> dict[str, Any]:
     return {
-        "source_relative_path": record.get("relative_path", ""),
-        "target_relative_path": target_relative_path,
-        "bids_name": bids_name,
-        "datatype": record.get("datatype", "eeg"),
-        "extension": record.get("extension", ""),
-        "entities": entities,
-        "issues": issues,
+        "record_id": record.id,
+        "source_relative_path": record.source_relative_path,
+        "target_relative_path": record.target_relative_path,
+        "bids_name": record.bids_name,
+        "datatype": record.datatype,
+        "extension": record.extension,
+        "entities": dict(record.entities),
+        "issues": list(record.errors),
+        "warnings": list(record.warnings),
+        "status": record.status,
     }
 
 
@@ -462,11 +516,17 @@ def bids_relative_path(entities: dict[str, str], datatype: str, extension: str) 
     return str(Path(*parts, filename)).replace("\\", "/")
 
 
-def _summary_from_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    subject_values = {row["entities"].get("sub") for row in rows if row["entities"].get("sub")}
-    task_values = {row["entities"].get("task") for row in rows if row["entities"].get("task")}
+def _record_id(relative_path: str | Path) -> str:
+    normalized = Path(relative_path).as_posix()
+    digest = hashlib.sha1(normalized.encode("utf-8")).hexdigest()[:10]
+    return f"rec_{digest}"
+
+
+def _summary_from_records(records: list[ConversionRecord]) -> dict[str, Any]:
+    subject_values = {record.entities.get("sub") for record in records if record.entities.get("sub")}
+    task_values = {record.entities.get("task") for record in records if record.entities.get("task")}
     return {
-        "Total files": len(rows),
+        "Total files": len(records),
         "Number of subjects": len(subject_values),
         "Number of tasks": len(task_values),
         "Task list": sorted(task_values),

@@ -1,8 +1,12 @@
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from medusa_analyzer.backend.converter.other_database import (
+    ConversionContext,
+    ConversionRecord,
+    apply_other_database_mapping,
     build_other_database_bids,
     preview_other_database_mapping,
     scan_other_database,
@@ -10,16 +14,25 @@ from medusa_analyzer.backend.converter.other_database import (
 )
 
 
-def _scan(tokens):
-    return {
-        "files": [{
-            "source_path": "root/study/S01/runA.edf",
-            "relative_path": "study/S01/runA.edf",
-            "extension": ".edf",
-            "datatype": "eeg",
-            "tokens": tokens,
-        }],
-    }
+def _context(tokens, source_path="root/study/S01/runA.edf", relative_path="study/S01/runA.edf"):
+    record = ConversionRecord(
+        id="rec_test",
+        source_path=source_path,
+        source_relative_path=relative_path,
+        extension=".edf",
+        datatype="eeg",
+        tokens=list(tokens),
+    )
+    return ConversionContext(
+        source_root="root",
+        records=[record],
+        sample_record_id=record.id,
+        target_extension=".edf",
+    )
+
+
+def _mapped_context(source_context, mapping):
+    return apply_other_database_mapping(source_context, mapping)
 
 
 class OtherDatabaseMappingTests(unittest.TestCase):
@@ -28,7 +41,7 @@ class OtherDatabaseMappingTests(unittest.TestCase):
 
         self.assertEqual(tokens, ["study", "S01", "17", "rec"])
 
-    def test_scan_other_database_lists_all_matching_records(self):
+    def test_scan_other_database_generates_context_with_all_matching_records(self):
         with TemporaryDirectory() as folder:
             root = Path(folder)
             (root / "S01").mkdir()
@@ -39,11 +52,12 @@ class OtherDatabaseMappingTests(unittest.TestCase):
             second.write_text("", encoding="utf-8")
             ignored.write_text("", encoding="utf-8")
 
-            scan = scan_other_database(root, first)
+            context = scan_other_database(root, first)
 
-        self.assertEqual(scan["file_count"], 2)
+        self.assertIsInstance(context, ConversionContext)
+        self.assertEqual(context.file_count, 2)
         self.assertEqual(
-            [record["relative_path"] for record in scan["files"]],
+            [record.source_relative_path for record in context.records],
             ["S01/first.edf", "S01/second.edf"],
         )
 
@@ -61,16 +75,16 @@ class OtherDatabaseMappingTests(unittest.TestCase):
             for file in (sample, second, config, different_layout):
                 file.write_text("", encoding="utf-8")
 
-            scan = scan_other_database(root, sample)
+            context = scan_other_database(root, sample)
 
-        self.assertEqual(scan["file_count"], 3)
+        self.assertEqual(context.file_count, 3)
         self.assertEqual(
-            [record["relative_path"] for record in scan["files"]],
+            [record.source_relative_path for record in context.records],
             ["S1/R16.rec.json", "S2/R16.rec.json", "S31 (fNIRS)/R16.rec.json"],
         )
-        self.assertEqual(scan["record_name_suffix"], ".rec.json")
-        self.assertEqual(len(scan["layout_warnings"]), 1)
-        self.assertIn("do not match '*.rec.json'", scan["layout_warnings"][0])
+        self.assertEqual(context.record_name_suffix, ".rec.json")
+        self.assertEqual(len(context.warnings), 1)
+        self.assertIn("do not match '*.rec.json'", context.warnings[0])
 
     def test_mapping_parts_mix_path_tokens_and_custom_literals(self):
         mapping = {
@@ -84,7 +98,8 @@ class OtherDatabaseMappingTests(unittest.TestCase):
             },
         }
 
-        result = preview_other_database_mapping(_scan(["study", "S01", "runA"]), mapping)
+        mapped = _mapped_context(_context(["study", "S01", "runA"]), mapping)
+        result = preview_other_database_mapping(mapped)
 
         self.assertTrue(result["valid"])
         row = result["rows"][0]
@@ -98,42 +113,128 @@ class OtherDatabaseMappingTests(unittest.TestCase):
             "task": {"value": "eyes open"},
         }
 
-        result = preview_other_database_mapping(_scan(["study", "S01", "runA"]), mapping)
+        mapped = _mapped_context(_context(["study", "S01", "runA"]), mapping)
+        result = preview_other_database_mapping(mapped)
 
         self.assertTrue(result["valid"])
         row = result["rows"][0]
         self.assertEqual(row["entities"], {"sub": "S01", "task": "eyesopen"})
         self.assertEqual(row["target_relative_path"], "sub-S01/eeg/sub-S01_task-eyesopen_eeg.edf")
 
+    def test_each_record_has_unique_persistent_bids_mapping(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "S01").mkdir()
+            (root / "S02").mkdir()
+            first = root / "S01" / "a.edf"
+            second = root / "S02" / "b.edf"
+            first.write_text("", encoding="utf-8")
+            second.write_text("", encoding="utf-8")
+            context = scan_other_database(root, first)
+
+        mapped = _mapped_context(context, {"sub": {"indices": [0]}, "task": {"indices": [1]}})
+        targets_before_preview = [record.target_relative_path for record in mapped.records]
+
+        preview_other_database_mapping(mapped)
+
+        self.assertEqual(len(set(targets_before_preview)), 2)
+        self.assertEqual(targets_before_preview, [record.target_relative_path for record in mapped.records])
+
+    def test_preview_limit_does_not_trim_context_records(self):
+        records = [
+            ConversionRecord(
+                id=f"rec_{index:02d}",
+                source_path=f"root/S{index:02d}/rest.edf",
+                source_relative_path=f"S{index:02d}/rest.edf",
+                extension=".edf",
+                datatype="eeg",
+                tokens=[f"S{index:02d}", "rest"],
+            )
+            for index in range(45)
+        ]
+        context = ConversionContext(source_root="root", records=records, target_extension=".edf")
+        mapped = _mapped_context(context, {"sub": {"indices": [0]}, "task": {"indices": [1]}})
+
+        result = preview_other_database_mapping(mapped, limit=40)
+
+        self.assertEqual(len(result["rows"]), 40)
+        self.assertEqual(len(mapped.records), 45)
+
     def test_collisions_are_warnings_not_errors(self):
-        scan = {
-            "files": [
-                {
-                    "source_path": "root/S01/a.edf",
-                    "relative_path": "S01/a.edf",
-                    "extension": ".edf",
-                    "datatype": "eeg",
-                    "tokens": ["S01", "a"],
-                },
-                {
-                    "source_path": "root/S02/b.edf",
-                    "relative_path": "S02/b.edf",
-                    "extension": ".edf",
-                    "datatype": "eeg",
-                    "tokens": ["S02", "b"],
-                },
+        context = ConversionContext(
+            source_root="root",
+            records=[
+                ConversionRecord("rec_1", "root/S01/a.edf", "S01/a.edf", ".edf", "eeg", ["S01", "a"]),
+                ConversionRecord("rec_2", "root/S02/b.edf", "S02/b.edf", ".edf", "eeg", ["S02", "b"]),
             ],
-        }
+            target_extension=".edf",
+        )
         mapping = {
             "sub": {"value": "same"},
             "task": {"value": "rest"},
         }
 
-        result = preview_other_database_mapping(scan, mapping)
+        mapped = _mapped_context(context, mapping)
+        result = preview_other_database_mapping(mapped)
 
         self.assertTrue(result["valid"])
         self.assertEqual(result["errors"], [])
         self.assertTrue(any(warning.startswith("Collision:") for warning in result["warnings"]))
+
+    def test_build_uses_same_mapping_as_preview(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder) / "root"
+            output = Path(folder) / "out"
+            (root / "S01").mkdir(parents=True)
+            source = root / "S01" / "rest.edf"
+            source.write_text("recording", encoding="utf-8")
+            context = scan_other_database(root, source)
+            mapped = _mapped_context(context, {"sub": {"indices": [0]}, "task": {"indices": [1]}})
+            preview_target = preview_other_database_mapping(mapped)["rows"][0]["target_relative_path"]
+
+            build_other_database_bids(mapped, output)
+
+            self.assertTrue((output / preview_target).exists())
+            self.assertEqual((output / preview_target).read_text(encoding="utf-8"), "recording")
+
+    def test_build_does_not_reconstruct_mapping(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder) / "root"
+            output = Path(folder) / "out"
+            (root / "S01").mkdir(parents=True)
+            source = root / "S01" / "rest.edf"
+            source.write_text("recording", encoding="utf-8")
+            context = scan_other_database(root, source)
+            mapped = _mapped_context(context, {"sub": {"indices": [0]}, "task": {"indices": [1]}})
+
+            with patch(
+                "medusa_analyzer.backend.converter.other_database.normalize_mapping",
+                side_effect=AssertionError("mapping was reconstructed"),
+            ), patch(
+                "medusa_analyzer.backend.converter.other_database.bids_relative_path",
+                side_effect=AssertionError("target path was reconstructed"),
+            ):
+                result = build_other_database_bids(mapped, output)
+
+            self.assertEqual(result["copied_files"], 1)
+
+    def test_record_ids_are_different_and_stable(self):
+        with TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "S01").mkdir()
+            (root / "S02").mkdir()
+            first = root / "S01" / "a.edf"
+            second = root / "S02" / "b.edf"
+            first.write_text("", encoding="utf-8")
+            second.write_text("", encoding="utf-8")
+
+            first_scan = scan_other_database(root, first)
+            second_scan = scan_other_database(root, first)
+
+        first_ids = [record.id for record in first_scan.records]
+        second_ids = [record.id for record in second_scan.records]
+        self.assertEqual(first_ids, second_ids)
+        self.assertEqual(len(set(first_ids)), 2)
 
     def test_build_skips_later_colliding_files_without_overwriting(self):
         with TemporaryDirectory() as folder:
@@ -145,13 +246,14 @@ class OtherDatabaseMappingTests(unittest.TestCase):
             second = root / "S02" / "b.edf"
             first.write_text("first", encoding="utf-8")
             second.write_text("second", encoding="utf-8")
-            scan = scan_other_database(root, first)
+            context = scan_other_database(root, first)
             mapping = {
                 "sub": {"value": "same"},
                 "task": {"value": "rest"},
             }
+            mapped = _mapped_context(context, mapping)
 
-            result = build_other_database_bids(scan, mapping, output)
+            result = build_other_database_bids(mapped, output)
 
             copied_edfs = sorted(output.rglob("*.edf"))
             self.assertEqual(result["copied_files"], 1)
