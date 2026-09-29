@@ -5,7 +5,10 @@ import pandas as pd
 import shutil
 import time
 from medusa_analyzer.backend.converter.prune_output import prune_output
+from medusa.core.legacy.convert import _bids_label
 from medusa.core import Recording
+import mne
+import numpy as np
 
 SENSOR_NAMES = {'eeg': 'electrodes',
                 'fnirs': 'optodes'}
@@ -37,14 +40,7 @@ def _remove_nulls(obj):
         return [_remove_nulls(item) for item in obj if item is not None]
     return obj
 
-def file_to_bids(input_path: Path, output_path: Path):
-    """
-    Lee un archivo JSON estructurado y lo exporta en un formato compatible con BIDS.
-    """
-
-    # with open(input_path, 'r', encoding='utf-8') as f:
-    #     data = json.load(f)
-    data = Recording.load(str(input_path))
+def _convert_medusa_to_mpl(data: Recording, output_path: Path):
 
     if not hasattr(data, "bids"):
         raise ValueError("The 'bids' key is missing from data.")
@@ -160,6 +156,175 @@ def file_to_bids(input_path: Path, output_path: Path):
         with open(subject_output_path / f"{base_name}_events.json", 'w', encoding='utf-8') as f:
             json.dump(events_sidecar, f, indent=4)
 
+
+def _convert_mne_to_medusa(raw, *, task="rest", subject=None, session=None, run=None,
+                  zero_time_origin=True, task_name=None):
+    """Convert an MNE Raw object to a 2.0 :class:`Recording`.
+
+    Mapping rules:
+    - The channels are grouped by MNE channel type. Each type becomes a separate
+      :class:`~medusa.core.data.signal.Signal` keyed by its type (e.g., 'eeg', 'ecg').
+    - The MNE data arrays are transposed to `[n_samples, n_channels]`.
+    - Channels are typed according to MNE channel types (mapped to BIDS equivalents).
+    - `raw.annotations` are converted to an `Events` timeline (BIDS format).
+    - Acquisition metadata is extracted from `raw.info`.
+
+    Parameters
+    ----------
+    raw : mne.io.Raw
+        The MNE Raw object to convert.
+    task : str, optional
+        BIDS ``task`` label for the new recording (default ``"rest"``).
+    subject : str or None, optional
+        Override the ``sub`` label. If ``None`` (default), attempts to extract it
+        from `raw.info["subject_info"]`, falling back to ``"01"``.
+    session : str or int or None, optional
+        BIDS ``ses`` label.
+    run : str or int or None, optional
+        Optional BIDS ``run`` index.
+    zero_time_origin : bool, optional
+        Shift the time axis so the first recorded sample is ``t = 0`` and event onsets
+        are relative to it (default ``True``). ``False`` keeps absolute timestamps.
+    task_name : str or None, optional
+        Human-readable ``TaskName`` written to every stream's sidecar. Defaults to
+        ``task`` when ``None``.
+
+    Returns
+    -------
+    medusa.core.data.recording.Recording
+        The converted recording containing the signals, events, and MNE metadata.
+    """
+    from medusa.core.data import (Recording, BidsInfo, Signal, ChannelSet,
+                                  Channel, BIDS_CHANNEL_TYPES)
+
+    # -- Time origin and times --
+    meas_date = raw.info.get("meas_date")
+    abs_origin = meas_date.timestamp() if meas_date else 0.0
+
+    if zero_time_origin:
+        times = raw.times
+    else:
+        times = raw.times + abs_origin + (raw.first_samp / raw.info["sfreq"])
+
+    # -- Events --
+    events = _mne_annotations_to_events(raw, zero_time_origin, abs_origin)
+
+    # -- Metadata --
+    experiment = {
+        "kind": "mne-raw",
+        "time_origin": abs_origin,
+        "source_metadata": {
+            "sfreq": raw.info.get("sfreq"),
+            "highpass": raw.info.get("highpass"),
+            "lowpass": raw.info.get("lowpass"),
+            "description": raw.info.get("description"),
+            "subject_info": raw.info.get("subject_info")
+        }
+    }
+
+    # -- Assemble the 2.0 Recording --
+    sub_label = _bids_label(subject) or "01"
+    ses_label = _bids_label(session, fallback=None) if session else None
+
+    bids = BidsInfo(subject=sub_label, session=ses_label, task=task, run=run)
+    rec = Recording(bids)
+
+    # -- Signal extraction grouped by channel type --
+    ch_types = np.array(raw.get_channel_types())
+    unique_types = np.unique(ch_types)
+
+    for ch_type in unique_types:
+        idx = np.where(ch_types == ch_type)[0]
+        type_ch_names = [raw.ch_names[i] for i in idx]
+
+        # MNE returns [n_channels x n_samples], Medusa expects [n_samples x n_channels]
+        type_data = raw.get_data(picks=type_ch_names).T
+
+        channel_set = ChannelSet()
+        if ch_type.lower() == 'eeg':
+            channel_set.add_unipolar_eeg_channels(type_ch_names)
+        else:
+            bids_type = ch_type.upper()
+            if bids_type not in BIDS_CHANNEL_TYPES:
+                bids_type = "OTHER"
+            channels = [Channel(name, ch_type=bids_type, unit="n/a") for name in type_ch_names]
+            channel_set.add_channels(channels)
+
+        signal = Signal(type_data, fs=float(raw.info["sfreq"]),
+                        channel_set=channel_set, times=times)
+
+        rec.add_signal(ch_type.lower(), signal)
+
+    if events is not None:
+        rec.set_events(events)
+
+    rec.set_experiment(experiment)
+    rec.set_sidecar(TaskName=task_name if task_name is not None else task)
+
+    return rec
+
+
+def _mne_annotations_to_events(raw, zero_time_origin, abs_origin):
+    """Build the BIDS :class:`Events` timeline from MNE annotations."""
+    from medusa.core.data import Events
+
+    if not raw.annotations or len(raw.annotations) == 0:
+        return None
+
+    records = []
+    first_time = raw.first_samp / raw.info["sfreq"]
+    orig_time = raw.annotations.orig_time
+
+    for annot in raw.annotations:
+        onset = annot["onset"]
+
+        # MNE onset logic: if orig_time is set, onsets are absolute.
+        # Otherwise, they are relative to the start of the data file (first_time).
+        if orig_time is not None:
+            onset -= orig_time.timestamp()
+            onset -= first_time
+        else:
+            onset -= first_time
+
+        if not zero_time_origin:
+            onset = onset + abs_origin + first_time
+
+        records.append({
+            "onset": float(onset),
+            "duration": float(annot["duration"]),
+            "trial_type": str(annot["description"]),
+            "mark_type": "event" if float(annot["duration"]) == 0.0 else "condition"
+        })
+
+    if not records:
+        return None
+
+    records.sort(key=lambda r: r["onset"])
+
+    descriptions = {
+        "trial_type": {"Description": "Annotation description derived from MNE."},
+        "mark_type": {"Description": "'event' (duration 0) or 'condition' (duration > 0)."}
+    }
+
+    events = Events(optional_columns={"trial_type": str, "mark_type": str},
+                    descriptions=descriptions)
+    events.append(records)
+
+    return events
+
+
+def file_to_bids(input_path: Path, output_path: Path):
+    """
+    Lee un archivo JSON estructurado y lo exporta en un formato compatible con BIDS.
+    """
+
+    if str(input_path).endswith(('.h5', '.rec.bson', '.rec.json')):
+        data = Recording.load(str(input_path))
+        _convert_medusa_to_mpl(data, output_path)
+    else:
+        data = mne.io.read_raw(str(input_path))
+        data_mds = _convert_mne_to_medusa(data)
+        _convert_medusa_to_mpl(data_mds, output_path)
 
 def run_conversion(input_data: List[str], output_path: str, extensions: Tuple[str, ...] = ('.mat', '.h5py'),
                    progress_callback: Callable[[int], None] | None = None,
