@@ -10,6 +10,29 @@ from medusa_analyzer.backend.experiments import eeg_run_pipeline
 
 
 class EEGRunPipelineParameterTests(unittest.TestCase):
+    def test_load_events_for_recording_returns_empty_dataframe_when_missing(self):
+        with TemporaryDirectory() as tmp_dir:
+            recording = Path(tmp_dir) / "sub-01" / "eeg" / "sub-01_task-rest_eeg.mpl"
+            recording.parent.mkdir(parents=True)
+            recording.write_text("{}", encoding="utf-8")
+
+            events = eeg_run_pipeline._load_events_for_recording(recording)
+
+        self.assertEqual(list(events.columns), ["onset", "duration", "trial_type"])
+        self.assertTrue(events.empty)
+
+    def test_load_events_for_recording_reads_events_next_to_datatype_file(self):
+        with TemporaryDirectory() as tmp_dir:
+            recording = Path(tmp_dir) / "sub-01" / "eeg" / "sub-01_task-rest_eeg.mpl"
+            recording.parent.mkdir(parents=True)
+            recording.write_text("{}", encoding="utf-8")
+            events_path = recording.parent / "sub-01_task-rest_events.tsv"
+            events_path.write_text("onset\tduration\ttrial_type\n0.0\t1.0\trest\n", encoding="utf-8")
+
+            events = eeg_run_pipeline._load_events_for_recording(recording)
+
+        self.assertEqual(events["trial_type"].tolist(), ["rest"])
+
     def test_duration_segmentation_uses_duration_normalization_key_and_returns_ms(self):
         signal = np.ones((250, 2), dtype=float)
         times = np.arange(250) / 250

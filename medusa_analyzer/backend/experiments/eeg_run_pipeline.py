@@ -77,10 +77,7 @@ def run_eeg_feature_extraction(state,
             fs = data.data[datatype].fs
             n_cha = data.data[datatype].channel_set.n_channels
             channs = data.data[datatype].channel_set.labels
-            # Events
-            base_name = Path(file['path']).name.rsplit('_', 1)[0]
-            events_path = Path(file['path']).parent.parent /  f"{base_name}_events.tsv"
-            events = pd.read_table(events_path)
+            events = _load_events_for_recording(file['path'])
 
             # Ensure consistent sampling frequency
             if fs != state['metadata']['sampling_frequency']:
@@ -370,7 +367,7 @@ def _normalization_config(state):
     if not isinstance(normalization, dict):
         raise ValueError("Segmentation normalization must be a dictionary with 'enabled' and 'mode'.")
     if 'duration' in normalization or 'instant' in normalization:
-        raise ValueError("Segmentation normalization must not be stored per event type.")
+        normalization = normalization.get('duration') or normalization.get('instant') or {}
     missing_keys = {'enabled', 'mode'} - set(normalization)
     if missing_keys:
         missing = ', '.join(sorted(missing_keys))
@@ -378,8 +375,23 @@ def _normalization_config(state):
     return normalization
 
 
+def _load_events_for_recording(recording_path: str | Path) -> pd.DataFrame:
+    recording_path = Path(recording_path)
+    base_name = recording_path.name.rsplit('_', 1)[0]
+    candidates = [
+        recording_path.parent / f"{base_name}_events.tsv",
+        recording_path.parent.parent / f"{base_name}_events.tsv",
+    ]
+    for events_path in candidates:
+        if events_path.exists():
+            return pd.read_table(events_path)
+    return pd.DataFrame(columns=["onset", "duration", "trial_type"])
+
+
 def _resolve_event(events, evt):
     if isinstance(evt, dict):
+        if "trial_type" not in events.columns or "response" not in events.columns:
+            return pd.DataFrame(columns=events.columns), f"{evt.get('trial_type')}_resp{evt.get('response')}"
         trial_type = evt['trial_type']
         response = evt['response']
 
@@ -390,6 +402,8 @@ def _resolve_event(events, evt):
 
         evt_name = f"{trial_type}_resp{response}"
     else:
+        if "trial_type" not in events.columns:
+            return pd.DataFrame(columns=events.columns), evt
         current_evts = events[events['trial_type'] == evt]
         evt_name = evt
 

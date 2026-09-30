@@ -4,7 +4,6 @@ import csv
 import hashlib
 import json
 import re
-import shutil
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -56,7 +55,11 @@ class ConversionContext:
 
     @property
     def valid(self) -> bool:
-        return not self.errors and all(not record.errors for record in self.records)
+        return (
+            not self.errors
+            and all(not record.errors for record in self.records)
+            and all(_record_has_required_mapping(record) for record in self.records)
+        )
 
     @property
     def file_count(self) -> int:
@@ -265,7 +268,7 @@ def build_other_database_bids(context: ConversionContext, output_path: str | Pat
     dataset_name: str | None = None,
     progress_callback: Callable[[int], None] | None = None,
     log_callback: Callable[[str, str], None] | None = None) -> dict[str, Any]:
-    """Build a BIDS-like dataset by copying original EEG/MEG files unchanged."""
+    """Convert mapped Other DB records into the MEDUSA BIDS export."""
     if not context.valid:
         message = "Other DB mapping is not valid:\n" + "\n".join(context.errors[:12])
         _log(log_callback, message, "error")
@@ -278,6 +281,8 @@ def build_other_database_bids(context: ConversionContext, output_path: str | Pat
     if not target_output:
         raise ValueError("Output path is required.")
     output_root = Path(target_output)
+    if _paths_overlap(Path(context.source_root), output_root):
+        raise ValueError("Output path must be outside the selected Other DB source folder.")
     context.output_root = str(output_root)
 
     output_root.mkdir(parents=True, exist_ok=True)
@@ -290,13 +295,14 @@ def build_other_database_bids(context: ConversionContext, output_path: str | Pat
 
     participants: set[str] = set()
     scans_by_folder: dict[Path, list[dict[str, str]]] = defaultdict(list)
-    copied = 0
+    converted = 0
+    failed = 0
 
-    copied_targets: set[str] = set()
+    converted_targets: set[str] = set()
     skipped_collisions = 0
     for index, record in enumerate(context.records):
         target_relative_path = record.target_relative_path
-        if target_relative_path in copied_targets:
+        if target_relative_path in converted_targets:
             skipped_collisions += 1
             record.status = "skipped_collision"
             _log(
@@ -307,41 +313,75 @@ def build_other_database_bids(context: ConversionContext, output_path: str | Pat
             _progress(progress_callback, int(5 + 90 * ((index + 1) / len(context.records))))
             continue
 
-        source = Path(record.source_path)
-        destination = output_root / target_relative_path
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, destination)
-        copied_targets.add(target_relative_path)
-        copied += 1
-        record.status = "copied"
+        try:
+            _convert_record_to_bids(record, output_root)
+        except Exception as exc:
+            failed += 1
+            record.status = "failed"
+            record.errors.append(str(exc))
+            _log(log_callback, f"[{record.source_relative_path}] conversion failed: {exc}", "error")
+            _progress(progress_callback, int(5 + 90 * ((index + 1) / len(context.records))))
+            continue
 
-        for companion in _companion_files(source):
-            companion_destination = destination.with_suffix(companion.suffix)
-            shutil.copy2(companion, companion_destination)
-
+        converted_targets.add(target_relative_path)
+        converted += 1
+        record.status = "converted"
         participants.add(f"sub-{record.entities['sub']}")
+        destination = output_root / target_relative_path
         scans_folder = destination.parent.parent
         scans_by_folder[scans_folder].append({
             "filename": destination.relative_to(scans_folder).as_posix(),
             "acq_time": "n/a",
         })
-        _write_recording_sidecar(destination, record.entities, record.datatype)
 
         _progress(progress_callback, int(5 + 90 * ((index + 1) / len(context.records))))
-        _log(log_callback, f"[{record.source_relative_path}] copied to {record.target_relative_path}", "")
+        _log(log_callback, f"[{record.source_relative_path}] converted to {record.target_relative_path}", "")
 
-    _write_participants(output_root, participants)
+    _ensure_participants(output_root, participants)
     for folder, rows in scans_by_folder.items():
         _write_scans(folder, rows)
 
+    errors = [
+        f"{record.source_relative_path}: {error}"
+        for record in context.records
+        if record.status == "failed"
+        for error in record.errors
+    ]
+    result_warnings = list(context.warnings)
+    if failed:
+        _log(log_callback, "Skipping inheritance-based file pruning because one or more conversions failed.", "warning")
+    else:
+        prune_warning = _prune_converted_output(output_root, log_callback)
+        if isinstance(prune_warning, str):
+            result_warnings.append(prune_warning)
+
     _progress(progress_callback, 100)
-    _log(log_callback, f"Other DB BIDS build finished: {copied} file(s) copied.", "")
+    _log(log_callback, f"Other DB BIDS build finished: {converted} file(s) converted.", "")
     return {
-        "valid": True,
-        "copied_files": copied,
+        "valid": failed == 0,
+        "converted_files": converted,
+        "failed_files": failed,
         "skipped_collisions": skipped_collisions,
+        "errors": errors,
+        "warnings": _unique(result_warnings),
         "output_path": str(output_root),
     }
+
+
+def _convert_record_to_bids(record: ConversionRecord, output_root: Path) -> None:
+    from medusa_analyzer.backend.converter.run_conversion import file_to_bids
+
+    file_to_bids(Path(record.source_path), output_root, bids_entities=record.entities)
+
+
+def _paths_overlap(first: Path, second: Path) -> bool:
+    first_resolved = first.resolve()
+    second_resolved = second.resolve()
+    return (
+        first_resolved == second_resolved
+        or first_resolved in second_resolved.parents
+        or second_resolved in first_resolved.parents
+    )
 
 
 def _records_for_scan_filter(root: Path, target_extension: str, record_name_suffix: str | None = None,
@@ -460,7 +500,7 @@ def _map_record(record: ConversionRecord, mapping: dict[str, dict[str, Any]]) ->
     bids_name = ""
     if not issues:
         bids_name = bids_basename(entities)
-        target_relative_path = bids_relative_path(entities, record.datatype, record.extension)
+        target_relative_path = bids_relative_path(entities, record.datatype, ".mpl")
 
     return ConversionRecord(
         id=record.id,
@@ -491,6 +531,12 @@ def record_to_preview_row(record: ConversionRecord) -> dict[str, Any]:
         "warnings": list(record.warnings),
         "status": record.status,
     }
+
+
+def _record_has_required_mapping(record: ConversionRecord) -> bool:
+    return bool(record.target_relative_path) and all(
+        bool(record.entities.get(entity)) for entity in REQUIRED_BIDS_ENTITIES
+    )
 
 
 def _mapping_rule_has_value(rule: dict[str, Any]) -> bool:
@@ -537,15 +583,6 @@ def _datatype_from_extension(extension: str) -> str:
     return "meg" if extension.lower() in MEG_EXTENSIONS else "eeg"
 
 
-def _companion_files(source: Path) -> list[Path]:
-    if source.suffix.lower() == ".vhdr":
-        return [path for path in (source.with_suffix(".vmrk"), source.with_suffix(".eeg")) if path.exists()]
-    if source.suffix.lower() == ".set":
-        companion = source.with_suffix(".fdt")
-        return [companion] if companion.exists() else []
-    return []
-
-
 def _write_dataset_description(output_root: Path, dataset_name: str) -> None:
     description = {
         "Name": dataset_name,
@@ -576,7 +613,38 @@ def _write_participants(output_root: Path, participants: set[str]) -> None:
             writer.writerow({"participant_id": participant})
 
 
+def _ensure_participants(output_root: Path, participants: set[str]) -> None:
+    if not participants:
+        return
+
+    path = output_root / "participants.tsv"
+    if not path.exists():
+        _write_participants(output_root, participants)
+        return
+
+    with open(path, newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file, delimiter="\t")
+        fieldnames = list(reader.fieldnames or [])
+        rows = list(reader)
+
+    if "participant_id" not in fieldnames:
+        fieldnames.insert(0, "participant_id")
+
+    existing = {row.get("participant_id", "") for row in rows}
+    missing = sorted(participants - existing)
+    if not missing:
+        return
+
+    with open(path, "a", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames, delimiter="\t", lineterminator="\n")
+        for participant in missing:
+            row = {field: "n/a" for field in fieldnames}
+            row["participant_id"] = participant
+            writer.writerow(row)
+
+
 def _write_scans(folder: Path, rows: list[dict[str, str]]) -> None:
+    folder.mkdir(parents=True, exist_ok=True)
     scans_prefix = folder.name
     if folder.name.startswith("ses-") and folder.parent.name.startswith("sub-"):
         scans_prefix = f"{folder.parent.name}_{folder.name}"
@@ -588,22 +656,18 @@ def _write_scans(folder: Path, rows: list[dict[str, str]]) -> None:
             writer.writerow(row)
 
 
-def _write_recording_sidecar(recording_path: Path, entities: dict[str, str], datatype: str) -> None:
-    sidecar = {
-        "TaskName": entities.get("task", "n/a"),
-        "InstitutionName": "n/a",
-        "Manufacturer": "n/a",
-        "PowerLineFrequency": "n/a",
-        "RecordingType": "continuous",
-    }
-    sidecar_name = f"{recording_path.stem}.json"
-    if recording_path.suffix.lower() == ".json":
-        sidecar_name = f"{recording_path.stem}_metadata.json"
-    sidecar_path = recording_path.with_name(sidecar_name)
-    if datatype == "meg":
-        sidecar["DewarPosition"] = "n/a"
-    with open(sidecar_path, "w", encoding="utf-8") as file:
-        json.dump(sidecar, file, indent=4)
+def _prune_converted_output(output_root: Path, log_callback: Callable[[str, str], None] | None) -> str | None:
+    from medusa_analyzer.backend.converter.prune_output import prune_output
+
+    _log(log_callback, "Starting inheritance-based file pruning...", "")
+    try:
+        prune_output(output_root)
+    except Exception as exc:
+        message = f"Skipped inheritance-based file pruning: {exc}"
+        _log(log_callback, message, "warning")
+        return message
+    _log(log_callback, "Inheritance-based file pruning successfully run", "")
+    return None
 
 
 def _unique(values: list[str]) -> list[str]:

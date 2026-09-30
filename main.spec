@@ -13,20 +13,12 @@ test_path_markers = (
 
 excluded_modules = [
     "h5py.tests",
-    "numpy._pytesttester",
-    "numpy.testing",
-    "pandas._testing",
-    "pandas.testing",
-    "pandas.util._tester",
     "patsy.test_splines_bs_data",
     "patsy.test_splines_crs_data",
     "patsy.test_state",
     "pytest",
     "pyparsing.testing",
-    "pywt._pytesttester",
-    "scipy._lib._testutils",
     "sklearn.utils._testing",
-    "statsmodels.tools._test_runner",
 ]
 
 non_runtime_asset_markers = (

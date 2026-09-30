@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Dict, List, Union, Tuple, Callable
+from typing import List, Tuple, Callable
+from datetime import date, datetime
 import json
 import pandas as pd
 import shutil
@@ -7,7 +8,6 @@ import time
 from medusa_analyzer.backend.converter.prune_output import prune_output
 from medusa.core.legacy.convert import _bids_label
 from medusa.core import Recording
-import mne
 import numpy as np
 
 SENSOR_NAMES = {'eeg': 'electrodes',
@@ -39,6 +39,25 @@ def _remove_nulls(obj):
     elif isinstance(obj, list):
         return [_remove_nulls(item) for item in obj if item is not None]
     return obj
+
+
+def _json_safe(obj):
+    if isinstance(obj, dict):
+        return {str(k): _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [_json_safe(item) for item in obj]
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, np.generic):
+        return obj.item()
+    try:
+        json.dumps(obj)
+        return obj
+    except TypeError:
+        return str(obj)
+
 
 def _convert_medusa_to_mpl(data: Recording, output_path: Path):
 
@@ -121,7 +140,7 @@ def _convert_medusa_to_mpl(data: Recording, output_path: Path):
         if experiment is not None:
             sidecar.update(experiment)
 
-        sidecar = _remove_nulls(sidecar)  # Eliminación de campos null
+        sidecar = _json_safe(_remove_nulls(sidecar))  # Eliminación de campos null
         with open(full_output_path / f"{base_name}_{data_type}.json", 'w', encoding='utf-8') as f:
             json.dump(sidecar, f, indent=4)
 
@@ -130,7 +149,7 @@ def _convert_medusa_to_mpl(data: Recording, output_path: Path):
         ch_names = [str(ch.label) for ch in content.channel_set.channels]
         # Estructuración del diccionario de salida
         signal_export = {
-            "fs": content.fs,
+            "fs": float(content.fs),
             "channels": ch_names,
             "times": content.times.tolist(),
             "signal": content.signal.tolist()
@@ -141,23 +160,24 @@ def _convert_medusa_to_mpl(data: Recording, output_path: Path):
         with open(full_output_path / f"{base_name}_{data_type}.mpl", 'w', encoding='utf-8') as f:
             json.dump(signal_export, f)
 
-    # 4. Exportación de Eventos en TSV dentro de la misma jerarquía de la señal
-    events = data.events
+        _write_events_files(data.events, full_output_path, base_name)
+
+def _write_events_files(events, output_path: Path, base_name: str):
     if events and hasattr(events, 'df'):
         df_events = events.df
         # Export to TSV (BIDS uses 'n/a' for missing values)
-        df_events.to_csv( subject_output_path / f"{base_name}_events.tsv", sep='\t', index=False, na_rep='n/a')
+        df_events.to_csv(output_path / f"{base_name}_events.tsv", sep='\t', index=False, na_rep='n/a')
 
         # Generate and export JSON sidecar according to BIDS dictionary structure
         events_sidecar = {}
         for col_name, desc_text in events.descriptions.items():
             events_sidecar[to_pascal_case(col_name)] = desc_text
-        events_sidecar = _remove_nulls(events_sidecar)  # Eliminación de campos null
-        with open(subject_output_path / f"{base_name}_events.json", 'w', encoding='utf-8') as f:
+        events_sidecar = _json_safe(_remove_nulls(events_sidecar))  # Eliminación de campos null
+        with open(output_path / f"{base_name}_events.json", 'w', encoding='utf-8') as f:
             json.dump(events_sidecar, f, indent=4)
 
 
-def _convert_mne_to_medusa(raw, *, task="rest", subject=None, session=None, run=None,
+def _convert_mne_to_medusa(raw, *, task="rest", subject=None, session=None, acquisition=None, run=None,
                   zero_time_origin=True, task_name=None):
     """Convert an MNE Raw object to a 2.0 :class:`Recording`.
 
@@ -180,6 +200,8 @@ def _convert_mne_to_medusa(raw, *, task="rest", subject=None, session=None, run=
         from `raw.info["subject_info"]`, falling back to ``"01"``.
     session : str or int or None, optional
         BIDS ``ses`` label.
+    acquisition : str or int or None, optional
+        Optional BIDS ``acq`` label.
     run : str or int or None, optional
         Optional BIDS ``run`` index.
     zero_time_origin : bool, optional
@@ -225,8 +247,9 @@ def _convert_mne_to_medusa(raw, *, task="rest", subject=None, session=None, run=
     # -- Assemble the 2.0 Recording --
     sub_label = _bids_label(subject) or "01"
     ses_label = _bids_label(session, fallback=None) if session else None
+    acq_label = _bids_label(acquisition, fallback=None) if acquisition else None
 
-    bids = BidsInfo(subject=sub_label, session=ses_label, task=task, run=run)
+    bids = BidsInfo(subject=sub_label, session=ses_label, task=task, acquisition=acq_label, run=run)
     rec = Recording(bids)
 
     # -- Signal extraction grouped by channel type --
@@ -313,18 +336,62 @@ def _mne_annotations_to_events(raw, zero_time_origin, abs_origin):
     return events
 
 
-def file_to_bids(input_path: Path, output_path: Path):
+def file_to_bids(input_path: Path, output_path: Path, bids_entities: dict[str, str] | None = None):
     """
     Lee un archivo JSON estructurado y lo exporta en un formato compatible con BIDS.
     """
+    input_path = Path(input_path)
+    output_path = Path(output_path)
 
     if str(input_path).endswith(('.h5', '.rec.bson', '.rec.json')):
         data = Recording.load(str(input_path))
+        if bids_entities:
+            data.bids = _bids_info_from_entities(bids_entities, existing=getattr(data, "bids", None))
         _convert_medusa_to_mpl(data, output_path)
     else:
-        data = mne.io.read_raw(str(input_path))
-        data_mds = _convert_mne_to_medusa(data)
+        data = _read_raw_mne(input_path)
+        data_mds = _convert_mne_to_medusa(data, **_mne_kwargs_from_entities(bids_entities))
         _convert_medusa_to_mpl(data_mds, output_path)
+
+
+def _read_raw_mne(input_path: Path):
+    import mne
+
+    return mne.io.read_raw(str(input_path))
+
+
+def _mne_kwargs_from_entities(entities: dict[str, str] | None) -> dict[str, str | None]:
+    if not entities:
+        return {}
+    task = entities.get("task") or "rest"
+    return {
+        "subject": entities.get("sub"),
+        "session": _optional_entity(entities, "ses"),
+        "task": task,
+        "acquisition": _optional_entity(entities, "acq"),
+        "run": _optional_entity(entities, "run"),
+        "task_name": task,
+    }
+
+
+def _bids_info_from_entities(entities: dict[str, str], existing=None):
+    from medusa.core.data import BidsInfo
+
+    return BidsInfo(
+        subject=entities.get("sub") or getattr(existing, "subject", None),
+        session=_optional_entity(entities, "ses") or getattr(existing, "session", None),
+        task=entities.get("task") or getattr(existing, "task", None),
+        acquisition=_optional_entity(entities, "acq") or getattr(existing, "acquisition", None),
+        run=_optional_entity(entities, "run") or getattr(existing, "run", None),
+        participant=getattr(existing, "participant", None),
+        scan=getattr(existing, "scan", None),
+    )
+
+
+def _optional_entity(entities: dict[str, str], key: str) -> str | None:
+    value = entities.get(key)
+    return value or None
+
 
 def run_conversion(input_data: List[str], output_path: str, extensions: Tuple[str, ...] = ('.mat', '.h5py'),
                    progress_callback: Callable[[int], None] | None = None,

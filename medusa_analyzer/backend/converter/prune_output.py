@@ -1,4 +1,3 @@
-import os
 import json
 from pathlib import Path
 from collections import Counter
@@ -17,9 +16,16 @@ def _get_core_name(filename: str) -> str:
     return '_'.join(core_parts) + '.json'
 
 def _read_json_as_str(path: Path) -> str:
-    with open(path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    data = _load_json(path)
     return json.dumps(data, sort_keys=True)
+
+
+def _load_json(path: Path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON file during inheritance pruning: {path}: {exc}") from exc
 
 
 def _write_str_to_json(json_str: str, path: Path):
@@ -28,8 +34,7 @@ def _write_str_to_json(json_str: str, path: Path):
 
 def split_json(filepath: Path):
     """Divide el JSON aislando exclusivamente el bloque 'TaskInformation'."""
-    with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    data = _load_json(filepath)
 
     # Extraer el bloque completo de la tarea. Si no existe, devuelve None.
     task_info = data.pop('TaskInformation', None)
@@ -109,8 +114,7 @@ def merge_and_clean(directory: Path) -> None:
     for base_name, files in base_groups.items():
         merged_data = {}
         for file in files:
-            with open(file, 'r', encoding='utf-8') as f:
-                merged_data.update(json.load(f))
+            merged_data.update(_load_json(file))
             file.unlink()
 
         final_path = directory / base_name
