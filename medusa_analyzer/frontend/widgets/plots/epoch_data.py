@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
+from threading import Lock
 from typing import Any, Iterable
 
 import numpy as np
@@ -14,6 +17,7 @@ from .recording_ids import normalize_recording_id, recording_ignored_prefixes_fr
 
 _BAND_RE = re.compile(r"_band-([^_]+)")
 _SUBJECT_RE = re.compile(r"(?:^|[\\/])sub-([^_\\/]+)|(?:^|_)sub-([^_\\/]+)")
+_MAX_EPOCH_LOAD_WORKERS = max(4, min(8, os.cpu_count() or 4))
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +72,12 @@ class _LoadedEpoch:
     channels: tuple[str, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class _ReducedEpochChannels:
+    values_by_channel: np.ndarray
+    times: np.ndarray
+
+
 class EpochDataIndex:
     """Index segmented epoch files by band, subject and logical recording id."""
 
@@ -75,7 +85,10 @@ class EpochDataIndex:
         self.records = records
         self.ignored_recording_prefixes = ignored_recording_prefixes
         self._records_by_key: dict[tuple[str, str, str], list[_EpochRecord]] = {}
-        self._loaded_by_path: dict[Path, _LoadedEpoch | None] = {}
+        self._band_tokens = {record.band_token for record in records}
+        self._reduced_channels_by_path: dict[tuple[Path, int], _ReducedEpochChannels | None] = {}
+        self._reduced_by_key: dict[tuple[Path, tuple[int, ...], int], PreparedEpochValue | None] = {}
+        self._cache_lock = Lock()
         for record in records:
             key = (record.band_token, record.subject_id, record.recording_id)
             self._records_by_key.setdefault(key, []).append(record)
@@ -87,12 +100,15 @@ class EpochDataIndex:
         records: list[_EpochRecord] = []
         ignored_recording_prefixes = recording_ignored_prefixes_from_state(state)
 
-        if not segmented_path.is_dir():
-            return cls(records, ignored_recording_prefixes)
+        discovered_files = state.get("epoch_files")
+        if isinstance(discovered_files, list) and discovered_files:
+            candidate_paths = [Path(str(path)) for path in discovered_files]
+        elif segmented_path.is_dir():
+            candidate_paths = [path for path in segmented_path.rglob("*") if path.is_file()]
+        else:
+            candidate_paths = []
 
-        for path in segmented_path.rglob("*"):
-            if not path.is_file():
-                continue
+        for path in candidate_paths:
             record = _epoch_record_from_path(path, ignored_recording_prefixes)
             if record is not None:
                 records.append(record)
@@ -107,10 +123,7 @@ class EpochDataIndex:
         values: list[PreparedEpochValue] = []
 
         for record in self._records_by_key.get((band_token, subject_key, recording_key), []):
-            loaded = self._load(record.path)
-            if loaded is None:
-                continue
-            reduced = _reduce_loaded_epoch(loaded, selected_channels, channel_count)
+            reduced = self._reduced(record.path, selected_channels, channel_count)
             if reduced is not None:
                 values.append(reduced)
         return values
@@ -119,15 +132,37 @@ class EpochDataIndex:
         return {record.band_id for record in self.records}
 
     def has_band(self, band_id: str) -> bool:
-        return _token(band_id) in {record.band_token for record in self.records}
+        return _token(band_id) in self._band_tokens
 
     def normalize_recording_id(self, value: Any) -> str:
         return normalize_recording_id(value, self.ignored_recording_prefixes)
 
     def _load(self, path: Path) -> _LoadedEpoch | None:
-        if path not in self._loaded_by_path:
-            self._loaded_by_path[path] = _load_epoch_file(path)
-        return self._loaded_by_path[path]
+        return _load_epoch_file(path)
+
+    def _reduced(self, path: Path, selected_channels: list[int], channel_count: int) -> PreparedEpochValue | None:
+        key = (path, tuple(selected_channels), channel_count)
+        with self._cache_lock:
+            if key in self._reduced_by_key:
+                return self._reduced_by_key[key]
+
+        channels_key = (path, channel_count)
+        with self._cache_lock:
+            reduced_channels = self._reduced_channels_by_path.get(channels_key)
+
+        if channels_key not in self._reduced_channels_by_path:
+            loaded = self._load(path)
+            reduced_channels = (
+                _reduce_loaded_epoch_channels(loaded, channel_count)
+                if loaded is not None
+                else None
+            )
+            with self._cache_lock:
+                reduced_channels = self._reduced_channels_by_path.setdefault(channels_key, reduced_channels)
+
+        reduced = _select_reduced_epoch_channels(reduced_channels, selected_channels)
+        with self._cache_lock:
+            return self._reduced_by_key.setdefault(key, reduced)
 
 
 def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_channels: list[int],
@@ -144,14 +179,27 @@ def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_cha
         selected_recordings = _unique_ordered(
             data_index.normalize_recording_id(item) for item in _selected_recordings(state))
         observation_unit = "recording"
+        group_subjects_by_id = {
+            group_id: [_normalize_subject_id(item) for item in group.get("subjects", [])]
+            for group_id, group in groups.items()
+        }
+        combo_values_by_key = _combo_epoch_value_map(
+            data_index,
+            band_id,
+            ((subject_id, recording_id)
+                for group_subjects in group_subjects_by_id.values()
+                for recording_id in selected_recordings
+                for subject_id in group_subjects),
+            channels,
+            channel_count,
+        )
         for group_id, group in groups.items():
             prepared_group = _prepared_group_shell(group_id, group)
-            group_subjects = [_normalize_subject_id(item) for item in group.get("subjects", [])]
+            group_subjects = group_subjects_by_id.get(group_id, [])
             for recording_id in selected_recordings:
                 averaged_values = []
                 for subject_id in group_subjects:
-                    combo_values = data_index.values_for(band_id, subject_id, recording_id, channels, channel_count)
-                    combo_value = _average_epoch_values(combo_values)
+                    combo_value = combo_values_by_key.get((subject_id, recording_id))
                     if combo_value is not None:
                         averaged_values.append(combo_value)
                 observation = _average_epoch_values(averaged_values)
@@ -163,15 +211,27 @@ def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_cha
     else:
         selected_subjects = [_normalize_subject_id(item) for item in _selected_subjects(state)]
         observation_unit = "subject"
+        group_recordings_by_id = {
+            group_id: _unique_ordered(data_index.normalize_recording_id(item) for item in group.get("files", []))
+            for group_id, group in groups.items()
+        }
+        combo_values_by_key = _combo_epoch_value_map(
+            data_index,
+            band_id,
+            ((subject_id, recording_id)
+                for subject_id in selected_subjects
+                for group_recordings in group_recordings_by_id.values()
+                for recording_id in group_recordings),
+            channels,
+            channel_count,
+        )
         for group_id, group in groups.items():
             prepared_group = _prepared_group_shell(group_id, group)
-            group_recordings = _unique_ordered(
-                data_index.normalize_recording_id(item) for item in group.get("files", []))
+            group_recordings = group_recordings_by_id.get(group_id, [])
             for subject_id in selected_subjects:
                 averaged_values = []
                 for recording_id in group_recordings:
-                    combo_values = data_index.values_for(band_id, subject_id, recording_id, channels, channel_count)
-                    combo_value = _average_epoch_values(combo_values)
+                    combo_value = combo_values_by_key.get((subject_id, recording_id))
                     if combo_value is not None:
                         averaged_values.append(combo_value)
                 observation = _average_epoch_values(averaged_values)
@@ -183,6 +243,36 @@ def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_cha
 
     return PreparedEpochData(band_id=band_id, analysis_mode=analysis_mode, observation_unit=observation_unit,
         groups=prepared_groups, times=times)
+
+
+def _combo_epoch_value_map(data_index: EpochDataIndex, band_id: str, combinations: Iterable[tuple[str, str]],
+    selected_channels: list[int], channel_count: int) -> dict[tuple[str, str], PreparedEpochValue | None]:
+    unique_combinations = _unique_ordered_combinations(combinations)
+    if len(unique_combinations) <= 1:
+        return {
+            combo: _average_epoch_values(data_index.values_for(
+                band_id, combo[0], combo[1], selected_channels, channel_count))
+            for combo in unique_combinations
+        }
+
+    workers = min(_MAX_EPOCH_LOAD_WORKERS, len(unique_combinations))
+    results: dict[tuple[str, str], PreparedEpochValue | None] = {}
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(
+                data_index.values_for,
+                band_id,
+                subject_id,
+                recording_id,
+                selected_channels,
+                channel_count,
+            ): (subject_id, recording_id)
+            for subject_id, recording_id in unique_combinations
+        }
+        for future in as_completed(futures):
+            combo = futures[future]
+            results[combo] = _average_epoch_values(future.result())
+    return results
 
 
 def _epoch_record_from_path(path: Path, ignored_recording_prefixes: tuple[str, ...]) -> _EpochRecord | None:
@@ -236,22 +326,48 @@ def _time_vector_ms(payload: Any) -> np.ndarray | None:
 
 def _reduce_loaded_epoch(loaded: _LoadedEpoch, selected_channels: list[int],
     channel_count: int) -> PreparedEpochValue | None:
+    return _select_reduced_epoch_channels(_reduce_loaded_epoch_channels(loaded, channel_count), selected_channels)
+
+
+def _reduce_loaded_epoch_channels(loaded: _LoadedEpoch, channel_count: int) -> _ReducedEpochChannels | None:
     epochs = _normalize_epoch_array(loaded.values, len(loaded.channels) or channel_count, loaded.times.size)
     if epochs is None:
         return None
 
-    channels = selected_channels or list(range(epochs.shape[2]))
-    valid_channels = [channel for channel in channels if 0 <= channel < epochs.shape[2]]
+    channel_means = _nanmean_axis(epochs, 0)
+    channel_means = np.asarray(channel_means, dtype=float)
+    if channel_means.ndim != 2 or channel_means.size == 0 or not np.isfinite(channel_means).any():
+        return None
+
+    times = loaded.times
+    if channel_means.shape[0] != times.size:
+        min_len = min(channel_means.shape[0], times.size)
+        channel_means = channel_means[:min_len, :]
+        times = times[:min_len]
+
+    return _ReducedEpochChannels(values_by_channel=channel_means.T, times=times)
+
+
+def _select_reduced_epoch_channels(reduced_channels: _ReducedEpochChannels | None,
+    selected_channels: list[int]) -> PreparedEpochValue | None:
+    if reduced_channels is None:
+        return None
+
+    values_by_channel = np.asarray(reduced_channels.values_by_channel, dtype=float)
+    if values_by_channel.ndim != 2 or values_by_channel.size == 0:
+        return None
+
+    channels = selected_channels or list(range(values_by_channel.shape[0]))
+    valid_channels = [channel for channel in channels if 0 <= channel < values_by_channel.shape[0]]
     if not valid_channels:
         return None
 
-    channel_mean = _nanmean_axis(np.take(epochs, valid_channels, axis=2), 2)
-    epoch_mean = _nanmean_axis(channel_mean, 0)
+    epoch_mean = _nanmean_axis(np.take(values_by_channel, valid_channels, axis=0), 0)
     epoch_mean = np.asarray(epoch_mean, dtype=float).squeeze()
     if epoch_mean.ndim != 1 or epoch_mean.size == 0 or not np.isfinite(epoch_mean).any():
         return None
 
-    times = loaded.times
+    times = reduced_channels.times
     if epoch_mean.size != times.size:
         min_len = min(epoch_mean.size, times.size)
         epoch_mean = epoch_mean[:min_len]
@@ -395,6 +511,10 @@ def _normalize_subject_id(value: Any) -> str:
 
 def _unique_ordered(values: Iterable[str]) -> list[str]:
     return list(dict.fromkeys(value for value in values if value))
+
+
+def _unique_ordered_combinations(values: Iterable[tuple[str, str]]) -> list[tuple[str, str]]:
+    return list(dict.fromkeys(value for value in values if value[0] and value[1]))
 
 
 def _token(value: Any) -> str:

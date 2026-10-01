@@ -88,7 +88,11 @@ class PlotDataIndex:
         self.ignored_recording_prefixes = ignored_recording_prefixes
         self._records_by_key: dict[tuple[str, str, str, str], list[_ParameterRecord]] = {}
         self._loaded_by_path: dict[Path, _LoadedParameter | None] = {}
+        self._band_tokens_by_feature: dict[str, set[str]] = defaultdict(set)
+        self._band_ids_by_feature: dict[str, set[str]] = defaultdict(set)
         for record in records:
+            self._band_tokens_by_feature[record.feature_token].add(record.band_token)
+            self._band_ids_by_feature[record.feature_token].add(record.band_id)
             for recording_id in (record.recording_id, *record.recording_aliases):
                 key = (record.feature_token, record.band_token, record.subject_id, recording_id)
                 self._records_by_key.setdefault(key, []).append(record)
@@ -101,12 +105,15 @@ class PlotDataIndex:
         records: list[_ParameterRecord] = []
         ignored_recording_prefixes = recording_ignored_prefixes_from_state(state)
 
-        if not search_path.is_dir():
-            return cls(records, ignored_recording_prefixes)
+        discovered_files = state.get("feature_files")
+        if isinstance(discovered_files, list) and discovered_files:
+            candidate_paths = [Path(str(path)) for path in discovered_files]
+        elif search_path.is_dir():
+            candidate_paths = [path for path in search_path.rglob("*") if path.is_file()]
+        else:
+            candidate_paths = []
 
-        for path in search_path.rglob("*"):
-            if not path.is_file():
-                continue
+        for path in candidate_paths:
             record = _parameter_record_from_path(path, ignored_recording_prefixes)
             if record is not None:
                 records.append(record)
@@ -135,11 +142,11 @@ class PlotDataIndex:
 
     def available_band_tokens(self, feature_id: str) -> set[str]:
         feature_tokens = _feature_tokens(feature_id)
-        return {record.band_token for record in self.records if record.feature_token in feature_tokens}
+        return set().union(*(self._band_tokens_by_feature.get(token, set()) for token in feature_tokens))
 
     def available_band_ids(self, feature_id: str) -> set[str]:
         feature_tokens = _feature_tokens(feature_id)
-        return {record.band_id for record in self.records if record.feature_token in feature_tokens}
+        return set().union(*(self._band_ids_by_feature.get(token, set()) for token in feature_tokens))
 
     def has_feature_band(self, feature_id: str, band_id: str) -> bool:
         return _token(band_id) in self.available_band_tokens(feature_id)

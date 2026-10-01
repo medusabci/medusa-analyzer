@@ -6,7 +6,7 @@ from typing import Any
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QDoubleSpinBox, QFileDialog, QFrame, QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QScrollArea, QSizePolicy, QSpinBox, QSplitter, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout,
@@ -28,6 +28,8 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
         self._refreshing = False
         self._data_index: PlotDataIndex | None = None
         self._data_index_key = ""
+        self._draw_scheduled = False
+        self._pending_draw_features: list[str] = []
 
         self.setWidgetResizable(True)
         self.setFrameShape(QFrame.Shape.NoFrame)
@@ -49,6 +51,7 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
         self.tabs = QTabWidget()
         self.tabs.setProperty("role", "features-tabs")
         self.tabs.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.tabs.currentChanged.connect(lambda _index: self._schedule_current_feature_draw())
         root.addWidget(self.tabs, 1)
 
         self.status_label = QLabel("")
@@ -70,6 +73,8 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
             if isinstance(config_data, dict) and isinstance(config_data.get("selected_features"), list):
                 selected_features = [str(feature) for feature in config_data["selected_features"]]
 
+        self._pending_draw_features.clear()
+        self._draw_scheduled = False
         self.feature_tabs.clear()
         self.tabs.clear()
         stored_configs = self.state.setdefault("plot_feature_configs", {})
@@ -88,7 +93,7 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
 
         self._refreshing = False
         for feature_id in selected_features:
-            self._sync_feature_config(feature_id, emit_changed=False)
+            self._sync_feature_config(feature_id, emit_changed=False, draw_plot=False)
 
         if not selected_features:
             self.status_label.setText("Select at least one feature before configuring plots.")
@@ -98,6 +103,7 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
             self.status_label.setProperty("status", "ready")
         self.status_label.style().unpolish(self.status_label)
         self.status_label.style().polish(self.status_label)
+        self._schedule_feature_draws(selected_features)
 
     def _build_feature_tab(self, feature_id: str, available_plots: list[dict[str, Any]]) -> QWidget:
         """Construye una tab completa: controles a la izquierda y canvas a la derecha."""
@@ -253,6 +259,7 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
         splitter.setSizes([360, 720])
 
         self.feature_tabs[feature_id] = {
+            "page": page,
             "plot_combo": plot_combo,
             "available_plots": available_plots,
             "channel_table": channel_table,
@@ -405,7 +412,7 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
         layout.setColumnStretch(1, 1)
         self._sync_feature_config(feature_id)
 
-    def _sync_feature_config(self, feature_id: str, emit_changed: bool = True) -> None:
+    def _sync_feature_config(self, feature_id: str, emit_changed: bool = True, draw_plot: bool = True) -> None:
         """Lee los controles de una tab, guarda el state y actualiza el canvas."""
         if self._refreshing or feature_id not in self.feature_tabs:
             return
@@ -452,11 +459,52 @@ class PlotFeaturesVisualizationWidget(QScrollArea):
             "visualization": visualization,
         }
 
-        self._draw_feature_plot(feature_id, plot_id, str(selected_band or ""), selected_channels, visualization)
-        tab["canvas"].draw_idle()
+        if draw_plot or not plot_id or not selected_band or not selected_channels:
+            self._draw_feature_plot(feature_id, plot_id, str(selected_band or ""), selected_channels, visualization)
+            tab["canvas"].draw_idle()
 
         if emit_changed:
             self.changed.emit()
+
+    def _schedule_current_feature_draw(self) -> None:
+        feature_id = self._current_feature_id()
+        if feature_id is None:
+            return
+        self._schedule_feature_draws([feature_id], prioritize=True)
+
+    def _schedule_feature_draws(self, feature_ids: list[str], prioritize: bool = False) -> None:
+        if self._refreshing or not feature_ids:
+            return
+        existing = set(self._pending_draw_features)
+        new_items = [feature_id for feature_id in feature_ids
+            if feature_id in self.feature_tabs and feature_id not in existing]
+        if not new_items and self._draw_scheduled:
+            return
+        if prioritize:
+            self._pending_draw_features = new_items + self._pending_draw_features
+        else:
+            self._pending_draw_features.extend(new_items)
+        if not self._draw_scheduled:
+            self._draw_scheduled = True
+            QTimer.singleShot(0, self._draw_next_pending_feature)
+
+    def _draw_next_pending_feature(self) -> None:
+        self._draw_scheduled = False
+        while self._pending_draw_features:
+            feature_id = self._pending_draw_features.pop(0)
+            if feature_id in self.feature_tabs:
+                self._sync_feature_config(feature_id, emit_changed=False, draw_plot=True)
+                break
+        if self._pending_draw_features:
+            self._draw_scheduled = True
+            QTimer.singleShot(0, self._draw_next_pending_feature)
+
+    def _current_feature_id(self) -> str | None:
+        current_widget = self.tabs.currentWidget()
+        for feature_id, tab in self.feature_tabs.items():
+            if self.tabs.indexOf(current_widget) == self.tabs.indexOf(tab["page"]):
+                return feature_id
+        return None
 
     def _draw_feature_plot(self, feature_id: str, plot_id: str, band_id: str, selected_channels: list[int],
         visualization: dict[str, Any]) -> None:

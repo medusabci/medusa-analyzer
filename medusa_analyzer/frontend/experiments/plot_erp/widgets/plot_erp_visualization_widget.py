@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -32,11 +33,29 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from medusa_analyzer.frontend.worker import TaskRunner, Worker
+from medusa_analyzer.frontend.widgets.progress_overlay import ProgressOverlay
 from medusa_analyzer.frontend.widgets.plots import (
     ERPPlot,
     EpochDataIndex,
     prepare_grouped_epoch_data,
 )
+
+
+def _prepare_erp_plot_data(state_snapshot: dict[str, Any], band_id: str, selected_channels: list[int],
+    data_index: EpochDataIndex, request_id: int, cache_key: tuple[Any, ...],
+    progress_callback=None, log_callback=None) -> dict[str, Any]:
+    del log_callback
+    if progress_callback is not None:
+        progress_callback(15)
+    prepared_data = prepare_grouped_epoch_data(state_snapshot, band_id, selected_channels, data_index)
+    if progress_callback is not None:
+        progress_callback(90)
+    return {
+        "request_id": request_id,
+        "cache_key": cache_key,
+        "prepared_data": prepared_data,
+    }
 
 
 class PlotERPVisualizationWidget(QScrollArea):
@@ -52,6 +71,16 @@ class PlotERPVisualizationWidget(QScrollArea):
         self._refreshing = False
         self._data_index: EpochDataIndex | None = None
         self._data_index_key = ""
+        self._prepared_data_cache: dict[tuple[Any, ...], Any] = {}
+        self._draw_scheduled = False
+        self._draw_timer = QTimer(self)
+        self._draw_timer.setSingleShot(True)
+        self._draw_timer.setInterval(150)
+        self._draw_timer.timeout.connect(self._draw_current_plot)
+        self._plot_request_id = 0
+        self._active_plot_request_id = 0
+        self._active_plot_cache_key: tuple[Any, ...] | None = None
+        self.runner = TaskRunner()
         self.dynamic_controls: dict[str, dict[str, Any]] = {}
         self.last_export = {"width": 8.0, "height": 5.0, "dpi": 300, "path": ""}
 
@@ -86,6 +115,9 @@ class PlotERPVisualizationWidget(QScrollArea):
         self.status_label.setProperty("status", "idle")
         self.status_label.setWordWrap(True)
         root.addWidget(self.status_label)
+
+        self.overlay = ProgressOverlay(self, show_log=False)
+        self.overlay.close_button.clicked.connect(lambda _checked=False: self.changed.emit())
 
         self._refresh_from_state()
 
@@ -232,7 +264,8 @@ class PlotERPVisualizationWidget(QScrollArea):
             self._rebuild_dynamic_controls()
         finally:
             self._refreshing = False
-        self._sync_plot_config(emit_changed=False)
+        self._sync_plot_config(emit_changed=False, draw_plot=False)
+        self._schedule_plot_draw()
 
     def _populate_channel_table(self) -> None:
         channels = self._channel_names()
@@ -291,11 +324,7 @@ class PlotERPVisualizationWidget(QScrollArea):
                 self.band_combo.setCurrentIndex(index)
 
         channels = self._channel_names()
-        selected_channels = stored.get("selected_channels")
-        if isinstance(selected_channels, list):
-            self._select_channels([int(channel) for channel in selected_channels if str(channel).isdigit()])
-        else:
-            self._select_channels(list(range(len(channels))))
+        self._select_channels(self._channel_indices_from_config(stored.get("selected_channels"), len(channels)))
 
     def _plot_type_changed(self) -> None:
         self._rebuild_dynamic_controls()
@@ -379,7 +408,7 @@ class PlotERPVisualizationWidget(QScrollArea):
 
         self.dynamic_layout.setColumnStretch(1, 1)
 
-    def _sync_plot_config(self, *_: Any, emit_changed: bool = True) -> None:
+    def _sync_plot_config(self, *_: Any, emit_changed: bool = True, draw_plot: bool = True) -> None:
         if self._refreshing:
             return
 
@@ -423,33 +452,77 @@ class PlotERPVisualizationWidget(QScrollArea):
             "visualization": visualization,
         }
 
-        self._draw_plot(plot_id, str(selected_band or ""), selected_channels, visualization)
-        self.canvas.draw_idle()
+        if draw_plot:
+            self._schedule_plot_draw()
         self._update_status(plot_id, str(selected_band or ""), selected_channels)
 
         if emit_changed:
             self.changed.emit()
 
+    def _schedule_plot_draw(self) -> None:
+        if self._refreshing:
+            return
+        self._draw_scheduled = True
+        self._draw_timer.start()
+
+    def _draw_current_plot(self) -> None:
+        self._draw_scheduled = False
+        config = self.state.get("plot_erp_plot_config", {})
+        if not isinstance(config, dict):
+            config = {}
+        plot_id = str(config.get("plot_type") or "")
+        band_id = str(config.get("selected_band") or "")
+        selected_channels = self._valid_channel_indices(config.get("selected_channels"), len(self._channel_names()))
+        visualization = config.get("visualization")
+        if not isinstance(visualization, dict):
+            visualization = {}
+
+        self._plot_request_id += 1
+        request_id = self._plot_request_id
+        self._active_plot_request_id = request_id
+        self._draw_plot(plot_id, band_id, selected_channels, visualization, request_id=request_id)
+        self.canvas.draw_idle()
+
     def _draw_plot(self, plot_id: str, band_id: str, selected_channels: list[int],
-        visualization: dict[str, Any]) -> None:
+        visualization: dict[str, Any], prepared_data=None, request_id: int | None = None,
+        cache_key: tuple[Any, ...] | None = None) -> None:
         self.figure.clear()
         ax = self.figure.add_subplot(111)
         try:
             if not plot_id:
+                self._active_plot_cache_key = None
+                self.overlay.hide()
                 self._draw_empty_plot(ax, visualization, "No compatible plot selected.")
                 return
             if plot_id != "plot_erp":
+                self._active_plot_cache_key = None
+                self.overlay.hide()
                 self._draw_empty_plot(ax, visualization, f"{plot_id} plotting is not available.")
                 return
             if not band_id:
+                self._active_plot_cache_key = None
+                self.overlay.hide()
                 self._draw_empty_plot(ax, visualization, "Select a band before plotting.")
                 return
             if not selected_channels:
+                self._active_plot_cache_key = None
+                self.overlay.hide()
                 self._draw_empty_plot(ax, visualization, "Select at least one channel before plotting.")
                 return
 
             data_index = self._data_index_for_state()
-            prepared_data = prepare_grouped_epoch_data(self.state, band_id, selected_channels, data_index)
+            cache_key = cache_key or self._prepared_epoch_data_cache_key(band_id, selected_channels)
+            if prepared_data is None:
+                prepared_data = self._prepared_data_cache.get(cache_key)
+            if prepared_data is None:
+                self._draw_empty_plot(ax, visualization, "Recalculating plot...")
+                if request_id is not None:
+                    self._start_plot_recalculation(
+                        request_id, cache_key, band_id, selected_channels, visualization, data_index)
+                return
+
+            self._active_plot_cache_key = None
+            self.overlay.hide()
             if not prepared_data.has_observations():
                 self._draw_empty_plot(ax, visualization, "No epochs found for this band and selection.")
                 return
@@ -546,7 +619,125 @@ class PlotERPVisualizationWidget(QScrollArea):
         if self._data_index is None or self._data_index_key != data_index_key:
             self._data_index = EpochDataIndex.from_state(self.state)
             self._data_index_key = data_index_key
+            self._prepared_data_cache.clear()
         return self._data_index
+
+    def _prepared_epoch_data(self, band_id: str, selected_channels: list[int]):
+        data_index = self._data_index_for_state()
+        cache_key = self._prepared_epoch_data_cache_key(band_id, selected_channels)
+        if cache_key not in self._prepared_data_cache:
+            self._prepared_data_cache[cache_key] = prepare_grouped_epoch_data(
+                self.state, band_id, selected_channels, data_index)
+            if len(self._prepared_data_cache) > 12:
+                self._prepared_data_cache.pop(next(iter(self._prepared_data_cache)))
+        return self._prepared_data_cache[cache_key]
+
+    def _start_plot_recalculation(self, request_id: int, cache_key: tuple[Any, ...], band_id: str,
+        selected_channels: list[int], visualization: dict[str, Any], data_index: EpochDataIndex) -> None:
+        self._active_plot_cache_key = cache_key
+        self.overlay.start_process("Recalculating plot...")
+        self.overlay.progress.setValue(10)
+
+        worker = Worker(
+            _prepare_erp_plot_data,
+            self._plot_state_snapshot(),
+            band_id,
+            list(selected_channels),
+            data_index,
+            request_id,
+            cache_key,
+        )
+        worker.signals.progress.connect(self.overlay.progress.setValue)
+        worker.signals.result.connect(
+            lambda result, plot_id="plot_erp", band=band_id, channels=list(selected_channels),
+            params=deepcopy(visualization): self._plot_data_ready(result, plot_id, band, channels, params))
+        worker.signals.error.connect(
+            lambda error, rid=request_id, params=deepcopy(visualization): self._plot_data_failed(error, rid, params))
+        worker.signals.finished.connect(lambda rid=request_id: self._plot_worker_finished(rid))
+        self.runner.start(worker)
+
+    def _plot_data_ready(self, result: dict[str, Any], plot_id: str, band_id: str, selected_channels: list[int],
+        visualization: dict[str, Any]) -> None:
+        request_id = int(result.get("request_id", 0))
+        if request_id != self._active_plot_request_id:
+            return
+
+        cache_key = result.get("cache_key")
+        prepared_data = result.get("prepared_data")
+        if isinstance(cache_key, tuple) and prepared_data is not None:
+            self._prepared_data_cache[cache_key] = prepared_data
+            if len(self._prepared_data_cache) > 12:
+                self._prepared_data_cache.pop(next(iter(self._prepared_data_cache)))
+
+        self.overlay.progress.setValue(100)
+        self._draw_plot(plot_id, band_id, selected_channels, visualization,
+            prepared_data=prepared_data, request_id=request_id,
+            cache_key=cache_key if isinstance(cache_key, tuple) else None)
+        self.canvas.draw_idle()
+
+    def _plot_data_failed(self, error: str, request_id: int, visualization: dict[str, Any]) -> None:
+        if request_id != self._active_plot_request_id:
+            return
+        self.figure.clear()
+        ax = self.figure.add_subplot(111)
+        self._draw_empty_plot(ax, visualization, error.splitlines()[0] if error else "Could not recalculate plot.")
+        self.figure.tight_layout()
+        self.canvas.draw_idle()
+
+    def _plot_worker_finished(self, request_id: int) -> None:
+        if request_id == self._active_plot_request_id:
+            self._active_plot_cache_key = None
+            self.overlay.hide()
+
+    def _plot_state_snapshot(self) -> dict[str, Any]:
+        keys = (
+            "analysis_mode",
+            "channel_names",
+            "data_assignment",
+            "groups",
+            "plot_features_config",
+            "plot_selected_recordings",
+            "plot_selected_subjects",
+        )
+        return {key: deepcopy(self.state.get(key)) for key in keys}
+
+    def _prepared_epoch_data_cache_key(self, band_id: str, selected_channels: list[int]) -> tuple[Any, ...]:
+        groups = self.state.get("groups")
+        data_assignment = self.state.get("data_assignment")
+        return (
+            self._data_index_key,
+            str(self.state.get("analysis_mode") or ""),
+            str(band_id),
+            tuple(int(channel) for channel in selected_channels),
+            self._state_list_key("plot_selected_subjects"),
+            self._state_list_key("plot_selected_recordings"),
+            json.dumps(groups if isinstance(groups, dict) else {}, sort_keys=True, default=str),
+            json.dumps(data_assignment if isinstance(data_assignment, dict) else {}, sort_keys=True, default=str),
+        )
+
+    def _state_list_key(self, key: str) -> tuple[str, ...]:
+        values = self.state.get(key)
+        return tuple(str(value) for value in values) if isinstance(values, list) else ()
+
+    @staticmethod
+    def _channel_indices_from_config(selected_channels: Any, channel_count: int) -> list[int]:
+        valid_channels = PlotERPVisualizationWidget._valid_channel_indices(selected_channels, channel_count)
+        if valid_channels:
+            return sorted(set(valid_channels))
+        return [0] if channel_count > 0 else []
+
+    @staticmethod
+    def _valid_channel_indices(selected_channels: Any, channel_count: int) -> list[int]:
+        valid_channels = []
+        if isinstance(selected_channels, list):
+            for channel in selected_channels:
+                try:
+                    channel_index = int(channel)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= channel_index < channel_count:
+                    valid_channels.append(channel_index)
+        return sorted(set(valid_channels))
 
     def _select_all_channels(self) -> None:
         self._select_channels(list(range(len(self._channel_names()))))
@@ -646,6 +837,7 @@ class PlotERPVisualizationWidget(QScrollArea):
 
     def on_step_activated(self) -> None:
         self._data_index = None
+        self._prepared_data_cache.clear()
         self._refresh_from_state()
 
     def can_continue(self) -> bool:

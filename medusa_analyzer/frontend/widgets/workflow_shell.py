@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QVBoxLayout,
+    QWidget)
 from medusa_analyzer.frontend.navigator import Navigator
+from medusa_analyzer.frontend.widgets.progress_overlay import ProgressOverlay
 from medusa_analyzer.frontend.widgets.step_progress_bar import StepProgressBar
 
 # Nota: create_experiment_page() crea los widgets y WorkflowShell los muestra y emite señales para que el router
@@ -86,6 +88,8 @@ class WorkflowShell(QWidget):
         actions.addWidget(self.next_button)
         root.addLayout(actions)
 
+        self.overlay = ProgressOverlay(self, show_log=False)
+
         self._activate_current_step()
         self._refresh_navigation()
 
@@ -102,9 +106,10 @@ class WorkflowShell(QWidget):
             self.dashboard_requested.emit()
             return
         # Si no estamos en el primer paso, vamos al paso anterior
-        self.navigator.go_to(previous_steps[-1])
+        previous_step = previous_steps[-1]
+        self.navigator.go_to(previous_step)
         # Después, actualizamos el paso actual y los botones
-        self._activate_current_step()
+        self._activate_current_step(show_progress=self._step_needs_activation_progress(previous_step))
         self._refresh_navigation()
 
     def _go_next(self) -> None:
@@ -153,7 +158,7 @@ class WorkflowShell(QWidget):
             return bool(widget.can_continue())
         return True
 
-    def _activate_current_step(self) -> None:
+    def _activate_current_step_legacy(self, show_progress: bool | None = None) -> None:
         # Esta función se llama cuando se entra a un paso. Sirve para que un widget actualice su contenido
         # justo al mostrarse. Es útil para un paso de resultados, porque quizá necesita leer datos que se cargaron
         # en el paso anterior.
@@ -162,6 +167,34 @@ class WorkflowShell(QWidget):
             # NOTA: on_step_activated es un métoodo opcional que puede tener un widget de un step para decir
             # "cuando entres en este paso, actualízame"
             widget.on_step_activated()
+
+    def _activate_current_step(self, show_progress: bool | None = None) -> None:
+        current_index = self.navigator.current_index()
+        if show_progress is None:
+            show_progress = self._step_needs_activation_progress(current_index)
+
+        widget = self.navigator.current_widget()
+        on_step_activated = getattr(widget, "on_step_activated", None)
+        if not callable(on_step_activated):
+            return
+
+        if show_progress:
+            self.overlay.start_process("Preparing plot visualization...")
+            self.overlay.progress.setValue(10)
+            QApplication.processEvents()
+            try:
+                on_step_activated()
+                self.overlay.progress.setValue(100)
+                QApplication.processEvents()
+            finally:
+                self.overlay.hide()
+        else:
+            on_step_activated()
+
+    def _step_needs_activation_progress(self, step_index: int) -> bool:
+        if not 0 <= step_index < len(self.steps):
+            return False
+        return str(self.steps[step_index].get("id")) == "plot_visualization"
 
     def _refresh_navigation(self) -> None:
         # Función para actualizar la interfaz en función del paso

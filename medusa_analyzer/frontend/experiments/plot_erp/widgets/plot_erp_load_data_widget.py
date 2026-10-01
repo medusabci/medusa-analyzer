@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from medusa_analyzer.frontend.widgets.plot_workflow.load_data_widget import PlotWorkflowLoadDataWidget
+from medusa_analyzer.frontend.widgets.plots.recording_ids import normalize_recording_id
 
 
 class PlotERPLoadDataWidget(PlotWorkflowLoadDataWidget):
@@ -46,6 +47,16 @@ class PlotERPLoadDataWidget(PlotWorkflowLoadDataWidget):
     def _recordings_from_derivatives(cls, derivatives_path: Path | None,
         ignored_prefixes: tuple[str, ...]) -> list[str]:
         return cls._recordings_from_segmented_files(derivatives_path, ignored_prefixes)
+
+    def _recordings_from_discovered_files(self, file_paths: list[str],
+        ignored_prefixes: tuple[str, ...]) -> list[str]:
+        recordings = []
+        for file_path in file_paths:
+            path = Path(str(file_path))
+            stem = path.stem
+            if "_band-" in stem and "_segment-" in stem:
+                recordings.append(normalize_recording_id(str(path), ignored_prefixes))
+        return sorted({recording for recording in recordings if recording})
 
     def can_continue(self) -> bool:
         return (super().can_continue()
