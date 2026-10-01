@@ -357,13 +357,13 @@ def _prepare_grouped_plot_data(state: dict[str, Any], feature_id: str, band_id: 
     if analysis_mode == "between":
         selected_recordings = _unique_ordered(
             data_index.normalize_recording_id(item) for item in _selected_recordings(state))
-        observation_unit = "recording"
+        observation_unit = "subject"
         for group_id, group in groups.items():
             prepared_group = _prepared_group_shell(group_id, group)
             group_subjects = [_normalize_subject_id(item) for item in group.get("subjects", [])]
-            for recording_id in selected_recordings:
+            for subject_id in group_subjects:
                 averaged_values = []
-                for subject_id in group_subjects:
+                for recording_id in selected_recordings:
                     combo_values = data_index.values_for(feature_id, band_id, subject_id, recording_id, channels,
                         channel_count)
                     combo_value = _average_values(combo_values)
@@ -373,7 +373,7 @@ def _prepare_grouped_plot_data(state: dict[str, Any], feature_id: str, band_id: 
                 observation = _average_values(averaged_values)
                 if observation is not None:
                     freqs = freqs if freqs is not None else observation.freqs
-                    prepared_group.observations.append(PreparedObservation(recording_id, observation.values,
+                    prepared_group.observations.append(PreparedObservation(subject_id, observation.values,
                         observation.freqs))
             prepared_groups.append(prepared_group)
 

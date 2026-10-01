@@ -144,7 +144,7 @@ class BasePlotDataPreparationTests(unittest.TestCase):
             self.assertEqual(absolute_data.groups[0].observations, [])
             self.assertEqual(relative_data.groups[0].observations, [])
 
-    def test_between_subject_observations_are_recordings_after_channel_and_subject_average(self):
+    def test_between_subject_observations_are_subjects_after_channel_and_recording_average(self):
         with TemporaryDirectory() as tmp_dir:
             derivatives = Path(tmp_dir) / "derivatives"
             rec_1 = _recording_id("ses-01")
@@ -168,9 +168,9 @@ class BasePlotDataPreparationTests(unittest.TestCase):
             prepared = BasePlot.prepare_grouped_plot_data(state, "mean", "alpha", [0, 1])
             observations = prepared.groups[0].observations
 
-            self.assertEqual(prepared.observation_unit, "recording")
-            self.assertEqual([observation.id for observation in observations], [rec_1, rec_2])
-            np.testing.assert_allclose([float(observation.values) for observation in observations], [6.0, 10.0])
+            self.assertEqual(prepared.observation_unit, "subject")
+            self.assertEqual([observation.id for observation in observations], ["sub-01", "sub-02"])
+            np.testing.assert_allclose([float(observation.values) for observation in observations], [4.0, 12.0])
 
     def test_prepared_data_is_consumed_by_violin_scatter_and_psd_with_group_colors(self):
         with TemporaryDirectory() as tmp_dir:
@@ -229,6 +229,37 @@ class BasePlotDataPreparationTests(unittest.TestCase):
             psd.draw(psd_data.colors_by_name())
             np.testing.assert_allclose(psd._psd_data["Group A"]["mean"], [4.0, 5.0, 6.0])
             self.assertEqual(to_hex(psd_ax.lines[0].get_color()).upper(), "#123456")
+
+    def test_between_subject_psd_plot_error_uses_subject_ci(self):
+        with TemporaryDirectory() as tmp_dir:
+            derivatives = Path(tmp_dir) / "derivatives"
+            rec_1 = _recording_id("ses-01")
+            freqs = [10.0, 20.0, 30.0]
+            _write_param(derivatives, "sub-01", "ses-01", "psd", "alpha",
+                [[[1.0, 3.0], [2.0, 4.0], [3.0, 5.0]]], freqs)
+            _write_param(derivatives, "sub-02", "ses-01", "psd", "alpha",
+                [[[5.0, 7.0], [6.0, 8.0], [7.0, 9.0]]], freqs)
+
+            state = _base_state(derivatives, "between")
+            state["plot_selected_recordings"] = [rec_1]
+            state["groups"] = {
+                "group_1": {
+                    "group_name": "Group A",
+                    "group_color": "#123456",
+                    "subjects": ["sub-01", "sub-02"],
+                    "files": [],
+                },
+            }
+
+            prepared = BasePlot.prepare_grouped_plot_data(state, "psd", "alpha", [0, 1])
+            psd_ax = Figure().add_subplot(111)
+            psd = PSDPlot(psd_ax, {"plot_error": True})
+            psd.load_prepared_data(prepared)
+            psd.draw(prepared.colors_by_name())
+
+            self.assertEqual(prepared.observation_unit, "subject")
+            self.assertEqual(psd._psd_data["Group A"]["n"], 2)
+            self.assertGreaterEqual(len(psd_ax.collections), 1)
 
 
 if __name__ == "__main__":

@@ -80,6 +80,7 @@ class PlotERPVisualizationWidget(QScrollArea):
         self._plot_request_id = 0
         self._active_plot_request_id = 0
         self._active_plot_cache_key: tuple[Any, ...] | None = None
+        self._has_started_plot_calculation = False
         self.runner = TaskRunner()
         self.dynamic_controls: dict[str, dict[str, Any]] = {}
         self.last_export = {"width": 8.0, "height": 5.0, "dpi": 300, "path": ""}
@@ -515,10 +516,12 @@ class PlotERPVisualizationWidget(QScrollArea):
             if prepared_data is None:
                 prepared_data = self._prepared_data_cache.get(cache_key)
             if prepared_data is None:
-                self._draw_empty_plot(ax, visualization, "Recalculating plot...")
+                calculation_message = self._plot_calculation_message()
+                self._draw_empty_plot(ax, visualization, calculation_message)
                 if request_id is not None:
                     self._start_plot_recalculation(
-                        request_id, cache_key, band_id, selected_channels, visualization, data_index)
+                        request_id, cache_key, band_id, selected_channels, visualization, data_index,
+                        calculation_message)
                 return
 
             self._active_plot_cache_key = None
@@ -633,9 +636,11 @@ class PlotERPVisualizationWidget(QScrollArea):
         return self._prepared_data_cache[cache_key]
 
     def _start_plot_recalculation(self, request_id: int, cache_key: tuple[Any, ...], band_id: str,
-        selected_channels: list[int], visualization: dict[str, Any], data_index: EpochDataIndex) -> None:
+        selected_channels: list[int], visualization: dict[str, Any], data_index: EpochDataIndex,
+        calculation_message: str) -> None:
         self._active_plot_cache_key = cache_key
-        self.overlay.start_process("Recalculating plot...")
+        self.overlay.start_process(calculation_message)
+        self._has_started_plot_calculation = True
         self.overlay.progress.setValue(10)
 
         worker = Worker(
@@ -714,6 +719,9 @@ class PlotERPVisualizationWidget(QScrollArea):
             json.dumps(groups if isinstance(groups, dict) else {}, sort_keys=True, default=str),
             json.dumps(data_assignment if isinstance(data_assignment, dict) else {}, sort_keys=True, default=str),
         )
+
+    def _plot_calculation_message(self) -> str:
+        return "Recalculating plot..." if self._has_started_plot_calculation else "Calculating plot..."
 
     def _state_list_key(self, key: str) -> tuple[str, ...]:
         values = self.state.get(key)

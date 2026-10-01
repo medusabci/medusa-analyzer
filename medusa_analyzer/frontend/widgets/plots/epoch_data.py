@@ -178,7 +178,7 @@ def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_cha
     if analysis_mode == "between":
         selected_recordings = _unique_ordered(
             data_index.normalize_recording_id(item) for item in _selected_recordings(state))
-        observation_unit = "recording"
+        observation_unit = "subject"
         group_subjects_by_id = {
             group_id: [_normalize_subject_id(item) for item in group.get("subjects", [])]
             for group_id, group in groups.items()
@@ -196,9 +196,9 @@ def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_cha
         for group_id, group in groups.items():
             prepared_group = _prepared_group_shell(group_id, group)
             group_subjects = group_subjects_by_id.get(group_id, [])
-            for recording_id in selected_recordings:
+            for subject_id in group_subjects:
                 averaged_values = []
-                for subject_id in group_subjects:
+                for recording_id in selected_recordings:
                     combo_value = combo_values_by_key.get((subject_id, recording_id))
                     if combo_value is not None:
                         averaged_values.append(combo_value)
@@ -206,7 +206,7 @@ def prepare_grouped_epoch_data(state: dict[str, Any], band_id: str, selected_cha
                 if observation is not None:
                     times = times if times is not None else observation.times
                     prepared_group.observations.append(PreparedEpochObservation(
-                        recording_id, observation.values, observation.times))
+                        subject_id, observation.values, observation.times))
             prepared_groups.append(prepared_group)
     else:
         selected_subjects = [_normalize_subject_id(item) for item in _selected_subjects(state)]

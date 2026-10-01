@@ -1,4 +1,4 @@
-from PySide6.QtCore import Property, Qt
+from PySide6.QtCore import Property, QEvent, Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFrame,
@@ -21,8 +21,14 @@ class ProgressOverlay(QFrame):
         self.show_log = show_log
         self._error_color = QColor("#FFB6C2")
         self._warning_color = QColor("#F6C177")
+        self._running = False
+        self._completed = False
         self.setObjectName("progressOverlay")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_AcceptTouchEvents, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_NoMousePropagation, True)
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.setMouseTracking(True)
 
         self.panel = QFrame(self)
         self.panel.setObjectName("progressWindow")
@@ -105,23 +111,33 @@ class ProgressOverlay(QFrame):
         append_log_line(self.log_area, message, color)
 
     def start_process(self, text: str) -> None:
+        self._running = True
+        self._completed = False
         self.label.setText(text)
         self.progress.setValue(0)
         if self.show_log:
             self.log_area.clear()
+        self.close_button.setEnabled(False)
         self.close_button.hide()
         self.setGeometry(self.parentWidget().rect())
         self._update_panel_width()
         self._center_panel()
         self.raise_()
         self.show()
+        self.setFocus(Qt.FocusReason.ActiveWindowFocusReason)
 
-    def finish_process(self, summary: str | None = None) -> None:
-        self.label.setText('Process finished')
+    def finish_process(self, summary: str | None = None, text: str = "Process finished") -> None:
+        self._running = False
+        self._completed = True
+        self.label.setText(text)
+        self.progress.setValue(100)
         if self.show_log and summary:
             self.add_log_message('----------- SUMMARY -----------')
             self.add_log_message(summary)
+        self.close_button.setEnabled(True)
         self.close_button.show()
+        self._update_panel_width()
+        self._center_panel()
 
     def _update_panel_width(self) -> None:
         parent = self.parentWidget()
@@ -160,3 +176,21 @@ class ProgressOverlay(QFrame):
             self._update_panel_width()
             self._center_panel()
         super().resizeEvent(event)
+
+    def event(self, event):
+        if event.type() in {
+            QEvent.Type.MouseButtonPress,
+            QEvent.Type.MouseButtonRelease,
+            QEvent.Type.MouseButtonDblClick,
+            QEvent.Type.MouseMove,
+            QEvent.Type.Wheel,
+            QEvent.Type.TouchBegin,
+            QEvent.Type.TouchUpdate,
+            QEvent.Type.TouchEnd,
+            QEvent.Type.TouchCancel,
+            QEvent.Type.KeyPress,
+            QEvent.Type.KeyRelease,
+        }:
+            event.accept()
+            return True
+        return super().event(event)
