@@ -17,7 +17,6 @@ excluded_modules = [
     "patsy.test_splines_crs_data",
     "patsy.test_state",
     "pytest",
-    "pyparsing.testing",
     "sklearn.utils._testing",
 ]
 
