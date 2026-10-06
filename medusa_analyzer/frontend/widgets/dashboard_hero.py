@@ -1,8 +1,9 @@
 """Dashboard Hero Banner Component for MEDUSA Analyzer.
 
 This module provides the `DashboardHero` widget, which serves as the primary visual
-header for the dashboard view. It displays the framework branding, application title,
-subtitle, and descriptive feature chips, with responsive adaptations based on widget width.
+header for the dashboard view (it creates the upper information widget). It displays the
+framework branding, application title, subtitle, and descriptive feature chips, with
+responsive adaptations based on widget width.
 
 Relevant Classes and Functions:
     - DashboardHero: Custom QFrame that renders the information and handles dynamic layout
