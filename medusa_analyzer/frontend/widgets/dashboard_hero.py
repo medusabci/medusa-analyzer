@@ -1,10 +1,27 @@
+"""Dashboard Hero Banner Component for MEDUSA Analyzer.
+
+This module provides the `DashboardHero` widget, which serves as the primary visual
+header for the dashboard view. It displays the framework branding, application title,
+subtitle, and descriptive feature chips, with responsive adaptations based on widget width.
+
+Relevant Classes and Functions:
+    - DashboardHero: Custom QFrame that renders the information and handles dynamic layout
+     adjustments for responsive design.
+
+MEDUSA Analyzer Dependencies:
+    - None
+"""
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout
 
 
 class DashboardHero(QFrame):
-    """Cabecera grande del dashboard. El bloque superior con el nombre de la app, una frase descriptiva
-    y unas "chips" o etiquetas pequeñas."""
+    """Initializes the DashboardHero widget and configures its layout.
+
+    Constructs the widget hierarchy, applying container styles, branding labels
+    (eyebrow, title, and subtitle), and an inline horizontal list of feature chips.
+    """
 
     def __init__(self):
         super().__init__()
@@ -50,8 +67,12 @@ class DashboardHero(QFrame):
         root.addLayout(self.chips) # metemos la fila de chips en el hero
 
     def resizeEvent(self, event) -> None:
-        """Métoodo que se ejecuta automáticamente cuando cambia el tamaño del hero. Lo llama Qt cuando la
-        ventana cambia de tamaño."""
+        """Handles responsive layout and style updates when the widget is resized.
+
+        Dynamically updates content margins and triggers stylesheet re-polishing when the
+        width falls below 620 px. Switches the feature chip container between horizontal
+        and vertical arrangements when the width falls below 310 px.
+        """
         compact = self.width() < 620
         stacked_chips = self.width() < 310
 
