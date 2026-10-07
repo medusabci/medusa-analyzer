@@ -5,6 +5,9 @@ navigation across pages within a `QStackedWidget` container. It encapsulates ind
 boundaries checking, dynamic view transitions, and step tracking for wizard-like
 interfaces.
 
+While 'Navigator' manages the navigation within an experiment, 'Router' manages the
+navigation between experiments and dashboard.
+
 Relevant Classes and Functions:
     - Navigator: Controller wrapping a QStackedWidget to manage sequential and indexed page transitions.
 
@@ -51,14 +54,26 @@ class Navigator:
 
 
     def go_to(self, index: int) -> None:
-        """Transitions the view to the page at the specified index."""
+        """Transitions the view to the page at the specified index.
+
+        Parameters
+        ----------
+        index : int
+            Target zero-based page index.
+        """
         if not 0 <= index < self.count(): # comprueba que el índice exista
             raise ValueError(f"Step index out of range: {index}")
         self.stack.setCurrentIndex(index) # cambia el paso visible
 
 
     def add_page(self, page: QWidget) -> None:
-        """Appends a new page widget to the end of the stack."""
+        """Appends a new page widget to the end of the stack.
+
+        Parameters
+        ----------
+        page : QWidget
+            The view widget to add to the stack.
+        """
         self.stack.addWidget(page)
 
 
