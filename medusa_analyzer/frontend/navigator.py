@@ -5,8 +5,8 @@ navigation across pages within a `QStackedWidget` container. It encapsulates ind
 boundaries checking, dynamic view transitions, and step tracking for wizard-like
 interfaces.
 
-While 'Navigator' manages the navigation within an experiment, 'Router' manages the
-navigation between experiments and dashboard.
+While 'Navigator' manages the transitions within an experiment, 'Router' manages the
+transitions between the experiments and the dashboard.
 
 Relevant Classes and Functions:
     - Navigator: Controller wrapping a QStackedWidget to manage sequential and indexed page transitions.

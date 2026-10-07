@@ -4,8 +4,8 @@ This module provides the `Router` class, which handles string-based routing and 
 switching on top of a `QStackedWidget`. It associates explicit route identifiers with
 concrete widget instances and manages navigation transitions and error notifications.
 
-While 'Navigator' manages the navigation within an experiment, 'Router' manages the
-navigation between experiments and dashboard.
+While 'Navigator' manages the transitions within an experiment, 'Router' manages the
+transitions between the experiments and the dashboard.
 
 Relevant Classes and Functions:
     - Router: Controller mapping string route keys to QWidget views within a QStackedWidget.
