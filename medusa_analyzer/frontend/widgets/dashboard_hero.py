@@ -67,6 +67,7 @@ class DashboardHero(QFrame):
         self.chips.addStretch() # stretch para empujar las chips a la izquierda
         root.addLayout(self.chips) # metemos la fila de chips en el hero
 
+
     def resizeEvent(self, event) -> None:
         """Handles responsive layout and style updates when the widget is resized.
 

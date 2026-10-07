@@ -1,3 +1,18 @@
+"""Interactive experiment card component for MEDUSA Analyzer dashboard.
+
+This module provides the visual and interactive card widget used in the dashboard
+to display and launch analysis workflows and experiments. It encapsulates different
+visual features: state badges, circular icon rendering, elevation hover animations,
+and keyboard/mouse activation mechanisms.
+
+Relevant Classes and Functions:
+    - _render_circular_icon: Helper function to crop and antialias image icons into circles.
+    - ExperimentCard: Interactive QWidget card container with elevation and focus handling.
+
+MEDUSA Analyzer Dependencies:
+    - None
+"""
+
 from pathlib import Path
 
 from PySide6.QtCore import (Property, QEasingCurve, QEvent, QPropertyAnimation,
@@ -7,17 +22,78 @@ from PySide6.QtGui import (QColor, QCursor, QKeyEvent, QMouseEvent, QPainter,
 from PySide6.QtWidgets import (QFrame, QGraphicsDropShadowEffect, QHBoxLayout,
     QLabel, QSizePolicy, QVBoxLayout, QWidget)
 
+
+def _render_circular_icon(icon_path: Path, size: int = 106) -> QPixmap:
+    """Loads and crops an image file into an antialiased circular QPixmap.
+
+    Parameters
+    ----------
+    icon_path : Path
+        Filesystem path pointing to the icon image.
+    size : int, optional
+        Target diameter in pixels for the circular output, by default 106.
+
+    Returns
+    -------
+    QPixmap
+        Rendered circular pixmap with an alpha-channel background.
+    """
+    pixmap = QPixmap(str(icon_path))
+    crop_size = int(min(pixmap.width(), pixmap.height()) * 0.76)
+    crop = pixmap.copy(
+        (pixmap.width() - crop_size) // 2,
+        (pixmap.height() - crop_size) // 2,
+        crop_size,
+        crop_size,
+    )
+    scaled = crop.scaled(
+        size,
+        size,
+        Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+        Qt.TransformationMode.SmoothTransformation,
+    )
+    clipped = QPixmap(size, size)
+    clipped.fill(Qt.GlobalColor.transparent)
+
+    painter = QPainter(clipped)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    path = QPainterPath()
+    path.addEllipse(QRectF(0, 0, size, size))
+    painter.setClipPath(path)
+    painter.drawPixmap(0, 0, scaled)
+    painter.end()
+
+    return clipped
+
 # Clase para definir la tarjeta visual clicable que aparece en el dashboard para abrir un experimento.
 class ExperimentCard(QWidget):
-    """Pinta una tarjeta con icono, título, subtítulo, estado. Tiene una animación al pasar el ratón,
-    puede recibir foco con teclado y emite clicked cuando haces click o pulsas Enter/espacio."""
+    """Interactive dashboard card representing an analysis experiment or workflow.
+
+    Provides visual identification via cropped icon, title, description, and status
+    badge. Supports hover elevation animations, keyboard navigation, and click signals.
+    """
 
     clicked = Signal() # definimos una señal llamada clicked
 
     def __init__(self, title: str, subtitle: str, icon_path: Path | None, enabled: bool = True,
         status: str = "", accent: str = "burgundy"):
-        # Recibimos el título, subtítulo, path, si queremos que se pueda clicar en la tarjeta o no, el estado (ready,
-        # coming soon, updating, beta o lo que se quiera), y el acento (estilo)
+        """Initializes the ExperimentCard widget, subcomponents, and animations.
+
+        Parameters
+        ----------
+        title : str
+            Display name of the experiment.
+        subtitle : str
+            Brief descriptive summary of the workflow.
+        icon_path : Path or None
+            File path to the card's visual icon, or None to display fallback text.
+        enabled : bool, optional
+            Whether the card can be interacted with, by default True.
+        status : str, optional
+            Explicit status override (e.g., 'Beta', 'Updating'), by default "".
+        accent : str, optional
+            Color theme token used for styling properties, by default "burgundy".
+        """
         super().__init__()
         self._hover_progress = 0.0 # variable que controla la animación de hover
         self._enabled = enabled # guarda si está habilitada
@@ -63,28 +139,15 @@ class ExperimentCard(QWidget):
         root.addLayout(badge_row)
         root.addSpacing(13)
 
-        icon = QLabel() # Label para el icono
+        icon = QLabel()
         icon.setObjectName("moduleIcon")
         icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon.setFixedSize(126, 126)
-        if icon_path is not None and icon_path.is_file(): # si hay icono válido, carga la imagen
-            pixmap = QPixmap(str(icon_path))
-            crop_size = int(min(pixmap.width(), pixmap.height()) * 0.76)
-            crop = pixmap.copy((pixmap.width() - crop_size) // 2, (pixmap.height() - crop_size) // 2, crop_size, crop_size)
-            scaled = crop.scaled(106, 106, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)
-            clipped = QPixmap(106, 106)
-            clipped.fill(Qt.GlobalColor.transparent)
-            painter = QPainter(clipped)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-            path = QPainterPath()
-            path.addEllipse(QRectF(0, 0, 106, 106))
-            painter.setClipPath(path)
-            painter.drawPixmap(0, 0, scaled)
-            painter.end()
-            icon.setPixmap(clipped)
-        else: # Si no hay icono, muestra el título como texto
+        if icon_path is not None and icon_path.is_file():
+            icon.setPixmap(_render_circular_icon(icon_path, size=106))
+        else:
             icon.setText(title)
-        root.addWidget(icon, alignment=Qt.AlignmentFlag.AlignHCenter) # Añadimos el icono al layout
+        root.addWidget(icon, alignment=Qt.AlignmentFlag.AlignHCenter)
         root.addSpacing(15)
 
         title_label = QLabel(title) # Título
@@ -119,42 +182,31 @@ class ExperimentCard(QWidget):
         self.animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         self._position_surface()
 
+
     def set_card_width(self, width: int) -> None:
-        """
-        Permite cambiar el ancho de la tarjeta y recolocar surface. Esto puede usarlo un grid responsive.
-        Se llama en module_grid en el reflow, cuando hay que recalcular el grid donde se menten todas las
-        tarjetas.
+        """Updates the fixed width of the card and recalculates inner surface geometry, for responsive adaptations.
         """
         self.setFixedWidth(width)
         self._position_surface()
 
-    def _position_surface(self) -> None:
-        """
-        Coloca surface dentro de la tarjeta. Al hacer hover, la tarjeta sube 4 píxeles.
-        """
-        lift = round(self._hover_progress * 4)
-        self.surface.setGeometry(8, 10 - lift, max(0, self.width() - 16), 322)
 
     def get_hover_progress(self) -> float:
-        """
-        Devuelve el valor actual del hover.
-        """
+        """Returns the current progress value of the hover elevation animation."""
         return self._hover_progress
 
+
     def set_hover_progress(self, value: float) -> None:
-        """
-        Reposiciona la superficie, aumenta blur de la sombra y cambia offset de la sombra.
-        """
+        """Applies hover animation progress to surface position and drop-shadow parameters."""
         self._hover_progress = value
         self._position_surface()
         self.shadow.setBlurRadius(25 + 11 * value)
         self.shadow.setOffset(0, 7 - 2 * value)
 
+
     hoverProgress = Property(float, get_hover_progress, set_hover_progress)
 
     def _animate_to(self, target: float) -> None:
-        """Anima el hover hacua un valor. Cuando target=1, activa el hover. Cuando target=0, quita el
-        hover. """
+        """Transitions hover progress toward a target state and refreshes styles."""
         if not self._enabled: # si la tarjeta está deshabilitada, no anima.
             return
         self.animation.stop()
@@ -165,49 +217,62 @@ class ExperimentCard(QWidget):
         self.surface.setProperty("hovered", active)
         self._refresh_surface_style()
 
+
+    def _position_surface(self) -> None:
+        """Calculates and updates surface geometry based on current hover elevation."""
+        lift = round(self._hover_progress * 4)
+        self.surface.setGeometry(8, 10 - lift, max(0, self.width() - 16), 322)
+
+
     def _refresh_surface_style(self) -> None:
-        """Recalcular el estilo QSS"""
+        """Forces Qt style recalculation on the inner surface widget."""
         self.surface.style().unpolish(self.surface)
         self.surface.style().polish(self.surface)
 
+
     def enterEvent(self, event: QEvent) -> None:
-        """ Cuando el ratón entra en la tarjeta, animas a hover activo."""
+        """Triggers the forward hover elevation animation upon cursor entry."""
         self._animate_to(1.0)
         super().enterEvent(event)
 
+
     def leaveEvent(self, event: QEvent) -> None:
-        """ Cuando el ratón sale de la tarjeta, quitas el hover."""
+        """Triggers the reverse elevation animation when the cursor departs."""
         self._animate_to(0.0)
         super().leaveEvent(event)
 
+
     def focusInEvent(self, event) -> None:
-        """ Cuando la tarjeta recibe foco, marca focused=True"""
+        """Applies focused state styling when the card receives keyboard focus."""
         self.surface.setProperty("focused", True)
         self._refresh_surface_style()
         super().focusInEvent(event)
 
+
     def focusOutEvent(self, event) -> None:
-        """ Cuando la tarjeta pierde el foco, quita esa propiedad"""
+        """Removes focused state styling when the card loses keyboard focus."""
         self.surface.setProperty("focused", False)
         self._refresh_surface_style()
         super().focusOutEvent(event)
 
+
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
-        """Función que detecta cuando se suelta el ratón. Si era un click izquierdo, emite señal del click"""
+        """Emits the clicked signal when the card is left-clicked while enabled."""
         if self._enabled and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit() # Emitimos señal de que se ha clicado en la tarjeta para que lo reciba el dashboard
         super().mouseReleaseEvent(event)
 
+
     def keyPressEvent(self, event: QKeyEvent) -> None:
-        """Función que detecta si se ha pulsado enter, return o espacio cuando la tarjeta tiene el foco y emite
-        señal de click."""
+        """Emits the clicked signal upon Enter or Space key press while focused."""
         if self._enabled and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
             self.clicked.emit() # Emitimos señal de que se ha clicado en la tarjeta para que lo reciba el dashboard
             event.accept()
             return
         super().keyPressEvent(event)
 
+
     def resizeEvent(self, event) -> None:
-        """ Cuando cambia el tamaño de la tarjeta, reposiciona surface."""
+        """Recalculates inner surface positioning when the widget dimensions change."""
         self._position_surface()
         super().resizeEvent(event)
