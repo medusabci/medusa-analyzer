@@ -45,7 +45,8 @@
       "id": "plot_visualization",
       "title": "Plot visualization",
       "subtitle": "Configure and export the ERP plot.",
-      "widget": "plot_erp_visualization_widget.PlotERPVisualizationWidget"
+      "widget": "plot_erp_visualization_widget.PlotERPVisualizationWidget",
+      "show_progress_overlay": true
     }
   ]
 }

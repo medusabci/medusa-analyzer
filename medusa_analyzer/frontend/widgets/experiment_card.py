@@ -184,7 +184,8 @@ class ExperimentCard(QWidget):
 
 
     def set_card_width(self, width: int) -> None:
-        """Updates the fixed width of the card and recalculates inner surface geometry, for responsive adaptations.
+        """Updates the fixed width of the card and recalculates inner surface geometry,
+        for responsive adaptations.
         """
         self.setFixedWidth(width)
         self._position_surface()

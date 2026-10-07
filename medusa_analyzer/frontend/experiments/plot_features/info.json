@@ -51,7 +51,8 @@
       "id": "plot_visualization",
       "title": "Plot visualization",
       "subtitle": "Configure and export one plot per selected feature.",
-      "widget": "plot_features_visualization_widget.PlotFeaturesVisualizationWidget"
+      "widget": "plot_features_visualization_widget.PlotFeaturesVisualizationWidget",
+      "show_progress_overlay": true
     }
   ]
 }
